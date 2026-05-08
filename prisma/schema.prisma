@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Store {
+  id              String   @id @default(cuid())
+  name            String   // e.g. "Boutique Abidjan"
+  currency        String   // "FCFA", "GNF", etc.
+  shopifyUrl      String   // e.g. "mystore.myshopify.com"
+  shopifyToken    String   // shpat_...
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  orders          Order[]
+  users           UserStore[]
+}
+
+enum Role {
+  ADMIN
+  CLOSER
+  LIVREUR
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String
+  role          Role     @default(CLOSER)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  stores        UserStore[]
+  assignedOrders Order[] @relation("CloserOrders")
+  deliveryOrders Order[] @relation("LivreurOrders")
+}
+
+model UserStore {
+  userId   String
+  storeId  String
+  user     User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  store    Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@id([userId, storeId])
+}
+
+model Order {
+  id              String   @id @default(cuid())
+  shopifyOrderId  String   @unique
+  storeId         String
+  store           Store    @relation(fields: [storeId], references: [id])
+  
+  customerName    String
+  customerPhone   String
+  amount          Float
+  status          OrderStatus @default(PENDING)
+  
+  closerId        String?
+  closer          User?    @relation("CloserOrders", fields: [closerId], references: [id])
+  
+  livreurId       String?
+  livreur         User?    @relation("LivreurOrders", fields: [livreurId], references: [id])
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+enum OrderStatus {
+  PENDING      // En attente
+  CONFIRMED    // Confirmé par le closer
+  SHIPPED      // En cours de livraison
+  DELIVERED    // Livré
+  RETURNED     // Retour
+  FAILED       // Échec
+}
