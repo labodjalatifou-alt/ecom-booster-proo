@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Truck, ShoppingBag, ArrowUpRight, ArrowDownRight, Clock, CheckCircle2 } from 'lucide-react';
 import { useStore } from '../StoreProvider';
 import { supabase } from '@/lib/supabase';
+import toast from 'react-hot-toast';
 
 export default function StatCards() {
   const { currency, selectedStore } = useStore();
@@ -112,8 +113,8 @@ export default function StatCards() {
         .eq('status', 'Livré')
         .eq('cash_received', false);
       
-      if (error) alert("Erreur : " + error.message);
-      else alert("Cash validé et transféré en comptabilité !");
+      if (error) toast.error("Erreur : " + error.message);
+      else toast.success("Cash validé et transféré en comptabilité !");
     }
   }
 
