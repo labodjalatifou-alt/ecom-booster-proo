@@ -91,7 +91,7 @@ export default function SalesChart() {
               contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', padding: '16px' }}
               itemStyle={{ fontWeight: 900, fontSize: '12px', textTransform: 'uppercase' }}
               labelStyle={{ fontWeight: 900, color: '#64748b', marginBottom: '4px' }}
-              formatter={(value: number) => [`${new Intl.NumberFormat('fr-FR').format(value)} ${currency}`, 'Ventes']}
+              formatter={(value: any) => [`${new Intl.NumberFormat('fr-FR').format(Number(value))} ${currency}`, 'Ventes']}
             />
             <Bar dataKey="sales" radius={[8, 8, 8, 8]} barSize={period === '1Y' ? 20 : 40}>
               {periodData[period].map((entry, index) => (
