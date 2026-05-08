@@ -1,24 +1,85 @@
 "use client";
 
-import React from 'react';
-import { DollarSign, Truck, ShoppingBag, ArrowUpRight, ArrowDownRight, Clock, CheckCircle2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Truck, ShoppingBag, ArrowUpRight, ArrowDownRight, Clock, CheckCircle2 } from 'lucide-react';
 import { useStore } from '../StoreProvider';
+import { supabase } from '@/lib/supabase';
 
 export default function StatCards() {
-  const { currency } = useStore();
+  const { currency, selectedStore } = useStore();
+  const [loading, setLoading] = useState(true);
+  const [metrics, setMetrics] = useState({
+    caLivre: 0,
+    cashInTransit: 0,
+    deliveryRate: 0,
+    pendingOrders: 0
+  });
+
+  useEffect(() => {
+    async function fetchMetrics() {
+      setLoading(true);
+      try {
+        let query = supabase.from('orders').select('*');
+        
+        // Filtrage par boutique
+        if (selectedStore !== 'ALL') {
+          query = query.eq('city', selectedStore === 'ABIDJAN' ? 'Abidjan' : selectedStore === 'DAKAR' ? 'Dakar' : 'Conakry');
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+
+        if (data) {
+          const caLivre = data
+            .filter(o => o.status === 'Livré')
+            .reduce((acc, curr) => acc + parseInt(curr.price.replace(/\s/g, '')), 0);
+          
+          const cashInTransit = data
+            .filter(o => o.status === 'Livré' && !o.cash_received)
+            .reduce((acc, curr) => acc + parseInt(curr.price.replace(/\s/g, '')), 0);
+
+          const deliveredCount = data.filter(o => o.status === 'Livré').length;
+          const confirmedCount = data.filter(o => ['Confirmé', 'Livré', 'Annulé'].includes(o.status)).length;
+          const deliveryRate = confirmedCount > 0 ? Math.round((deliveredCount / confirmedCount) * 100) : 0;
+
+          const pendingOrders = data.filter(o => o.status === 'A Confirmer').length;
+
+          setMetrics({ caLivre, cashInTransit, deliveryRate, pendingOrders });
+        }
+      } catch (err) {
+        console.error('Error fetching metrics:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchMetrics();
+    
+    // Abonnement en temps réel
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+        fetchMetrics();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedStore]);
 
   const stats = [
     {
       title: 'CA Livré',
-      value: `3 450 000 ${currency}`,
-      trend: '+12%',
+      value: loading ? '...' : `${new Intl.NumberFormat('fr-FR').format(metrics.caLivre)} ${currency}`,
+      trend: '+0%',
       isPositive: true,
       icon: CheckCircle2,
       color: 'bg-emerald-100 text-emerald-600',
     },
     {
       title: 'Cash in Transit',
-      value: `1 125 000 ${currency}`,
+      value: loading ? '...' : `${new Intl.NumberFormat('fr-FR').format(metrics.cashInTransit)} ${currency}`,
       trend: 'En attente',
       isPositive: null,
       icon: Clock,
@@ -27,21 +88,34 @@ export default function StatCards() {
     },
     {
       title: 'Taux Livraison',
-      value: '84%',
-      trend: '+2.4%',
+      value: loading ? '...' : `${metrics.deliveryRate}%`,
+      trend: '+0%',
       isPositive: true,
       icon: Truck,
       color: 'bg-blue-100 text-blue-600',
     },
     {
       title: 'Commandes Shopify',
-      value: '142',
+      value: loading ? '...' : `${metrics.pendingOrders}`,
       trend: 'À traiter',
       isPositive: null,
       icon: ShoppingBag,
       color: 'bg-primary-100 text-primary-600',
     }
   ];
+
+  async function handleMarkReceived() {
+    if (confirm("Voulez-vous marquer tout le cash en transit comme reçu ?")) {
+      const { error } = await supabase
+        .from('orders')
+        .update({ cash_received: true })
+        .eq('status', 'Livré')
+        .eq('cash_received', false);
+      
+      if (error) alert("Erreur : " + error.message);
+      else alert("Cash validé et transféré en comptabilité !");
+    }
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
@@ -71,9 +145,9 @@ export default function StatCards() {
               <p className="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tighter">{stat.value}</p>
             </div>
 
-            {stat.action && (
+            {stat.action && metrics.cashInTransit > 0 && (
               <button 
-                onClick={(e) => { e.stopPropagation(); alert('Transfert vers la comptabilité...'); }}
+                onClick={(e) => { e.stopPropagation(); handleMarkReceived(); }}
                 className="mt-4 py-2 px-4 bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95 shadow-lg shadow-amber-500/20"
               >
                 {stat.action}
