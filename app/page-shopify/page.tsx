@@ -62,8 +62,8 @@ export default function PageShopifyPage() {
     setLoading(true);
     try {
       const selectedContent = productData.sections
-        .filter(s => selectedSections.includes(s.id))
-        .map(s => `<h2>${s.h2}</h2><p>${s.p}</p>`)
+        .filter((s: any) => selectedSections.includes(s.id))
+        .map((s: any) => `<h2>${s.h2}</h2><p>${s.p}</p>`)
         .join('');
 
       const res = await fetch('/api/create-product', {
