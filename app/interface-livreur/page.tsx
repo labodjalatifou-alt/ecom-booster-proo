@@ -166,7 +166,7 @@ export default function InterfaceLivreurPage() {
                 </tr>
               </thead>
               <tbody className="divide-y-2 divide-slate-100 dark:divide-slate-800">
-                {filteredOrders.map((item) => (
+                {filteredOrders.map((item: any) => (
                   <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all">
                     <td className="px-8 py-4">
                       <div className="font-black text-sm">{item.customer}</div>

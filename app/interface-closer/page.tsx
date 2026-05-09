@@ -118,7 +118,7 @@ export default function InterfaceCloserPage() {
                 </tr>
               </thead>
               <tbody className="divide-y-2 divide-slate-100 dark:divide-slate-800">
-                {orders.map((item) => (
+                {orders.map((item: any) => (
                   <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group">
                     <td className="px-8 py-4">
                       <div className="font-black text-sm">{item.customer}</div>
