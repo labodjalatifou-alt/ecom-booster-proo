@@ -135,7 +135,7 @@ export default function EquipePage() {
                     <button 
                       key={r.id} 
                       type="button" 
-                      onClick={() => setRole(r.id as any)} 
+                      onClick={() => setFormData({...formData, role: r.id as any})} 
                       className={`flex flex-col items-start px-5 py-3 rounded-2xl border-2 transition-all ${formData.role === r.id ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-slate-100 dark:border-slate-800 hover:bg-slate-50'}`}
                     >
                       <span className={`text-[10px] font-black uppercase tracking-widest ${formData.role === r.id ? 'text-primary-700 dark:text-primary-400' : 'text-slate-600'}`}>{r.label}</span>
