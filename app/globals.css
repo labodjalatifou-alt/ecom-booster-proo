@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8fafc;
+  --background: #ffffff;
   --foreground: #0f172a;
   
   --primary-50: #eff4ff;
@@ -27,14 +27,20 @@
   --color-primary-500: var(--primary-500);
   --color-primary-600: var(--primary-600);
   --color-primary-900: var(--primary-900);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
 }
 
 body {
   background-color: var(--background);
   color: var(--foreground);
   font-family: 'Inter', system-ui, sans-serif;
-  transition: background-color 0.3s ease, color 0.3s ease;
 }
+
+/* Force light theme styles */
+.bg-white { background-color: #ffffff !important; }
+.text-slate-800 { color: #1e293b !important; }
+.text-slate-400 { color: #94a3b8 !important; }
 
 /* Custom scrollbar for Sidebar */
 .scrollbar-hide::-webkit-scrollbar {
