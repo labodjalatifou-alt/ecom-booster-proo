@@ -179,7 +179,7 @@ export default function StatCards() {
         ))}
       </div>
       <button 
-        onClick={syncShopify}
+        onClick={() => syncShopify()}
         className="flex items-center gap-2 px-6 py-3 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-primary-600 hover:border-primary-100 transition-all shadow-sm"
       >
         <RefreshCw className="w-4 h-4" />
