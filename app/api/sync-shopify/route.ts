@@ -17,7 +17,7 @@ export async function GET() {
 
     // Pagination loop — fetches ALL orders
     while (nextPageUrl) {
-      const response = await fetch(nextPageUrl, {
+      const response: Response = await fetch(nextPageUrl, {
         headers: {
           'X-Shopify-Access-Token': accessToken,
           'Content-Type': 'application/json',
