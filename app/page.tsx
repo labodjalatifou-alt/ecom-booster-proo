@@ -2,7 +2,6 @@
 
 import React from 'react';
 import StatCards from '@/components/dashboard/StatCards';
-import AIAdvisor from '@/components/dashboard/AIAdvisor';
 import SalesChart from '@/components/dashboard/SalesChart';
 import TopProducts from '@/components/dashboard/TopProducts';
 import PerformanceWidget from '@/components/dashboard/PerformanceWidget';
@@ -34,7 +33,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <AIAdvisor />
       <StatCards />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
