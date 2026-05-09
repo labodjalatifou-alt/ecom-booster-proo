@@ -15,7 +15,7 @@ export default function EmptyAnalysisState({ icon, title, description }: EmptyAn
       <div className="relative mb-10">
         <div className="absolute inset-0 bg-primary-500/20 blur-3xl rounded-full scale-150 animate-pulse" />
         <div className="relative p-10 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[3rem] shadow-2xl flex items-center justify-center">
-          {React.isValidElement(icon) ? React.cloneElement(icon as React.ReactElement, { className: 'w-16 h-16 text-primary-500' }) : icon}
+          {React.isValidElement(icon) ? React.cloneElement(icon as React.ReactElement<any>, { className: 'w-16 h-16 text-primary-500' }) : icon}
         </div>
         <div className="absolute -bottom-4 -right-4 p-3 bg-amber-500 text-white rounded-2xl shadow-lg rotate-12">
           <AlertCircle className="w-5 h-5" />
