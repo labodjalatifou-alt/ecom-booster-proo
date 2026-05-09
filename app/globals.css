@@ -1,33 +1,32 @@
-@import "tailwindcss";
-@custom-variant dark (&:where(.dark, .dark *));
-
-@theme {
-  --color-primary-50: #eff4ff;
-  --color-primary-100: #dbe6ff;
-  --color-primary-500: #2b59ff; /* Vibrant Blue */
-  --color-primary-600: #1a42db; /* Darker vibrant blue */
-  --color-primary-900: #10247a;
-  
-  --color-background-soft: #f8fafc;
-  --color-border-subtle: #e2e8f0;
-  
-  --font-sans: 'Inter', system-ui, sans-serif;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
-  --background: #f8fafc; /* Light gray background for the SaaS */
-  --foreground: #0f172a; /* Slate 900 for text */
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  
+  --primary-50: #eff4ff;
+  --primary-100: #dbe6ff;
+  --primary-500: #2b59ff;
+  --primary-600: #1a42db;
+  --primary-900: #10247a;
+  
+  --background-soft: #f8fafc;
+  --border-subtle: #e2e8f0;
 }
 
 .dark {
-  --background: #0f172a; /* Slate 900 */
+  --background: #0f172a;
   --foreground: #f8fafc;
+  --background-soft: #1e293b;
+  --border-subtle: #334155;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans);
+  font-family: 'Inter', system-ui, sans-serif;
 }
 
 /* Custom scrollbar for Sidebar */
