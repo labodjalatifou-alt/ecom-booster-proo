@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.95.1",
     "@prisma/client": "^6.4.0",
     "@shopify/shopify-api": "^13.0.0",
     "@supabase/supabase-js": "^2.105.4",
