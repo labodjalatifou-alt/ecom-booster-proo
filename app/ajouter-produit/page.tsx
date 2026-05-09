@@ -27,12 +27,21 @@ export default function AjouterProduitPage() {
       });
 
       const data = await res.json();
-      if (data.error) throw new Error(data.error);
+      if (data.error) {
+        // Traduire les erreurs Shopify courantes en messages clairs
+        if (data.error.includes('401') || data.error.includes('Unauthorized')) {
+          throw new Error("Permission refusée. Ton token Shopify doit avoir la permission 'write_products'.");
+        }
+        if (data.error.includes('403') || data.error.includes('Forbidden')) {
+          throw new Error("Accès refusé. Vérifie les scopes de ton API Shopify.");
+        }
+        throw new Error(data.error);
+      }
 
-      toast.success("Produit créé avec succès sur Shopify !");
+      toast.success(`✅ "${formData.name}" créé sur Shopify !`);
       setFormData({ name: '', price: '', category: 'Beauté', stock: '', description: '' });
     } catch (err: any) {
-      toast.error("Erreur : " + err.message);
+      toast.error(err.message, { duration: 6000 });
     } finally {
       setLoading(false);
     }
