@@ -20,12 +20,16 @@ model Store {
   // Relations
   orders          Order[]
   users           UserStore[]
+
+
 }
 
 enum Role {
   ADMIN
   CLOSER
   LIVREUR
+
+
 }
 
 model User {
@@ -40,6 +44,8 @@ model User {
   stores        UserStore[]
   assignedOrders Order[] @relation("CloserOrders")
   deliveryOrders Order[] @relation("LivreurOrders")
+
+
 }
 
 model UserStore {
@@ -49,27 +55,34 @@ model UserStore {
   store    Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   @@id([userId, storeId])
+
 }
 
 model Order {
   id              String   @id @default(cuid())
-  shopifyOrderId  String   @unique
-  storeId         String
-  store           Store    @relation(fields: [storeId], references: [id])
+  shopifyOrderId  String   @unique @map("shopify_id")
+  storeId         String?  @map("store_id")
+  store           Store?   @relation(fields: [storeId], references: [id])
   
-  customerName    String
-  customerPhone   String
-  amount          Float
-  status          OrderStatus @default(PENDING)
+  customerName    String   @map("customer")
+  customerPhone   String   @map("phone")
+  product         String
+  price           String?  @map("price")
+  status          String   @default("A Confirmer")
+  city            String?
+  cashReceived    Boolean  @default(false) @map("cash_received")
   
-  closerId        String?
+  closerId        String?  @map("closer_id")
   closer          User?    @relation("CloserOrders", fields: [closerId], references: [id])
   
-  livreurId       String?
+  livreurId       String?  @map("livreur_id")
   livreur         User?    @relation("LivreurOrders", fields: [livreurId], references: [id])
   
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("orders")
+
 }
 
 enum OrderStatus {
@@ -79,4 +92,39 @@ enum OrderStatus {
   DELIVERED    // Livré
   RETURNED     // Retour
   FAILED       // Échec
+
+
+}
+
+model Product {
+  id            String   @id @default(cuid())
+  shopifyId     String   @unique @map("shopify_id")
+  title         String
+  price         String
+  comparePrice  String?  @map("compare_price")
+  status        String   // active, draft, etc.
+  stock         Int      @default(0)
+  imageUrl      String?  @map("image_url")
+  currency      String   @default("FCFA")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("products")
+
+}
+
+model ProductAnalysis {
+  id                  String   @id @default(cuid())
+  productName         String
+  score               Int
+  priceRecommendation String
+  customerAvatar      Json
+  shopifyPageContent  Json
+  facebookAdContent   Json
+  voiceOverScript     String
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@map("analyses")
+  @@schema("public")
 }

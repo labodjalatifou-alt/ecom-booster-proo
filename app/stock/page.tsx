@@ -12,38 +12,27 @@ export default function StockPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
   const [newStockValue, setNewStockValue] = useState<number>(0);
+  const [statusFilter, setStatusFilter] = useState('active'); // active, draft
 
   useEffect(() => {
     fetchStock();
-  }, []);
+  }, [statusFilter]);
 
   async function fetchStock() {
     setLoading(true);
     try {
-      // Dans une version réelle, nous aurions une table 'products'
-      // Pour l'instant, nous agrégeons les produits depuis la table 'orders'
-      // Mais pour la gestion de stock, il est préférable d'avoir une table dédiée.
-      // Simulons l'utilisation de la table 'products' si elle existe, sinon on fallback.
-      const { data, error } = await supabase.from('orders').select('product, price');
-      if (error) throw error;
-
-      if (data) {
-        const uniqueProducts = data.reduce((acc: any, curr: any) => {
-          if (!acc[curr.product]) {
-            acc[curr.product] = { 
-              id: curr.product, 
-              name: curr.product, 
-              price: curr.price, 
-              stock: Math.floor(Math.random() * 100), // Valeur simulée car pas encore de table stock
-              sku: curr.product.substring(0, 3).toUpperCase() + "-" + Math.floor(Math.random() * 1000)
-            };
-          }
-          return acc;
-        }, {});
-        setStockItems(Object.values(uniqueProducts));
+      let query = supabase.from('products').select('*');
+      
+      if (statusFilter !== 'all') {
+        query = query.eq('status', statusFilter);
       }
+
+      const { data, error } = await query.order('title');
+      if (error) throw error;
+      if (data) setStockItems(data);
     } catch (err) {
       console.error('Error fetching stock:', err);
+      toast.error("Erreur lors de la récupération du stock");
     } finally {
       setLoading(false);
     }
@@ -75,9 +64,29 @@ export default function StockPage() {
           <h2 className="text-4xl font-black tracking-tighter">Gestion du Stock</h2>
         </div>
         
-        <button className="flex items-center gap-2 px-8 py-4 bg-primary-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-primary-500/30 hover:bg-primary-700 transition-all active:scale-95">
+        <div className="flex bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-1 shadow-sm h-fit self-end">
+          {[
+            { id: 'active', label: 'Actifs' },
+            { id: 'draft', label: 'Brouillons' },
+            { id: 'all', label: 'Tous' }
+          ].map((f) => (
+            <button
+              key={f.id}
+              onClick={() => setStatusFilter(f.id)}
+              className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                statusFilter === f.id 
+                  ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/20' 
+                  : 'text-slate-400 hover:text-slate-600'
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+        
+        <Link href="/ajouter-produit" className="flex items-center gap-2 px-8 py-4 bg-primary-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-primary-500/30 hover:bg-primary-700 transition-all active:scale-95">
           <Plus className="w-5 h-5" /> Ajouter un Produit
-        </button>
+        </Link>
       </div>
 
       <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[3rem] shadow-sm overflow-hidden min-h-[400px]">
@@ -101,8 +110,11 @@ export default function StockPage() {
                 {stockItems.map((item) => (
                   <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all group">
                     <td className="px-8 py-6 overflow-hidden">
-                      <div className="font-black text-base truncate">{item.name}</div>
-                      <div className="text-[10px] font-bold text-slate-400 mt-1 uppercase">SKU: {item.sku}</div>
+                      <div className="font-black text-base truncate">{item.title}</div>
+                      <div className="text-[10px] font-bold text-slate-400 mt-1 uppercase flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full ${item.status === 'active' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+                        {item.status}
+                      </div>
                     </td>
                     <td className="px-8 py-6">
                       <div className="flex flex-col items-center gap-2">
@@ -113,7 +125,7 @@ export default function StockPage() {
                       </div>
                     </td>
                     <td className="px-8 py-6 font-black text-sm text-slate-800 dark:text-slate-100">
-                      {new Intl.NumberFormat('fr-FR').format(parseInt(item.price.replace(/\s/g, '')))} F
+                      {new Intl.NumberFormat('fr-FR').format(parseInt(item.price?.replace(/\s/g, '') || '0'))} {item.currency || 'FCFA'}
                     </td>
                     <td className="px-8 py-6 text-right relative">
                       <button onClick={() => setActiveMenu(activeMenu === item.id ? null : item.id)} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl hover:bg-primary-600 hover:text-white transition-all shadow-sm active:scale-90">

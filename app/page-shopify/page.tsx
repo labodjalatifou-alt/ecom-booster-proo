@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Store, Copy, Check, Sparkles, Layout, DollarSign, Database, Send, CheckCircle2, Eye, FileText } from 'lucide-react';
+import { Store, Copy, Check, Sparkles, Layout, DollarSign, Database, Send, CheckCircle2, Eye, FileText, Loader2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function PageShopifyPage() {
   const [copied, setCopied] = useState(false);
@@ -11,6 +12,8 @@ export default function PageShopifyPage() {
   const [price, setPrice] = useState('25000');
   const [stock, setStock] = useState('100');
   const [currency, setCurrency] = useState('FCFA');
+  const [loading, setLoading] = useState(false);
+  const [productName, setProductName] = useState('');
 
   const productData = {
     titles: [
@@ -28,10 +31,37 @@ export default function PageShopifyPage() {
     ]
   };
 
-  const handleExport = () => {
-    setExported(true);
-    alert(`Succès ! \nProduit créé sur Shopify. \nPrix: ${price} ${currency} | Stock: ${stock} pcs.`);
-    setTimeout(() => setExported(false), 3000);
+  const handleExport = async () => {
+    setLoading(true);
+    try {
+      const selectedContent = productData.sections
+        .filter(s => selectedSections.includes(s.id))
+        .map(s => `<h2>${s.h2}</h2><p>${s.p}</p>`)
+        .join('');
+
+      const res = await fetch('/api/create-product', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: productData.titles[selectedTitle],
+          price: price,
+          stock: stock,
+          description: selectedContent,
+          category: 'Shopify Builder'
+        }),
+      });
+
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      toast.success("🚀 Page Shopify créée et produit exporté !");
+      setExported(true);
+      setTimeout(() => setExported(false), 5000);
+    } catch (err: any) {
+      toast.error("Erreur: " + err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleSection = (id: number) => {
@@ -148,8 +178,13 @@ export default function PageShopifyPage() {
               </div>
             </div>
 
-            <button onClick={handleExport} className="w-full py-6 bg-emerald-600 text-white rounded-[2rem] font-black uppercase tracking-[0.2em] shadow-xl shadow-emerald-500/20 hover:bg-emerald-700 hover:-translate-y-1 transition-all flex items-center justify-center gap-3 active:scale-95">
-              <Send className="w-5 h-5" /> Créer sur Shopify
+            <button 
+              disabled={loading}
+              onClick={handleExport} 
+              className="w-full py-6 bg-emerald-600 text-white rounded-[2rem] font-black uppercase tracking-[0.2em] shadow-xl shadow-emerald-500/20 hover:bg-emerald-700 hover:-translate-y-1 transition-all flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50"
+            >
+              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+              {loading ? "Création..." : "Créer sur Shopify"}
             </button>
           </div>
         </div>

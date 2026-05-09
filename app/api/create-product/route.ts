@@ -10,7 +10,7 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { name, price, stock, category } = body;
+    const { name, price, stock, category, description } = body;
 
     if (!name || !price) {
       return NextResponse.json({ error: 'Nom et prix sont requis' }, { status: 400 });
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     const shopifyPayload = {
       product: {
         title: name,
-        body_html: `<strong>Catégorie:</strong> ${category || 'Général'}`,
+        body_html: description || `<strong>Catégorie:</strong> ${category || 'Général'}`,
         vendor: 'Ecom Booster Pro',
         product_type: category || 'Général',
         status: 'active',
@@ -58,8 +58,27 @@ export async function POST(req: Request) {
     }
 
     const data = await response.json();
-    console.log('[create-product] Product created:', data.product?.id);
-    return NextResponse.json({ success: true, product: data.product });
+    const shopifyProduct = data.product;
+
+    // 2. Sauvegarder dans la base de données locale Supabase
+    // On utilise shopify_id pour le mapping
+    const { error: dbError } = await supabase.from('products').upsert({
+      shopify_id: shopifyProduct.id.toString(),
+      title: shopifyProduct.title,
+      price: priceFormatted,
+      status: 'active',
+      stock: inventoryQty,
+      image_url: shopifyProduct.image?.src || null,
+      currency: 'FCFA' // TODO: Récupérer dynamiquement
+    }, { onConflict: 'shopify_id' });
+
+    if (dbError) {
+      console.error('[create-product] Database save error:', dbError);
+      // On ne throw pas forcément ici car le produit est déjà sur Shopify
+    }
+
+    console.log('[create-product] Product created and saved:', shopifyProduct.id);
+    return NextResponse.json({ success: true, product: shopifyProduct });
   } catch (error: any) {
     console.error('[create-product] Error:', error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });

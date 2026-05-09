@@ -1,29 +1,103 @@
 "use client";
 
-import React, { useState } from 'react';
-import { Truck, MapPin, PhoneForwarded, MoreVertical, MessageSquare, Clock, Edit3, X, CheckCircle2, DollarSign } from 'lucide-react';
-
-const mockDeliveries = [
-  { id: 1, client: "Awa Diop", product: "Brosse 5-en-1", price: "25 000 F", address: "Plateau, Abidjan", status: "À Livrer", phone: "+2250707123456" },
-  { id: 2, client: "Moussa Traoré", product: "Mini Projecteur", price: "45 000 F", address: "Cocody, Abidjan", status: "Livré", phone: "+2250505123456" },
-  { id: 3, client: "Fatou Kane", product: "Montre Connectée", price: "35 000 F", address: "Dakar Plateau", status: "Annulé", phone: "+221770001122" },
-  { id: 4, client: "Jean Kouassi", product: "Sac Premium", price: "30 000 F", address: "Marcory, Abidjan", status: "À Livrer", phone: "+2250101123456" },
-  { id: 5, client: "Saliou Diallo", product: "Brosse 5-en-1", price: "25 000 F", address: "Bamako Coura", status: "Livré", phone: "+22366001122" },
-  { id: 6, client: "Kadiatou B.", product: "Écouteurs Pro", price: "15 000 F", address: "Conakry", status: "À Livrer", phone: "+224622001122" },
-  { id: 7, client: "Oumar Sow", product: "Mini Projecteur", price: "45 000 F", address: "Niamey", status: "À Livrer", phone: "+22799001122" },
-  { id: 8, client: "Aminata C.", product: "Brosse 5-en-1", price: "25 000 F", address: "Lomé", status: "Livré", phone: "+22890001122" },
-  { id: 9, client: "Ibrahim K.", product: "Sac Premium", price: "30 000 F", address: "Ouaga", status: "À Livrer", phone: "+22670001122" },
-  { id: 10, client: "Mariam T.", product: "Montre Pro", price: "35 000 F", address: "Cotonou", status: "À Livrer", phone: "+22997001122" },
-];
+import React, { useEffect, useState } from 'react';
+import { Truck, PhoneForwarded, MessageSquare, CheckCircle2, MapPin, DollarSign, Loader2, Package } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import toast from 'react-hot-toast';
 
 export default function InterfaceLivreurPage() {
-  const [activeMenu, setActiveMenu] = useState<number | null>(null);
-  const [selectedRow, setSelectedRow] = useState<number | null>(null);
-  const [showScheduleModal, setShowScheduleModal] = useState(false);
-  const [showNotesModal, setShowNotesModal] = useState(false);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [totalCash, setTotalCash] = useState(0);
+
+  async function fetchOrders() {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('status', 'Confirmé')
+      .order('created_at', { ascending: false });
+
+    if (!error && data) {
+      setOrders(data);
+      const total = data.reduce((acc, o) => acc + parseFloat(o.price || '0'), 0);
+      setTotalCash(total);
+    }
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    fetchOrders();
+
+    const channel = supabase
+      .channel('livreur-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+        fetchOrders();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  async function markDelivered(orderId: any) {
+    setOrders(prev => prev.filter(o => o.id !== orderId));
+    
+    const { error } = await supabase
+      .from('orders')
+      .update({ status: 'Livré' })
+      .eq('id', orderId);
+
+    if (error) {
+      toast.error("Erreur lors de la mise à jour");
+      fetchOrders();
+    } else {
+      toast.success("Colis marqué comme livré ! Bon travail.", { 
+        icon: '💰',
+        style: {
+          borderRadius: '1.5rem',
+          background: '#10b981',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '12px',
+          textTransform: 'uppercase',
+          letterSpacing: '0.1em',
+          padding: '16px 24px'
+        }
+      });
+      fetchOrders();
+    }
+  }
+
+  async function markFailed(orderId: any) {
+    setOrders(prev => prev.filter(o => o.id !== orderId));
+
+    const { error } = await supabase
+      .from('orders')
+      .update({ status: 'Annulé' })
+      .eq('id', orderId);
+
+    if (error) {
+      toast.error("Erreur");
+      fetchOrders();
+    } else {
+      toast.error("Livraison annulée", {
+        style: {
+          borderRadius: '1.5rem',
+          background: '#ef4444',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '12px',
+          textTransform: 'uppercase',
+          letterSpacing: '0.1em',
+          padding: '16px 24px'
+        }
+      });
+      fetchOrders();
+    }
+  }
 
   const handleCall = (phone: string) => { window.location.href = `tel:${phone}`; };
-  const handleWhatsApp = (phone: string) => { window.open(`https://wa.me/${phone.replace('+', '')}`, '_blank'); };
+  const handleWhatsApp = (phone: string) => { window.open(`https://wa.me/${phone.replace(/\D/g, '')}`, '_blank'); };
 
   return (
     <div className="max-w-7xl mx-auto pb-10 px-4 text-slate-800 dark:text-slate-100 animate-in fade-in duration-500">
@@ -36,115 +110,86 @@ export default function InterfaceLivreurPage() {
             <span className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em]">Tableau de Bord Livreur</span>
           </div>
           <h2 className="text-4xl font-black tracking-tighter">Mes Livraisons</h2>
+          <p className="text-slate-400 text-xs font-bold mt-1 flex items-center gap-2">
+            <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse inline-block"></span>
+            {orders.length} colis à livrer · Temps réel
+          </p>
         </div>
 
         <div className="grid grid-cols-2 gap-6 w-full md:w-auto">
-          <div className="bg-emerald-500 text-white p-8 rounded-[2.5rem] shadow-xl shadow-emerald-500/20 flex flex-col items-center justify-center min-w-[200px]">
-             <CheckCircle2 className="w-8 h-8 mb-2 opacity-50" />
-             <span className="text-4xl font-black tracking-tighter">45</span>
-             <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Livraisons</span>
+          <div className="bg-blue-500 text-white p-8 rounded-[2.5rem] shadow-xl shadow-blue-500/20 flex flex-col items-center justify-center min-w-[180px]">
+            <Package className="w-8 h-8 mb-2 opacity-60" />
+            <span className="text-4xl font-black tracking-tighter">{orders.length}</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80">À Livrer</span>
           </div>
-          <div className="bg-slate-900 text-white p-8 rounded-[2.5rem] shadow-xl flex flex-col items-center justify-center min-w-[200px]">
-             <DollarSign className="w-8 h-8 mb-2 text-emerald-400" />
-             <span className="text-3xl font-black tracking-tighter">1 125 000 F</span>
-             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Total Cash</span>
+          <div className="bg-slate-900 text-white p-8 rounded-[2.5rem] shadow-xl flex flex-col items-center justify-center min-w-[180px]">
+            <DollarSign className="w-8 h-8 mb-2 text-emerald-400" />
+            <span className="text-2xl font-black tracking-tighter">{new Intl.NumberFormat('fr-FR').format(totalCash)}</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Cash à collecter</span>
           </div>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[3rem] shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse table-fixed">
-            <thead>
-              <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b-2 border-slate-100 dark:border-slate-800">
-                <th className="w-[30%] px-8 py-4 text-[10px] font-black uppercase text-slate-400 tracking-widest">Client & Mobile</th>
-                <th className="w-[30%] px-8 py-4 text-[10px] font-black uppercase text-slate-400 tracking-widest">Colis / Adresse</th>
-                <th className="w-[20%] px-8 py-4 text-[10px] font-black uppercase text-slate-400 tracking-widest text-center">Statut</th>
-                <th className="w-[20%] px-8 py-4 text-[10px] font-black uppercase text-slate-400 tracking-widest text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y-2 divide-slate-100 dark:divide-slate-800">
-              {mockDeliveries.map((item) => (
-                <tr 
-                  key={item.id} 
-                  onClick={() => {
-                    setActiveMenu(activeMenu === item.id ? null : item.id);
-                    setSelectedRow(item.id);
-                  }}
-                  className={`transition-all cursor-pointer group relative ${
-                    selectedRow === item.id ? 'bg-primary-50 dark:bg-primary-900/10' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
-                  }`}
-                >
-                  <td className={`px-8 py-4 overflow-hidden relative ${selectedRow === item.id ? 'before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-primary-500 before:z-10' : ''}`}>
-                    <div className={`font-black text-sm truncate transition-colors ${selectedRow === item.id ? 'text-primary-600' : ''}`}>{item.client}</div>
-                    <div className="text-[11px] font-bold text-primary-500 mt-0.5">{item.phone}</div>
-                  </td>
-                  <td className="px-8 py-4 overflow-hidden">
-                    <div className="text-sm font-black text-slate-700 dark:text-slate-200 truncate">{item.product}</div>
-                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 mt-0.5 uppercase truncate">
-                      <MapPin className="w-3 h-3 shrink-0" /> {item.address}
-                    </div>
-                  </td>
-                  <td className="px-8 py-4 text-center">
-                    <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
-                      item.status === 'Livré' ? 'bg-emerald-100 text-emerald-700' : 
-                      item.status === 'Annulé' ? 'bg-red-100 text-red-700' : 
-                      'bg-blue-100 text-blue-700'
-                    }`}>
-                      {item.status}
-                    </span>
-                  </td>
-                  <td className="px-8 py-4 text-right relative">
-                    <button className={`p-2 rounded-xl transition-all shadow-sm ${selectedRow === item.id ? 'bg-primary-600 text-white' : 'bg-slate-50 dark:bg-slate-800'}`}>
-                      <MoreVertical className="w-4 h-4" />
-                    </button>
-                    
-                    {activeMenu === item.id && (
-                      <div className="absolute right-8 top-full mt-2 w-56 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2rem] shadow-2xl z-[100] overflow-hidden py-2 animate-in slide-in-from-top-2 duration-200">
-                        <button onClick={(e) => {e.stopPropagation(); handleCall(item.phone)}} className="w-full flex items-center gap-4 px-6 py-3.5 text-xs font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors border-b border-slate-50">
-                          <PhoneForwarded className="w-5 h-5 text-emerald-500" /> Appeler
+      <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[3rem] shadow-sm overflow-hidden min-h-[400px]">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-40 gap-4 text-slate-400">
+            <Loader2 className="w-10 h-10 animate-spin text-blue-500" />
+            <p className="text-[10px] font-black uppercase tracking-[0.3em]">Chargement...</p>
+          </div>
+        ) : orders.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-40 gap-4 text-slate-400">
+            <Truck className="w-16 h-16 opacity-20" />
+            <p className="text-xl font-black text-slate-600">Aucune livraison en attente</p>
+            <p className="text-sm text-slate-400">Les commandes confirmées par le Closer apparaîtront ici.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse table-fixed">
+              <thead>
+                <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b-2 border-slate-100 dark:border-slate-800">
+                  <th className="w-[28%] px-8 py-4 text-[10px] font-black uppercase text-slate-400 tracking-widest">Client & Téléphone</th>
+                  <th className="w-[28%] px-8 py-4 text-[10px] font-black uppercase text-slate-400 tracking-widest">Produit & Ville</th>
+                  <th className="w-[14%] px-8 py-4 text-[10px] font-black uppercase text-slate-400 tracking-widest text-right">Montant</th>
+                  <th className="w-[30%] px-8 py-4 text-[10px] font-black uppercase text-slate-400 tracking-widest text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y-2 divide-slate-100 dark:divide-slate-800">
+                {orders.map((item) => (
+                  <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group">
+                    <td className="px-8 py-4">
+                      <div className="font-black text-sm">{item.customer}</div>
+                      <div className="text-[11px] font-bold text-primary-500 mt-0.5">{item.phone}</div>
+                    </td>
+                    <td className="px-8 py-4">
+                      <div className="text-sm font-black text-slate-700 dark:text-slate-200 truncate">{item.product}</div>
+                      <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 mt-0.5 uppercase">
+                        <MapPin className="w-3 h-3" /> {item.city}
+                      </div>
+                    </td>
+                    <td className="px-8 py-4 text-right font-black text-sm">{item.price}</td>
+                    <td className="px-8 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button onClick={() => handleCall(item.phone)} className="p-2 bg-emerald-100 text-emerald-600 rounded-xl hover:bg-emerald-600 hover:text-white transition-all" title="Appeler">
+                          <PhoneForwarded className="w-4 h-4" />
                         </button>
-                        <button onClick={(e) => {e.stopPropagation(); handleWhatsApp(item.phone)}} className="w-full flex items-center gap-4 px-6 py-3.5 text-xs font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors border-b border-slate-50">
-                          <MessageSquare className="w-5 h-5 text-green-500" /> WhatsApp
+                        <button onClick={() => handleWhatsApp(item.phone)} className="p-2 bg-green-100 text-green-600 rounded-xl hover:bg-green-600 hover:text-white transition-all" title="WhatsApp">
+                          <MessageSquare className="w-4 h-4" />
                         </button>
-                        <button onClick={(e) => {e.stopPropagation(); setShowScheduleModal(true)}} className="w-full flex items-center gap-4 px-6 py-3.5 text-xs font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors border-b border-slate-50">
-                          <Clock className="w-5 h-5 text-blue-500" /> Programmer
+                        <button onClick={() => markDelivered(item.id)} className="px-3 py-2 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all active:scale-95">
+                          ✓ Livré
                         </button>
-                        <button onClick={(e) => {e.stopPropagation(); setShowNotesModal(true)}} className="w-full flex items-center gap-4 px-6 py-3.5 text-xs font-black uppercase text-amber-600 hover:bg-amber-50 transition-colors">
-                          <Edit3 className="w-5 h-5" /> Notes Livreur
+                        <button onClick={() => markFailed(item.id)} className="px-3 py-2 bg-red-100 text-red-500 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all active:scale-95">
+                          ✗ Annuler
                         </button>
                       </div>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
-
-      {/* Modales Simulées */}
-      {showScheduleModal && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setShowScheduleModal(false)} />
-          <div className="relative bg-white dark:bg-slate-900 w-full max-w-md rounded-[3rem] shadow-2xl p-10 animate-in zoom-in-95">
-             <h3 className="text-2xl font-black mb-6 flex items-center gap-3"><Clock className="w-8 h-8 text-blue-500" /> Programmer Rappel</h3>
-             <input type="datetime-local" className="w-full p-4 bg-slate-50 rounded-2xl border-none font-bold mb-6" />
-             <button onClick={() => {alert('Rappel programmé !'); setShowScheduleModal(false)}} className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest">Confirmer Rappel</button>
-          </div>
-        </div>
-      )}
-
-      {showNotesModal && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setShowNotesModal(false)} />
-          <div className="relative bg-white dark:bg-slate-900 w-full max-w-md rounded-[3rem] shadow-2xl p-10 animate-in zoom-in-95">
-             <h3 className="text-2xl font-black mb-6 flex items-center gap-3"><Edit3 className="w-8 h-8 text-amber-500" /> Notes du Livreur</h3>
-             <textarea placeholder="Ex: Client ne répond pas..." className="w-full p-6 bg-slate-50 rounded-2xl border-none font-bold mb-6 h-32" />
-             <button onClick={() => {alert('Note enregistrée !'); setShowNotesModal(false)}} className="w-full py-4 bg-amber-500 text-white rounded-2xl font-black uppercase tracking-widest">Enregistrer Note</button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

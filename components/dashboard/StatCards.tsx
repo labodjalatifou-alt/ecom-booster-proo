@@ -17,6 +17,7 @@ export default function StatCards() {
     deliveryRate: 0,
     pendingOrders: 0
   });
+  const [period, setPeriod] = useState('ALL'); // TODAY, YESTERDAY, 30D, 90D, ALL
 
   useEffect(() => {
     async function fetchMetrics() {
@@ -24,6 +25,23 @@ export default function StatCards() {
       try {
         let query = supabase.from('orders').select('*');
         
+        // Filtrage par période
+        const now = new Date();
+        if (period === 'TODAY') {
+          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+          query = query.gte('created_at', today);
+        } else if (period === 'YESTERDAY') {
+          const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).toISOString();
+          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+          query = query.gte('created_at', yesterday).lt('created_at', today);
+        } else if (period === '30D') {
+          const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+          query = query.gte('created_at', thirtyDaysAgo);
+        } else if (period === '90D') {
+          const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString();
+          query = query.gte('created_at', ninetyDaysAgo);
+        }
+
         // Filtrage par boutique
         if (selectedStore !== 'ALL') {
           query = query.eq('city', selectedStore === 'ABIDJAN' ? 'Abidjan' : selectedStore === 'DAKAR' ? 'Dakar' : 'Conakry');
@@ -76,7 +94,7 @@ export default function StatCards() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [selectedStore]);
+  }, [selectedStore, period]);
 
   const stats = [
     {
@@ -140,7 +158,28 @@ export default function StatCards() {
 
   return (
     <>
-    <div className="flex justify-end mb-4">
+    <div className="flex justify-end items-center gap-4 mb-4">
+      <div className="flex bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-1 shadow-sm">
+        {[
+          { id: 'TODAY', label: 'Aujourd\'hui' },
+          { id: 'YESTERDAY', label: 'Hier' },
+          { id: '30D', label: '30 Jours' },
+          { id: '90D', label: '90 Jours' },
+          { id: 'ALL', label: 'Tout' }
+        ].map((p) => (
+          <button
+            key={p.id}
+            onClick={() => setPeriod(p.id)}
+            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+              period === p.id 
+                ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/20' 
+                : 'text-slate-400 hover:text-slate-600'
+            }`}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
       <button 
         onClick={syncShopify}
         className="flex items-center gap-2 px-6 py-3 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-primary-600 hover:border-primary-100 transition-all shadow-sm"
