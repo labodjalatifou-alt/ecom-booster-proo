@@ -13,11 +13,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Clé API Anthropic manquante" }, { status: 500 });
     }
 
-    // Liste des modèles à essayer par ordre de priorité
+    // Liste élargie incluant les modèles legacy pour les comptes restreints
     const models = [
       'claude-3-5-sonnet-20241022',
       'claude-3-5-sonnet-20240620',
-      'claude-3-haiku-20240307'
+      'claude-3-haiku-20240307',
+      'claude-2.1',
+      'claude-instant-1.2'
     ];
 
     let lastError = null;
@@ -27,7 +29,7 @@ export async function POST(req: Request) {
         const message = await anthropic.messages.create({
           model: model,
           max_tokens: 1024,
-          system: "Tu es l'expert stratégique d'Ecom Booster Pro, spécialiste du E-commerce en Afrique de l'Ouest. Ton rôle est d'analyser les produits et les données de vente pour maximiser les profits. Tu maîtrises le neuromarketing et les spécificités du Cash on Delivery. Réponds toujours de manière structurée et actionnable.",
+          system: "Tu es l'expert stratégique d'Ecom Booster Pro. Analyse le produit et réponds en JSON valide.",
           messages: [{ role: 'user', content: prompt }],
         });
 
@@ -36,11 +38,12 @@ export async function POST(req: Request) {
       } catch (err: any) {
         lastError = err;
         console.warn(`Model ${model} failed:`, err.message);
-        if (err.status !== 404) break; // If it's not a 404, the error might be key-related, so stop.
+        // Si c'est une erreur de permission ou de quota, on essaie quand même le suivant
+        continue;
       }
     }
 
-    throw lastError || new Error("Tous les modèles ont échoué.");
+    throw lastError || new Error("Tous les modèles (nouveaux et anciens) ont échoué. Vérifiez vos crédits Anthropic.");
 
   } catch (error: any) {
     console.error('[ai-advisor] Error:', error.message);
