@@ -162,7 +162,7 @@ export default function PageShopifyPage() {
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-7 shadow-sm">
             <h3 className="text-[10px] font-black mb-5 uppercase tracking-widest text-slate-400">2. Sections à inclure</h3>
             <div className="space-y-3">
-              {productData.sections.map((section, i) => (
+              {productData.sections.map((section: any, i: number) => (
                 <div
                   key={i}
                   onClick={() => toggleSection(section.id)}
@@ -239,7 +239,7 @@ export default function PageShopifyPage() {
 
               <div className="space-y-4 pt-4 border-t border-white/10">
                 <span className="text-[9px] font-black text-white/30 uppercase block">{selectedSections.length} section(s)</span>
-                {productData.sections.filter(s => selectedSections.includes(s.id)).map((s, i) => (
+                {productData.sections.filter((s: any) => selectedSections.includes(s.id)).map((s: any, i: number) => (
                   <div key={i}>
                     <h5 className="text-[10px] font-black uppercase text-emerald-400 mb-1">{s.h2}</h5>
                     <p className="text-[10px] font-bold text-white/60 italic leading-relaxed line-clamp-2">{s.p}</p>
