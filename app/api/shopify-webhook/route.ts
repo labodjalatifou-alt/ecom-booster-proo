@@ -5,14 +5,27 @@ import crypto from 'crypto';
 export async function POST(req: Request) {
   try {
     const rawBody = await req.text();
-    const hmac = req.headers.get('x-shopify-hmac-sha256');
+    const hmacHeader = req.headers.get('x-shopify-hmac-sha256');
+    const webhookSecret = process.env.SHOPIFY_WEBHOOK_SECRET;
 
-    // Optionnel : Vérification HMAC pour la sécurité
-    // const hash = crypto.createHmac('sha256', process.env.SHOPIFY_WEBHOOK_SECRET!).update(rawBody, 'utf8').digest('base64');
-    // if (hash !== hmac) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!hmacHeader || !webhookSecret) {
+      console.error('Missing HMAC or Webhook Secret');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Vérification de la signature Shopify (HMAC)
+    const generatedHash = crypto
+      .createHmac('sha256', webhookSecret)
+      .update(rawBody, 'utf8')
+      .digest('base64');
+
+    if (generatedHash !== hmacHeader) {
+      console.error('Invalid Webhook Signature');
+      return NextResponse.json({ error: 'Invalid Signature' }, { status: 401 });
+    }
 
     const order = JSON.parse(rawBody);
-    console.log('New Order via Webhook:', order.id);
+    console.log('Secure Order Received:', order.id);
 
     // Détection de la ville simplifiée
     const shippingCity = order.shipping_address?.city?.toLowerCase() || '';
@@ -39,7 +52,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error('Webhook Error:', error.message);
+    console.error('Webhook processing error:', error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
