@@ -12,41 +12,56 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { name, price, stock, category } = body;
 
-    // 1. Création du produit sur Shopify
-    const response = await fetch(`https://${shopifyUrl}/admin/api/2023-10/products.json`, {
-      method: 'POST',
-      headers: {
-        'X-Shopify-Access-Token': accessToken,
-        'Content-Type': 'application/json',
+    if (!name || !price) {
+      return NextResponse.json({ error: 'Nom et prix sont requis' }, { status: 400 });
+    }
+
+    // Shopify API: price must be a string with 2 decimal places
+    const priceFormatted = parseFloat(price).toFixed(2);
+    const inventoryQty = parseInt(stock || '0');
+
+    const shopifyPayload = {
+      product: {
+        title: name,
+        body_html: `<strong>Catégorie:</strong> ${category || 'Général'}`,
+        vendor: 'Ecom Booster Pro',
+        product_type: category || 'Général',
+        status: 'active',
+        variants: [
+          {
+            price: priceFormatted,
+            sku: name.substring(0, 3).toUpperCase() + '-' + Date.now().toString().slice(-4),
+            inventory_management: 'shopify',
+            inventory_quantity: inventoryQty,
+            fulfillment_service: 'manual',
+          },
+        ],
       },
-      body: JSON.stringify({
-        product: {
-          title: name,
-          body_html: `<strong>Catégorie:</strong> ${category}`,
-          vendor: 'Ecom Booster Pro',
-          product_type: category,
-          status: 'active',
-          variants: [
-            {
-              price: price,
-              inventory_management: 'shopify',
-              inventory_quantity: parseInt(stock),
-              sku: name.substring(0, 3).toUpperCase() + "-" + Math.floor(Math.random() * 1000)
-            }
-          ]
-        }
-      }),
-    });
+    };
+
+    const response = await fetch(
+      `https://${shopifyUrl}/admin/api/2023-10/products.json`,
+      {
+        method: 'POST',
+        headers: {
+          'X-Shopify-Access-Token': accessToken,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(shopifyPayload),
+      }
+    );
 
     if (!response.ok) {
       const errorData = await response.text();
-      throw new Error(`Shopify API Error: ${errorData}`);
+      console.error('[create-product] Shopify error:', errorData);
+      throw new Error(`Shopify API Error ${response.status}: ${errorData}`);
     }
 
     const data = await response.json();
+    console.log('[create-product] Product created:', data.product?.id);
     return NextResponse.json({ success: true, product: data.product });
   } catch (error: any) {
-    console.error('Create Product Error:', error.message);
+    console.error('[create-product] Error:', error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

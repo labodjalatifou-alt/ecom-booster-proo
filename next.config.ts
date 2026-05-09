@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  serverExternalPackages: ['@anthropic-ai/sdk'],
+  experimental: {
+    // Ensures crypto works properly in API routes
+  }
 };
 
 export default nextConfig;

@@ -33,13 +33,15 @@ export default function StatCards() {
         if (error) throw error;
 
         if (data) {
+          const parsePrice = (p: string) => { const n = parseFloat((p || '0').replace(/\s/g, '')); return isNaN(n) ? 0 : n; };
+
           const caLivre = data
             .filter(o => o.status === 'Livré')
-            .reduce((acc, curr) => acc + parseInt(curr.price.replace(/\s/g, '')), 0);
+            .reduce((acc, curr) => acc + parsePrice(curr.price), 0);
           
           const cashInTransit = data
             .filter(o => o.status === 'Livré' && !o.cash_received)
-            .reduce((acc, curr) => acc + parseInt(curr.price.replace(/\s/g, '')), 0);
+            .reduce((acc, curr) => acc + parsePrice(curr.price), 0);
 
           const deliveredCount = data.filter(o => o.status === 'Livré').length;
           const confirmedCount = data.filter(o => ['Confirmé', 'Livré', 'Annulé'].includes(o.status)).length;
