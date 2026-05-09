@@ -1,13 +1,15 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { Truck, ShoppingBag, ArrowUpRight, ArrowDownRight, Clock, CheckCircle2 } from 'lucide-react';
+import { Truck, ShoppingBag, ArrowUpRight, ArrowDownRight, Clock, CheckCircle2, RefreshCw } from 'lucide-react';
 import { useStore } from '../StoreProvider';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
+import { useShopifySound } from '@/lib/hooks/useShopifySound';
 
 export default function StatCards() {
   const { currency, selectedStore } = useStore();
+  const { playKaching } = useShopifySound();
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState({
     caLivre: 0,
@@ -59,7 +61,12 @@ export default function StatCards() {
     // Abonnement en temps réel
     const channel = supabase
       .channel('schema-db-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, () => {
+        playKaching();
+        toast.success("Nouvelle commande Shopify !", { icon: '💰' });
+        fetchMetrics();
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, () => {
         fetchMetrics();
       })
       .subscribe();
@@ -105,6 +112,17 @@ export default function StatCards() {
     }
   ];
 
+  async function syncShopify() {
+    toast.promise(
+      fetch('/api/sync-shopify').then(res => res.json()),
+      {
+        loading: 'Synchronisation Shopify...',
+        success: (data) => `Synchronisé : ${data.count} commandes !`,
+        error: 'Erreur de synchronisation',
+      }
+    );
+  }
+
   async function handleMarkReceived() {
     if (confirm("Voulez-vous marquer tout le cash en transit comme reçu ?")) {
       const { error } = await supabase
@@ -119,6 +137,16 @@ export default function StatCards() {
   }
 
   return (
+    <>
+    <div className="flex justify-end mb-4">
+      <button 
+        onClick={syncShopify}
+        className="flex items-center gap-2 px-6 py-3 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-primary-600 hover:border-primary-100 transition-all shadow-sm"
+      >
+        <RefreshCw className="w-4 h-4" />
+        Sync Shopify
+      </button>
+    </div>
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
       {stats.map((stat, idx) => {
         const Icon = stat.icon;
