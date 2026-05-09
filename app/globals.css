@@ -1,46 +1,34 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-primary-50: #eff4ff;
+  --color-primary-100: #dbe6ff;
+  --color-primary-500: #2b59ff; /* Vibrant Blue */
+  --color-primary-600: #1a42db; /* Darker vibrant blue */
+  --color-primary-900: #10247a;
+  
+  --color-background-soft: #f8fafc;
+  --color-border-subtle: #e2e8f0;
+  
+  --font-sans: 'Inter', system-ui, sans-serif;
+}
 
 :root {
-  --background: #ffffff;
-  --foreground: #0f172a;
-  
-  --primary-50: #eff4ff;
-  --primary-100: #dbe6ff;
-  --primary-500: #2b59ff;
-  --primary-600: #1a42db;
-  --primary-900: #10247a;
-  
-  --background-soft: #f8fafc;
-  --border-subtle: #e2e8f0;
+  --background: #f8fafc; /* Light gray background for the SaaS */
+  --foreground: #0f172a; /* Slate 900 for text */
 }
 
 .dark {
-  --background: #0f172a;
+  --background: #0f172a; /* Slate 900 */
   --foreground: #f8fafc;
-  --background-soft: #1e293b;
-  --border-subtle: #334155;
-}
-
-@theme {
-  --color-primary-50: var(--primary-50);
-  --color-primary-100: var(--primary-100);
-  --color-primary-500: var(--primary-500);
-  --color-primary-600: var(--primary-600);
-  --color-primary-900: var(--primary-900);
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
 }
 
 body {
-  background-color: var(--background);
+  background: var(--background);
   color: var(--foreground);
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: var(--font-sans);
 }
-
-/* Force light theme styles */
-.bg-white { background-color: #ffffff !important; }
-.text-slate-800 { color: #1e293b !important; }
-.text-slate-400 { color: #94a3b8 !important; }
 
 /* Custom scrollbar for Sidebar */
 .scrollbar-hide::-webkit-scrollbar {
