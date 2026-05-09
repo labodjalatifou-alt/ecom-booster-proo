@@ -4,10 +4,12 @@ import React, { useEffect, useState } from 'react';
 import { Truck, PhoneForwarded, MessageSquare, CheckCircle2, MapPin, DollarSign, Loader2, Package, XCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
+import { useStore } from '@/components/StoreProvider';
 
 type Tab = 'pending' | 'delivered' | 'cancelled';
 
 export default function InterfaceLivreurPage() {
+  const { currency } = useStore();
   const [tab, setTab] = useState<Tab>('pending');
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,16 +101,21 @@ export default function InterfaceLivreurPage() {
         </div>
 
         {/* Stats cards */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-blue-500 text-white p-6 rounded-2xl shadow-xl shadow-blue-500/20 flex flex-col items-center justify-center min-w-[150px]">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="bg-blue-500 text-white p-6 rounded-2xl shadow-xl shadow-blue-500/20 flex flex-col items-center justify-center min-w-[120px]">
             <Package className="w-6 h-6 mb-1 opacity-70" />
-            <span className="text-3xl font-black">{orders.filter(o => o.status === 'Confirmé').length}</span>
+            <span className="text-3xl font-black">{orders.filter((o: any) => o.status === 'Confirmé').length}</span>
             <span className="text-[9px] font-black uppercase tracking-widest opacity-80">À Livrer</span>
           </div>
-          <div className="bg-emerald-600 text-white p-6 rounded-2xl shadow-xl shadow-emerald-500/20 flex flex-col items-center justify-center min-w-[150px]">
+          <div className="bg-emerald-600 text-white p-6 rounded-2xl shadow-xl shadow-emerald-500/20 flex flex-col items-center justify-center min-w-[120px]">
             <DollarSign className="w-6 h-6 mb-1 opacity-70" />
-            <span className="text-xl font-black tracking-tight">{new Intl.NumberFormat('fr-FR').format(totalCashPending)}</span>
+            <span className="text-xl font-black tracking-tight">{new Intl.NumberFormat('fr-FR').format(totalCashPending)} {currency}</span>
             <span className="text-[9px] font-black uppercase tracking-widest opacity-80">Cash à collecter</span>
+          </div>
+          <div className="bg-rose-500 text-white p-6 rounded-2xl shadow-xl shadow-rose-500/20 flex flex-col items-center justify-center min-w-[120px]">
+            <XCircle className="w-6 h-6 mb-1 opacity-70" />
+            <span className="text-3xl font-black">{orders.filter((o: any) => o.status === 'Annulé').length}</span>
+            <span className="text-[9px] font-black uppercase tracking-widest opacity-80">Annulées</span>
           </div>
         </div>
       </div>
@@ -179,7 +186,7 @@ export default function InterfaceLivreurPage() {
                       </div>
                     </td>
                     <td className="px-8 py-4 text-right">
-                      <div className="font-black text-sm text-emerald-600">{item.price}</div>
+                      <div className="font-black text-sm text-emerald-600">{item.price} {currency}</div>
                     </td>
                     <td className="px-8 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">

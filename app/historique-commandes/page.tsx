@@ -5,6 +5,7 @@ import { History, Search, Filter, MapPin, Loader2, ShoppingCart, RefreshCw, Chev
 import { supabase } from '@/lib/supabase';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useStore } from '@/components/StoreProvider';
 
 const PAGE_SIZE = 50;
 
@@ -32,6 +33,7 @@ const statusColor = (s: string) => {
 };
 
 export default function HistoriqueCommandesPage() {
+  const { currency: storeCurrency } = useStore();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -194,7 +196,7 @@ export default function HistoriqueCommandesPage() {
                     </td>
                     <td className="px-8 py-5 text-right">
                       <div className="font-black text-sm">{new Intl.NumberFormat('fr-FR').format(parsePrice(order.price))}</div>
-                      <div className="text-[9px] font-black text-slate-400 uppercase">{getCurrency(order.city)}</div>
+                      <div className="text-[9px] font-black text-slate-400 uppercase">{order.currency || storeCurrency}</div>
                     </td>
                     <td className="px-8 py-5 text-right font-mono text-[9px] text-slate-400">
                       #{String(order.shopify_id || order.id || '').slice(-6)}

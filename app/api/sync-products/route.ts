@@ -19,7 +19,7 @@ export async function GET() {
 
     let allProducts: any[] = [];
     let nextPageUrl: string | null =
-      `https://${shopifyUrl}/admin/api/2023-10/products.json?limit=250&fields=id,title,status,variants,image`;
+      `https://${shopifyUrl}/admin/api/2023-10/products.json?limit=250&status=any&fields=id,title,status,variants,image`;
 
     while (nextPageUrl) {
       const response: Response = await fetch(nextPageUrl, {

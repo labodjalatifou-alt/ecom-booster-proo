@@ -4,9 +4,11 @@ import React, { useEffect, useState } from 'react';
 import { Package, Plus, Edit3, Trash2, MoreVertical, X, Loader2, RefreshCw } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
+import { useStore } from '@/components/StoreProvider';
 import Link from 'next/link';
 
 export default function StockPage() {
+  const { currency } = useStore();
   const [stockItems, setStockItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -182,7 +184,7 @@ export default function StockPage() {
                       </div>
                     </td>
                     <td className="px-8 py-5 font-black text-sm">
-                      {new Intl.NumberFormat('fr-FR').format(parseInt(String(item.price || '0').replace(/\s/g, '')))} {item.currency || 'FCFA'}
+                      {new Intl.NumberFormat('fr-FR').format(parseInt(String(item.price || '0').replace(/\s/g, '')))} {item.currency || currency}
                     </td>
                     <td className="px-8 py-5 text-right relative">
                       <button

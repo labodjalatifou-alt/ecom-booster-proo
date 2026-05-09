@@ -1,11 +1,16 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { Headset, PhoneForwarded, MessageSquare, CheckCircle2, MapPin, Edit3, Loader2, X, MoreVertical } from 'lucide-react';
+import { Headset, PhoneForwarded, MessageSquare, CheckCircle2, MapPin, Edit3, Loader2, X, MoreVertical, XCircle, Clock } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
+import { useStore } from '@/components/StoreProvider';
+
+type Tab = 'pending' | 'confirmed' | 'cancelled';
 
 export default function InterfaceCloserPage() {
+  const { currency } = useStore();
+  const [tab, setTab] = useState<Tab>('pending');
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [confirmedToday, setConfirmedToday] = useState(0);
@@ -14,18 +19,19 @@ export default function InterfaceCloserPage() {
   const [showNote, setShowNote] = useState(false);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
 
-  async function fetchOrders() {
+  async function fetchData() {
     setLoading(true);
+    // Fetch all relevant orders
     const { data, error } = await supabase
       .from('orders')
       .select('*')
-      .eq('status', 'A Confirmer')
       .order('created_at', { ascending: false });
-    if (!error && data) setOrders(data);
-    setLoading(false);
-  }
 
-  async function fetchConfirmedCount() {
+    if (!error && data) {
+      setOrders(data);
+    }
+    
+    // Fetch count confirmed today
     const today = new Date().toISOString().split('T')[0];
     const { count } = await supabase
       .from('orders')
@@ -33,39 +39,43 @@ export default function InterfaceCloserPage() {
       .eq('status', 'Confirmé')
       .gte('created_at', today);
     setConfirmedToday(count || 0);
+    
+    setLoading(false);
   }
 
   useEffect(() => {
-    fetchOrders();
-    fetchConfirmedCount();
+    fetchData();
 
     const channel = supabase
       .channel('closer-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
-        fetchOrders();
-        fetchConfirmedCount();
+        fetchData();
       })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  async function confirmOrder(orderId: any) {
-    setOrders(prev => prev.filter(o => o.id !== orderId));
-    
+  async function updateStatus(orderId: any, newStatus: string) {
     const { error } = await supabase
       .from('orders')
-      .update({ status: 'Confirmé' })
+      .update({ status: newStatus })
       .eq('id', orderId);
 
     if (error) {
-      toast.error("Erreur lors de la confirmation");
-      fetchOrders();
+      toast.error("Erreur lors de la mise à jour");
     } else {
-      toast.success("Commande propulsée ! 🚀");
-      fetchConfirmedCount();
+      toast.success(newStatus === 'Confirmé' ? "Commande propulsée ! 🚀" : "Commande annulée");
+      fetchData();
     }
   }
+
+  const filteredOrders = orders.filter(o => {
+    if (tab === 'pending') return o.status === 'A Confirmer';
+    if (tab === 'confirmed') return o.status === 'Confirmé';
+    if (tab === 'cancelled') return o.status === 'Annulé';
+    return false;
+  });
 
   const handleCall = (phone: string) => { window.location.href = `tel:${phone}`; };
   const handleWhatsApp = (phone: string) => { window.open(`https://wa.me/${phone.replace(/\D/g, '')}`, '_blank'); };
@@ -84,14 +94,36 @@ export default function InterfaceCloserPage() {
         </div>
         <div className="flex gap-4">
           <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 p-4 rounded-2xl shadow-sm text-center min-w-[120px]">
-            <span className="text-[9px] font-black text-slate-400 uppercase block mb-1">Confirmés</span>
+            <span className="text-[9px] font-black text-slate-400 uppercase block mb-1">Confirmés Aujourd'hui</span>
             <span className="text-xl font-black text-emerald-600">{confirmedToday}</span>
           </div>
           <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 p-4 rounded-2xl shadow-sm text-center min-w-[120px]">
             <span className="text-[9px] font-black text-slate-400 uppercase block mb-1">En Attente</span>
-            <span className="text-xl font-black text-primary-600">{orders.length}</span>
+            <span className="text-xl font-black text-primary-600">{orders.filter(o => o.status === 'A Confirmer').length}</span>
           </div>
         </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-1 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-1 shadow-sm mb-8 w-fit">
+        {[
+          { id: 'pending', label: 'À Confirmer', icon: Clock },
+          { id: 'confirmed', label: 'Confirmées', icon: CheckCircle2 },
+          { id: 'cancelled', label: 'Annulées', icon: XCircle },
+        ].map(t => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id as Tab)}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+              tab === t.id
+                ? 'bg-slate-900 text-white shadow-lg'
+                : 'text-slate-400 hover:text-slate-600'
+            }`}
+          >
+            <t.icon className="w-3.5 h-3.5" />
+            {t.label}
+          </button>
+        ))}
       </div>
 
       <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] shadow-sm overflow-hidden min-h-[400px]">
@@ -100,10 +132,10 @@ export default function InterfaceCloserPage() {
             <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
             <p className="text-[10px] font-black uppercase tracking-[0.3em]">Chargement...</p>
           </div>
-        ) : orders.length === 0 ? (
+        ) : filteredOrders.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-40 gap-4 text-slate-400">
             <CheckCircle2 className="w-12 h-12 text-emerald-400 opacity-50" />
-            <p className="text-lg font-black text-slate-600">Tout est traité ! 🎉</p>
+            <p className="text-lg font-black text-slate-600">Aucune commande dans cette liste</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -118,7 +150,7 @@ export default function InterfaceCloserPage() {
                 </tr>
               </thead>
               <tbody className="divide-y-2 divide-slate-100 dark:divide-slate-800">
-                {orders.map((item: any) => (
+                {filteredOrders.map((item: any) => (
                   <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group">
                     <td className="px-8 py-4">
                       <div className="font-black text-sm">{item.customer}</div>
@@ -131,10 +163,7 @@ export default function InterfaceCloserPage() {
                       </div>
                     </td>
                     <td className="px-8 py-4 text-right">
-                      <div className="font-black text-sm text-emerald-600">{item.price}</div>
-                      <div className="text-[9px] font-black text-slate-400 uppercase mt-0.5">
-                        {['Conakry','Kankan','Kindia','Labe','Mamou'].some(c => item.city?.includes(c)) ? 'GNF' : 'FCFA'}
-                      </div>
+                      <div className="font-black text-sm text-emerald-600">{item.price} {currency}</div>
                     </td>
                     <td className="px-8 py-4 text-right relative">
                       <button 
@@ -152,7 +181,16 @@ export default function InterfaceCloserPage() {
                             <button onClick={() => { handleWhatsApp(item.phone); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors"><MessageSquare className="w-4 h-4 text-green-500" /> WhatsApp</button>
                             <button onClick={() => { setSelectedOrder(item); setShowNote(true); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors"><Edit3 className="w-4 h-4 text-amber-500" /> Note</button>
                             <div className="h-px bg-slate-100 my-2" />
-                            <button onClick={() => { confirmOrder(item.id); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-primary-600 hover:bg-primary-50 transition-colors"><CheckCircle2 className="w-4 h-4" /> Confirmer</button>
+                            {tab === 'pending' ? (
+                              <>
+                                <button onClick={() => { updateStatus(item.id, 'Confirmé'); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-primary-600 hover:bg-primary-50 transition-colors"><CheckCircle2 className="w-4 h-4" /> Confirmer</button>
+                                <button onClick={() => { updateStatus(item.id, 'Annulé'); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-rose-600 hover:bg-rose-50 transition-colors"><XCircle className="w-4 h-4" /> Annuler</button>
+                              </>
+                            ) : tab === 'cancelled' ? (
+                              <button onClick={() => { updateStatus(item.id, 'A Confirmer'); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-blue-600 hover:bg-blue-50 transition-colors"><Clock className="w-4 h-4" /> Remettre en attente</button>
+                            ) : (
+                              <button onClick={() => { updateStatus(item.id, 'A Confirmer'); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-slate-400 hover:bg-slate-50 transition-colors"><XCircle className="w-4 h-4" /> Annuler Confirmation</button>
+                            )}
                           </div>
                         </>
                       )}

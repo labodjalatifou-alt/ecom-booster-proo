@@ -5,8 +5,10 @@ import { Bot, Sparkles, Loader2, Zap, Globe, DollarSign, User, Megaphone, Mic, C
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
+import { useStore } from '@/components/StoreProvider';
 
 export default function AnalysesPage() {
+  const { currency } = useStore();
   const [loading, setLoading] = useState(false);
   const [productName, setProductName] = useState('');
   const [productDesc, setProductDesc] = useState('');
@@ -41,22 +43,22 @@ export default function AnalysesPage() {
     try {
       const prompt = `Tu es l'expert stratégique Ecom Booster Pro. Analyse ce produit :
 NOM : ${productName}
-PRIX D'ACHAT : ${costPrice} FCFA
+PRIX D'ACHAT : ${costPrice} ${currency}
 DESCRIPTION : ${productDesc || 'Non fournie'}
 LIEN SOURCE : ${sourceLink || 'Non fourni'}
 
 RÈGLES DE PRIX STRICTES :
-1. Coût d'achat = ${costPrice} FCFA.
-2. "price_min" DOIT être : ${costPrice} + 8000 FCFA.
-3. "price_max" DOIT être : ${costPrice} + 15000 FCFA.
+1. Coût d'achat = ${costPrice} ${currency}.
+2. "price_min" DOIT être : ${costPrice} + 8000 ${currency}.
+3. "price_max" DOIT être : ${costPrice} + 15000 ${currency}.
 4. "price_recommendation" DOIT être un prix marketing entre les deux.
 
 Réponds UNIQUEMENT en JSON valide :
 {
   "score": 85,
-  "price_recommendation": "X FCFA",
-  "price_min": "Y FCFA",
-  "price_max": "Z FCFA",
+  "price_recommendation": "X ${currency}",
+  "price_min": "Y ${currency}",
+  "price_max": "Z ${currency}",
   "avatar": { "title": "...", "age": "...", "income": "...", "pains": [], "goals": [] },
   "shopify_page": { "title": "...", "hook": "...", "features": [] },
   "facebook_ad": { "primary_text": "...", "headline": "..." },
