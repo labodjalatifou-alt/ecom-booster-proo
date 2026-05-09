@@ -20,12 +20,19 @@ export default function AjouterProduitPage() {
     setLoading(true);
     
     try {
-      // Simulation d'envoi vers Shopify & Supabase
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const res = await fetch('/api/create-product', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
       toast.success("Produit créé avec succès sur Shopify !");
       setFormData({ name: '', price: '', category: 'Beauté', stock: '', description: '' });
-    } catch (err) {
-      toast.error("Erreur lors de la création");
+    } catch (err: any) {
+      toast.error("Erreur : " + err.message);
     } finally {
       setLoading(false);
     }
