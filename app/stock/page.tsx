@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Package, Search, Plus, Edit3, Trash2, MoreVertical, X, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
+import Link from 'next/link';
 
 export default function StockPage() {
   const [stockItems, setStockItems] = useState<any[]>([]);
