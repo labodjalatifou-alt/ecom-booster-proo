@@ -58,7 +58,7 @@ export async function GET() {
   try {
     let allOrders: any[] = [];
     let nextPageUrl: string | null =
-      `https://${shopifyUrl}/admin/api/2023-10/orders.json?status=any&limit=250&fields=id,customer,shipping_address,billing_address,line_items,total_price,financial_status,fulfillment_status,created_at,updated_at`;
+      `https://${shopifyUrl}/admin/api/2024-01/orders.json?status=any&limit=250&fields=id,customer,shipping_address,billing_address,line_items,total_price,financial_status,fulfillment_status,created_at,updated_at`;
 
     // Pagination — charge TOUTES les commandes
     while (nextPageUrl) {

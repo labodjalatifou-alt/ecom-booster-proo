@@ -132,6 +132,13 @@ export default function HistoriqueCommandesPage() {
 
       {/* Status filter tabs */}
       <div className="flex gap-1 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-1 shadow-sm mb-8 w-fit flex-wrap">
+          <button
+            key="analyses"
+            onClick={() => window.location.href='/historique'}
+            className="px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all bg-amber-500/10 text-amber-600 hover:bg-amber-500 hover:text-white"
+          >
+            🔥 Produits Analysés
+          </button>
         {statuses.map(s => (
           <button
             key={s}
