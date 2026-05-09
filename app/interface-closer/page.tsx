@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { Headset, PhoneForwarded, MessageSquare, Clock, CheckCircle2, MapPin, Edit3, Loader2, X } from 'lucide-react';
+import { Headset, PhoneForwarded, MessageSquare, CheckCircle2, MapPin, Edit3, Loader2, X, MoreVertical } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 
@@ -12,6 +12,7 @@ export default function InterfaceCloserPage() {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [noteText, setNoteText] = useState('');
   const [showNote, setShowNote] = useState(false);
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
 
   async function fetchOrders() {
     setLoading(true);
@@ -50,7 +51,6 @@ export default function InterfaceCloserPage() {
   }, []);
 
   async function confirmOrder(orderId: any) {
-    // Optimistic UI update
     setOrders(prev => prev.filter(o => o.id !== orderId));
     
     const { error } = await supabase
@@ -60,21 +60,9 @@ export default function InterfaceCloserPage() {
 
     if (error) {
       toast.error("Erreur lors de la confirmation");
-      fetchOrders(); // Rollback
+      fetchOrders();
     } else {
-      toast.success("Commande propulsée vers le livreur !", { 
-        icon: '🚀',
-        style: {
-          borderRadius: '1.5rem',
-          background: '#0f172a',
-          color: '#fff',
-          fontWeight: 'bold',
-          fontSize: '12px',
-          textTransform: 'uppercase',
-          letterSpacing: '0.1em',
-          padding: '16px 24px'
-        }
-      });
+      toast.success("Commande propulsée ! 🚀");
       fetchConfirmedCount();
     }
   }
@@ -93,45 +81,40 @@ export default function InterfaceCloserPage() {
             <span className="text-[10px] font-black text-primary-600 uppercase tracking-[0.2em]">Centre d'Appels</span>
           </div>
           <h2 className="text-4xl font-black tracking-tighter">Interface Closer</h2>
-          <p className="text-slate-400 text-xs font-bold mt-1 flex items-center gap-2">
-            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse inline-block"></span>
-            {orders.length} commandes à confirmer · Temps réel
-          </p>
         </div>
         <div className="flex gap-4">
-          <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 p-6 rounded-[2rem] shadow-sm text-center min-w-[140px]">
-            <span className="text-[10px] font-black text-slate-400 uppercase block mb-1">Confirmés Aujourd'hui</span>
-            <span className="text-2xl font-black text-emerald-600">{confirmedToday}</span>
+          <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 p-4 rounded-2xl shadow-sm text-center min-w-[120px]">
+            <span className="text-[9px] font-black text-slate-400 uppercase block mb-1">Confirmés</span>
+            <span className="text-xl font-black text-emerald-600">{confirmedToday}</span>
           </div>
-          <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 p-6 rounded-[2rem] shadow-sm text-center min-w-[140px]">
-            <span className="text-[10px] font-black text-slate-400 uppercase block mb-1">En Attente</span>
-            <span className="text-2xl font-black text-primary-600">{orders.length}</span>
+          <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 p-4 rounded-2xl shadow-sm text-center min-w-[120px]">
+            <span className="text-[9px] font-black text-slate-400 uppercase block mb-1">En Attente</span>
+            <span className="text-xl font-black text-primary-600">{orders.length}</span>
           </div>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[3rem] shadow-sm overflow-hidden min-h-[400px]">
+      <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] shadow-sm overflow-hidden min-h-[400px]">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-40 gap-4 text-slate-400">
-            <Loader2 className="w-10 h-10 animate-spin text-primary-500" />
+            <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
             <p className="text-[10px] font-black uppercase tracking-[0.3em]">Chargement...</p>
           </div>
         ) : orders.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-40 gap-4 text-slate-400">
-            <CheckCircle2 className="w-16 h-16 text-emerald-400 opacity-50" />
-            <p className="text-xl font-black text-slate-600">Aucune commande à confirmer !</p>
-            <p className="text-sm text-slate-400">Toutes les commandes ont été traitées. Excellent travail ! 🎉</p>
+            <CheckCircle2 className="w-12 h-12 text-emerald-400 opacity-50" />
+            <p className="text-lg font-black text-slate-600">Tout est traité ! 🎉</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse table-fixed">
               <thead>
                 <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b-2 border-slate-100 dark:border-slate-800">
-                  <th className="w-[30%] px-8 py-4 text-[10px] font-black uppercase text-slate-400 tracking-widest">Client & Téléphone</th>
-                  <th className="w-[25%] px-8 py-4 text-[10px] font-black uppercase text-slate-400 tracking-widest">Produit</th>
-                  <th className="w-[15%] px-8 py-4 text-[10px] font-black uppercase text-slate-400 tracking-widest">Ville</th>
-                  <th className="w-[15%] px-8 py-4 text-[10px] font-black uppercase text-slate-400 tracking-widest text-right">Prix</th>
-                  <th className="w-[15%] px-8 py-4 text-[10px] font-black uppercase text-slate-400 tracking-widest text-right">Actions</th>
+                  <th className="w-[30%] px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest">Client</th>
+                  <th className="w-[25%] px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest">Produit</th>
+                  <th className="w-[15%] px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest">Ville</th>
+                  <th className="w-[15%] px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest text-right">Prix</th>
+                  <th className="w-[15%] px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y-2 divide-slate-100 dark:divide-slate-800">
@@ -139,45 +122,40 @@ export default function InterfaceCloserPage() {
                   <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group">
                     <td className="px-8 py-4">
                       <div className="font-black text-sm">{item.customer}</div>
-                      <div className="text-[11px] font-bold text-primary-500 mt-0.5">{item.phone}</div>
+                      <div className="text-[10px] font-bold text-primary-500 mt-0.5">{item.phone}</div>
                     </td>
                     <td className="px-8 py-4 text-xs font-black text-slate-600 dark:text-slate-300 truncate">{item.product}</td>
                     <td className="px-8 py-4">
                       <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500 uppercase">
-                        <MapPin className="w-3 h-3" /> {item.city}
+                        <MapPin className="w-3 h-3" /> {item.city?.split(',').map((s: string) => s.trim()).filter((v: string, i: number, a: string[]) => a.indexOf(v) === i).join(', ')}
                       </div>
                     </td>
-                    <td className="px-8 py-4 text-right font-black text-sm">{item.price}</td>
                     <td className="px-8 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => handleCall(item.phone)}
-                          className="p-2 bg-emerald-100 text-emerald-600 rounded-xl hover:bg-emerald-600 hover:text-white transition-all"
-                          title="Appeler"
-                        >
-                          <PhoneForwarded className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleWhatsApp(item.phone)}
-                          className="p-2 bg-green-100 text-green-600 rounded-xl hover:bg-green-600 hover:text-white transition-all"
-                          title="WhatsApp"
-                        >
-                          <MessageSquare className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => { setSelectedOrder(item); setShowNote(true); }}
-                          className="p-2 bg-amber-100 text-amber-600 rounded-xl hover:bg-amber-600 hover:text-white transition-all"
-                          title="Note"
-                        >
-                          <Edit3 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => confirmOrder(item.id)}
-                          className="px-4 py-2 bg-primary-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary-700 transition-all active:scale-95"
-                        >
-                          ✓ Confirmer
-                        </button>
+                      <div className="font-black text-sm text-emerald-600">{item.price}</div>
+                      <div className="text-[9px] font-black text-slate-400 uppercase mt-0.5">
+                        {['Conakry','Kankan','Kindia','Labe','Mamou'].some(c => item.city?.includes(c)) ? 'GNF' : 'FCFA'}
                       </div>
+                    </td>
+                    <td className="px-8 py-4 text-right relative">
+                      <button 
+                        onClick={() => setActiveMenu(activeMenu === item.id ? null : item.id)}
+                        className="p-2.5 text-slate-400 hover:text-primary-600 rounded-xl transition-all"
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
+
+                      {activeMenu === item.id && (
+                        <>
+                          <div className="fixed inset-0 z-40" onClick={() => setActiveMenu(null)} />
+                          <div className="absolute right-8 top-full mt-2 w-48 bg-white dark:bg-slate-900 border-2 border-slate-100 rounded-2xl shadow-2xl z-50 overflow-hidden py-2 animate-in zoom-in-95 duration-200">
+                            <button onClick={() => { handleCall(item.phone); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors"><PhoneForwarded className="w-4 h-4 text-emerald-500" /> Appeler</button>
+                            <button onClick={() => { handleWhatsApp(item.phone); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors"><MessageSquare className="w-4 h-4 text-green-500" /> WhatsApp</button>
+                            <button onClick={() => { setSelectedOrder(item); setShowNote(true); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors"><Edit3 className="w-4 h-4 text-amber-500" /> Note</button>
+                            <div className="h-px bg-slate-100 my-2" />
+                            <button onClick={() => { confirmOrder(item.id); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-primary-600 hover:bg-primary-50 transition-colors"><CheckCircle2 className="w-4 h-4" /> Confirmer</button>
+                          </div>
+                        </>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -187,28 +165,22 @@ export default function InterfaceCloserPage() {
         )}
       </div>
 
-      {/* Modal Note */}
       {showNote && selectedOrder && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setShowNote(false)} />
-          <div className="relative bg-white dark:bg-slate-900 w-full max-w-md rounded-[3rem] shadow-2xl p-10 animate-in zoom-in-95">
+          <div className="relative bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] shadow-2xl p-10 animate-in zoom-in-95">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-black flex items-center gap-3"><Edit3 className="w-7 h-7 text-amber-500" /> Note Closer</h3>
               <button onClick={() => setShowNote(false)} className="p-2 hover:bg-slate-100 rounded-full"><X className="w-5 h-5" /></button>
             </div>
             <p className="text-xs font-bold text-slate-400 uppercase mb-4">{selectedOrder.customer} — {selectedOrder.product}</p>
             <textarea
-              placeholder="Ex: Client hésite, rappeler demain matin..."
+              placeholder="Client hésite, rappeler demain..."
               value={noteText}
               onChange={e => setNoteText(e.target.value)}
-              className="w-full p-6 bg-slate-50 dark:bg-slate-800 rounded-2xl border-none font-bold mb-6 h-32 outline-none resize-none"
+              className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border-none font-bold mb-6 h-32 outline-none resize-none"
             />
-            <button
-              onClick={() => { toast.success("Note enregistrée !"); setShowNote(false); setNoteText(''); }}
-              className="w-full py-4 bg-amber-500 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-amber-600 transition-all"
-            >
-              Enregistrer Note
-            </button>
+            <button onClick={() => { toast.success("Note enregistrée !"); setShowNote(false); setNoteText(''); }} className="w-full py-4 bg-amber-500 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-amber-600 transition-all">Enregistrer</button>
           </div>
         </div>
       )}

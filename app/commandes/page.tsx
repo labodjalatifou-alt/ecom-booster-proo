@@ -1,42 +1,44 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { ShoppingCart, Search, Filter, Eye, MapPin, Phone, Package, X, Globe, User, ArrowRight, Loader2, RefreshCw } from 'lucide-react';
+import { ShoppingCart, Search, Eye, MapPin, Phone, Package, X, Globe, User, Loader2, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+
+const PAGE_SIZE = 50;
 
 export default function CommandesPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
-  const [liveCount, setLiveCount] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+  const [page, setPage] = useState(1);
 
-  async function fetchOrders(silent = false) {
+  async function fetchOrders(p = page, silent = false) {
     if (!silent) setLoading(true);
+    const { count } = await supabase.from('orders').select('*', { count: 'exact', head: true });
+    if (count !== null) setTotalCount(count);
+
+    const from = (p - 1) * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
     const { data, error } = await supabase
       .from('orders')
       .select('*')
-      .order('created_at', { ascending: false });
-    if (!error && data) {
-      setOrders(data);
-      setLiveCount(data.length);
-    }
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
+    if (!error && data) setOrders(data);
     if (!silent) setLoading(false);
   }
 
   useEffect(() => {
-    fetchOrders();
-
-    // Temps réel — nouvelles commandes sans actualisation
+    fetchOrders(page);
     const channel = supabase
       .channel('orders-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
-        fetchOrders(true);
-      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => fetchOrders(page, true))
       .subscribe();
-
     return () => { supabase.removeChannel(channel); };
-  }, []);
+  }, [page]);
 
   const filtered = orders.filter(o =>
     o.customer?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -44,11 +46,21 @@ export default function CommandesPage() {
     o.city?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+
+  const cleanCity = (city: string) =>
+    city?.split(',').map(s => s.trim()).filter((v, i, a) => a.indexOf(v) === i).join(', ') || '-';
+
+  const getCurrency = (city: string) => {
+    const gnCities = ['Conakry', 'Kankan', 'Labe', 'Kindia', 'Mamou', "N'Zerekore"];
+    return gnCities.some(c => city?.includes(c)) ? 'GNF' : 'FCFA';
+  };
+
   const statusColor = (s: string) => {
-    if (s === 'Livré') return 'bg-emerald-50 text-emerald-600 border-emerald-100';
-    if (s === 'Annulé') return 'bg-red-50 text-red-500 border-red-100';
-    if (s === 'Confirmé') return 'bg-blue-50 text-blue-600 border-blue-100';
-    return 'bg-amber-50 text-amber-600 border-amber-100';
+    if (s === 'Livré') return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+    if (s === 'Annulé') return 'bg-red-100 text-red-700 border-red-200';
+    if (s === 'Confirmé') return 'bg-blue-100 text-blue-700 border-blue-200';
+    return 'bg-amber-100 text-amber-700 border-amber-200';
   };
 
   return (
@@ -63,23 +75,26 @@ export default function CommandesPage() {
           </div>
           <h2 className="text-4xl font-black tracking-tighter">Toutes les Commandes</h2>
           <p className="text-slate-400 text-xs font-bold mt-1 flex items-center gap-2">
-            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse inline-block"></span>
-            {liveCount} commandes · Temps réel
+            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse inline-block" />
+            {totalCount} commandes · Page {page}/{totalPages || 1}
           </p>
         </div>
-        <div className="flex gap-4">
-          <div className="relative w-full max-w-xs group">
+        <div className="flex gap-3">
+          <div className="relative group">
             <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-primary-500 transition-colors" />
             <input
               type="text"
-              placeholder="Rechercher client, produit, ville..."
+              placeholder="Rechercher..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className="w-full pl-11 pr-4 py-4 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl text-xs font-bold focus:ring-4 focus:ring-primary-500/10 transition-all"
+              className="pl-10 pr-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl text-xs font-bold focus:ring-4 focus:ring-primary-500/10 transition-all w-56"
             />
           </div>
-          <button onClick={() => fetchOrders()} className="p-4 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl text-slate-400 hover:text-primary-600 transition-all">
-            <RefreshCw className="w-5 h-5" />
+          <button
+            onClick={() => fetchOrders(page)}
+            className="p-3 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl text-slate-400 hover:text-primary-600 transition-all"
+          >
+            <RefreshCw className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -88,54 +103,74 @@ export default function CommandesPage() {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-40 gap-4 text-slate-400">
             <Loader2 className="w-10 h-10 animate-spin text-primary-500" />
-            <p className="text-[10px] font-black uppercase tracking-[0.3em]">Chargement des commandes...</p>
+            <p className="text-[10px] font-black uppercase tracking-widest">Chargement des commandes...</p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-40 gap-4 text-slate-400">
             <ShoppingCart className="w-12 h-12 opacity-20" />
-            <p className="text-[10px] font-black uppercase tracking-[0.3em]">Aucune commande trouvée</p>
-            <p className="text-xs text-slate-400">Utilisez le bouton "Sync Shopify" sur le Dashboard</p>
+            <p className="text-sm font-black text-slate-600">{searchTerm ? 'Aucun résultat' : 'Aucune commande'}</p>
+            {!searchTerm && <p className="text-xs text-slate-400">Synchronisez vos commandes depuis le tableau de bord.</p>}
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b-2 border-slate-100 dark:border-slate-800">
-                  <th className="px-8 py-5 text-[10px] font-black uppercase text-slate-400 tracking-widest">Client & Mobile</th>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase text-slate-400 tracking-widest">Produit</th>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase text-slate-400 tracking-widest">Ville</th>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase text-slate-400 tracking-widest text-center">Statut</th>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase text-slate-400 tracking-widest text-right">Montant</th>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase text-slate-400 tracking-widest text-right">Détails</th>
+                  <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest">Client</th>
+                  <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest">Produit</th>
+                  <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest">Ville</th>
+                  <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest text-center">Statut</th>
+                  <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest text-right">Montant</th>
+                  <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y-2 divide-slate-100 dark:divide-slate-800">
                 {filtered.map((order) => (
                   <tr
                     key={order.id}
-                    className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all cursor-pointer group"
+                    className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all cursor-pointer"
                     onClick={() => setSelectedOrder(order)}
                   >
                     <td className="px-8 py-5">
-                      <div className="font-black text-sm group-hover:text-primary-600 transition-colors">{order.customer}</div>
-                      <div className="text-[10px] font-bold text-primary-500 mt-0.5">{order.phone}</div>
+                      <div className="font-black text-sm uppercase">{order.customer}</div>
+                      <div className="text-[9px] font-bold text-slate-400 mt-0.5">#{String(order.shopify_id || order.id).slice(-6)}</div>
                     </td>
-                    <td className="px-8 py-5 text-sm font-black text-slate-700 dark:text-slate-200 max-w-[200px] truncate">{order.product}</td>
+                    <td className="px-8 py-5 text-xs font-bold text-slate-700 dark:text-slate-200 max-w-[200px] truncate">
+                      {order.product}
+                    </td>
                     <td className="px-8 py-5">
-                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 uppercase">
-                        <MapPin className="w-3 h-3" /> {order.city}
+                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-600 uppercase">
+                        <MapPin className="w-3 h-3 text-primary-500" />
+                        {cleanCity(order.city)}
+                      </div>
+                      <div className="text-[9px] font-bold text-slate-400 mt-0.5 flex items-center gap-1">
+                        <Phone className="w-2.5 h-2.5" /> {order.phone}
                       </div>
                     </td>
                     <td className="px-8 py-5 text-center">
-                      <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${statusColor(order.status)}`}>
+                      <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${statusColor(order.status)}`}>
                         {order.status}
                       </span>
                     </td>
-                    <td className="px-8 py-5 text-right font-black text-sm">{order.price}</td>
                     <td className="px-8 py-5 text-right">
-                      <button className="p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl group-hover:bg-primary-600 group-hover:text-white transition-all shadow-sm">
-                        <Eye className="w-5 h-5" />
-                      </button>
+                      <div className="font-black text-sm">{new Intl.NumberFormat('fr-FR').format(Number(String(order.price || '0').replace(/\s/g, '')))}</div>
+                      <div className="text-[9px] font-black text-slate-400 uppercase">{getCurrency(order.city)}</div>
+                    </td>
+                    <td className="px-8 py-5 text-right" onClick={e => e.stopPropagation()}>
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => setSelectedOrder(order)}
+                          className="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-primary-600 hover:text-white transition-all"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <a
+                          href={`tel:${order.phone}`}
+                          className="p-2 bg-emerald-100 text-emerald-600 rounded-xl hover:bg-emerald-600 hover:text-white transition-all"
+                        >
+                          <Phone className="w-4 h-4" />
+                        </a>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -145,60 +180,83 @@ export default function CommandesPage() {
         )}
       </div>
 
-      {/* Modale détails */}
+      {/* Pagination */}
+      {!loading && totalPages > 1 && (
+        <div className="flex justify-center items-center gap-4 mt-10">
+          <button
+            disabled={page === 1}
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            className="p-2.5 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-slate-400 hover:text-primary-600 disabled:opacity-30 transition-all"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <div className="flex gap-1">
+            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+              const p = i + 1;
+              return (
+                <button
+                  key={p}
+                  onClick={() => setPage(p)}
+                  className={`w-9 h-9 rounded-xl text-[10px] font-black transition-all ${page === p ? 'bg-primary-600 text-white' : 'bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 text-slate-400 hover:text-primary-600'}`}
+                >
+                  {p}
+                </button>
+              );
+            })}
+          </div>
+          <button
+            disabled={page >= totalPages}
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            className="p-2.5 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-slate-400 hover:text-primary-600 disabled:opacity-30 transition-all"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Modal détails */}
       {selectedOrder && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setSelectedOrder(null)} />
-          <div className="relative bg-white dark:bg-slate-900 w-full max-w-lg rounded-[3.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+          <div className="relative bg-white dark:bg-slate-900 w-full max-w-lg rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
             <div className="bg-primary-600 p-8 text-white flex justify-between items-center">
-              <h3 className="text-2xl font-black flex items-center gap-3"><ShoppingCart className="w-8 h-8" /> Fiche Commande</h3>
-              <button onClick={() => setSelectedOrder(null)} className="p-2 hover:bg-white/10 rounded-full transition-all"><X className="w-7 h-7" /></button>
+              <h3 className="text-xl font-black flex items-center gap-3"><ShoppingCart className="w-6 h-6" /> Fiche Commande</h3>
+              <button onClick={() => setSelectedOrder(null)} className="p-2 hover:bg-white/10 rounded-full transition-all"><X className="w-6 h-6" /></button>
             </div>
-            <div className="p-10 space-y-6">
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-1">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><User className="w-3 h-3" /> Client</span>
-                  <p className="text-lg font-black">{selectedOrder.customer}</p>
-                </div>
-                <div className="space-y-1 text-right">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5 justify-end"><Phone className="w-3 h-3" /> Numéro</span>
-                  <p className="text-lg font-black text-primary-600">{selectedOrder.phone}</p>
-                </div>
-              </div>
-              <div className="p-6 bg-slate-50 dark:bg-slate-800 rounded-3xl space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><Globe className="w-3 h-3" /> Ville</span>
-                  <span className="text-xs font-black uppercase">{selectedOrder.city}</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between p-6 bg-primary-50 dark:bg-primary-900/10 rounded-3xl border border-primary-100">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-white rounded-xl shadow-sm"><Package className="w-6 h-6 text-primary-600" /></div>
-                  <div>
-                    <span className="text-[10px] font-black text-primary-600 uppercase tracking-widest block">Produit</span>
-                    <p className="text-sm font-black">{selectedOrder.product}</p>
-                  </div>
+            <div className="p-8 space-y-5">
+              <div className="grid grid-cols-2 gap-5">
+                <div>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1 mb-1"><User className="w-3 h-3" /> Client</span>
+                  <p className="text-base font-black">{selectedOrder.customer}</p>
                 </div>
                 <div className="text-right">
-                  <span className="text-[10px] font-black text-primary-600 uppercase tracking-widest block">Total</span>
-                  <p className="text-xl font-black">{selectedOrder.price}</p>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1 justify-end mb-1"><Phone className="w-3 h-3" /> Téléphone</span>
+                  <p className="text-base font-black text-primary-600">{selectedOrder.phone}</p>
                 </div>
               </div>
-              <div className="flex gap-4">
-                <a
-                  href={`tel:${selectedOrder.phone}`}
-                  className="flex-1 py-4 bg-emerald-500 text-white rounded-2xl font-black uppercase tracking-widest text-center text-xs hover:bg-emerald-600 transition-all"
-                >
-                  📞 Appeler
-                </a>
-                <a
-                  href={`https://wa.me/${selectedOrder.phone?.replace(/\D/g, '')}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex-1 py-4 bg-green-500 text-white rounded-2xl font-black uppercase tracking-widest text-center text-xs hover:bg-green-600 transition-all"
-                >
-                  💬 WhatsApp
-                </a>
+              <div className="p-5 bg-slate-50 dark:bg-slate-800 rounded-2xl space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-[9px] font-black text-slate-400 uppercase flex items-center gap-1"><Globe className="w-3 h-3" /> Ville</span>
+                  <span className="text-xs font-black uppercase">{cleanCity(selectedOrder.city)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[9px] font-black text-slate-400 uppercase flex items-center gap-1"><Package className="w-3 h-3" /> Statut</span>
+                  <span className={`px-3 py-0.5 rounded-full text-[9px] font-black uppercase border ${statusColor(selectedOrder.status)}`}>{selectedOrder.status}</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between p-5 bg-primary-50 dark:bg-primary-900/10 rounded-2xl border border-primary-100">
+                <div>
+                  <span className="text-[9px] font-black text-primary-600 uppercase block">Produit</span>
+                  <p className="text-sm font-black">{selectedOrder.product}</p>
+                </div>
+                <div className="text-right">
+                  <span className="text-[9px] font-black text-primary-600 uppercase block">Total</span>
+                  <p className="text-lg font-black">{new Intl.NumberFormat('fr-FR').format(Number(String(selectedOrder.price || '0').replace(/\s/g, '')))} {getCurrency(selectedOrder.city)}</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <a href={`tel:${selectedOrder.phone}`} className="flex-1 py-3 bg-emerald-500 text-white rounded-xl font-black uppercase text-[10px] text-center hover:bg-emerald-600 transition-all">📞 Appeler</a>
+                <a href={`https://wa.me/${selectedOrder.phone?.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="flex-1 py-3 bg-green-500 text-white rounded-xl font-black uppercase text-[10px] text-center hover:bg-green-600 transition-all">💬 WhatsApp</a>
               </div>
             </div>
           </div>

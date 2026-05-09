@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Bot, Sparkles, Loader2, Send, Zap, Globe, DollarSign, User, Megaphone, Mic, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Bot, Sparkles, Loader2, Zap, Globe, DollarSign, User, Megaphone, Mic, CheckCircle2, ArrowRight, Plus, X, ImageIcon, Link as LinkIcon, FileText } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
@@ -10,42 +10,58 @@ export default function AnalysesPage() {
   const [loading, setLoading] = useState(false);
   const [productName, setProductName] = useState('');
   const [productDesc, setProductDesc] = useState('');
+  const [sourceLink, setSourceLink] = useState('');
+  const [costPrice, setCostPrice] = useState('');
+  const [images, setImages] = useState<File[]>([]);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
+
+  const handleImageAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
+    const newFiles = Array.from(e.target.files);
+    if (images.length + newFiles.length > 3) {
+      toast.error('3 images maximum');
+      return;
+    }
+    setImages(prev => [...prev, ...newFiles]);
+    e.target.value = '';
+  };
+
+  const removeImage = (index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
+  };
 
   async function handleAnalyze(e: React.FormEvent) {
     e.preventDefault();
-    if (!productName) return;
+    if (!productName.trim()) { toast.error('Le nom du produit est requis'); return; }
+    if (!costPrice) { toast.error('Le prix d\'achat est requis pour le calcul de rentabilité'); return; }
 
     setLoading(true);
     setAnalysisResult(null);
 
     try {
-      const prompt = `Analyse ce produit pour le marché d'Afrique de l'Ouest (Abidjan, Dakar, Conakry) :
-      Nom : ${productName}
-      Description : ${productDesc}
-      
-      Réponds UNIQUEMENT en JSON avec cette structure :
-      {
-        "score": 0-100,
-        "price_recommendation": "Prix en FCFA/GNF",
-        "avatar": {
-          "title": "Nom du persona",
-          "age": "Tranche d'âge",
-          "income": "Revenu estimé",
-          "pains": ["douleur 1", "douleur 2"],
-          "goals": ["objectif 1", "objectif 2"]
-        },
-        "shopify_page": {
-          "title": "Titre accrocheur",
-          "hook": "Phrase d'accroche",
-          "features": ["caractéristique 1", "caractéristique 2"]
-        },
-        "facebook_ad": {
-          "primary_text": "Texte de la pub",
-          "headline": "Titre de la pub"
-        },
-        "voiceover_script": "Script pour vidéo de 30 secondes"
-      }`;
+      const prompt = `Tu es l'expert stratégique Ecom Booster Pro. Analyse ce produit :
+NOM : ${productName}
+PRIX D'ACHAT : ${costPrice} FCFA
+DESCRIPTION : ${productDesc || 'Non fournie'}
+LIEN SOURCE : ${sourceLink || 'Non fourni'}
+
+RÈGLES DE PRIX STRICTES :
+1. Coût d'achat = ${costPrice} FCFA.
+2. "price_min" DOIT être : ${costPrice} + 8000 FCFA.
+3. "price_max" DOIT être : ${costPrice} + 15000 FCFA.
+4. "price_recommendation" DOIT être un prix marketing entre les deux.
+
+Réponds UNIQUEMENT en JSON valide :
+{
+  "score": 85,
+  "price_recommendation": "X FCFA",
+  "price_min": "Y FCFA",
+  "price_max": "Z FCFA",
+  "avatar": { "title": "...", "age": "...", "income": "...", "pains": [], "goals": [] },
+  "shopify_page": { "title": "...", "hook": "...", "features": [] },
+  "facebook_ad": { "primary_text": "...", "headline": "..." },
+  "voiceover_script": "..."
+}`;
 
       const res = await fetch('/api/ai-advisor', {
         method: 'POST',
@@ -56,197 +72,227 @@ export default function AnalysesPage() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
 
-      // Parse JSON from Claude response
       let result;
       try {
         const jsonMatch = data.text.match(/\{[\s\S]*\}/);
         result = JSON.parse(jsonMatch ? jsonMatch[0] : data.text);
-      } catch (e) {
-        console.error("JSON Parse Error", e);
-        throw new Error("Erreur de formatage de l'IA. Réessayez.");
+      } catch {
+        throw new Error("Erreur de formatage IA. Réessayez.");
       }
 
       setAnalysisResult(result);
 
-      // Sauvegarder dans Supabase (table 'analyses')
-      const { error } = await supabase.from('analyses').insert([{
+      // Save to Supabase
+      await supabase.from('analyses').insert([{
         product_name: productName,
         score: result.score,
         price_recommendation: result.price_recommendation,
+        cost_price: costPrice,
         customer_avatar: result.avatar,
         shopify_page_content: result.shopify_page,
         facebook_ad_content: result.facebook_ad,
         voiceover_script: result.voiceover_script
       }]);
 
-      if (error) console.error("Supabase Save Error:", error);
-      
-      toast.success("Analyse terminée avec succès !");
+      toast.success('Analyse terminée !');
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error(err.message || 'Erreur lors de l\'analyse');
     } finally {
       setLoading(false);
     }
   }
 
+  // --- RESULTS VIEW ---
   if (analysisResult) {
     return (
-      <div className="max-w-4xl mx-auto pb-20 px-4 animate-in fade-in zoom-in-95 duration-500">
+      <div className="max-w-5xl mx-auto pb-20 px-4 animate-in fade-in zoom-in-95 duration-500">
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-6 py-2 bg-emerald-100 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-widest mb-4">
-            <CheckCircle2 className="w-4 h-4" /> Analyse Terminée
+          <div className="inline-flex items-center gap-2 px-5 py-2 bg-emerald-500/10 text-emerald-500 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 border border-emerald-500/20">
+            <CheckCircle2 className="w-4 h-4" /> Analyse Stratégique Prête
           </div>
-          <h2 className="text-5xl font-black tracking-tighter mb-4">{productName}</h2>
-          <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Propulsé par Claude 3.5 Sonnet</p>
+          <h2 className="text-5xl font-black tracking-tighter mb-2">{productName}</h2>
+          <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.3em]">IA Engine Version 2.1</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Score & Prix Card */}
-          <Link href="/score-et-prix" className="bg-white dark:bg-slate-900 p-8 rounded-[3rem] border-2 border-slate-100 hover:border-primary-500 transition-all group">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+          {/* Card 1 */}
+          <Link href="/score-et-prix" className="bg-white dark:bg-slate-900 p-8 rounded-[3rem] border-2 border-slate-100 dark:border-slate-800 hover:border-primary-500 transition-all group hover:-translate-y-2 shadow-sm">
             <div className="flex justify-between items-start mb-6">
-              <div className="p-4 bg-amber-100 text-amber-600 rounded-2xl group-hover:rotate-6 transition-transform">
+              <div className="p-4 bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded-2xl group-hover:rotate-12 transition-transform">
                 <Zap className="w-6 h-6" />
               </div>
               <div className="text-right">
-                <span className="text-[10px] font-black text-slate-400 uppercase">Potentiel</span>
-                <p className="text-2xl font-black text-amber-600">{analysisResult.score}%</p>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Gagnant ?</span>
+                <p className="text-3xl font-black text-amber-600">{analysisResult.score}%</p>
               </div>
             </div>
-            <h3 className="text-xl font-black mb-2 tracking-tight">Score & Prix</h3>
-            <p className="text-xs text-slate-400 font-bold mb-6">Prix conseillé : <span className="text-primary-600">{analysisResult.price_recommendation}</span></p>
-            <div className="flex items-center gap-2 text-primary-600 text-[10px] font-black uppercase">
-              Voir détails <ArrowRight className="w-4 h-4" />
-            </div>
+            <h3 className="text-xl font-black mb-1 tracking-tight">Score & Rentabilité</h3>
+            <p className="text-xs text-slate-400 font-bold mb-6">Prix recommandé : <span className="text-primary-600">{analysisResult.price_recommendation}</span></p>
+            <div className="flex items-center gap-2 text-primary-600 text-[10px] font-black uppercase tracking-widest">Détails financiers <ArrowRight className="w-3 h-3" /></div>
           </Link>
 
-          {/* Avatar Card */}
-          <Link href="/avatar" className="bg-white dark:bg-slate-900 p-8 rounded-[3rem] border-2 border-slate-100 hover:border-primary-500 transition-all group">
+          {/* Card 2 */}
+          <Link href="/avatar" className="bg-white dark:bg-slate-900 p-8 rounded-[3rem] border-2 border-slate-100 dark:border-slate-800 hover:border-primary-500 transition-all group hover:-translate-y-2 shadow-sm">
             <div className="flex justify-between items-start mb-6">
-              <div className="p-4 bg-blue-100 text-blue-600 rounded-2xl group-hover:rotate-6 transition-transform">
+              <div className="p-4 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-2xl group-hover:rotate-12 transition-transform">
                 <User className="w-6 h-6" />
               </div>
-              <div className="text-right">
-                <span className="text-[10px] font-black text-slate-400 uppercase">Cible</span>
-                <p className="text-sm font-black text-blue-600 truncate max-w-[120px]">{analysisResult.avatar.title}</p>
-              </div>
             </div>
-            <h3 className="text-xl font-black mb-2 tracking-tight">Avatar Client</h3>
-            <p className="text-xs text-slate-400 font-bold mb-6 italic leading-relaxed">Profil psychologique et financier précis pour le marché ciblé.</p>
-            <div className="flex items-center gap-2 text-primary-600 text-[10px] font-black uppercase">
-              Voir détails <ArrowRight className="w-4 h-4" />
-            </div>
+            <h3 className="text-xl font-black mb-1 tracking-tight">Avatar Client</h3>
+            <p className="text-xs text-slate-400 font-bold mb-6 line-clamp-2">Comprenez qui achète et pourquoi.</p>
+            <div className="flex items-center gap-2 text-primary-600 text-[10px] font-black uppercase tracking-widest">Voir le profil <ArrowRight className="w-3 h-3" /></div>
           </Link>
 
-          {/* Shopify Card */}
-          <Link href="/page-shopify" className="bg-white dark:bg-slate-900 p-8 rounded-[3rem] border-2 border-slate-100 hover:border-primary-500 transition-all group">
+          {/* Card 3 */}
+          <Link href="/page-shopify" className="bg-white dark:bg-slate-900 p-8 rounded-[3rem] border-2 border-slate-100 dark:border-slate-800 hover:border-primary-500 transition-all group hover:-translate-y-2 shadow-sm">
             <div className="flex justify-between items-start mb-6">
-              <div className="p-4 bg-emerald-100 text-emerald-600 rounded-2xl group-hover:rotate-6 transition-transform">
+              <div className="p-4 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 rounded-2xl group-hover:rotate-12 transition-transform">
                 <Globe className="w-6 h-6" />
               </div>
             </div>
-            <h3 className="text-xl font-black mb-2 tracking-tight">Page Shopify</h3>
-            <p className="text-xs text-slate-400 font-bold mb-6 line-clamp-2">"{analysisResult.shopify_page.hook}"</p>
-            <div className="flex items-center gap-2 text-primary-600 text-[10px] font-black uppercase">
-              Générer Page <ArrowRight className="w-4 h-4" />
-            </div>
-          </Link>
-
-          {/* Facebook Ads Card */}
-          <Link href="/publicite-facebook" className="bg-white dark:bg-slate-900 p-8 rounded-[3rem] border-2 border-slate-100 hover:border-primary-500 transition-all group">
-            <div className="flex justify-between items-start mb-6">
-              <div className="p-4 bg-indigo-100 text-indigo-600 rounded-2xl group-hover:rotate-6 transition-transform">
-                <Megaphone className="w-6 h-6" />
-              </div>
-            </div>
-            <h3 className="text-xl font-black mb-2 tracking-tight">Publicité Facebook</h3>
-            <p className="text-xs text-slate-400 font-bold mb-6 line-clamp-2">{analysisResult.facebook_ad.headline}</p>
-            <div className="flex items-center gap-2 text-primary-600 text-[10px] font-black uppercase">
-              Voir Pubs <ArrowRight className="w-4 h-4" />
-            </div>
+            <h3 className="text-xl font-black mb-1 tracking-tight">Page Shopify</h3>
+            <p className="text-xs text-slate-400 font-bold mb-6 line-clamp-2">Générez votre fiche produit en 1 clic.</p>
+            <div className="flex items-center gap-2 text-primary-600 text-[10px] font-black uppercase tracking-widest">Accéder au builder <ArrowRight className="w-3 h-3" /></div>
           </Link>
         </div>
 
-        <div className="mt-12 text-center">
-          <button 
-            onClick={() => setAnalysisResult(null)}
-            className="px-8 py-4 bg-slate-100 dark:bg-slate-800 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-all"
+        <div className="flex justify-center">
+          <button
+            onClick={() => { setAnalysisResult(null); setProductName(''); setProductDesc(''); setSourceLink(''); setCostPrice(''); setImages([]); }}
+            className="px-10 py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl active:scale-95"
           >
-            Analyser un autre produit
+            ← Analyser un autre produit
           </button>
         </div>
       </div>
     );
   }
 
+  // --- FORM VIEW ---
   return (
-    <div className="max-w-4xl mx-auto pb-10 px-4 animate-in fade-in duration-500">
-      <div className="flex flex-col items-center text-center mb-16">
-        <div className="p-6 bg-primary-100 dark:bg-primary-900/30 rounded-[2.5rem] mb-6">
-          <Bot className="w-12 h-12 text-primary-600" />
+    <div className="max-w-4xl mx-auto pb-20 px-4 animate-in fade-in duration-700">
+      <div className="flex flex-col items-center text-center mb-12">
+        <div className="p-5 bg-primary-600 text-white rounded-[2rem] mb-6 shadow-xl shadow-primary-500/20 rotate-3">
+          <Sparkles className="w-8 h-8" />
         </div>
-        <h2 className="text-5xl font-black tracking-tighter mb-4">Analyse de Produit IA</h2>
-        <p className="text-slate-400 font-medium text-sm max-w-md italic">
-          Entrez les détails de votre produit et laissez Claude IA générer une stratégie marketing complète pour l'Afrique.
-        </p>
+        <h2 className="text-5xl font-black tracking-tighter mb-3">Intelligence Stratégique</h2>
+        <p className="text-slate-400 text-sm font-bold uppercase tracking-[0.2em]">Transformez un produit en succès commercial</p>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[3.5rem] p-10 md:p-16 shadow-sm">
-        <form onSubmit={handleAnalyze} className="space-y-10">
-          <div className="space-y-4">
-            <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 ml-4">Nom du Produit</label>
-            <input 
-              required
-              type="text" 
-              placeholder="Ex: Brosse Soufflante 5-en-1"
-              value={productName}
-              onChange={e => setProductName(e.target.value)}
-              className="w-full px-8 py-6 bg-slate-50 dark:bg-slate-800/50 border-none rounded-[2rem] font-black text-lg outline-none focus:ring-4 focus:ring-primary-500/10 transition-all placeholder:text-slate-300"
+      <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[4rem] p-10 md:p-16 shadow-2xl relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/5 rounded-full -mr-32 -mt-32 blur-3xl" />
+        
+        <form onSubmit={handleAnalyze} className="relative z-10 space-y-10">
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+            {/* Nom */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-slate-400">
+                <FileText className="w-4 h-4" />
+                <label className="text-[10px] font-black uppercase tracking-widest">Nom du Produit *</label>
+              </div>
+              <input
+                required
+                type="text"
+                value={productName}
+                onChange={e => setProductName(e.target.value)}
+                placeholder="Ex: Robot Mixeur Premium"
+                className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-3xl px-8 py-5 text-base font-black outline-none focus:ring-4 focus:ring-primary-500/10 transition-all"
+              />
+            </div>
+
+            {/* Prix Achat */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-slate-400">
+                <DollarSign className="w-4 h-4" />
+                <label className="text-[10px] font-black uppercase tracking-widest">Prix d'Achat (FCFA) *</label>
+              </div>
+              <input
+                required
+                type="number"
+                value={costPrice}
+                onChange={e => setCostPrice(e.target.value)}
+                placeholder="Ex: 4500"
+                className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-3xl px-8 py-5 text-base font-black outline-none focus:ring-4 focus:ring-primary-500/10 transition-all text-primary-600"
+              />
+            </div>
+          </div>
+
+          {/* Lien Source */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-slate-400">
+              <LinkIcon className="w-4 h-4" />
+              <label className="text-[10px] font-black uppercase tracking-widest">Lien Source (Optionnel)</label>
+            </div>
+            <input
+              type="url"
+              value={sourceLink}
+              onChange={e => setSourceLink(e.target.value)}
+              placeholder="https://alibaba.com/item/..."
+              className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-3xl px-8 py-5 text-sm font-bold outline-none focus:ring-4 focus:ring-primary-500/10 transition-all"
             />
           </div>
 
-          <div className="space-y-4">
-            <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 ml-4">Description (Optionnel)</label>
-            <textarea 
-              placeholder="Ajoutez des détails pour une analyse plus précise..."
+          {/* Description */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-slate-400">
+              <Bot className="w-4 h-4" />
+              <label className="text-[10px] font-black uppercase tracking-widest">Description (Optionnel)</label>
+            </div>
+            <textarea
               value={productDesc}
               onChange={e => setProductDesc(e.target.value)}
-              className="w-full px-8 py-6 bg-slate-50 dark:bg-slate-800/50 border-none rounded-[2rem] font-bold text-sm outline-none focus:ring-4 focus:ring-primary-500/10 transition-all h-32 resize-none placeholder:text-slate-300"
+              placeholder="Décrivez les avantages clés pour une meilleure analyse..."
+              className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-[2rem] px-8 py-6 text-sm font-bold outline-none focus:ring-4 focus:ring-primary-500/10 transition-all h-32 resize-none"
             />
           </div>
 
-          <button 
-            disabled={loading}
-            className="w-full py-8 bg-primary-600 text-white rounded-[2.5rem] font-black uppercase tracking-[0.4em] text-xs shadow-2xl shadow-primary-500/40 hover:bg-primary-700 hover:-translate-y-1 transition-all active:scale-95 disabled:opacity-50 disabled:translate-y-0"
-          >
-            {loading ? (
-              <div className="flex items-center justify-center gap-4">
-                <Loader2 className="w-6 h-6 animate-spin" /> Analyse par Claude IA...
-              </div>
-            ) : (
-              <div className="flex items-center justify-center gap-4">
-                <Sparkles className="w-6 h-6" /> Lancer l'Analyse Stratégique
-              </div>
-            )}
-          </button>
-        </form>
-      </div>
+          {/* Images */}
+          <div className="space-y-4">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block ml-4">Photos du Produit (2 ou 3 max)</label>
+            <div className="flex gap-6 flex-wrap">
+              {images.map((img, i) => (
+                <div key={i} className="relative w-32 h-32 rounded-[2rem] overflow-hidden border-4 border-white dark:border-slate-800 shadow-xl group">
+                  <img src={URL.createObjectURL(img)} className="w-full h-full object-cover" alt="" />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(i)}
+                    className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-xl opacity-0 group-hover:opacity-100 transition-all hover:scale-110"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+              {images.length < 3 && (
+                <label className="cursor-pointer w-32 h-32 border-4 border-dashed border-slate-100 dark:border-slate-800 rounded-[2rem] flex flex-col items-center justify-center hover:bg-primary-50 dark:hover:bg-primary-900/10 hover:border-primary-200 transition-all group">
+                  <input type="file" accept="image/*" className="hidden" onChange={handleImageAdd} />
+                  <ImageIcon className="w-8 h-8 text-slate-200 group-hover:text-primary-400 mb-2 transition-colors" />
+                  <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Ajouter</span>
+                </label>
+              )}
+            </div>
+          </div>
 
-      <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 text-center opacity-40">
-        <div className="space-y-2">
-          <Zap className="w-6 h-6 mx-auto text-amber-500" />
-          <h4 className="text-[10px] font-black uppercase tracking-widest">Rapidité</h4>
-          <p className="text-[10px] font-bold">Analyse en &lt; 15 secondes</p>
-        </div>
-        <div className="space-y-2">
-          <Globe className="w-6 h-6 mx-auto text-emerald-500" />
-          <h4 className="text-[10px] font-black uppercase tracking-widest">Localisé</h4>
-          <p className="text-[10px] font-bold">Insights pour Abidjan/Dakar/Conakry</p>
-        </div>
-        <div className="space-y-2">
-          <Send className="w-6 h-6 mx-auto text-primary-500" />
-          <h4 className="text-[10px] font-black uppercase tracking-widest">Prêt à l'export</h4>
-          <p className="text-[10px] font-bold">Synchronisation directe Shopify</p>
-        </div>
+          {/* Submit */}
+          <div className="flex justify-center pt-6">
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-12 py-5 bg-primary-600 text-white rounded-3xl font-black uppercase tracking-[0.2em] text-xs shadow-2xl shadow-primary-500/40 hover:bg-primary-700 hover:-translate-y-1 transition-all active:scale-95 disabled:opacity-50"
+            >
+              {loading ? (
+                <div className="flex items-center gap-3">
+                  <Loader2 className="w-5 h-5 animate-spin" /> Analyse en cours...
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <Zap className="w-5 h-5" /> Lancer l'Analyse Stratégique
+                </div>
+              )}
+            </button>
+          </div>
+
+        </form>
       </div>
     </div>
   );

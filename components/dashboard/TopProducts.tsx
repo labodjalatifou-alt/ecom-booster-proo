@@ -25,7 +25,7 @@ export default function TopProducts() {
           // Group by product
           const grouped = orders.reduce((acc: any, curr: any) => {
             if (!acc[curr.product]) {
-              acc[curr.product] = { name: curr.product, sold: 0, profit: 0, review: 4.8 + Math.random() * 0.2 };
+              acc[curr.product] = { name: curr.product, sold: 0, profit: 0, review: 5.0 };
             }
             acc[curr.product].sold += 1;
             if (curr.status === 'Livré') {

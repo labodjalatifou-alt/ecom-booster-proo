@@ -7,16 +7,12 @@ import { useTheme } from 'next-themes';
 import { useSidebar } from './SidebarProvider';
 import {
   LayoutDashboard,
-  LineChart,
   Bot,
   Tags,
-  UserSquare2,
   User,
-  Users,
   Megaphone,
   Store,
   Mic,
-  FileText,
   Trophy,
   History,
   ShoppingCart,
@@ -24,12 +20,12 @@ import {
   Truck,
   Package,
   Calculator,
-  Contact,
+  Users,
   Bell,
-  Link as LinkIcon,
   Moon,
   Sun,
-  X
+  X,
+  ClipboardList
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -48,9 +44,10 @@ const menuGroups = [
   {
     title: 'IA & E-COMMERCE',
     items: [
-      { name: 'Analyse', icon: Bot, href: '/analyses' },
+      { name: 'Analyse IA', icon: Bot, href: '/analyses' },
+      { name: 'Historique Analyses', icon: ClipboardList, href: '/historique' },
       { name: 'Score et Prix', icon: Tags, href: '/score-et-prix' },
-      { name: 'Avatar', icon: User, href: '/avatar' },
+      { name: 'Avatar Client', icon: User, href: '/avatar' },
       { name: 'Analyse Concurrent', icon: Trophy, href: '/analyse-concurrent' },
       { name: 'Page Shopify', icon: Store, href: '/page-shopify' },
     ]
@@ -65,20 +62,21 @@ const menuGroups = [
   {
     title: 'OPÉRATIONS & CRM',
     items: [
-      { name: 'Commande', icon: ShoppingCart, href: '/commandes' },
-      { name: 'Historique', icon: History, href: '/historique-commandes' },
+      { name: 'Commandes', icon: ShoppingCart, href: '/commandes' },
       { name: 'Interface Closer', icon: Headset, href: '/interface-closer' },
       { name: 'Interface Livreur', icon: Truck, href: '/interface-livreur' },
-      { name: 'Stock', icon: Package, href: '/stock' },
+      { name: 'Stock / Inventaire', icon: Package, href: '/stock' },
+      { name: 'Historique Ventes', icon: History, href: '/historique-commandes' },
       { name: 'Comptabilité', icon: Calculator, href: '/comptabilite' },
     ]
   },
   {
-    title: 'ADMINISTRATION',
+    title: 'CONFIGURATION',
     items: [
-      { name: 'Équipe', icon: Users, href: '/equipe' },
-      { name: 'Boutique', icon: Store, href: '/boutiques' },
-      { name: 'Notification', icon: Bell, href: '/notifications' },
+      { name: 'Gestion Équipe', icon: Users, href: '/equipe' },
+      { name: 'Mes Boutiques', icon: Store, href: '/boutiques' },
+      { name: 'Base Clients', icon: User, href: '/clients' },
+      { name: 'Notifications', icon: Bell, href: '/notifications' },
     ]
   }
 ];
@@ -105,44 +103,46 @@ export default function Sidebar() {
 
       {/* Sidebar Content */}
       <aside className={cn(
-        "fixed top-0 left-0 h-screen w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col z-30 transition-transform duration-300 ease-in-out",
+        "fixed top-0 left-0 h-screen w-64 bg-white dark:bg-slate-900 border-r-2 border-slate-100 dark:border-slate-800 flex flex-col z-30 transition-transform duration-300 ease-in-out shadow-2xl md:shadow-none",
         isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
       )}>
         {/* Logo */}
-        <div className="h-16 flex items-center justify-between px-6 border-b border-slate-200 dark:border-slate-800">
-          <div className="flex items-center gap-2 text-primary-600 dark:text-primary-500 font-bold text-xl tracking-tight">
-            <ShoppingCart className="w-6 h-6" />
+        <div className="h-20 flex items-center justify-between px-8 border-b-2 border-slate-50 dark:border-slate-800">
+          <div className="flex items-center gap-3 text-primary-600 dark:text-primary-500 font-black text-2xl tracking-tighter">
+            <div className="w-9 h-9 bg-primary-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary-500/20">
+              <ShoppingCart className="w-5 h-5" />
+            </div>
             <span>EcomDash</span>
           </div>
-          <button onClick={() => setIsOpen(false)} className="md:hidden text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100">
-            <X className="w-5 h-5" />
+          <button onClick={() => setIsOpen(false)} className="md:hidden p-2 text-slate-400 hover:text-slate-600 transition-colors">
+            <X className="w-6 h-6" />
           </button>
         </div>
 
       {/* Navigation */}
-      <div className="flex-1 overflow-y-auto scrollbar-hide py-4">
+      <div className="flex-1 overflow-y-auto scrollbar-hide py-6">
         {menuGroups.map((group, idx) => (
-          <div key={idx} className="mb-6 px-4">
-            <h3 className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 px-2">
+          <div key={idx} className="mb-8 px-4">
+            <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-3 px-4">
               {group.title}
             </h3>
             <ul className="space-y-1">
               {group.items.map((item, itemIdx) => {
                 const Icon = item.icon;
-                const isActive = pathname === item.href && item.href !== '#';
+                const isActive = pathname === item.href;
                 return (
                   <li key={itemIdx}>
                     <Link
                       href={item.href}
                       onClick={() => setIsOpen(false)}
                       className={cn(
-                        "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-[1.02] active:scale-95",
+                        "flex items-center gap-3.5 px-4 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all duration-200 group/link",
                         isActive 
-                          ? "bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400 shadow-sm" 
-                          : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-200"
+                          ? "bg-primary-600 text-white shadow-xl shadow-primary-500/20 translate-x-1" 
+                          : "text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-primary-600"
                       )}
                     >
-                      <Icon className={cn("w-5 h-5", isActive ? "text-primary-600 dark:text-primary-400" : "text-slate-400 dark:text-slate-500")} />
+                      <Icon className={cn("w-5 h-5 transition-transform group-hover/link:scale-110", isActive ? "text-white" : "text-slate-400 group-hover/link:text-primary-500")} />
                       {item.name}
                     </Link>
                   </li>
@@ -154,13 +154,13 @@ export default function Sidebar() {
       </div>
 
       {/* Theme Toggle */}
-      <div className="p-4 border-t border-slate-200 dark:border-slate-800">
-        <div className="bg-slate-100 dark:bg-slate-800/50 rounded-xl p-1 flex items-center justify-between relative shadow-inner">
+      <div className="p-6 border-t-2 border-slate-50 dark:border-slate-800">
+        <div className="bg-slate-100 dark:bg-slate-800 rounded-[1.5rem] p-1.5 flex items-center justify-between relative shadow-inner">
           <button 
             onClick={() => setTheme('light')}
             className={cn(
-              "flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition-all duration-300 relative z-10",
-              mounted && theme !== 'dark' ? "bg-white shadow-sm text-primary-600 dark:text-primary-500 ring-1 ring-slate-200/50" : "text-slate-500 hover:text-slate-700"
+              "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 relative z-10",
+              mounted && theme !== 'dark' ? "bg-white shadow-lg text-primary-600 shadow-slate-200/50" : "text-slate-400 hover:text-slate-600"
             )}
           >
             <Sun className="w-4 h-4" /> Clair
@@ -168,8 +168,8 @@ export default function Sidebar() {
           <button 
             onClick={() => setTheme('dark')}
             className={cn(
-              "flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition-all duration-300 relative z-10",
-              mounted && theme === 'dark' ? "bg-slate-700 text-primary-400 shadow-sm ring-1 ring-slate-600" : "text-slate-500 hover:text-slate-300"
+              "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 relative z-10",
+              mounted && theme === 'dark' ? "bg-slate-700 text-primary-400 shadow-lg" : "text-slate-400 hover:text-slate-300"
             )}
           >
             <Moon className="w-4 h-4" /> Sombre

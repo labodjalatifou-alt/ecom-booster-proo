@@ -1,111 +1,175 @@
 "use client";
 
-import React from 'react';
-import { Users, Search, Filter, Mail, Phone, MoreHorizontal, Star } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Users, Search, Phone, Star, Loader2, MapPin } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
-const mockClients = [
-  { id: 'C-001', name: 'Amina Diaby', email: 'amina.diaby@email.com', phone: '+225 0102030405', totalSpent: '125 000 FCFA', orders: 4, lastOrder: 'Il y a 2 jours', status: 'VIP' },
-  { id: 'C-002', name: 'Jean Koffi', email: 'jean.koffi@email.com', phone: '+225 0506070809', totalSpent: '45 000 FCFA', orders: 1, lastOrder: 'Il y a 1 semaine', status: 'Nouveau' },
-  { id: 'C-003', name: 'Sarah Koné', email: 'sarah.kone@email.com', phone: '+225 0708091011', totalSpent: '210 000 FCFA', orders: 6, lastOrder: 'Aujourd\'hui', status: 'VIP' },
-  { id: 'C-004', name: 'Mamadou Bah', email: 'm.bah@email.com', phone: '+224 622001122', totalSpent: '85 000 FCFA', orders: 2, lastOrder: 'Il y a 1 mois', status: 'Régulier' },
-  { id: 'C-005', name: 'Kadiatou Sy', email: 'kadi.sy@email.com', phone: '+221 771234567', totalSpent: '12 000 FCFA', orders: 1, lastOrder: 'Il y a 3 mois', status: 'Inactif' },
-];
+interface Client {
+  customer: string;
+  phone: string;
+  city: string;
+  totalOrders: number;
+  totalSpent: number;
+  lastOrder: string;
+  currency: string;
+}
 
 export default function ClientsPage() {
-  const getStatusColor = (status: string) => {
-    switch(status) {
-      case 'VIP': return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400';
-      case 'Nouveau': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
-      case 'Régulier': return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400';
-      default: return 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400';
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    async function fetchClients() {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('customer, phone, city, price, created_at, currency')
+        .order('created_at', { ascending: false });
+
+      if (!error && data) {
+        // Grouper par client (nom + téléphone)
+        const map = new Map<string, Client>();
+
+        data.forEach((order: any) => {
+          const key = `${order.customer}|${order.phone}`;
+          const price = parseFloat(String(order.price || '0').replace(/\s/g, '')) || 0;
+          const city = order.city?.split(',').map((s: string) => s.trim()).filter((v: string, i: number, a: string[]) => a.indexOf(v) === i).join(', ') || '-';
+
+          if (map.has(key)) {
+            const existing = map.get(key)!;
+            existing.totalOrders += 1;
+            existing.totalSpent += price;
+          } else {
+            map.set(key, {
+              customer: order.customer,
+              phone: order.phone,
+              city,
+              totalOrders: 1,
+              totalSpent: price,
+              lastOrder: order.created_at,
+              currency: order.currency || 'FCFA',
+            });
+          }
+        });
+
+        setClients(Array.from(map.values()).sort((a, b) => b.totalSpent - a.totalSpent));
+      }
+      setLoading(false);
     }
+    fetchClients();
+  }, []);
+
+  const filtered = clients.filter(c =>
+    c.customer?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.phone?.includes(searchTerm) ||
+    c.city?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const getLabel = (c: Client) => {
+    if (c.totalOrders >= 4) return { label: 'VIP', color: 'bg-purple-100 text-purple-700 border-purple-200' };
+    if (c.totalOrders >= 2) return { label: 'Régulier', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' };
+    return { label: 'Nouveau', color: 'bg-blue-100 text-blue-700 border-blue-200' };
   };
 
-  return (
-    <div className="max-w-7xl mx-auto pb-10">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-            <Users className="w-6 h-6 text-primary-600" />
-            CRM Clients
-          </h2>
-          <p className="text-slate-500 text-sm mt-1">
-            Gérez vos clients, analysez leur fidélité et optimisez la valeur à vie (LTV).
-          </p>
-        </div>
-      </div>
+  const fmt = (n: number, currency: string) =>
+    `${new Intl.NumberFormat('fr-FR').format(Math.round(n))} ${currency}`;
 
-      <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row gap-4 justify-between items-center mb-6">
-        <div className="relative w-full md:w-96 group">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 group-focus-within:text-primary-500 transition-colors" />
-          <input 
-            type="text" 
-            placeholder="Rechercher par nom, email, téléphone..." 
-            className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all text-slate-700 dark:text-slate-200"
+  return (
+    <div className="max-w-7xl mx-auto pb-10 px-4 text-slate-800 dark:text-slate-100 animate-in fade-in duration-500">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+              <Users className="w-5 h-5 text-primary-600" />
+            </div>
+            <span className="text-[10px] font-black text-primary-600 uppercase tracking-[0.2em]">Base Clients</span>
+          </div>
+          <h2 className="text-4xl font-black tracking-tighter">CRM Clients</h2>
+          {!loading && <p className="text-slate-400 text-xs font-bold mt-1">{clients.length} clients uniques</p>}
+        </div>
+
+        <div className="relative group">
+          <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-primary-500 transition-colors" />
+          <input
+            type="text"
+            placeholder="Nom, téléphone, ville..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="pl-10 pr-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl text-xs font-bold focus:ring-4 focus:ring-primary-500/10 transition-all w-64"
           />
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors w-full md:w-auto justify-center">
-          <Filter className="w-4 h-4" />
-          Filtrer
-        </button>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Client</th>
-                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Contact</th>
-                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Dépensé</th>
-                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Commandes</th>
-                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Statut</th>
-                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {mockClients.map((client, idx) => (
-                <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/50 text-primary-600 flex items-center justify-center font-bold text-sm">
-                        {client.name.split(' ').map(n => n[0]).join('')}
-                      </div>
-                      <div>
-                        <span className="text-sm font-bold text-slate-800 dark:text-slate-100 block">{client.name}</span>
-                        <span className="text-xs text-slate-500">{client.id}</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-xs text-slate-600 dark:text-slate-300 flex items-center gap-1.5"><Mail className="w-3 h-3" /> {client.email}</span>
-                      <span className="text-xs text-slate-600 dark:text-slate-300 flex items-center gap-1.5"><Phone className="w-3 h-3" /> {client.phone}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm font-bold text-slate-800 dark:text-slate-100">{client.totalSpent}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300 block">{client.orders} commandes</span>
-                    <span className="text-xs text-slate-500">{client.lastOrder}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${getStatusColor(client.status)}`}>
-                      {client.status === 'VIP' && <Star className="w-3 h-3 fill-current" />}
-                      {client.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button className="p-2 text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
-                      <MoreHorizontal className="w-5 h-5" />
-                    </button>
-                  </td>
+      <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[3rem] shadow-sm overflow-hidden min-h-[400px]">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-40 gap-4 text-slate-400">
+            <Loader2 className="w-10 h-10 animate-spin text-primary-500" />
+            <p className="text-[10px] font-black uppercase tracking-widest">Chargement des clients...</p>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-40 gap-4 text-slate-300">
+            <Users className="w-12 h-12" />
+            <p className="text-sm font-black text-slate-500">
+              {searchTerm ? 'Aucun client trouvé' : 'Aucun client enregistré'}
+            </p>
+            {!searchTerm && <p className="text-[10px] font-bold text-slate-400">Les clients apparaîtront après synchronisation des commandes.</p>}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b-2 border-slate-100 dark:border-slate-800">
+                  <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest">Client</th>
+                  <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest">Contact</th>
+                  <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest">Ville</th>
+                  <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest text-center">Commandes</th>
+                  <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest text-right">Total Dépensé</th>
+                  <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest text-right">Statut</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y-2 divide-slate-100 dark:divide-slate-800">
+                {filtered.map((client, i) => {
+                  const badge = getLabel(client);
+                  const initials = client.customer.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                  return (
+                    <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all">
+                      <td className="px-8 py-5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-primary-100 dark:bg-primary-900/30 text-primary-600 flex items-center justify-center font-black text-xs shrink-0">
+                            {initials}
+                          </div>
+                          <span className="font-black text-sm">{client.customer}</span>
+                          {client.totalOrders >= 4 && <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />}
+                        </div>
+                      </td>
+                      <td className="px-8 py-5">
+                        <a href={`tel:${client.phone}`} className="flex items-center gap-1.5 text-[11px] font-bold text-primary-500 hover:text-primary-700 transition-colors">
+                          <Phone className="w-3 h-3" /> {client.phone}
+                        </a>
+                      </td>
+                      <td className="px-8 py-5">
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 uppercase">
+                          <MapPin className="w-3 h-3" /> {client.city}
+                        </div>
+                      </td>
+                      <td className="px-8 py-5 text-center">
+                        <span className="text-sm font-black">{client.totalOrders}</span>
+                      </td>
+                      <td className="px-8 py-5 text-right font-black text-sm text-emerald-600">
+                        {fmt(client.totalSpent, client.currency)}
+                      </td>
+                      <td className="px-8 py-5 text-right">
+                        <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase border ${badge.color}`}>
+                          {badge.label}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

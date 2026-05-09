@@ -1,7 +1,9 @@
 "use client";
 
 import React from 'react';
-import { Trophy, Globe, Search, ArrowUpRight } from 'lucide-react';
+import { Trophy, Globe, Search, ArrowUpRight, Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import EmptyAnalysisState from '@/components/dashboard/EmptyAnalysisState';
 
 const countries = [
   { id: 'CI', name: 'Côte d\'Ivoire', flag: '🇨🇮', code: 'CI', lang: 'fr', color: 'bg-orange-50/50 border-orange-200 text-orange-600' },
@@ -27,50 +29,74 @@ const countries = [
 ];
 
 export default function AnalyseConcurrentPage() {
-  const productName = "Brosse Soufflante 5-en-1";
-  const productEn = "5-in-1 Hair Dryer Brush";
+  const [loading, setLoading] = React.useState(true);
+  const [latestProduct, setLatestProduct] = React.useState<any>(null);
+
+  React.useEffect(() => {
+    async function fetchLatest() {
+      const { data } = await supabase.from('analyses').select('*').order('created_at', { ascending: false }).limit(1);
+      if (data && data[0]) setLatestProduct(data[0]);
+      setLoading(false);
+    }
+    fetchLatest();
+  }, []);
 
   const handleCountryClick = (country: typeof countries[0]) => {
-    const q = country.lang === 'en' ? encodeURIComponent(productEn) : encodeURIComponent(productName);
+    if (!latestProduct) return;
+    const q = encodeURIComponent(latestProduct.product_name);
     const url = `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=${country.code}&q=${q}&search_type=keyword_unordered&media_type=all`;
     window.open(url, '_blank');
   };
 
   return (
     <div className="max-w-7xl mx-auto pb-10 px-4 text-slate-800 dark:text-slate-100 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
-              <Trophy className="w-5 h-5 text-amber-600" />
-            </div>
-            <span className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em]">Veille Concurrentielle</span>
-          </div>
-          <h2 className="text-4xl font-black tracking-tighter">Analyse Concurrent</h2>
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-40">
+           <Loader2 className="w-10 h-10 animate-spin text-primary-500" />
         </div>
-      </div>
-
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[3.5rem] p-8 md:p-16 shadow-sm mb-12">
-        <h3 className="text-2xl font-black mb-12 tracking-tight text-center italic text-slate-400">Cliquez sur un pays pour ouvrir la bibliothèque publicitaire 🚀</h3>
-        
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 md:gap-8">
-          {countries.map((country, i) => (
-            <button 
-              key={i} 
-              onClick={() => handleCountryClick(country)}
-              className={`relative h-28 md:h-32 rounded-[2.5rem] p-6 flex flex-col items-center justify-center transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:scale-105 border-2 group ${country.color} animate-in zoom-in duration-300`}
-              style={{ animationDelay: `${i * 30}ms` }}
-            >
-              <div className="absolute top-2 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                <ArrowUpRight className="w-4 h-4" />
+      ) : !latestProduct ? (
+        <EmptyAnalysisState 
+          icon={<Trophy />} 
+          title="Analyse Concurrent" 
+          description="Vous devez analyser un produit stratégiquement avant de pouvoir espionner vos concurrents sur Facebook Ads." 
+        />
+      ) : (
+        <>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+                  <Trophy className="w-5 h-5 text-amber-600" />
+                </div>
+                <span className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em]">Veille Concurrentielle</span>
               </div>
-              <span className="text-4xl mb-2 group-hover:scale-110 transition-transform drop-shadow-sm">{country.flag}</span>
-              <h4 className="text-[10px] font-black uppercase tracking-widest">{country.name}</h4>
-              <span className="text-[8px] font-bold uppercase opacity-60 mt-1">{country.lang === 'fr' ? 'Français' : 'English'}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+              <h2 className="text-4xl font-black tracking-tighter">Analyse Concurrent : <span className="text-primary-600">{latestProduct.product_name}</span></h2>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[3.5rem] p-8 md:p-16 shadow-sm mb-12">
+            <h3 className="text-2xl font-black mb-12 tracking-tight text-center italic text-slate-400">Cliquez sur un pays pour ouvrir la bibliothèque publicitaire 🚀</h3>
+            
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 md:gap-8">
+              {countries.map((country, i) => (
+                <button 
+                  key={i} 
+                  onClick={() => handleCountryClick(country)}
+                  className={`relative h-28 md:h-32 rounded-[2.5rem] p-6 flex flex-col items-center justify-center transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:scale-105 border-2 group ${country.color} animate-in zoom-in duration-300`}
+                  style={{ animationDelay: `${i * 30}ms` }}
+                >
+                  <div className="absolute top-2 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <ArrowUpRight className="w-4 h-4" />
+                  </div>
+                  <span className="text-4xl mb-2 group-hover:scale-110 transition-transform drop-shadow-sm">{country.flag}</span>
+                  <h4 className="text-[10px] font-black uppercase tracking-widest">{country.name}</h4>
+                  <span className="text-[8px] font-bold uppercase opacity-60 mt-1">{country.lang === 'fr' ? 'Français' : 'English'}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

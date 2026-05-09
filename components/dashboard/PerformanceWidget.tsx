@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useStore } from '../StoreProvider';
-import { Trophy, Users, Bike, TrendingUp, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Trophy, Users, Bike, TrendingUp, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 export default function PerformanceWidget() {
@@ -18,37 +18,19 @@ export default function PerformanceWidget() {
     async function fetchPerformance() {
       setLoading(true);
       try {
-        let query = supabase.from('orders').select('*');
-        if (selectedStore !== 'ALL') {
-          query = query.eq('city', selectedStore === 'ABIDJAN' ? 'Abidjan' : selectedStore === 'DAKAR' ? 'Dakar' : 'Conakry');
-        }
-        const { data: orders, error } = await query;
-        if (error) throw error;
-
-        if (orders) {
-          // Tunnel Stats
-          const totalConfirmed = orders.filter(o => ['Confirmé', 'Livré', 'Annulé'].includes(o.status)).length;
-          const delivered = orders.filter(o => o.status === 'Livré').length;
-          const cancelled = orders.filter(o => o.status === 'Annulé').length;
-          const pending = orders.filter(o => o.status === 'En cours').length;
-          const deliveryRate = totalConfirmed > 0 ? Math.round((delivered / totalConfirmed) * 100) : 0;
-          const rtoRate = totalConfirmed > 0 ? Math.round((cancelled / totalConfirmed) * 100) : 0;
-
-          // Closers Leaderboard (Simulé pour l'instant car closer_id est UUID)
-          const closers = [
-            { name: 'Fatou Diop', confirmed: orders.filter(o => o.status === 'Confirmé').length, rate: '92%' },
-          ];
-
-          // Livreurs Leaderboard
-          const livreurs = [
-            { name: 'Ibrahim Touré', delivered: delivered, success: `${deliveryRate}%`, cash: new Intl.NumberFormat('fr-FR').format(orders.filter(o => o.status === 'Livré').reduce((acc, curr) => acc + parseInt(curr.price.replace(/\s/g, '')), 0)) },
-          ];
-
-          setData({
-            closers,
-            livreurs,
-            tunnel: { delivered: deliveryRate, rto: rtoRate, cancelled: 4, pending: pending, totalConfirmed: totalConfirmed }
-          });
+        // Fetch orders with user info
+        // Note: We use a join if possible, otherwise we'll map names locally if we have few users
+        const { data: orders, error } = await supabase
+          .from('orders')
+          .select('*, closer:User!orders_closer_id_fkey(name), livreur:User!orders_livreur_id_fkey(name)');
+        
+        if (error) {
+          // If the join fails due to complex RLS or relationship names, fallback to basic fetch
+          const { data: basicOrders, error: basicError } = await supabase.from('orders').select('*');
+          if (basicError) throw basicError;
+          processStats(basicOrders || []);
+        } else {
+          processStats(orders || []);
         }
       } catch (err) {
         console.error('Error fetching performance:', err);
@@ -56,14 +38,82 @@ export default function PerformanceWidget() {
         setLoading(false);
       }
     }
+
+    function processStats(orders: any[]) {
+      // Filtering by store
+      const filtered = selectedStore === 'ALL' 
+        ? orders 
+        : orders.filter(o => o.city === (selectedStore === 'ABIDJAN' ? 'Abidjan' : selectedStore === 'DAKAR' ? 'Dakar' : 'Conakry'));
+
+      // Tunnel Stats
+      const confirmedStatus = ['Confirmé', 'Livré', 'Annulé'];
+      const totalConfirmed = filtered.filter(o => confirmedStatus.includes(o.status)).length;
+      const delivered = filtered.filter(o => o.status === 'Livré').length;
+      const cancelled = filtered.filter(o => o.status === 'Annulé').length;
+      const pending = filtered.filter(o => o.status === 'A Confirmer').length;
+      
+      const deliveryRate = totalConfirmed > 0 ? Math.round((delivered / totalConfirmed) * 100) : 0;
+      const rtoRate = totalConfirmed > 0 ? Math.round((cancelled / totalConfirmed) * 100) : 0;
+
+      // Group Closers
+      const closerStats: any = {};
+      filtered.forEach(o => {
+        if (o.status === 'Confirmé' || o.status === 'Livré' || o.status === 'Annulé') {
+          const name = o.closer?.name || 'Closer Inconnu';
+          if (!closerStats[name]) closerStats[name] = { name, confirmed: 0, total: 0 };
+          closerStats[name].confirmed += (o.status === 'Confirmé' || o.status === 'Livré' ? 1 : 0);
+          closerStats[name].total += 1;
+        }
+      });
+      const closers = Object.values(closerStats)
+        .map((c: any) => ({ ...c, rate: c.total > 0 ? Math.round((c.confirmed / c.total) * 100) + '%' : '0%' }))
+        .sort((a, b) => parseInt(b.rate) - parseInt(a.rate))
+        .slice(0, 3);
+
+      // Group Livreurs
+      const livreurStats: any = {};
+      filtered.forEach(o => {
+        if (o.status === 'Livré' || o.status === 'Annulé') {
+          const name = o.livreur?.name || 'Livreur Inconnu';
+          if (!livreurStats[name]) livreurStats[name] = { name, delivered: 0, total: 0, cash: 0 };
+          if (o.status === 'Livré') {
+            livreurStats[name].delivered += 1;
+            livreurStats[name].cash += parseFloat(String(o.price || '0').replace(/\s/g, '')) || 0;
+          }
+          livreurStats[name].total += 1;
+        }
+      });
+      const livreurs = Object.values(livreurStats)
+        .map((l: any) => ({ 
+          ...l, 
+          success: l.total > 0 ? Math.round((l.delivered / l.total) * 100) + '%' : '0%',
+          cash: new Intl.NumberFormat('fr-FR').format(Math.round(l.cash))
+        }))
+        .sort((a, b) => parseInt(b.success) - parseInt(a.success))
+        .slice(0, 3);
+
+      setData({
+        closers: closers.length > 0 ? closers : [{ name: 'Aucun closer actif', confirmed: 0, rate: '0%' }],
+        livreurs: livreurs.length > 0 ? livreurs : [{ name: 'Aucun livreur actif', delivered: 0, success: '0%', cash: '0' }],
+        tunnel: { delivered: deliveryRate, rto: rtoRate, cancelled, pending, totalConfirmed }
+      });
+    }
+
     fetchPerformance();
   }, [selectedStore]);
 
+  if (loading) return (
+    <div className="py-20 flex justify-center items-center">
+      <Loader2 className="w-10 h-10 animate-spin text-primary-500" />
+    </div>
+  );
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-6 animate-in fade-in duration-500">
       {/* Closer Leaderboard */}
-      <div className="bg-white dark:bg-slate-900 rounded-[3rem] p-10 border-2 border-slate-100 dark:border-slate-800 shadow-sm">
-        <div className="flex items-center justify-between mb-8">
+      <div className="bg-white dark:bg-slate-900 rounded-[3rem] p-10 border-2 border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-primary-500/5 rounded-full -mr-24 -mt-24 transition-transform group-hover:scale-110"></div>
+        <div className="flex items-center justify-between mb-8 relative z-10">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-2xl">
               <Users className="w-6 h-6 text-primary-600" />
@@ -76,9 +126,9 @@ export default function PerformanceWidget() {
           <Trophy className="w-8 h-8 text-amber-400" />
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 relative z-10">
           {data.closers.map((closer: any, idx: number) => (
-            <div key={idx} className="flex items-center justify-between p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl group hover:bg-primary-50 transition-all duration-300">
+            <div key={idx} className="flex items-center justify-between p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl group hover:bg-primary-50 dark:hover:bg-primary-900/10 transition-all duration-300 border-2 border-transparent hover:border-primary-100">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-700 flex items-center justify-center font-black text-sm shadow-sm">
                   #{idx + 1}
@@ -98,8 +148,9 @@ export default function PerformanceWidget() {
       </div>
 
       {/* Livreur Leaderboard */}
-      <div className="bg-white dark:bg-slate-900 rounded-[3rem] p-10 border-2 border-slate-100 dark:border-slate-800 shadow-sm">
-        <div className="flex items-center justify-between mb-8">
+      <div className="bg-white dark:bg-slate-900 rounded-[3rem] p-10 border-2 border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/5 rounded-full -mr-24 -mt-24 transition-transform group-hover:scale-110"></div>
+        <div className="flex items-center justify-between mb-8 relative z-10">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl">
               <Bike className="w-6 h-6 text-emerald-600" />
@@ -112,9 +163,9 @@ export default function PerformanceWidget() {
           <TrendingUp className="w-8 h-8 text-emerald-500" />
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 relative z-10">
           {data.livreurs.map((livreur: any, idx: number) => (
-            <div key={idx} className="flex items-center justify-between p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl group hover:bg-emerald-50 transition-all duration-300">
+            <div key={idx} className="flex items-center justify-between p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl group hover:bg-emerald-50 dark:hover:bg-emerald-900/10 transition-all duration-300 border-2 border-transparent hover:border-emerald-100">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-700 flex items-center justify-center font-black text-sm shadow-sm">
                   #{idx + 1}
@@ -155,32 +206,32 @@ export default function PerformanceWidget() {
             </div>
             <div className="w-px h-12 bg-white/10 hidden md:block"></div>
             <div className="text-center">
-              <div className="text-3xl font-black text-red-500">{data.tunnel.cancelled}%</div>
+              <div className="text-3xl font-black text-red-500">{data.tunnel.cancelled}</div>
               <div className="text-[9px] font-black text-white/30 uppercase tracking-widest mt-1">Annulations</div>
             </div>
           </div>
         </div>
 
         <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
-          <div className="p-6 bg-white/5 rounded-[2rem] border border-white/10 flex items-center gap-4">
-             <div className="p-3 bg-emerald-500/20 rounded-xl"><CheckCircle2 className="w-6 h-6 text-emerald-400" /></div>
+          <div className="p-6 bg-white/5 rounded-[2rem] border border-white/10 flex items-center gap-4 group/item hover:bg-white/10 transition-colors">
+             <div className="p-3 bg-emerald-500/20 rounded-xl group-hover/item:scale-110 transition-transform"><CheckCircle2 className="w-6 h-6 text-emerald-400" /></div>
              <div>
                <div className="text-[10px] font-black text-white/40 uppercase tracking-widest">Confirmées</div>
                <div className="text-xl font-black">{data.tunnel.totalConfirmed}</div>
              </div>
           </div>
-          <div className="p-6 bg-white/5 rounded-[2rem] border border-white/10 flex items-center gap-4">
-             <div className="p-3 bg-amber-500/20 rounded-xl"><TrendingUp className="w-6 h-6 text-amber-400" /></div>
+          <div className="p-6 bg-white/5 rounded-[2rem] border border-white/10 flex items-center gap-4 group/item hover:bg-white/10 transition-colors">
+             <div className="p-3 bg-amber-500/20 rounded-xl group-hover/item:scale-110 transition-transform"><TrendingUp className="w-6 h-6 text-amber-400" /></div>
              <div>
                <div className="text-[10px] font-black text-white/40 uppercase tracking-widest">En cours</div>
                <div className="text-xl font-black">{data.tunnel.pending}</div>
              </div>
           </div>
-          <div className="p-6 bg-white/5 rounded-[2rem] border border-white/10 flex items-center gap-4">
-             <div className="p-3 bg-red-500/20 rounded-xl"><AlertCircle className="w-6 h-6 text-red-400" /></div>
+          <div className="p-6 bg-white/5 rounded-[2rem] border border-white/10 flex items-center gap-4 group/item hover:bg-white/10 transition-colors">
+             <div className="p-3 bg-red-500/20 rounded-xl group-hover/item:scale-110 transition-transform"><AlertCircle className="w-6 h-6 text-red-400" /></div>
              <div>
-               <div className="text-[10px] font-black text-white/40 uppercase tracking-widest">Problèmes</div>
-               <div className="text-xl font-black">0</div>
+               <div className="text-[10px] font-black text-white/40 uppercase tracking-widest">Annulées</div>
+               <div className="text-xl font-black">{data.tunnel.cancelled}</div>
              </div>
           </div>
         </div>

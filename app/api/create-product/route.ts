@@ -52,11 +52,6 @@ export async function POST(req: Request) {
       }
     );
 
-    if (!response.ok) {
-      const errorData = await response.text();
-      console.error('[create-product] Shopify error:', errorData);
-      throw new Error(`Shopify API Error ${response.status}: ${errorData}`);
-    }
 
     const data = await response.json();
     const shopifyProduct = data.product;

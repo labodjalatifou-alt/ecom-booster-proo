@@ -1,21 +1,65 @@
 "use client";
 
-import React from 'react';
-import { Bell, CheckCircle2, Truck, AlertTriangle, UserPlus, ShoppingCart, Clock, ArrowRight } from 'lucide-react';
-import DatePicker from '@/components/DatePicker';
+import React, { useEffect, useState } from 'react';
+import { Bell, CheckCircle2, Truck, ShoppingCart, Clock, ArrowRight, Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { formatDistanceToNow } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 export default function NotificationsPage() {
-  const notifications = [
-    { id: 1, type: 'order', title: 'Nouvelle Commande #CMD-1048', desc: 'Amina Diaby vient de commander une Brosse Soufflante.', time: 'il y a 2 min', icon: ShoppingCart, color: 'text-primary-600', bg: 'bg-primary-50' },
-    { id: 2, type: 'closer', title: 'Commande Confirmée', desc: 'Le closer Fatou Diop a confirmé la commande #CMD-1042.', time: 'il y a 15 min', icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { id: 3, type: 'delivery', title: 'Colis Livré !', desc: 'Le livreur Moussa a livré avec succès le colis #LIV-1042.', time: 'il y a 1h', icon: Truck, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { id: 4, type: 'stock', title: 'Alerte Rupture', desc: 'Le stock de "Sac à Main Cuir" est épuisé.', time: 'il y a 3h', icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-50' },
-    { id: 5, type: 'team', title: 'Nouvel Accès Créé', desc: 'Un accès Closer a été créé pour jean@ecom.com.', time: 'Hier', icon: UserPlus, color: 'text-purple-600', bg: 'bg-purple-50' },
-  ];
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchNotifs() {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .order('updated_at', { ascending: false })
+        .limit(20);
+
+      if (!error && data && data.length > 0) {
+        const mapped = data.map((order: any) => {
+          let title = `Commande #${String(order.shopify_id || order.id).slice(-4)}`;
+          let desc = `${order.customer} a passé une commande.`;
+          let icon = ShoppingCart;
+          let color = 'text-primary-600';
+          let bg = 'bg-primary-50 dark:bg-primary-900/20';
+
+          if (order.status === 'Livré') {
+            title = 'Colis Livré !';
+            desc = `La commande de ${order.customer} a été livrée avec succès.`;
+            icon = Truck;
+            color = 'text-emerald-600';
+            bg = 'bg-emerald-50 dark:bg-emerald-900/20';
+          } else if (order.status === 'Confirmé') {
+            title = 'Commande Confirmée';
+            desc = `La commande de ${order.customer} a été validée par le closer.`;
+            icon = CheckCircle2;
+            color = 'text-blue-600';
+            bg = 'bg-blue-50 dark:bg-blue-900/20';
+          }
+
+          return {
+            id: order.id,
+            title,
+            desc,
+            time: formatDistanceToNow(new Date(order.updated_at || order.created_at), { addSuffix: true, locale: fr }),
+            icon,
+            color,
+            bg
+          };
+        });
+        setNotifications(mapped);
+      }
+      setLoading(false);
+    }
+    fetchNotifs();
+  }, []);
 
   return (
-    <div className="max-w-4xl mx-auto pb-10 px-4 text-slate-800 dark:text-slate-100 animate-in fade-in slide-in-from-bottom-6 duration-700">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+    <div className="max-w-4xl mx-auto pb-10 px-4 text-slate-800 dark:text-slate-100 animate-in fade-in duration-500">
+      <div className="flex items-end justify-between gap-6 mb-12">
         <div>
           <div className="flex items-center gap-2 mb-2">
             <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
@@ -25,37 +69,45 @@ export default function NotificationsPage() {
           </div>
           <h2 className="text-4xl font-black tracking-tighter">Notifications</h2>
         </div>
-        <DatePicker />
       </div>
 
-      <div className="space-y-4">
-        {notifications.map((notif, i) => (
-          <div key={notif.id} className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-6 rounded-[2rem] shadow-sm hover:shadow-xl hover:border-primary-500/20 transition-all duration-300 group cursor-pointer animate-in fade-in slide-in-from-left-4" style={{ animationDelay: `${i * 100}ms` }}>
-            <div className="flex items-start gap-6">
-              <div className={`w-14 h-14 rounded-2xl ${notif.bg} dark:bg-slate-800 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
-                <notif.icon className={`w-7 h-7 ${notif.color}`} />
-              </div>
-              <div className="flex-1">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-                  <h3 className="text-base font-black tracking-tight">{notif.title}</h3>
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5 whitespace-nowrap">
-                    <Clock className="w-3 h-3" /> {notif.time}
-                  </span>
+      <div className="space-y-3">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-40">
+            <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
+          </div>
+        ) : notifications.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-40 gap-4 text-slate-300">
+            <Bell className="w-10 h-10" />
+            <p className="text-[10px] font-black uppercase tracking-widest">Aucune notification pour le moment</p>
+          </div>
+        ) : (
+          notifications.map((notif, i) => (
+            <div
+              key={notif.id}
+              className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-5 rounded-2xl shadow-sm hover:shadow-lg hover:border-primary-500/20 transition-all duration-300 group cursor-pointer animate-in fade-in slide-in-from-left-4"
+              style={{ animationDelay: `${i * 80}ms` }}
+            >
+              <div className="flex items-start gap-4">
+                <div className={`w-10 h-10 rounded-xl ${notif.bg} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
+                  <notif.icon className={`w-5 h-5 ${notif.color}`} />
                 </div>
-                <p className="text-sm font-bold text-slate-500 italic mb-4">{notif.desc}</p>
-                <button className="flex items-center gap-2 text-[10px] font-black text-primary-600 uppercase tracking-widest group/btn hover:translate-x-2 transition-transform">
-                  Voir les détails <ArrowRight className="w-3 h-3" />
-                </button>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <h3 className="text-sm font-black tracking-tight">{notif.title}</h3>
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1 shrink-0">
+                      <Clock className="w-3 h-3" /> {notif.time}
+                    </span>
+                  </div>
+                  <p className="text-[11px] font-bold text-slate-500 italic mb-3">{notif.desc}</p>
+                  <button className="flex items-center gap-1.5 text-[9px] font-black text-primary-600 uppercase tracking-widest hover:translate-x-1 transition-transform">
+                    Voir <ArrowRight className="w-3 h-3" />
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-12 text-center">
-        <button className="px-10 py-5 bg-slate-100 dark:bg-slate-800 rounded-3xl text-xs font-black uppercase tracking-widest text-slate-600 dark:text-slate-400 hover:bg-slate-200 transition-all active:scale-95">
-          Charger plus de notifications
-        </button>
+          ))
+        )}
       </div>
     </div>
   );

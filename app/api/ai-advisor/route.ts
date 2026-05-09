@@ -19,7 +19,7 @@ export async function POST(req: Request) {
 
     // 2. Appeler Claude
     const message = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20240620',
+      model: 'claude-3-5-sonnet-latest',
       max_tokens: 1024,
       system: "Tu es l'expert stratégique d'Ecom Booster Pro, spécialiste du E-commerce en Afrique de l'Ouest (Côte d'Ivoire, Sénégal, Guinée). Ton rôle est d'analyser les produits et les données de vente pour maximiser les profits. Tu maîtrises le neuromarketing, la psychologie d'achat locale, et les spécificités du Cash on Delivery. Réponds toujours de manière structurée et actionnable.",
       messages: [
