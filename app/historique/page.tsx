@@ -28,14 +28,21 @@ export default function HistoriquePage() {
   }
 
   const handleClearHistory = async () => {
-    if (!confirm("⚠️ Voulez-vous vraiment supprimer tout l'historique d'analyse ? Cette action est irréversible et réinitialisera toutes les pages (Shopify, Concurrent, etc.).")) return;
+    if (!confirm("⚠️ Action Irréversible ! Voulez-vous vraiment supprimer tout l'historique et les données de test ?")) return;
     
     setLoading(true);
     try {
-      const { error } = await supabase.from('analyses').delete().neq('id', '0'); // Delete all
-      if (error) throw error;
+      // Nettoyer les analyses
+      const { error: err1 } = await supabase.from('analyses').delete().neq('id', '0');
+      if (err1) throw err1;
+
+      // Nettoyer les commandes de test (Latifou Labodja)
+      const { error: err2 } = await supabase.from('orders').delete().ilike('customer', '%latifou labodja%');
+      if (err2) throw err2;
+
       setAnalyses([]);
-      toast.success("Historique vidé ! Toutes les pages sont désormais réinitialisées.");
+      toast.success("Base de données nettoyée ! Tout est à zéro.");
+      fetchAnalyses();
     } catch (err: any) {
       toast.error("Erreur : " + err.message);
     } finally {
