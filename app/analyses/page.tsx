@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Bot, Sparkles, Loader2, Send, Zap, Globe, DollarSign, UserSquare2, Megaphone, Mic, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Bot, Sparkles, Loader2, Send, Zap, Globe, DollarSign, User, Megaphone, Mic, CheckCircle2, ArrowRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
@@ -123,7 +123,7 @@ export default function AnalysesPage() {
           <Link href="/avatar" className="bg-white dark:bg-slate-900 p-8 rounded-[3rem] border-2 border-slate-100 hover:border-primary-500 transition-all group">
             <div className="flex justify-between items-start mb-6">
               <div className="p-4 bg-blue-100 text-blue-600 rounded-2xl group-hover:rotate-6 transition-transform">
-                <UserSquare2 className="w-6 h-6" />
+                <User className="w-6 h-6" />
               </div>
               <div className="text-right">
                 <span className="text-[10px] font-black text-slate-400 uppercase">Cible</span>

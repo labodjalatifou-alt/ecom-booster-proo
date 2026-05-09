@@ -11,6 +11,7 @@ import {
   Bot,
   Tags,
   UserSquare2,
+  User,
   Users,
   Megaphone,
   Store,
@@ -24,7 +25,6 @@ import {
   Package,
   Calculator,
   Contact,
-  UsersRound,
   Bell,
   Link as LinkIcon,
   Moon,
@@ -50,7 +50,7 @@ const menuGroups = [
     items: [
       { name: 'Analyse', icon: Bot, href: '/analyses' },
       { name: 'Score et Prix', icon: Tags, href: '/score-et-prix' },
-      { name: 'Avatar', icon: UserSquare2, href: '/avatar' },
+      { name: 'Avatar', icon: User, href: '/avatar' },
       { name: 'Analyse Concurrent', icon: Trophy, href: '/analyse-concurrent' },
       { name: 'Page Shopify', icon: Store, href: '/page-shopify' },
     ]
@@ -76,7 +76,7 @@ const menuGroups = [
   {
     title: 'ADMINISTRATION',
     items: [
-      { name: 'Équipe', icon: UsersRound, href: '/equipe' },
+      { name: 'Équipe', icon: Users, href: '/equipe' },
       { name: 'Boutique', icon: Store, href: '/boutiques' },
       { name: 'Notification', icon: Bell, href: '/notifications' },
     ]

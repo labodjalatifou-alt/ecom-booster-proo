@@ -114,17 +114,16 @@ model Product {
 }
 
 model ProductAnalysis {
-  id                  String   @id @default(cuid())
-  productName         String
-  score               Int
-  priceRecommendation String
-  customerAvatar      Json
-  shopifyPageContent  Json
-  facebookAdContent   Json
-  voiceOverScript     String
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id                   String   @id @default(cuid())
+  product_name         String
+  score                Int
+  price_recommendation String
+  customer_avatar      Json
+  shopify_page_content Json
+  facebook_ad_content  Json
+  voiceover_script     String
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
 
   @@map("analyses")
-  @@schema("public")
 }
