@@ -11,8 +11,8 @@ export default function CommandesPage() {
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [liveCount, setLiveCount] = useState(0);
 
-  async function fetchOrders() {
-    setLoading(true);
+  async function fetchOrders(silent = false) {
+    if (!silent) setLoading(true);
     const { data, error } = await supabase
       .from('orders')
       .select('*')
@@ -21,7 +21,7 @@ export default function CommandesPage() {
       setOrders(data);
       setLiveCount(data.length);
     }
-    setLoading(false);
+    if (!silent) setLoading(false);
   }
 
   useEffect(() => {
@@ -31,7 +31,7 @@ export default function CommandesPage() {
     const channel = supabase
       .channel('orders-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
-        fetchOrders();
+        fetchOrders(true);
       })
       .subscribe();
 

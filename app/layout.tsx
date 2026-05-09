@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { SidebarProvider } from "@/components/SidebarProvider";
 import { StoreProvider } from "@/components/StoreProvider";
 import { Toaster } from 'react-hot-toast';
+import RealtimeNotifications from "@/components/RealtimeNotifications";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -27,6 +28,7 @@ export default function RootLayout({
           <StoreProvider>
             <SidebarProvider>
               <Toaster position="top-right" />
+            <RealtimeNotifications />
             <div className="flex min-h-screen">
               <Sidebar />
               {/* Overlay for mobile when sidebar is open */}

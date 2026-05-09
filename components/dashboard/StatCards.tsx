@@ -20,8 +20,8 @@ export default function StatCards() {
   const [period, setPeriod] = useState('ALL'); // TODAY, YESTERDAY, 30D, 90D, ALL
 
   useEffect(() => {
-    async function fetchMetrics() {
-      setLoading(true);
+    async function fetchMetrics(silent = false) {
+      if (!silent) setLoading(true);
       try {
         let query = supabase.from('orders').select('*');
         
@@ -72,7 +72,7 @@ export default function StatCards() {
       } catch (err) {
         console.error('Error fetching metrics:', err);
       } finally {
-        setLoading(false);
+        if (!silent) setLoading(false);
       }
     }
 
@@ -82,12 +82,10 @@ export default function StatCards() {
     const channel = supabase
       .channel('schema-db-changes')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, () => {
-        playKaching();
-        toast.success("Nouvelle commande Shopify !", { icon: '💰' });
-        fetchMetrics();
+        fetchMetrics(true);
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, () => {
-        fetchMetrics();
+        fetchMetrics(true);
       })
       .subscribe();
 
