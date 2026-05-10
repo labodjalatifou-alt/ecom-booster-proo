@@ -66,7 +66,9 @@ async function main() {
     await prisma.$executeRawUnsafe(`ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "cash_received" BOOLEAN DEFAULT false;`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "closerId" TEXT;`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "livreurId" TEXT;`);
-    console.log("Added cash_received, closerId, livreurId to orders.");
+    await prisma.$executeRawUnsafe(`ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "delivery_fee_included" BOOLEAN DEFAULT false;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "delivery_fee" INTEGER DEFAULT 0;`);
+    console.log("Added cash_received, closerId, livreurId, delivery_fee_included, delivery_fee to orders.");
   } catch (e) {
     console.error("Error adding extra order columns:", e.message);
   }

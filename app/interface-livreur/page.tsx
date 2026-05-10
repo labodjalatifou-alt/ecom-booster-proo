@@ -19,8 +19,10 @@ export default function InterfaceLivreurPage() {
   const [period, setPeriod] = useState<Period>('ALL');
   
   const [showCollectionModal, setShowCollectionModal] = useState(false);
-  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
-  const [collectionAmount, setCollectionAmount] = useState<string>('');
+  const [selectedOrderId, setSelectedOrderId] = useState<any>(null);
+  const [collectionAmount, setCollectionAmount] = useState('');
+  const [deliveryFee, setDeliveryFee] = useState('0');
+  const [isDeliveryFeeIncluded, setIsDeliveryFeeIncluded] = useState(false);
 
   function getDateRange(p: Period): { from: string | null; to: string | null } {
     const now = new Date();
@@ -90,9 +92,11 @@ export default function InterfaceLivreurPage() {
     return true;
   });
 
-  const openCollectionModal = (orderId: string, defaultAmount: string) => {
+  const openCollectionModal = (orderId: any, price: any) => {
     setSelectedOrderId(orderId);
-    setCollectionAmount(String(defaultAmount || '0').replace(/\s/g, ''));
+    setCollectionAmount(String(price).replace(/\s/g, '').replace(/[^\d]/g, ''));
+    setDeliveryFee('0');
+    setIsDeliveryFeeIncluded(false);
     setShowCollectionModal(true);
   };
 
@@ -100,12 +104,15 @@ export default function InterfaceLivreurPage() {
     if (!selectedOrderId) return;
     
     const amount = parseInt(collectionAmount) || 0;
+    const fee = parseInt(deliveryFee) || 0;
     
     const { error } = await supabase
       .from('orders')
       .update({ 
         status: 'Livré',
-        cash_collected: amount
+        cash_collected: amount,
+        delivery_fee: fee,
+        delivery_fee_included: isDeliveryFeeIncluded
       })
       .eq('id', selectedOrderId);
 
@@ -340,6 +347,38 @@ export default function InterfaceLivreurPage() {
                   <div className="absolute right-6 top-1/2 -translate-y-1/2 font-black text-slate-400">{currency}</div>
                 </div>
               </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Frais de livraison</label>
+                  <input
+                    type="number"
+                    value={deliveryFee}
+                    onChange={(e) => setDeliveryFee(e.target.value)}
+                    className="w-full p-4 mt-2 bg-slate-50 dark:bg-slate-800 rounded-2xl border-none font-black text-lg outline-none focus:ring-4 focus:ring-blue-500/10"
+                    placeholder="0"
+                  />
+                </div>
+                <div className="flex flex-col justify-end">
+                  <label className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-all">
+                    <input
+                      type="checkbox"
+                      checked={isDeliveryFeeIncluded}
+                      onChange={(e) => setIsDeliveryFeeIncluded(e.target.checked)}
+                      className="w-5 h-5 rounded-md border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                    />
+                    <span className="text-[10px] font-black text-slate-500 uppercase leading-tight">Inclus dans le total</span>
+                  </label>
+                </div>
+              </div>
+
+              {isDeliveryFeeIncluded && (
+                <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-2xl border border-amber-100 dark:border-amber-800/50">
+                  <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400">
+                    💡 Les {new Intl.NumberFormat('fr-FR').format(parseInt(deliveryFee) || 0)} {currency} seront déduits du CA net.
+                  </p>
+                </div>
+              )}
 
               <button 
                 onClick={handleCollectionSubmit}

@@ -4,10 +4,11 @@ import React, { useEffect, useState } from 'react';
 import { Calculator, TrendingUp, TrendingDown, DollarSign, Target, Wallet, BarChart3, ArrowUpRight, ArrowDownRight, PieChart, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useStore } from '@/components/StoreProvider';
+import TeamEarnings from '@/components/dashboard/TeamEarnings';
 
 function parsePrice(val: any): number {
   if (!val) return 0;
-  const str = String(val).replace(/\s/g, '').replace(/[^\d.,]/g, '').replace(',', '.');
+  const str = String(val).replace(/\s/g, '').replace(/[^\\d.,]/g, '').replace(',', '.');
   return parseFloat(str) || 0;
 }
 
@@ -16,8 +17,12 @@ export default function ComptabilitePage() {
   const [loading, setLoading] = useState(true);
   const [revenue, setRevenue] = useState(0);
   const [deliveredCount, setDeliveredCount] = useState(0);
+  const [confirmedCount, setConfirmedCount] = useState(0);
   const [pendingRevenue, setPendingRevenue] = useState(0);
   const [cancelledCount, setCancelledCount] = useState(0);
+
+  const COMMISSION_CLOSER = 500;
+  const COMMISSION_LIVREUR = 1000;
 
   useEffect(() => {
     async function fetchData() {
@@ -28,11 +33,13 @@ export default function ComptabilitePage() {
 
         if (!error && data) {
           const delivered = data.filter(o => o.status === 'Livré');
+          const confirmed = data.filter(o => o.status === 'Confirmé' || o.status === 'Livré');
           const pending = data.filter(o => o.status === 'Confirmé');
           const cancelled = data.filter(o => o.status === 'Annulé');
 
           setRevenue(delivered.reduce((acc, o) => acc + parsePrice(o.price), 0));
           setDeliveredCount(delivered.length);
+          setConfirmedCount(confirmed.length);
           setPendingRevenue(pending.reduce((acc, o) => acc + parsePrice(o.price), 0));
           setCancelledCount(cancelled.length);
         }
@@ -46,6 +53,11 @@ export default function ComptabilitePage() {
   }, []);
 
   const fmt = (n: number) => new Intl.NumberFormat('fr-FR').format(Math.round(n));
+
+  const totalCommCloser = confirmedCount * COMMISSION_CLOSER;
+  const totalCommLivreur = deliveredCount * COMMISSION_LIVREUR;
+  const totalCommissions = totalCommCloser + totalCommLivreur;
+  const netProfit = revenue - totalCommissions;
 
   const stats = [
     {
@@ -67,15 +79,15 @@ export default function ComptabilitePage() {
     {
       label: "Livraisons Annulées",
       val: `${cancelledCount} colis`,
-      sub: 'Non récupérés',
+      sub: 'Non récupérées',
       icon: TrendingDown,
       color: 'amber',
       trend: 'down'
     },
     {
-      label: "Profit Estimé",
-      val: `${fmt(revenue)} ${currency}`,
-      sub: 'Sur colis livrés',
+      label: "Profit Net",
+      val: `${fmt(netProfit)} ${currency}`,
+      sub: `Après commissions (${fmt(totalCommissions)})`,
       icon: TrendingUp,
       color: 'purple',
       trend: 'up'
@@ -132,6 +144,11 @@ export default function ComptabilitePage() {
             ))}
           </div>
 
+          {/* Team Earnings Widget */}
+          <div className="mb-10">
+            <TeamEarnings />
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Barres */}
             <div className="lg:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-9 shadow-sm">
@@ -148,8 +165,10 @@ export default function ComptabilitePage() {
               ) : (
                 <div className="space-y-6">
                   {[
-                    { label: "Revenus Livrés", val: revenue, max: revenue + pendingRevenue, color: 'bg-emerald-500' },
-                    { label: "Revenus En Attente", val: pendingRevenue, max: revenue + pendingRevenue, color: 'bg-blue-500' },
+                    { label: "Revenus Livrés", val: revenue, max: revenue + pendingRevenue + totalCommissions, color: 'bg-emerald-500' },
+                    { label: "Revenus En Attente", val: pendingRevenue, max: revenue + pendingRevenue + totalCommissions, color: 'bg-blue-500' },
+                    { label: "Commissions Closer", val: totalCommCloser, max: revenue + pendingRevenue + totalCommissions, color: 'bg-amber-500' },
+                    { label: "Commissions Livreur", val: totalCommLivreur, max: revenue + pendingRevenue + totalCommissions, color: 'bg-indigo-500' },
                   ].map((item, i) => {
                     const pct = item.max > 0 ? Math.round((item.val / item.max) * 100) : 0;
                     return (
@@ -181,6 +200,8 @@ export default function ComptabilitePage() {
                 {[
                   { label: 'CA Total (Livré)', val: `${fmt(revenue)} ${currency}`, color: 'text-emerald-400' },
                   { label: 'En Attente', val: `${fmt(pendingRevenue)} ${currency}`, color: 'text-blue-400' },
+                  { label: 'Commission Closer', val: `-${fmt(totalCommCloser)} ${currency}`, color: 'text-amber-400' },
+                  { label: 'Commission Livreur', val: `-${fmt(totalCommLivreur)} ${currency}`, color: 'text-indigo-400' },
                   { label: 'Colis Livrés', val: `${deliveredCount}`, color: 'text-white' },
                   { label: 'Annulés', val: `${cancelledCount}`, color: 'text-red-400' },
                 ].map((item, i) => (
@@ -191,7 +212,10 @@ export default function ComptabilitePage() {
                 ))}
 
                 <div className="pt-5 border-t border-white/10">
-                  <p className="text-[9px] font-black text-white/40 uppercase tracking-widest mb-2">Conseil</p>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Profit Net</span>
+                    <span className="text-lg font-black text-emerald-400">{fmt(netProfit)} {currency}</span>
+                  </div>
                   <p className="text-[11px] font-bold text-white/70 italic leading-relaxed">
                     {deliveredCount === 0
                       ? "Dès que les premières livraisons sont effectuées, vos stats apparaîtront ici."
@@ -202,8 +226,6 @@ export default function ComptabilitePage() {
               </div>
             </div>
           </div>
-        </>
-      )}
     </div>
   );
 }
