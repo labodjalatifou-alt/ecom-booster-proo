@@ -75,7 +75,6 @@ const menuGroups = [
     items: [
       { name: 'Gestion Équipe', icon: Users, href: '/equipe' },
       { name: 'Mes Boutiques', icon: Store, href: '/boutiques' },
-      { name: 'Base Clients', icon: User, href: '/clients' },
       { name: 'Notifications', icon: Bell, href: '/notifications' },
     ]
   }
