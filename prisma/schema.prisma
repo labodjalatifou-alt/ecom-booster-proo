@@ -20,16 +20,12 @@ model Store {
   // Relations
   orders          Order[]
   users           UserStore[]
-
-
 }
 
 enum Role {
   ADMIN
   CLOSER
   LIVREUR
-
-
 }
 
 model User {
@@ -44,8 +40,6 @@ model User {
   stores        UserStore[]
   assignedOrders Order[] @relation("CloserOrders")
   deliveryOrders Order[] @relation("LivreurOrders")
-
-
 }
 
 model UserStore {
@@ -55,7 +49,6 @@ model UserStore {
   store    Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   @@id([userId, storeId])
-
 }
 
 model Order {
@@ -68,6 +61,7 @@ model Order {
   customerPhone   String   @map("phone")
   product         String
   price           String?  @map("price")
+  currency        String   @default("FCFA")
   status          String   @default("A Confirmer")
   city            String?
   cashReceived    Boolean  @default(false) @map("cash_received")
@@ -82,7 +76,6 @@ model Order {
   updatedAt       DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@map("orders")
-
 }
 
 enum OrderStatus {
@@ -92,8 +85,6 @@ enum OrderStatus {
   DELIVERED    // Livré
   RETURNED     // Retour
   FAILED       // Échec
-
-
 }
 
 model Product {
@@ -110,7 +101,6 @@ model Product {
   updatedAt     DateTime @updatedAt
 
   @@map("products")
-
 }
 
 model ProductAnalysis {

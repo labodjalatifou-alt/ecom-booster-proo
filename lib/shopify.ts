@@ -1,0 +1,158 @@
+// lib/shopify.ts
+// Client Shopify pour les composants Next.js
+// Appelle /api/shopify (sécurisé) — jamais directement l'API Shopify depuis le frontend
+
+export interface ShopifyOrder {
+  id: number
+  order_number: number
+  email: string
+  created_at: string
+  total_price: string
+  currency: string
+  financial_status: string
+  fulfillment_status: string | null
+  tags: string
+  note: string
+  test: boolean
+  payment_gateway: string
+  customer?: {
+    first_name?: string
+    last_name?: string
+    phone?: string
+    email?: string
+  }
+  shipping_address?: {
+    address1?: string
+    city?: string
+    province?: string
+    country?: string
+    phone?: string
+  }
+  billing_address?: {
+    phone?: string
+  }
+  line_items: Array<{
+    title: string
+    quantity: number
+    price: string
+  }>
+}
+
+async function callShopify(action: string, extra: Record<string, any> = {}) {
+  const res = await fetch('/api/shopify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action, ...extra }),
+  })
+
+  if (!res.ok) {
+    const err = await res.json()
+    throw new Error(err.error || `Erreur Shopify: ${res.status}`)
+  }
+
+  return res.json()
+}
+
+// ── Récupérer TOUTES les commandes (pagination automatique) ──
+export async function importerToutesLesCommandes(
+  onProgress?: (count: number) => void
+): Promise<ShopifyOrder[]> {
+  let allOrders: ShopifyOrder[] = []
+  let sinceId: number | null = null
+  let page = 1
+
+  while (page <= 20) { // max 5000 commandes
+    const data = await callShopify('get_orders', sinceId ? { since_id: sinceId } : {})
+
+    if (!data.orders || data.orders.length === 0) break
+
+    allOrders = allOrders.concat(data.orders)
+    onProgress?.(allOrders.length)
+
+    if (data.orders.length < 250) break // Dernière page
+
+    // Pagination par since_id
+    sinceId = data.orders[data.orders.length - 1].id
+    page++
+  }
+
+  return allOrders
+}
+
+// ── Convertir commande Shopify → format app ─────────────────
+export function shopifyOrderToCommande(order: ShopifyOrder, currency: string = 'GNF') {
+  const addr = order.shipping_address || order.billing_address || {}
+  const items = order.line_items || []
+
+  const produit = items.length > 1
+    ? items.map(i => `${i.title} x${i.quantity}`).join(' + ')
+    : (items[0]?.title || 'Produit')
+
+  return {
+    id: `SHP${order.id}`,
+    shopify_id: String(order.id),
+    client: [order.customer?.first_name, order.customer?.last_name].filter(Boolean).join(' ') || order.email || 'Client',
+    phone: order.customer?.phone || (addr as any).phone || order.billing_address?.phone || '—',
+    adresse: [(addr as any).address1, (addr as any).city, (addr as any).province, (addr as any).country].filter(Boolean).join(', ') || '—',
+    produit,
+    quantite: items.reduce((s, i) => s + i.quantity, 0),
+    montant: Math.round(parseFloat(order.total_price || '0')),
+    currency,
+    statut: order.fulfillment_status === 'fulfilled' ? 'delivered'
+      : order.financial_status === 'paid' ? 'confirmed'
+      : 'pending',
+    date: order.created_at,
+    source: 'shopify',
+    shopify_order_number: order.order_number,
+    email: order.email || '',
+    note: order.note || '',
+    tags: order.tags || '',
+    cod: !!(
+      order.tags?.toLowerCase().includes('cod') ||
+      order.payment_gateway?.toLowerCase().includes('easysell') ||
+      order.payment_gateway?.toLowerCase().includes('cash') ||
+      order.financial_status === 'pending'
+    ),
+    test: order.test || false,
+    closer_id: null,
+    livreur_id: null,
+  }
+}
+
+// ── Récupérer les produits actifs ────────────────────────────
+export async function importerProduitsActifs() {
+  const data = await callShopify('get_products')
+  return data.products || []
+}
+
+// ── Info boutique ────────────────────────────────────────────
+export async function getShopInfo() {
+  const data = await callShopify('get_shop')
+  return data.shop
+}
+
+// ── Créer un produit depuis l'analyse IA ─────────────────────
+export async function creerProduitShopify(params: {
+  title: string
+  body_html: string
+  price: number
+  quantity?: number
+  tags?: string
+  status?: 'draft' | 'active'
+}) {
+  const data = await callShopify('create_product', {
+    body: {
+      title: params.title,
+      body_html: params.body_html,
+      status: params.status || 'draft',
+      tags: params.tags || '',
+      variants: [{
+        price: String(params.price),
+        inventory_quantity: params.quantity || 10,
+        inventory_management: 'shopify',
+        requires_shipping: true,
+      }]
+    }
+  })
+  return data.product
+}

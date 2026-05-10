@@ -132,7 +132,7 @@ export default function StatCards() {
 
   async function syncShopify() {
     toast.promise(
-      fetch('/api/sync-shopify').then(res => res.json()),
+      fetch(`/api/sync-shopify?store=${selectedStore}`).then(res => res.json()),
       {
         loading: 'Synchronisation Shopify...',
         success: (data) => `Synchronisé : ${data.count} commandes !`,

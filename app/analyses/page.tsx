@@ -72,14 +72,22 @@ Réponds UNIQUEMENT en JSON valide :
       });
 
       const data = await res.json();
-      if (data.error) throw new Error(data.error);
+      if (data.error) {
+        console.error('[Claude API Error]', data.detail);
+        throw new Error(`${data.error} ${data.detail || ''}`);
+      }
+
+      console.log('[Claude Response]', data.text);
 
       let result;
       try {
+        // Recherche plus robuste du JSON
         const jsonMatch = data.text.match(/\{[\s\S]*\}/);
-        result = JSON.parse(jsonMatch ? jsonMatch[0] : data.text);
-      } catch {
-        throw new Error("Erreur de formatage IA. Réessayez.");
+        const jsonStr = jsonMatch ? jsonMatch[0] : data.text;
+        result = JSON.parse(jsonStr);
+      } catch (parseErr) {
+        console.error('[JSON Parse Error]', parseErr);
+        throw new Error("Format IA invalide. Essayez de simplifier la description.");
       }
 
       setAnalysisResult(result);

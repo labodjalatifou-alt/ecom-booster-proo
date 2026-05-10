@@ -1,19 +1,20 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
-/** Extrait la ville réelle de l'adresse Shopify */
-function resolveCity(order: any): string {
+function resolveCity(order: any, storeCode: string | null): string {
+  if (storeCode === 'ABIDJAN') return 'Abidjan';
+  if (storeCode === 'DAKAR') return 'Dakar';
+  if (storeCode === 'CONAKRY') return 'Conakry';
+
   const shipping = order.shipping_address;
   const billing = order.billing_address;
   const addr = shipping || billing;
 
   if (!addr) return 'Ville inconnue';
 
-  // Utilise city + province pour une identification précise
   const city = (addr.city || '').trim();
   const province = (addr.province || '').trim();
 
-  // Retourne ville réelle + province si différents (évite les doublons)
   if (city && province && city.toLowerCase() !== province.toLowerCase()) {
     return `${city}, ${province}`;
   }
@@ -47,7 +48,10 @@ function resolveStatus(order: any): string {
   return 'A Confirmer';
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const storeCode = searchParams.get('store');
+
   const shopifyUrl = process.env.SHOPIFY_STORE_URL;
   const accessToken = process.env.SHOPIFY_ACCESS_TOKEN;
 
@@ -87,7 +91,7 @@ export async function GET() {
     }
 
     const ordersToInsert = allOrders.map((order: any) => {
-      const city = resolveCity(order);
+      const city = resolveCity(order, storeCode);
       const phone = resolvePhone(order);
       const rawPrice = parseFloat(order.total_price || '0');
       const currency = resolveCurrency(city);
@@ -103,8 +107,8 @@ export async function GET() {
         phone,
         product,
         price: Math.round(rawPrice).toString(),
-        city,
         currency,
+        city,
         status,
         created_at: order.created_at,
         updated_at: order.updated_at,

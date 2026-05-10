@@ -22,13 +22,10 @@ export default function PerformanceWidget() {
         // Note: We use a join if possible, otherwise we'll map names locally if we have few users
         const { data: orders, error } = await supabase
           .from('orders')
-          .select('*, closer:User!orders_closer_id_fkey(name), livreur:User!orders_livreur_id_fkey(name)');
+          .select('*');
         
         if (error) {
-          // If the join fails due to complex RLS or relationship names, fallback to basic fetch
-          const { data: basicOrders, error: basicError } = await supabase.from('orders').select('*');
-          if (basicError) throw basicError;
-          processStats(basicOrders || []);
+          throw error;
         } else {
           processStats(orders || []);
         }

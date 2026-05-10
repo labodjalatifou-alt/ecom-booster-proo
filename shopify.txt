@@ -1,0 +1,119 @@
+// app/api/shopify/route.ts
+// Route API sécurisée Shopify — token côté serveur uniquement
+
+import { NextRequest, NextResponse } from 'next/server'
+
+// Helper pour appeler l'API Shopify
+async function shopifyFetch(domain: string, token: string, endpoint: string, options: RequestInit = {}) {
+  const url = `https://${domain}/admin/api/2024-01/${endpoint}`
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      'X-Shopify-Access-Token': token,
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  })
+
+  if (!res.ok) {
+    const error = await res.text()
+    throw new Error(`Shopify ${res.status}: ${error}`)
+  }
+
+  return res.json()
+}
+
+export async function POST(req: NextRequest) {
+  const { action, domain, token, body: reqBody, since_id, page_info } = await req.json()
+
+  // Utiliser les vars d'env en priorité (sécurisé), sinon body (pour multi-boutiques)
+  const shopDomain = process.env.SHOPIFY_DOMAIN || domain
+  const shopToken = process.env.SHOPIFY_ACCESS_TOKEN || token
+
+  if (!shopDomain || !shopToken) {
+    return NextResponse.json({ error: 'Shopify non configuré' }, { status: 400 })
+  }
+
+  try {
+    switch (action) {
+
+      // ── Info boutique ─────────────────────────────────────────
+      case 'get_shop': {
+        const data = await shopifyFetch(shopDomain, shopToken, 'shop.json')
+        return NextResponse.json(data)
+      }
+
+      // ── Commandes — avec pagination complète ──────────────────
+      case 'get_orders': {
+        let endpoint = 'orders.json?status=any&limit=250&order=created_at+desc'
+        if (since_id) endpoint += `&since_id=${since_id}`
+        if (page_info) endpoint += `&page_info=${page_info}`
+        const data = await shopifyFetch(shopDomain, shopToken, endpoint)
+        return NextResponse.json(data)
+      }
+
+      // ── Compter les commandes ─────────────────────────────────
+      case 'count_orders': {
+        const data = await shopifyFetch(shopDomain, shopToken, 'orders/count.json?status=any')
+        return NextResponse.json(data)
+      }
+
+      // ── Commandes COD EasySell (pending) ──────────────────────
+      case 'get_cod_orders': {
+        const data = await shopifyFetch(shopDomain, shopToken, 'orders.json?status=any&financial_status=pending&limit=250&order=created_at+desc')
+        return NextResponse.json(data)
+      }
+
+      // ── Produits actifs uniquement ────────────────────────────
+      case 'get_products': {
+        const data = await shopifyFetch(shopDomain, shopToken, 'products.json?status=active&limit=250')
+        return NextResponse.json(data)
+      }
+
+      // ── Créer un produit Shopify depuis l'analyse IA ──────────
+      case 'create_product': {
+        const { title, body_html, variants, tags, status = 'draft' } = reqBody || {}
+
+        if (!title) {
+          return NextResponse.json({ error: 'Titre requis' }, { status: 400 })
+        }
+
+        const productData = {
+          product: {
+            title,
+            body_html: body_html || '',
+            vendor: 'ECOM BOOSTER PRO',
+            status, // 'draft' — à activer dans Shopify après ajout images
+            variants: variants || [{ price: '0', requires_shipping: true }],
+            tags: tags || '',
+          }
+        }
+
+        const data = await shopifyFetch(shopDomain, shopToken, 'products.json', {
+          method: 'POST',
+          body: JSON.stringify(productData),
+        })
+        return NextResponse.json(data)
+      }
+
+      // ── Mettre à jour une commande (note, tags) ───────────────
+      case 'update_order': {
+        const { orderId, note, tags: orderTags } = reqBody || {}
+        if (!orderId) return NextResponse.json({ error: 'orderId requis' }, { status: 400 })
+
+        const data = await shopifyFetch(shopDomain, shopToken, `orders/${orderId}.json`, {
+          method: 'PUT',
+          body: JSON.stringify({ order: { id: orderId, note: note || '', tags: orderTags || '' } }),
+        })
+        return NextResponse.json(data)
+      }
+
+      default:
+        return NextResponse.json({ error: `Action inconnue: ${action}` }, { status: 400 })
+    }
+
+  } catch (err: any) {
+    console.error('Shopify route error:', err)
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}

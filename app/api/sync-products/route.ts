@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
 export async function GET() {
-  const shopifyUrl = process.env.SHOPIFY_STORE_URL;
+  const shopifyUrl = process.env.SHOPIFY_STORE_URL || process.env.SHOPIFY_DOMAIN;
   const accessToken = process.env.SHOPIFY_ACCESS_TOKEN;
 
   if (!shopifyUrl || !accessToken) {
@@ -11,7 +11,7 @@ export async function GET() {
 
   try {
     // Get store currency first
-    const shopRes = await fetch(`https://${shopifyUrl}/admin/api/2023-10/shop.json`, {
+    const shopRes = await fetch(`https://${shopifyUrl}/admin/api/2024-01/shop.json`, {
       headers: { 'X-Shopify-Access-Token': accessToken },
     });
     const shopData = shopRes.ok ? await shopRes.json() : {};
