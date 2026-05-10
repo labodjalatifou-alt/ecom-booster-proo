@@ -21,6 +21,7 @@ export default function InterfaceCloserPage() {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [period, setPeriod] = useState<Period>('ALL');
   const [myEarnings, setMyEarnings] = useState(0);
+  const [userId, setUserId] = useState<string | null>(null);
 
   function getDateRange(p: Period): { from: string | null; to: string | null } {
     const now = new Date();
@@ -73,15 +74,20 @@ export default function InterfaceCloserPage() {
       ).length;
       setConfirmedToday(todayConfirmed);
       
-      // Commission : 500 FCFA par commande confirmée dans la période
-      const confirmedInPeriod = data.filter(o => o.status === 'Confirmé').length;
-      setMyEarnings(confirmedInPeriod * 500);
+      // Commission : 500 pour confirmation, 1000 si livré
+      const confirmedInPeriod = data.filter(o => o.status === 'Confirmé' || o.status === 'Livré').length;
+      const deliveredInPeriod = data.filter(o => o.status === 'Livré').length;
+      setMyEarnings((confirmedInPeriod * 500) + (deliveredInPeriod * 500));
     }
     
     setLoading(false);
   }
 
   useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) setUserId(data.user.id);
+    });
+
     fetchData();
 
     const channel = supabase
@@ -95,9 +101,14 @@ export default function InterfaceCloserPage() {
   }, [period]);
 
   async function updateStatus(orderId: any, newStatus: string) {
+    const updateData: any = { status: newStatus };
+    if (newStatus === 'Confirmé' && userId) {
+      updateData.closer_id = userId;
+    }
+
     const { error } = await supabase
       .from('orders')
-      .update({ status: newStatus })
+      .update(updateData)
       .eq('id', orderId);
 
     if (error) {

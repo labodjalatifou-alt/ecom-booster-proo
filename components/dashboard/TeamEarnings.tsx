@@ -41,7 +41,8 @@ export default function TeamEarnings() {
           setConfirmedCount(cCount);
           setDeliveredCount(dCount);
           
-          const closerTotal = cCount * COMMISSION_CLOSER;
+          // Closer gets 500 for confirmation, and an additional 500 if delivered (total 1000)
+          const closerTotal = (cCount * 500) + (dCount * 500);
           const livreurTotal = dCount * COMMISSION_LIVREUR;
           
           setCloserEarnings(closerTotal);

@@ -42,6 +42,15 @@ export async function POST(req: Request) {
             commission = (user as any).commissionPerConfirm || 500;
           } else if (status === 'Livré' && (order as any).status !== 'Livré') {
             commission = (user as any).commissionPerDeliver || 1000;
+            
+            // Bonus Livraison pour le Closer (500 de plus pour arriver à 1000 au total)
+            const closerId = (order as any).closer_id;
+            if (closerId) {
+              await tx.user.update({
+                where: { id: closerId },
+                data: { earnings: { increment: 500 } }
+              } as any);
+            }
           }
 
           if (commission > 0) {

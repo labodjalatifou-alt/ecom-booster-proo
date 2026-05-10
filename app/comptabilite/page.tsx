@@ -54,7 +54,7 @@ export default function ComptabilitePage() {
 
   const fmt = (n: number) => new Intl.NumberFormat('fr-FR').format(Math.round(n));
 
-  const totalCommCloser = confirmedCount * COMMISSION_CLOSER;
+  const totalCommCloser = (confirmedCount * 500) + (deliveredCount * 500);
   const totalCommLivreur = deliveredCount * COMMISSION_LIVREUR;
   const totalCommissions = totalCommCloser + totalCommLivreur;
   const netProfit = revenue - totalCommissions;
