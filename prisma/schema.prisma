@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
@@ -22,12 +21,15 @@ model Store {
   // Relations
   orders          Order[]
   users           UserStore[]
+
+  @@schema("public")
 }
 
 enum Role {
   ADMIN
   CLOSER
   LIVREUR
+  @@schema("public")
 }
 
 model User {
@@ -47,6 +49,8 @@ model User {
   stores        UserStore[]
   assignedOrders Order[] @relation("CloserOrders")
   deliveryOrders Order[] @relation("LivreurOrders")
+
+  @@schema("public")
 }
 
 model UserStore {
@@ -56,6 +60,7 @@ model UserStore {
   store    Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   @@id([userId, storeId])
+  @@schema("public")
 }
 
 model Order {
@@ -83,10 +88,13 @@ model Order {
   livreur_id      String?
   livreur         User?    @relation("LivreurOrders", fields: [livreur_id], references: [id])
   
+  closer_paid     Int?     @default(0)
+  
   created_at      DateTime @default(now())
   updated_at      DateTime @default(now()) @updatedAt
 
   @@map("orders")
+  @@schema("public")
 }
 
 enum OrderStatus {
@@ -96,6 +104,7 @@ enum OrderStatus {
   DELIVERED    // Livré
   RETURNED     // Retour
   FAILED       // Échec
+  @@schema("public")
 }
 
 model Product {
@@ -112,6 +121,7 @@ model Product {
   updatedAt     DateTime @updatedAt
 
   @@map("products")
+  @@schema("public")
 }
 
 model ProductAnalysis {
@@ -128,4 +138,5 @@ model ProductAnalysis {
   updatedAt            DateTime @updatedAt @map("updated_at")
 
   @@map("analyses")
+  @@schema("public")
 }

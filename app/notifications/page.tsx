@@ -1,114 +1,146 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { Bell, CheckCircle2, Truck, ShoppingCart, Clock, ArrowRight, Loader2 } from 'lucide-react';
+import { Bell, CheckCheck, Package, Truck, DollarSign, ShoppingCart, Loader2, Inbox } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { formatDistanceToNow } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import toast from 'react-hot-toast';
+
+const TYPE_CONFIG: Record<string, { icon: any; color: string; bg: string }> = {
+  ORDER_CREATED: { icon: ShoppingCart, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+  ORDER_CONFIRMED: { icon: Package, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
+  ORDER_DELIVERED: { icon: Truck, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/20' },
+  MONEY_ADDED: { icon: DollarSign, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20' },
+  ORDER_ASSIGNED: { icon: Truck, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
+};
+
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "À l'instant";
+  if (mins < 60) return `Il y a ${mins}min`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `Il y a ${hours}h`;
+  const days = Math.floor(hours / 24);
+  return `Il y a ${days}j`;
+}
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  async function fetchNotifications() {
+    const { data } = await supabase
+      .from('notifications')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(100);
+    
+    if (data) setNotifications(data);
+    setLoading(false);
+  }
+
   useEffect(() => {
-    async function fetchNotifs() {
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .order('updated_at', { ascending: false })
-        .limit(20);
+    fetchNotifications();
 
-      if (!error && data && data.length > 0) {
-        const mapped = data.map((order: any) => {
-          let title = `Commande #${String(order.shopify_id || order.id).slice(-4)}`;
-          let desc = `${order.customer} a passé une commande.`;
-          let icon = ShoppingCart;
-          let color = 'text-primary-600';
-          let bg = 'bg-primary-50 dark:bg-primary-900/20';
+    // Temps réel
+    const channel = supabase
+      .channel('notifications-realtime')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, () => {
+        fetchNotifications();
+      })
+      .subscribe();
 
-          if (order.status === 'Livré') {
-            title = 'Colis Livré !';
-            desc = `La commande de ${order.customer} a été livrée avec succès.`;
-            icon = Truck;
-            color = 'text-emerald-600';
-            bg = 'bg-emerald-50 dark:bg-emerald-900/20';
-          } else if (order.status === 'Confirmé') {
-            title = 'Commande Confirmée';
-            desc = `La commande de ${order.customer} a été validée par le closer.`;
-            icon = CheckCircle2;
-            color = 'text-blue-600';
-            bg = 'bg-blue-50 dark:bg-blue-900/20';
-          }
-
-          return {
-            id: order.id,
-            title,
-            desc,
-            time: formatDistanceToNow(new Date(order.updated_at || order.created_at), { addSuffix: true, locale: fr }),
-            icon,
-            color,
-            bg
-          };
-        });
-        setNotifications(mapped);
-      }
-      setLoading(false);
-    }
-    fetchNotifs();
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
+  const markAllRead = async () => {
+    await fetch('/api/notifications', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'all', read: true }),
+    });
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    toast.success('Toutes les notifications marquées comme lues');
+  };
+
+  const markRead = async (id: string) => {
+    await supabase.from('notifications').update({ read: true }).eq('id', id);
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  };
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  if (loading) return (
+    <div className="flex items-center justify-center py-40">
+      <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
+    </div>
+  );
+
   return (
-    <div className="max-w-4xl mx-auto pb-10 px-4 text-slate-800 dark:text-slate-100 animate-in fade-in duration-500">
-      <div className="flex items-end justify-between gap-6 mb-12">
+    <div className="max-w-4xl mx-auto pb-20 px-4 animate-in fade-in duration-500">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
         <div>
-          <div className="flex items-center gap-2 mb-2">
-            <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
-              <Bell className="w-5 h-5 text-amber-600" />
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-2xl">
+              <Bell className="w-6 h-6 text-primary-600" />
             </div>
-            <span className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em]">Flux d'activité</span>
+            {unreadCount > 0 && (
+              <span className="px-3 py-1 bg-red-500 text-white rounded-full text-[10px] font-black">{unreadCount} nouvelles</span>
+            )}
           </div>
           <h2 className="text-4xl font-black tracking-tighter">Notifications</h2>
         </div>
-      </div>
-
-      <div className="space-y-3">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-40">
-            <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
-          </div>
-        ) : notifications.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-40 gap-4 text-slate-300">
-            <Bell className="w-10 h-10" />
-            <p className="text-[10px] font-black uppercase tracking-widest">Aucune notification pour le moment</p>
-          </div>
-        ) : (
-          notifications.map((notif, i) => (
-            <div
-              key={notif.id}
-              className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-5 rounded-2xl shadow-sm hover:shadow-lg hover:border-primary-500/20 transition-all duration-300 group cursor-pointer animate-in fade-in slide-in-from-left-4"
-              style={{ animationDelay: `${i * 80}ms` }}
-            >
-              <div className="flex items-start gap-4">
-                <div className={`w-10 h-10 rounded-xl ${notif.bg} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
-                  <notif.icon className={`w-5 h-5 ${notif.color}`} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2 mb-1">
-                    <h3 className="text-sm font-black tracking-tight">{notif.title}</h3>
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1 shrink-0">
-                      <Clock className="w-3 h-3" /> {notif.time}
-                    </span>
-                  </div>
-                  <p className="text-[11px] font-bold text-slate-500 italic mb-3">{notif.desc}</p>
-                  <button className="flex items-center gap-1.5 text-[9px] font-black text-primary-600 uppercase tracking-widest hover:translate-x-1 transition-transform">
-                    Voir <ArrowRight className="w-3 h-3" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))
+        {unreadCount > 0 && (
+          <button
+            onClick={markAllRead}
+            className="flex items-center gap-2 px-5 py-3 bg-slate-100 dark:bg-slate-800 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all"
+          >
+            <CheckCheck className="w-4 h-4" /> Tout marquer lu
+          </button>
         )}
       </div>
+
+      {notifications.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="p-5 bg-slate-100 dark:bg-slate-800 rounded-3xl mb-4 opacity-40">
+            <Inbox className="w-10 h-10 text-slate-400" />
+          </div>
+          <p className="text-sm font-black text-slate-500 mb-1">Aucune notification</p>
+          <p className="text-[10px] font-bold text-slate-400">Les notifications apparaîtront ici en temps réel.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {notifications.map((n) => {
+            const config = TYPE_CONFIG[n.type] || TYPE_CONFIG.ORDER_CREATED;
+            const Icon = config.icon;
+            return (
+              <div
+                key={n.id}
+                onClick={() => !n.read && markRead(n.id)}
+                className={`flex items-start gap-4 p-5 rounded-2xl border-2 transition-all cursor-pointer ${
+                  n.read
+                    ? 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 opacity-60'
+                    : `${config.bg} border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md`
+                }`}
+              >
+                <div className={`p-2.5 rounded-xl ${config.bg} ${config.color} shrink-0`}>
+                  <Icon className="w-5 h-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-sm font-black truncate">{n.title}</p>
+                    {!n.read && <span className="w-2 h-2 bg-primary-500 rounded-full shrink-0" />}
+                  </div>
+                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400 leading-relaxed">{n.message}</p>
+                </div>
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest shrink-0 mt-1">
+                  {timeAgo(n.created_at)}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

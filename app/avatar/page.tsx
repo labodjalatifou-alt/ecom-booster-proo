@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { User, Target, Brain, Wallet, ShieldAlert, CheckCircle2, Loader2 } from 'lucide-react';
+import { User, Target, Brain, Wallet, ShieldAlert, CheckCircle2, Loader2, Heart, MessageCircle, AlertTriangle, Lightbulb, Flame, Quote } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 
@@ -49,7 +49,6 @@ export default function AvatarPage() {
 
   const avatar = latestProduct.customer_avatar;
 
-  // Safety check if avatar is not properly formatted
   if (!avatar || typeof avatar !== 'object') return (
     <div className="max-w-7xl mx-auto pb-10 px-4 flex flex-col items-center justify-center min-h-[50vh] text-center">
       <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl mb-4 opacity-40">
@@ -63,6 +62,19 @@ export default function AvatarPage() {
     </div>
   );
 
+  // Helper pour afficher une liste ou un texte
+  const renderList = (items: any) => {
+    if (!items) return null;
+    if (typeof items === 'string') return [items];
+    if (Array.isArray(items)) return items;
+    return null;
+  };
+
+  const frustrations = renderList(avatar.frustrations || avatar.pains);
+  const peurs = renderList(avatar.peurs || avatar.fears);
+  const desirs = renderList(avatar.désirs || avatar.desirs || avatar.goals || avatar.desires);
+  const objections = renderList(avatar.objections);
+
   return (
     <div className="max-w-5xl mx-auto pb-20 px-4 animate-in fade-in duration-500">
       <div className="text-center mb-12">
@@ -70,56 +82,128 @@ export default function AvatarPage() {
           <Target className="w-4 h-4" /> Ciblage Précis
         </div>
         <h2 className="text-4xl font-black tracking-tighter mb-2">{avatar.title || 'Client Idéal'}</h2>
-        <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Profil Psychographique · {latestProduct.product_name}</p>
+        <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Profil Psychographique Complet · {latestProduct.product_name}</p>
       </div>
 
-      {/* Stats rapides */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border-2 border-slate-100 dark:border-slate-800 shadow-sm text-center">
-          <User className="w-6 h-6 text-blue-500 mx-auto mb-3" />
-          <span className="text-[9px] font-black text-slate-400 uppercase block mb-1">Tranche d'âge</span>
-          <p className="text-lg font-black">{avatar.age || '-'}</p>
+      {/* Stats rapides — 4 colonnes */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border-2 border-slate-100 dark:border-slate-800 shadow-sm text-center">
+          <User className="w-5 h-5 text-blue-500 mx-auto mb-2" />
+          <span className="text-[9px] font-black text-slate-400 uppercase block mb-1">Sexe</span>
+          <p className="text-base font-black">{avatar.sexe || avatar.gender || '-'}</p>
         </div>
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border-2 border-slate-100 dark:border-slate-800 shadow-sm text-center">
-          <Wallet className="w-6 h-6 text-emerald-500 mx-auto mb-3" />
-          <span className="text-[9px] font-black text-slate-400 uppercase block mb-1">Revenu Estimé</span>
-          <p className="text-lg font-black">{avatar.income || '-'}</p>
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border-2 border-slate-100 dark:border-slate-800 shadow-sm text-center">
+          <Target className="w-5 h-5 text-amber-500 mx-auto mb-2" />
+          <span className="text-[9px] font-black text-slate-400 uppercase block mb-1">Âge</span>
+          <p className="text-base font-black">{avatar.age || '-'}</p>
         </div>
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border-2 border-slate-100 dark:border-slate-800 shadow-sm text-center">
-          <Brain className="w-6 h-6 text-purple-500 mx-auto mb-3" />
-          <span className="text-[9px] font-black text-slate-400 uppercase block mb-1">Profil Psy</span>
-          <p className="text-lg font-black">Pragmatique</p>
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border-2 border-slate-100 dark:border-slate-800 shadow-sm text-center">
+          <Wallet className="w-5 h-5 text-emerald-500 mx-auto mb-2" />
+          <span className="text-[9px] font-black text-slate-400 uppercase block mb-1">Revenus</span>
+          <p className="text-base font-black">{avatar.revenus || avatar.income || '-'}</p>
+        </div>
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border-2 border-slate-100 dark:border-slate-800 shadow-sm text-center">
+          <Brain className="w-5 h-5 text-purple-500 mx-auto mb-2" />
+          <span className="text-[9px] font-black text-slate-400 uppercase block mb-1">Profil</span>
+          <p className="text-base font-black">{avatar.profil || avatar.title || '-'}</p>
         </div>
       </div>
 
-      {/* Pains & Goals */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Frustrations & Peurs */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div className="bg-rose-50 dark:bg-rose-900/10 border-2 border-rose-100 dark:border-rose-800 p-8 rounded-[2.5rem]">
-          <h3 className="text-lg font-black mb-6 flex items-center gap-3 text-rose-600">
-            <ShieldAlert className="w-5 h-5" /> Points de Douleur
+          <h3 className="text-lg font-black mb-5 flex items-center gap-3 text-rose-600">
+            <ShieldAlert className="w-5 h-5" /> Frustrations
           </h3>
           <ul className="space-y-3">
-            {(avatar.pains || []).map((pain: string, i: number) => (
-              <li key={i} className="flex items-start gap-3 text-sm font-bold text-slate-600 dark:text-slate-300 italic">
+            {(frustrations || []).map((item: string, i: number) => (
+              <li key={i} className="flex items-start gap-3 text-sm font-bold text-slate-600 dark:text-slate-300">
                 <span className="w-1.5 h-1.5 bg-rose-400 rounded-full mt-2 shrink-0" />
-                {pain}
+                {item}
               </li>
             ))}
           </ul>
         </div>
 
-        <div className="bg-emerald-50 dark:bg-emerald-900/10 border-2 border-emerald-100 dark:border-emerald-800 p-8 rounded-[2.5rem]">
-          <h3 className="text-lg font-black mb-6 flex items-center gap-3 text-emerald-600">
-            <CheckCircle2 className="w-5 h-5" /> Objectifs & Désirs
+        <div className="bg-amber-50 dark:bg-amber-900/10 border-2 border-amber-100 dark:border-amber-800 p-8 rounded-[2.5rem]">
+          <h3 className="text-lg font-black mb-5 flex items-center gap-3 text-amber-600">
+            <AlertTriangle className="w-5 h-5" /> Peurs
           </h3>
           <ul className="space-y-3">
-            {(avatar.goals || []).map((goal: string, i: number) => (
-              <li key={i} className="flex items-start gap-3 text-sm font-bold text-slate-600 dark:text-slate-300 italic">
-                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full mt-2 shrink-0" />
-                {goal}
+            {(peurs || []).map((item: string, i: number) => (
+              <li key={i} className="flex items-start gap-3 text-sm font-bold text-slate-600 dark:text-slate-300">
+                <span className="w-1.5 h-1.5 bg-amber-400 rounded-full mt-2 shrink-0" />
+                {item}
               </li>
             ))}
           </ul>
+        </div>
+      </div>
+
+      {/* Désirs & Objections */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div className="bg-emerald-50 dark:bg-emerald-900/10 border-2 border-emerald-100 dark:border-emerald-800 p-8 rounded-[2.5rem]">
+          <h3 className="text-lg font-black mb-5 flex items-center gap-3 text-emerald-600">
+            <Heart className="w-5 h-5" /> Désirs
+          </h3>
+          <ul className="space-y-3">
+            {(desirs || []).map((item: string, i: number) => (
+              <li key={i} className="flex items-start gap-3 text-sm font-bold text-slate-600 dark:text-slate-300">
+                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full mt-2 shrink-0" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="bg-slate-50 dark:bg-slate-800/50 border-2 border-slate-200 dark:border-slate-700 p-8 rounded-[2.5rem]">
+          <h3 className="text-lg font-black mb-5 flex items-center gap-3 text-slate-600">
+            <MessageCircle className="w-5 h-5" /> Objections
+          </h3>
+          <ul className="space-y-3">
+            {(objections || []).map((item: string, i: number) => (
+              <li key={i} className="flex items-start gap-3 text-sm font-bold text-slate-600 dark:text-slate-300">
+                <span className="w-1.5 h-1.5 bg-slate-400 rounded-full mt-2 shrink-0" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      {/* Déclencheurs — section spéciale */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        {/* Phrase déclenchante */}
+        <div className="bg-gradient-to-br from-indigo-600 to-purple-700 text-white p-7 rounded-[2.5rem] shadow-xl">
+          <div className="flex items-center gap-2 mb-4 opacity-80">
+            <Quote className="w-4 h-4" />
+            <span className="text-[9px] font-black uppercase tracking-widest">Phrase Déclenchante</span>
+          </div>
+          <p className="text-sm font-bold italic leading-relaxed">
+            &ldquo;{avatar.phrase_declenchante || avatar.trigger_phrase || 'Non définie'}&rdquo;
+          </p>
+        </div>
+
+        {/* Comment le convaincre */}
+        <div className="bg-gradient-to-br from-emerald-600 to-teal-700 text-white p-7 rounded-[2.5rem] shadow-xl">
+          <div className="flex items-center gap-2 mb-4 opacity-80">
+            <Lightbulb className="w-4 h-4" />
+            <span className="text-[9px] font-black uppercase tracking-widest">Comment le convaincre</span>
+          </div>
+          <p className="text-sm font-bold leading-relaxed">
+            {avatar.comment_le_convaincre || avatar.how_to_convince || 'Non défini'}
+          </p>
+        </div>
+
+        {/* Déclencheur émotionnel */}
+        <div className="bg-gradient-to-br from-rose-600 to-pink-700 text-white p-7 rounded-[2.5rem] shadow-xl">
+          <div className="flex items-center gap-2 mb-4 opacity-80">
+            <Flame className="w-4 h-4" />
+            <span className="text-[9px] font-black uppercase tracking-widest">Déclencheur Émotionnel</span>
+          </div>
+          <p className="text-sm font-bold leading-relaxed">
+            {avatar.declencheur_emotionnel || avatar.emotional_trigger || 'Non défini'}
+          </p>
         </div>
       </div>
     </div>

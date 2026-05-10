@@ -2,10 +2,6 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
 function resolveCity(order: any, storeCode: string | null): string {
-  if (storeCode === 'ABIDJAN') return 'Abidjan';
-  if (storeCode === 'DAKAR') return 'Dakar';
-  if (storeCode === 'CONAKRY') return 'Conakry';
-
   const shipping = order.shipping_address;
   const billing = order.billing_address;
   const addr = shipping || billing;

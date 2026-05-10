@@ -34,13 +34,8 @@ export default function ComptabilitePage() {
           query = query.eq('store_id', selectedStore);
         } else if (stores.length > 0) {
           query = query.in('store_id', stores.map(s => s.id));
-        } else {
-          setRevenue(0);
-          setDeliveredCount(0);
-          setConfirmedCount(0);
-          setLoading(false);
-          return;
         }
+        // Si stores vide et ALL, on montre tout
 
         const { data, error } = await query;
 

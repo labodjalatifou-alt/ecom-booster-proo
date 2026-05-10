@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { Mic, Copy, Check, Clock, ExternalLink, Loader2 } from 'lucide-react';
+import { Mic, Copy, Check, Clock, ExternalLink, Loader2, AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import Link from 'next/link';
 import EmptyAnalysisState from '@/components/dashboard/EmptyAnalysisState';
 
 const tools = [
@@ -11,6 +10,14 @@ const tools = [
   { name: "Google AI Studio", url: "https://aistudio.google.com", color: "text-orange-600", bg: "bg-orange-50 dark:bg-orange-900/20" },
   { name: "Eleven Labs", url: "https://elevenlabs.io", color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/20" },
   { name: "TTS Maker", url: "https://ttsmaker.com", color: "text-purple-600", bg: "bg-purple-50 dark:bg-purple-900/20" },
+];
+
+const STRUCTURE_LABELS = [
+  { key: 'presentation_probleme', label: '1. Présentation du Problème', icon: '😰', color: 'border-red-500' },
+  { key: 'agitation_emotionnelle', label: '2. Agitation Émotionnelle', icon: '💔', color: 'border-amber-500' },
+  { key: 'presentation_solution', label: '3. Présentation de la Solution', icon: '✨', color: 'border-emerald-500' },
+  { key: 'preuve_temoignage', label: '4. Preuve / Témoignage', icon: '⭐', color: 'border-blue-500' },
+  { key: 'call_to_action', label: '5. Call to Action', icon: '🔥', color: 'border-purple-500' },
 ];
 
 export default function ScriptVoixOffPage() {
@@ -37,25 +44,41 @@ export default function ScriptVoixOffPage() {
     fetchAnalysis();
   }, []);
 
-  const getScripts = () => {
-    if (!latestProduct?.voiceover_script) return [];
-    return [
-      { title: "Script 1 — Hook Principal", text: latestProduct.voiceover_script },
-      {
-        title: "Script 2 — Urgence",
-        text: `Attention ! Ne ratez pas cette opportunité. ${latestProduct.product_name} est disponible en quantité limitée. Commandez maintenant, paiement à la livraison. Livraison rapide. Cliquez sur le lien !`
-      },
-      {
-        title: "Script 3 — Offre Irrésistible",
-        text: `Promotion exceptionnelle ! Le ${latestProduct.product_name} est en solde aujourd'hui uniquement. Zéro risque — vous payez à la livraison. Commandez maintenant avant rupture de stock !`
-      }
-    ];
+  const getScriptData = () => {
+    if (!latestProduct) return null;
+
+    const raw = latestProduct.voiceover_script;
+    const fbAd = latestProduct.facebook_ad_content;
+
+    // Nouveau format : objet structuré video_script
+    if (raw && typeof raw === 'object' && raw.text) {
+      return raw;
+    }
+
+    // Ancien format : string simple
+    if (typeof raw === 'string' && raw.length > 0) {
+      return { text: raw, word_count: raw.split(/\s+/).length };
+    }
+
+    return null;
   };
 
-  const scripts = getScripts();
+  const scriptData = getScriptData();
 
-  const handleCopy = (idx: number) => {
-    navigator.clipboard.writeText(scripts[idx].text);
+  const getFullText = () => {
+    if (!scriptData) return '';
+    if (scriptData.text) return scriptData.text;
+    if (scriptData.structure) {
+      return Object.values(scriptData.structure).join(' ');
+    }
+    return '';
+  };
+
+  const fullText = getFullText();
+  const wordCount = fullText.split(/\s+/).filter(Boolean).length;
+
+  const handleCopy = (text: string, idx: number) => {
+    navigator.clipboard.writeText(text);
     setCopiedIdx(idx);
     setTimeout(() => setCopiedIdx(null), 2000);
   };
@@ -66,8 +89,7 @@ export default function ScriptVoixOffPage() {
     </div>
   );
 
-  // Empty state — nothing if no product analyzed
-  if (!latestProduct) return (
+  if (!latestProduct || !scriptData) return (
     <div className="pt-20">
       <EmptyAnalysisState 
         icon={<Mic />} 
@@ -77,9 +99,11 @@ export default function ScriptVoixOffPage() {
     </div>
   );
 
+  const hasStructure = scriptData.structure && typeof scriptData.structure === 'object';
+
   return (
-    <div className="max-w-7xl mx-auto pb-10 px-4 text-slate-800 dark:text-slate-100 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+    <div className="max-w-5xl mx-auto pb-10 px-4 text-slate-800 dark:text-slate-100 animate-in fade-in duration-500">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
         <div>
           <div className="flex items-center gap-2 mb-2">
             <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
@@ -87,11 +111,21 @@ export default function ScriptVoixOffPage() {
             </div>
             <span className="text-[10px] font-black text-purple-600 uppercase tracking-[0.2em]">{latestProduct.product_name}</span>
           </div>
-          <h2 className="text-4xl font-black tracking-tighter">Scripts Voix Off</h2>
+          <h2 className="text-4xl font-black tracking-tighter">Script Voix Off</h2>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest ${wordCount >= 80 && wordCount <= 180 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+            <Clock className="w-3 h-3 inline mr-1" /> {wordCount} mots · {Math.round(wordCount / 3)}s
+          </span>
+          {(wordCount < 80 || wordCount > 180) && (
+            <span className="px-3 py-2 bg-red-100 text-red-600 rounded-full text-[9px] font-black flex items-center gap-1">
+              <AlertCircle className="w-3 h-3" /> Hors limites (80-180)
+            </span>
+          )}
         </div>
       </div>
 
-      {/* Tools */}
+      {/* Outils TTS */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10">
         {tools.map((tool, i) => (
           <a
@@ -110,31 +144,50 @@ export default function ScriptVoixOffPage() {
         ))}
       </div>
 
-      {/* Scripts */}
-      <div className="space-y-6">
-        {scripts.map((script, idx) => (
-          <div key={idx} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-sm hover:shadow-xl transition-all">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-              <div className="flex items-center gap-3">
-                <h3 className="text-lg font-black tracking-tight">{script.title}</h3>
-                <span className="px-3 py-1 bg-slate-50 dark:bg-slate-800 rounded-full text-[9px] font-black text-slate-400 uppercase flex items-center gap-1">
-                  <Clock className="w-3 h-3" /> 20-45 SEC
-                </span>
-              </div>
-              <button
-                onClick={() => handleCopy(idx)}
-                className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-purple-700 transition-all active:scale-95 shrink-0"
-              >
-                {copiedIdx === idx ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                {copiedIdx === idx ? 'Copié !' : 'Copier'}
-              </button>
-            </div>
-            <p className="text-sm font-medium leading-relaxed italic text-slate-600 dark:text-slate-300 pl-4 border-l-4 border-purple-500/30">
-              "{script.text}"
-            </p>
-          </div>
-        ))}
+      {/* Script complet */}
+      <div className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-[3rem] p-8 md:p-10 shadow-sm mb-8">
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-lg font-black tracking-tight">Script Complet</h3>
+          <button
+            onClick={() => handleCopy(fullText, 99)}
+            className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-purple-700 transition-all active:scale-95"
+          >
+            {copiedIdx === 99 ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+            {copiedIdx === 99 ? 'Copié !' : 'Copier Tout'}
+          </button>
+        </div>
+        <p className="text-sm font-medium leading-relaxed italic text-slate-600 dark:text-slate-300 pl-4 border-l-4 border-purple-500/30">
+          &ldquo;{fullText}&rdquo;
+        </p>
       </div>
+
+      {/* Structure détaillée (si disponible) */}
+      {hasStructure && (
+        <div className="space-y-4">
+          <h3 className="text-sm font-black uppercase tracking-widest text-slate-400 ml-2 mb-2">Décomposition par Phase</h3>
+          {STRUCTURE_LABELS.map((phase, idx) => {
+            const text = scriptData.structure[phase.key];
+            if (!text) return null;
+            return (
+              <div key={idx} className={`bg-white dark:bg-slate-900 border-l-4 ${phase.color} border border-slate-100 dark:border-slate-800 rounded-2xl p-6 shadow-sm`}>
+                <div className="flex justify-between items-start mb-3">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                    {phase.icon} {phase.label}
+                  </span>
+                  <button
+                    onClick={() => handleCopy(text, idx)}
+                    className="text-[9px] font-black text-purple-600 uppercase hover:underline flex items-center gap-1"
+                  >
+                    {copiedIdx === idx ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                    {copiedIdx === idx ? 'Copié' : 'Copier'}
+                  </button>
+                </div>
+                <p className="text-sm font-medium leading-relaxed text-slate-700 dark:text-slate-200">{text}</p>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

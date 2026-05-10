@@ -17,12 +17,19 @@ export default function InterfaceLivreurPage() {
   const [totalCashPending, setTotalCashPending] = useState(0);
   const [totalCashCollected, setTotalCashCollected] = useState(0);
   const [period, setPeriod] = useState<Period>('ALL');
+  const [userId, setUserId] = useState<string | null>(null);
   
   const [showCollectionModal, setShowCollectionModal] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<any>(null);
   const [collectionAmount, setCollectionAmount] = useState('');
   const [deliveryFee, setDeliveryFee] = useState('0');
   const [isDeliveryFeeIncluded, setIsDeliveryFeeIncluded] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user) setUserId(data.user.id);
+    });
+  }, []);
 
   function getDateRange(p: Period): { from: string | null; to: string | null } {
     const now = new Date();
@@ -113,32 +120,48 @@ export default function InterfaceLivreurPage() {
     const amount = parseInt(collectionAmount) || 0;
     const fee = parseInt(deliveryFee) || 0;
     
-    const { error } = await supabase
-      .from('orders')
-      .update({ 
-        status: 'Livré',
-        cash_collected: amount,
-        delivery_fee: fee,
-        delivery_fee_included: isDeliveryFeeIncluded
-      })
-      .eq('id', selectedOrderId);
+    try {
+      const res = await fetch('/api/update-order-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: selectedOrderId,
+          status: 'Livré',
+          userId: userId,
+          cashCollected: amount,
+          deliveryFee: fee,
+          deliveryFeeIncluded: isDeliveryFeeIncluded
+        })
+      });
 
-    if (error) {
-      toast.error("Erreur lors de la mise à jour");
-    } else {
+      if (!res.ok) throw new Error("Erreur API");
+
       toast.success(`💰 Colis livré ! (${new Intl.NumberFormat('fr-FR').format(amount)} ${currency} encaissés)`);
       setShowCollectionModal(false);
       fetchOrders();
+    } catch (error) {
+      toast.error("Erreur lors de la mise à jour");
     }
   }
 
   async function markFailed(orderId: any) {
-    const { error } = await supabase.from('orders').update({ status: 'Annulé' }).eq('id', orderId);
-    if (error) {
-      toast.error("Erreur");
-    } else {
+    try {
+      const res = await fetch('/api/update-order-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: orderId,
+          status: 'Annulé',
+          userId: userId
+        })
+      });
+
+      if (!res.ok) throw new Error("Erreur API");
+
       toast.error("Livraison annulée");
       fetchOrders();
+    } catch {
+      toast.error("Erreur");
     }
   }
 

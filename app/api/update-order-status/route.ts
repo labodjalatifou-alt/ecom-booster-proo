@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
 import { NextResponse } from 'next/server';
-
-const prisma = new PrismaClient();
+import { supabase } from '@/lib/supabase';
 
 export async function POST(req: Request) {
   try {
@@ -11,61 +9,118 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // Use a transaction to ensure data integrity
-    const result = await prisma.$transaction(async (tx: any) => {
-      // 1. Get the current order
-      const order = await tx.order.findUnique({
-        where: { id: orderId }
-      });
+    // 1. Récupérer la commande actuelle
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('id', orderId)
+      .single();
 
-      if (!order) throw new Error("Order not found");
+    if (orderError || !order) {
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
 
-      // 2. Update order status
-      const updatedOrder = await tx.order.update({
-        where: { id: orderId },
-        data: { 
-          status,
-          cash_collected: cashCollected !== undefined ? parseInt(cashCollected) : (order as any).cash_collected,
-          delivery_fee: deliveryFee !== undefined ? parseInt(deliveryFee) : (order as any).delivery_fee,
-          delivery_fee_included: deliveryFeeIncluded !== undefined ? deliveryFeeIncluded : (order as any).delivery_fee_included,
-          closer_id: status === 'Confirmé' ? userId : (order as any).closer_id,
-          livreur_id: status === 'Livré' ? userId : (order as any).livreur_id,
-        } as any
-      });
+    const previousStatus = order.status;
+    const currentCloserPaid = order.closer_paid || 0;
 
-      // 3. Handle Commissions
+    // 2. Construire les données de mise à jour
+    const updateData: any = {
+      status,
+      updated_at: new Date().toISOString(),
+    };
+
+    // Cash collecté (livreur)
+    if (cashCollected !== undefined) updateData.cash_collected = parseInt(cashCollected);
+    if (deliveryFee !== undefined) updateData.delivery_fee = parseInt(deliveryFee);
+    if (deliveryFeeIncluded !== undefined) updateData.delivery_fee_included = deliveryFeeIncluded;
+
+    // Assigner le closer ou livreur
+    if (status === 'Confirmé' && userId) updateData.closer_id = userId;
+    if (status === 'Livré' && userId) updateData.livreur_id = userId;
+
+    // 3. GAINS CLOSER — Logique NON-CUMULATIVE (500 confirmé, 1000 livré)
+    //    - Confirmé : closer gagne 500, closer_paid = 500
+    //    - Livré : closer gagne (1000 - closer_paid), closer_paid = 1000
+    //    Ce n'est PAS cumulatif 500 + 1000.
+    
+    if (status === 'Confirmé' && previousStatus !== 'Confirmé') {
+      updateData.closer_paid = 500;
+
+      // Créditer le closer de 500
       if (userId) {
-        const user = await tx.user.findUnique({ where: { id: userId } });
-        if (user) {
-          let commission = 0;
-          if (status === 'Confirmé' && (order as any).status !== 'Confirmé') {
-            commission = (user as any).commissionPerConfirm || 500;
-          } else if (status === 'Livré' && (order as any).status !== 'Livré') {
-            commission = (user as any).commissionPerDeliver || 1000;
-            
-            // Bonus Livraison pour le Closer (500 de plus pour arriver à 1000 au total)
-            const closerId = (order as any).closer_id;
-            if (closerId) {
-              await tx.user.update({
-                where: { id: closerId },
-                data: { earnings: { increment: 500 } }
-              } as any);
-            }
-          }
-
-          if (commission > 0) {
-            await tx.user.update({
-              where: { id: userId },
-              data: { earnings: { increment: commission } }
-            } as any);
+        const { error: rpcError } = await supabase.rpc('increment_earnings', { user_id: userId, amount: 500 });
+        if (rpcError) {
+          // Fallback : update direct
+          const { data: user } = await supabase.from('User').select('earnings').eq('id', userId).single();
+          if (user) {
+            await supabase.from('User').update({ earnings: (user.earnings || 0) + 500 }).eq('id', userId);
           }
         }
       }
 
-      return updatedOrder;
-    });
+      // Notification
+      await supabase.from('notifications').insert({
+        type: 'ORDER_CONFIRMED',
+        title: 'Commande Confirmée',
+        message: `Commande #${orderId.slice(-6)} confirmée. +500 ${order.currency || 'FCFA'} crédités.`,
+        target_role: 'ADMIN',
+        order_id: orderId,
+        store_id: order.store_id,
+      });
 
-    return NextResponse.json(result);
+    } else if (status === 'Livré' && previousStatus !== 'Livré') {
+      const difference = 1000 - currentCloserPaid;
+      updateData.closer_paid = 1000;
+
+      // Créditer le closer du complément (1000 - ce qu'il a déjà reçu)
+      const closerId = order.closer_id;
+      if (closerId && difference > 0) {
+        const { data: closerUser } = await supabase.from('User').select('earnings').eq('id', closerId).single();
+        if (closerUser) {
+          await supabase.from('User').update({ earnings: (closerUser.earnings || 0) + difference }).eq('id', closerId);
+        }
+      }
+
+      // Créditer le livreur (commission livraison = 1000)
+      if (userId) {
+        const { data: livreurUser } = await supabase.from('User').select('earnings').eq('id', userId).single();
+        if (livreurUser) {
+          await supabase.from('User').update({ earnings: (livreurUser.earnings || 0) + 1000 }).eq('id', userId);
+        }
+      }
+
+      // Notifications
+      await supabase.from('notifications').insert([
+        {
+          type: 'ORDER_DELIVERED',
+          title: 'Commande Livrée',
+          message: `Commande #${orderId.slice(-6)} livrée. Cash encaissé: ${cashCollected || order.price} ${order.currency || 'FCFA'}`,
+          target_role: 'ADMIN',
+          order_id: orderId,
+          store_id: order.store_id,
+        },
+        {
+          type: 'MONEY_ADDED',
+          title: 'Encaissement',
+          message: `${cashCollected || order.price} ${order.currency || 'FCFA'} encaissés sur commande #${orderId.slice(-6)}`,
+          target_role: 'ADMIN',
+          order_id: orderId,
+          store_id: order.store_id,
+        }
+      ]);
+    }
+
+    // 4. Appliquer la mise à jour
+    const { data: updatedOrder, error: updateError } = await supabase
+      .from('orders')
+      .update(updateData)
+      .eq('id', orderId)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
+
+    return NextResponse.json(updatedOrder);
   } catch (error: any) {
     console.error('Update Order Status Error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });

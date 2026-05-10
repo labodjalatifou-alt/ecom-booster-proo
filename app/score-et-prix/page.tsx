@@ -51,7 +51,11 @@ export default function ScorePage() {
   const costPrice = parseInt(latestProduct.cost_price || '0') || 0;
   const priceMin = costPrice > 0 ? costPrice + 8000 : null;
   const priceMax = costPrice > 0 ? costPrice + 15000 : null;
-  const score = latestProduct.score || 0;
+  
+  // Support nouveau format score (objet) et ancien (int)
+  const rawScore = latestProduct.score;
+  const score = typeof rawScore === 'object' ? (rawScore?.total || 0) : (rawScore || 0);
+  const scoreExplication = typeof rawScore === 'object' ? rawScore?.explication : null;
 
   const scoreColor = score >= 80 ? 'text-emerald-500' : score >= 60 ? 'text-amber-500' : 'text-red-500';
   const scoreLabel = score >= 80 ? 'Excellent Potentiel' : score >= 60 ? 'Bon Potentiel' : 'Potentiel Moyen';
@@ -160,6 +164,26 @@ export default function ScorePage() {
           </p>
         </div>
       </div>
+
+      {/* Explication détaillée du score pondéré */}
+      {scoreExplication && (
+        <div className="mt-6 bg-slate-50 dark:bg-slate-800/50 border-2 border-slate-200 dark:border-slate-700 rounded-[2rem] p-8">
+          <h3 className="text-sm font-black uppercase tracking-widest text-slate-500 mb-4 flex items-center gap-2">
+            <Star className="w-4 h-4" /> Analyse Détaillée du Score ({score}/100)
+          </h3>
+          <p className="text-sm font-medium leading-relaxed text-slate-600 dark:text-slate-300 whitespace-pre-line">
+            {scoreExplication}
+          </p>
+          <div className="mt-5 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-3">Critères évalués</p>
+            <div className="flex flex-wrap gap-2">
+              {['Résout un problème', 'Effet waouh', 'Viral potentiel', 'Livraison Afrique', 'Poids', 'Disponibilité locale', 'Marge', 'Créatifs', 'Saturation', 'Achat impulsif', 'Compatible CoD'].map((c, i) => (
+                <span key={i} className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-full text-[9px] font-black text-slate-500">{c}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

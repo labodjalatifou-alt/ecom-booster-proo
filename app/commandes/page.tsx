@@ -11,7 +11,7 @@ type StatusFilter = 'ALL' | 'A Confirmer' | 'Confirmé' | 'Livré' | 'Annulé';
 const PAGE_SIZE = 50;
 
 export default function CommandesPage() {
-  const { selectedStore, stores } = useStore();
+  const { selectedStore, stores, loadingStores } = useStore();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -42,19 +42,14 @@ export default function CommandesPage() {
     // Build count query
     let countQuery = supabase.from('orders').select('*', { count: 'exact', head: true });
     
-    // Store filtering
+    // Store filtering — ne PAS bloquer si stores pas encore chargés
     if (selectedStore !== 'ALL') {
       countQuery = countQuery.eq('store_id', selectedStore);
     } else if (stores.length > 0) {
       const storeIds = stores.map(s => s.id);
       countQuery = countQuery.in('store_id', storeIds);
-    } else {
-      // No stores connected, return empty
-      setOrders([]);
-      setTotalCount(0);
-      setLoading(false);
-      return;
     }
+    // Si stores.length === 0 et selectedStore === 'ALL', on montre TOUTES les commandes
 
     const { from, to } = getDateRange(period);
     if (from) countQuery = countQuery.gte('created_at', from);
@@ -73,10 +68,10 @@ export default function CommandesPage() {
       .order('created_at', { ascending: false })
       .range(rangeFrom, rangeTo);
 
-    // Re-apply same filters to data query
+    // Re-apply same store filter
     if (selectedStore !== 'ALL') {
       query = query.eq('store_id', selectedStore);
-    } else {
+    } else if (stores.length > 0) {
       const storeIds = stores.map(s => s.id);
       query = query.in('store_id', storeIds);
     }
@@ -91,9 +86,10 @@ export default function CommandesPage() {
   }
 
   useEffect(() => {
+    if (loadingStores) return; // Attendre que les stores soient chargés
     setPage(1);
     fetchOrders(1);
-  }, [period, statusFilter, selectedStore]);
+  }, [period, statusFilter, selectedStore, loadingStores]);
 
   useEffect(() => {
     fetchOrders(page);

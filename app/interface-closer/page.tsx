@@ -82,9 +82,12 @@ export default function InterfaceCloserPage() {
       setConfirmedToday(todayConfirmed);
       
       // Commission : 500 pour confirmation, 1000 si livré
-      const confirmedInPeriod = data.filter(o => o.status === 'Confirmé' || o.status === 'Livré').length;
-      const deliveredInPeriod = data.filter(o => o.status === 'Livré').length;
-      setMyEarnings((confirmedInPeriod * 500) + (deliveredInPeriod * 500));
+      // Gains non-cumulatifs : 500 confirmé, total 1000 si livré
+      const earnings = data.reduce((acc: number, o: any) => {
+        const paid = o.closer_paid || 0;
+        return acc + paid;
+      }, 0);
+      setMyEarnings(earnings);
     }
     
     setLoading(false);

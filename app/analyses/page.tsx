@@ -41,7 +41,7 @@ export default function AnalysesPage() {
     setAnalysisResult(null);
 
     try {
-      const prompt = `Tu es l'expert stratégique Ecom Booster Pro. Analyse ce produit :
+      const prompt = `Tu es l'expert stratégique Ecom Booster Pro spécialisé dans le marché africain. Analyse ce produit :
 NOM : ${productName}
 PRIX D'ACHAT : ${costPrice} ${currency}
 DESCRIPTION : ${productDesc || 'Non fournie'}
@@ -53,16 +53,37 @@ RÈGLES DE PRIX STRICTES :
 3. "price_max" DOIT être : ${costPrice} + 15000 ${currency}.
 4. "price_recommendation" DOIT être un prix marketing entre les deux.
 
+RÈGLES DE GÉNÉRATION DE CONTENU (AUCUNE INTERPRÉTATION LIBRE) :
+
+1. FACEBOOK ADS (3 VERSIONS, 3 ANGLES DIFFÉRENTS) :
+   - Structure par Ad : { hook_grand_format, phrase_explication, liste_benefices (3-5 puces), cta_clair }
+   - Optimisé Neuro-marketing et mentalité Afrique (confiance, urgence).
+
+2. SCRIPT VIDÉO (20-45 SECONDES) :
+   - Structure : { presentation_probleme, agitation_emotionnelle, presentation_solution, preuve_temoignage, call_to_action }
+   - Longueur : 80 à 180 mots. Ton émotionnel, adapté à l'Afrique (Cash on Delivery).
+
+3. AVATAR CLIENT DÉTAILLÉ :
+   - Structure : { sexe, age, revenus, frustrations, peurs, désirs, objections, phrase_declenchante, comment_le_convaincre, declencheur_emotionnel }
+
+4. SCORE PRODUIT PONDÉRÉ :
+   - Critères : Résout un problème, Effet waouh, Viral potentiel, Livraison facile Afrique, Poids, Disponibilité locale, Marge, Créatifs, Saturation, Impulsif, Compatible CoD.
+   - Fournir un score total et une explication détaillée.
+
 Réponds UNIQUEMENT en JSON valide :
 {
-  "score": 85,
+  "score": { "total": 85, "explication": "..." },
   "price_recommendation": "X ${currency}",
   "price_min": "Y ${currency}",
   "price_max": "Z ${currency}",
-  "avatar": { "title": "...", "age": "...", "income": "...", "pains": [], "goals": [] },
+  "avatar": { ... },
   "shopify_page": { "title": "...", "hook": "...", "features": [] },
-  "facebook_ad": { "primary_text": "...", "headline": "..." },
-  "voiceover_script": "..."
+  "facebook_ads": [
+    { "angle": "...", "hook": "...", "explanation": "...", "benefits": [], "cta": "..." },
+    { "angle": "...", "hook": "...", "explanation": "...", "benefits": [], "cta": "..." },
+    { "angle": "...", "hook": "...", "explanation": "...", "benefits": [], "cta": "..." }
+  ],
+  "video_script": { "text": "...", "word_count": 0, "structure": { ... } }
 }`;
 
       const res = await fetch('/api/ai-advisor', {
@@ -96,13 +117,13 @@ Réponds UNIQUEMENT en JSON valide :
       const { data: savedData, error: saveError } = await supabase.from('analyses').insert([{
         id: crypto.randomUUID(), // Satisfy the not-null constraint
         product_name: productName,
-        score: result.score,
+        score: result.score.total || result.score,
         price_recommendation: result.price_recommendation,
         cost_price: costPrice,
         customer_avatar: result.avatar,
         shopify_page_content: result.shopify_page,
-        facebook_ad_content: result.facebook_ad,
-        voiceover_script: result.voiceover_script
+        facebook_ad_content: result.facebook_ads || result.facebook_ad,
+        voiceover_script: result.video_script?.text || result.voiceover_script
       }]).select();
 
       if (saveError) throw saveError;
@@ -140,7 +161,7 @@ Réponds UNIQUEMENT en JSON valide :
               </div>
               <div className="text-right">
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Gagnant ?</span>
-                <p className="text-3xl font-black text-amber-600">{analysisResult.score}%</p>
+                <p className="text-3xl font-black text-amber-600">{analysisResult.score.total || analysisResult.score}%</p>
               </div>
             </div>
             <h3 className="text-xl font-black mb-1 tracking-tight">Score & Rentabilité</h3>
