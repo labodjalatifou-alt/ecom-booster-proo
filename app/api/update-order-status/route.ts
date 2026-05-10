@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     }
 
     // Use a transaction to ensure data integrity
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       // 1. Get the current order
       const order = await tx.order.findUnique({
         where: { id: orderId }
