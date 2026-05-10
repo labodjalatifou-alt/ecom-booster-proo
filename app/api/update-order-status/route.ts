@@ -25,11 +25,11 @@ export async function POST(req: Request) {
         where: { id: orderId },
         data: { 
           status,
-          cashCollected: cashCollected !== undefined ? parseInt(cashCollected) : order.cashCollected,
-          deliveryFee: deliveryFee !== undefined ? parseInt(deliveryFee) : order.deliveryFee,
-          deliveryFeeIncluded: deliveryFeeIncluded !== undefined ? deliveryFeeIncluded : order.deliveryFeeIncluded,
-          closerId: status === 'Confirmé' ? userId : order.closerId,
-          livreurId: status === 'Livré' ? userId : order.livreurId,
+          cash_collected: cashCollected !== undefined ? parseInt(cashCollected) : order.cash_collected,
+          delivery_fee: deliveryFee !== undefined ? parseInt(deliveryFee) : order.delivery_fee,
+          delivery_fee_included: deliveryFeeIncluded !== undefined ? deliveryFeeIncluded : order.delivery_fee_included,
+          closer_id: status === 'Confirmé' ? userId : order.closer_id,
+          livreur_id: status === 'Livré' ? userId : order.livreur_id,
         }
       });
 

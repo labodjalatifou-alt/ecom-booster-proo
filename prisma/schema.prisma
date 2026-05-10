@@ -69,20 +69,20 @@ model Order {
   currency        String   @default("FCFA")
   status          String   @default("A Confirmer")
   city            String?
-  cashReceived    Boolean  @default(false) @map("cash_received")
-  cashCollected   Int?     @map("cash_collected")
-  deliveryFee     Int?     @default(0) @map("delivery_fee")
-  deliveryFeeIncluded Boolean @default(false) @map("delivery_fee_included")
-  programmedDate  DateTime? @map("programmed_date")
+  cash_received   Boolean  @default(false)
+  cash_collected  Int?
+  delivery_fee    Int?     @default(0)
+  delivery_fee_included Boolean @default(false)
+  programmed_date DateTime?
   
-  closerId        String?  @map("closer_id")
-  closer          User?    @relation("CloserOrders", fields: [closerId], references: [id])
+  closer_id       String?
+  closer          User?    @relation("CloserOrders", fields: [closer_id], references: [id])
   
-  livreurId       String?  @map("livreur_id")
-  livreur         User?    @relation("LivreurOrders", fields: [livreurId], references: [id])
+  livreur_id      String?
+  livreur         User?    @relation("LivreurOrders", fields: [livreur_id], references: [id])
   
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at")
+  created_at      DateTime @default(now())
+  updated_at      DateTime @default(now()) @updatedAt
 
   @@map("orders")
 }
@@ -117,6 +117,7 @@ model ProductAnalysis {
   product_name         String
   score                Int
   price_recommendation String
+  cost_price           String?
   customer_avatar      Json
   shopify_page_content Json
   facebook_ad_content  Json
