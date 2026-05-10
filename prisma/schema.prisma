@@ -71,6 +71,8 @@ model Order {
   city            String?
   cashReceived    Boolean  @default(false) @map("cash_received")
   cashCollected   Int?     @map("cash_collected")
+  deliveryFee     Int?     @default(0) @map("delivery_fee")
+  deliveryFeeIncluded Boolean @default(false) @map("delivery_fee_included")
   programmedDate  DateTime? @map("programmed_date")
   
   closerId        String?  @map("closer_id")
