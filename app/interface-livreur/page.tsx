@@ -10,7 +10,7 @@ type Tab = 'pending' | 'delivered' | 'cancelled' | 'programmed';
 type Period = 'TODAY' | 'YESTERDAY' | '7D' | '30D' | 'ALL';
 
 export default function InterfaceLivreurPage() {
-  const { currency } = useStore();
+  const { currency, selectedStore, stores } = useStore();
   const [tab, setTab] = useState<Tab>('pending');
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,6 +58,13 @@ export default function InterfaceLivreurPage() {
       .in('status', ['Confirmé', 'Livré', 'Annulé', 'Programmé'])
       .order('created_at', { ascending: false });
 
+    // Store filtering
+    if (selectedStore !== 'ALL') {
+      query = query.eq('store_id', selectedStore);
+    } else if (stores.length > 0) {
+      query = query.in('store_id', stores.map(s => s.id));
+    }
+
     const { from, to } = getDateRange(period);
     if (from) query = query.gte('created_at', from);
     if (to) query = query.lt('created_at', to);
@@ -82,7 +89,7 @@ export default function InterfaceLivreurPage() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, fetchOrders)
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [period]);
+  }, [period, selectedStore]);
 
   const filteredOrders = orders.filter(o => {
     if (tab === 'pending') return o.status === 'Confirmé';

@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { ShoppingCart, Search, Eye, MapPin, Phone, Package, X, Globe, User, Loader2, RefreshCw, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { useStore } from '@/components/StoreProvider';
 
 type Period = 'TODAY' | 'YESTERDAY' | '7D' | '30D' | 'ALL';
 type StatusFilter = 'ALL' | 'A Confirmer' | 'Confirmé' | 'Livré' | 'Annulé';
@@ -10,6 +11,7 @@ type StatusFilter = 'ALL' | 'A Confirmer' | 'Confirmé' | 'Livré' | 'Annulé';
 const PAGE_SIZE = 50;
 
 export default function CommandesPage() {
+  const { selectedStore, stores } = useStore();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -39,6 +41,21 @@ export default function CommandesPage() {
 
     // Build count query
     let countQuery = supabase.from('orders').select('*', { count: 'exact', head: true });
+    
+    // Store filtering
+    if (selectedStore !== 'ALL') {
+      countQuery = countQuery.eq('store_id', selectedStore);
+    } else if (stores.length > 0) {
+      const storeIds = stores.map(s => s.id);
+      countQuery = countQuery.in('store_id', storeIds);
+    } else {
+      // No stores connected, return empty
+      setOrders([]);
+      setTotalCount(0);
+      setLoading(false);
+      return;
+    }
+
     const { from, to } = getDateRange(period);
     if (from) countQuery = countQuery.gte('created_at', from);
     if (to) countQuery = countQuery.lt('created_at', to);
@@ -56,6 +73,14 @@ export default function CommandesPage() {
       .order('created_at', { ascending: false })
       .range(rangeFrom, rangeTo);
 
+    // Re-apply same filters to data query
+    if (selectedStore !== 'ALL') {
+      query = query.eq('store_id', selectedStore);
+    } else {
+      const storeIds = stores.map(s => s.id);
+      query = query.in('store_id', storeIds);
+    }
+
     if (from) query = query.gte('created_at', from);
     if (to) query = query.lt('created_at', to);
     if (statusFilter !== 'ALL') query = query.eq('status', statusFilter);
@@ -68,7 +93,7 @@ export default function CommandesPage() {
   useEffect(() => {
     setPage(1);
     fetchOrders(1);
-  }, [period, statusFilter]);
+  }, [period, statusFilter, selectedStore]);
 
   useEffect(() => {
     fetchOrders(page);

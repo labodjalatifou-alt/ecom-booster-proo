@@ -94,6 +94,7 @@ Réponds UNIQUEMENT en JSON valide :
 
       // Save to Supabase
       const { data: savedData, error: saveError } = await supabase.from('analyses').insert([{
+        id: crypto.randomUUID(), // Satisfy the not-null constraint
         product_name: productName,
         score: result.score,
         price_recommendation: result.price_recommendation,

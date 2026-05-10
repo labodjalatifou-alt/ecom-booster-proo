@@ -46,6 +46,7 @@ export default function BoutiquesPage() {
       .from('Store')
       .insert([
         {
+          id: crypto.randomUUID(), // Generate a unique ID to satisfy the not-null constraint
           name: formData.name,
           shopifyUrl: formData.shopifyUrl,
           shopifyToken: formData.shopifyToken,

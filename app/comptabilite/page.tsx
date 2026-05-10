@@ -13,7 +13,7 @@ function parsePrice(val: any): number {
 }
 
 export default function ComptabilitePage() {
-  const { currency } = useStore();
+  const { selectedStore, stores, currency } = useStore();
   const [loading, setLoading] = useState(true);
   const [revenue, setRevenue] = useState(0);
   const [deliveredCount, setDeliveredCount] = useState(0);
@@ -26,10 +26,23 @@ export default function ComptabilitePage() {
 
   useEffect(() => {
     async function fetchData() {
+      setLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('orders')
-          .select('price, status');
+        let query = supabase.from('orders').select('price, status');
+        
+        if (selectedStore !== 'ALL') {
+          query = query.eq('store_id', selectedStore);
+        } else if (stores.length > 0) {
+          query = query.in('store_id', stores.map(s => s.id));
+        } else {
+          setRevenue(0);
+          setDeliveredCount(0);
+          setConfirmedCount(0);
+          setLoading(false);
+          return;
+        }
+
+        const { data, error } = await query;
 
         if (!error && data) {
           const delivered = data.filter(o => o.status === 'Livré');
@@ -50,7 +63,7 @@ export default function ComptabilitePage() {
       }
     }
     fetchData();
-  }, []);
+  }, [selectedStore]);
 
   const fmt = (n: number) => new Intl.NumberFormat('fr-FR').format(Math.round(n));
 

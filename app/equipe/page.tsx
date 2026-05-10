@@ -49,6 +49,7 @@ export default function EquipePage() {
       .from('User')
       .insert([
         {
+          id: crypto.randomUUID(), // Satisfy the not-null constraint
           name: formData.name,
           email: formData.email,
           role: formData.role,

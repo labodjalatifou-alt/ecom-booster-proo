@@ -10,7 +10,7 @@ type Tab = 'pending' | 'confirmed' | 'cancelled';
 type Period = 'TODAY' | 'YESTERDAY' | '7D' | '30D' | 'ALL';
 
 export default function InterfaceCloserPage() {
-  const { currency } = useStore();
+  const { currency, selectedStore, stores } = useStore();
   const [tab, setTab] = useState<Tab>('pending');
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,6 +56,13 @@ export default function InterfaceCloserPage() {
       .select('*')
       .order('created_at', { ascending: false });
 
+    // Store filtering
+    if (selectedStore !== 'ALL') {
+      query = query.eq('store_id', selectedStore);
+    } else if (stores.length > 0) {
+      query = query.in('store_id', stores.map(s => s.id));
+    }
+
     // Filtrage par période
     const { from, to } = getDateRange(period);
     if (from) query = query.gte('created_at', from);
@@ -98,7 +105,7 @@ export default function InterfaceCloserPage() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [period]);
+  }, [period, selectedStore]);
 
   async function updateStatus(orderId: any, newStatus: string) {
     const updateData: any = { status: newStatus };
