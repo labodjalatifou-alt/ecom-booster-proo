@@ -1,50 +1,67 @@
-import { Anthropic } from '@anthropic-ai/sdk';
 import { NextResponse } from 'next/server';
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || '',
-});
 
 export async function POST(req: Request) {
   try {
     const { prompt } = await req.json();
 
-    if (!process.env.ANTHROPIC_API_KEY) {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
       return NextResponse.json({ error: "Clé API Anthropic manquante" }, { status: 500 });
     }
 
-    // Liste mise à jour pour Mai 2026 avec les IDs complets
-    const models = [
-      'claude-3-5-sonnet-20241022',
-      'claude-3-7-sonnet-20250219',
-      'claude-4-6-sonnet-20260217',
-      'claude-4-7-opus-20260416'
-    ];
-    
     console.log("=== AI ADVISOR ENDPOINT TRIGGERED ===");
-    console.log("Models to try:", models);
+
+    // Try models in order of preference - using direct HTTP to avoid SDK version issues
+    const models = [
+      'claude-sonnet-4-20250514',
+      'claude-3-5-sonnet-20241022',
+      'claude-3-haiku-20240307',
+    ];
 
     let lastErrorDetail = "";
     
-    // On essaie d'abord les modèles les plus récents (on inverse la liste pour tester les 4.x d'abord)
-    const priorityModels = [...models].reverse();
-
-    for (const model of priorityModels) {
+    for (const model of models) {
       try {
-        const message = await anthropic.messages.create({
-          model: model,
-          max_tokens: 4096, // Augmenté pour des réponses JSON complètes
-          system: "Tu es l'expert stratégique d'Ecom Booster Pro spécialisé dans le marché Africain. Analyse le produit et réponds EXCLUSIVEMENT en JSON valide. Ne fournis aucune explication avant ou après le JSON.",
-          messages: [{ role: 'user', content: prompt }],
+        console.log(`Trying model: ${model}`);
+        
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01',
+          },
+          body: JSON.stringify({
+            model: model,
+            max_tokens: 4096,
+            system: "Tu es l'expert stratégique d'Ecom Booster Pro spécialisé dans le marché Africain (Côte d'Ivoire, Sénégal, Guinée). Analyse le produit et réponds EXCLUSIVEMENT en JSON valide. Le JSON doit contenir: score_potentiel (0-100), prix_recommande, marge_estimee, analyse_marche, points_forts (array), points_faibles (array), recommandations (array), verdict (string). Ne fournis aucune explication avant ou après le JSON.",
+            messages: [{ role: 'user', content: prompt }],
+          }),
         });
 
-        // @ts-ignore
-        return NextResponse.json({ text: message.content[0].text, model_used: model });
+        if (!response.ok) {
+          const errText = await response.text();
+          console.warn(`Model ${model} HTTP ${response.status}:`, errText);
+          lastErrorDetail = `${model}: HTTP ${response.status}`;
+          
+          // If auth error, no point trying other models
+          if (response.status === 401) break;
+          continue;
+        }
+
+        const data = await response.json();
+        const text = data.content?.[0]?.text || '';
+        
+        // Robust JSON extraction
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        const cleanJson = jsonMatch ? jsonMatch[0] : text;
+
+        console.log(`✅ Success with model: ${model}`);
+        return NextResponse.json({ text: cleanJson, model_used: model });
+        
       } catch (err: any) {
         lastErrorDetail = err.message;
-        console.warn(`Model ${model} failed:`, err.message);
-        // Si c'est une erreur d'authentification, on arrête tout de suite
-        if (err.status === 401) break;
+        console.warn(`Model ${model} exception:`, err.message);
         continue;
       }
     }

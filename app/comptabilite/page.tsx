@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Calculator, TrendingUp, TrendingDown, DollarSign, Target, Wallet, BarChart3, ArrowUpRight, ArrowDownRight, PieChart, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { useStore } from '@/components/StoreProvider';
 
 function parsePrice(val: any): number {
   if (!val) return 0;
@@ -11,6 +12,7 @@ function parsePrice(val: any): number {
 }
 
 export default function ComptabilitePage() {
+  const { currency } = useStore();
   const [loading, setLoading] = useState(true);
   const [revenue, setRevenue] = useState(0);
   const [deliveredCount, setDeliveredCount] = useState(0);
@@ -48,7 +50,7 @@ export default function ComptabilitePage() {
   const stats = [
     {
       label: "Chiffre d'Affaires",
-      val: `${fmt(revenue)} FCFA`,
+      val: `${fmt(revenue)} ${currency}`,
       sub: `${deliveredCount} colis livrés`,
       icon: Wallet,
       color: 'emerald',
@@ -56,7 +58,7 @@ export default function ComptabilitePage() {
     },
     {
       label: "En Attente (Confirmés)",
-      val: `${fmt(pendingRevenue)} FCFA`,
+      val: `${fmt(pendingRevenue)} ${currency}`,
       sub: 'Cash à collecter',
       icon: DollarSign,
       color: 'blue',
@@ -72,7 +74,7 @@ export default function ComptabilitePage() {
     },
     {
       label: "Profit Estimé",
-      val: `${fmt(revenue)} FCFA`,
+      val: `${fmt(revenue)} ${currency}`,
       sub: 'Sur colis livrés',
       icon: TrendingUp,
       color: 'purple',
@@ -154,7 +156,7 @@ export default function ComptabilitePage() {
                       <div key={i} className="space-y-2">
                         <div className="flex justify-between items-center">
                           <span className="text-xs font-black text-slate-500 uppercase tracking-widest">{item.label}</span>
-                          <span className="text-sm font-black">{fmt(item.val)} FCFA <span className="text-slate-400 text-[10px]">({pct}%)</span></span>
+                          <span className="text-sm font-black">{fmt(item.val)} {currency} <span className="text-slate-400 text-[10px]">({pct}%)</span></span>
                         </div>
                         <div className="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                           <div
@@ -177,8 +179,8 @@ export default function ComptabilitePage() {
               </h3>
               <div className="space-y-5 relative z-10">
                 {[
-                  { label: 'CA Total (Livré)', val: `${fmt(revenue)} FCFA`, color: 'text-emerald-400' },
-                  { label: 'En Attente', val: `${fmt(pendingRevenue)} FCFA`, color: 'text-blue-400' },
+                  { label: 'CA Total (Livré)', val: `${fmt(revenue)} ${currency}`, color: 'text-emerald-400' },
+                  { label: 'En Attente', val: `${fmt(pendingRevenue)} ${currency}`, color: 'text-blue-400' },
                   { label: 'Colis Livrés', val: `${deliveredCount}`, color: 'text-white' },
                   { label: 'Annulés', val: `${cancelledCount}`, color: 'text-red-400' },
                 ].map((item, i) => (

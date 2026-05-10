@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { Headset, PhoneForwarded, MessageSquare, CheckCircle2, MapPin, Edit3, Loader2, X, MoreVertical, XCircle, Clock } from 'lucide-react';
+import { Headset, PhoneForwarded, MessageSquare, CheckCircle2, MapPin, Edit3, Loader2, X, MoreVertical, XCircle, Clock, DollarSign, Calendar } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { useStore } from '@/components/StoreProvider';
 
 type Tab = 'pending' | 'confirmed' | 'cancelled';
+type Period = 'TODAY' | 'YESTERDAY' | '7D' | '30D' | 'ALL';
 
 export default function InterfaceCloserPage() {
   const { currency } = useStore();
@@ -18,27 +19,64 @@ export default function InterfaceCloserPage() {
   const [noteText, setNoteText] = useState('');
   const [showNote, setShowNote] = useState(false);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [period, setPeriod] = useState<Period>('ALL');
+  const [myEarnings, setMyEarnings] = useState(0);
+
+  function getDateRange(p: Period): { from: string | null; to: string | null } {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    switch (p) {
+      case 'TODAY':
+        return { from: startOfToday.toISOString(), to: null };
+      case 'YESTERDAY': {
+        const yesterday = new Date(startOfToday);
+        yesterday.setDate(yesterday.getDate() - 1);
+        return { from: yesterday.toISOString(), to: startOfToday.toISOString() };
+      }
+      case '7D': {
+        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        return { from: sevenDaysAgo.toISOString(), to: null };
+      }
+      case '30D': {
+        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        return { from: thirtyDaysAgo.toISOString(), to: null };
+      }
+      default:
+        return { from: null, to: null };
+    }
+  }
 
   async function fetchData() {
     setLoading(true);
-    // Fetch all relevant orders
-    const { data, error } = await supabase
+    
+    let query = supabase
       .from('orders')
       .select('*')
       .order('created_at', { ascending: false });
 
+    // Filtrage par période
+    const { from, to } = getDateRange(period);
+    if (from) query = query.gte('created_at', from);
+    if (to) query = query.lt('created_at', to);
+
+    const { data, error } = await query;
+
     if (!error && data) {
       setOrders(data);
+      
+      // Calcul des confirmés aujourd'hui (toujours basé sur "aujourd'hui")
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+      const todayConfirmed = data.filter(
+        o => o.status === 'Confirmé' && new Date(o.updated_at) >= startOfToday
+      ).length;
+      setConfirmedToday(todayConfirmed);
+      
+      // Commission : 500 FCFA par commande confirmée dans la période
+      const confirmedInPeriod = data.filter(o => o.status === 'Confirmé').length;
+      setMyEarnings(confirmedInPeriod * 500);
     }
-    
-    // Fetch count confirmed today
-    const today = new Date().toISOString().split('T')[0];
-    const { count } = await supabase
-      .from('orders')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'Confirmé')
-      .gte('created_at', today);
-    setConfirmedToday(count || 0);
     
     setLoading(false);
   }
@@ -54,7 +92,7 @@ export default function InterfaceCloserPage() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, []);
+  }, [period]);
 
   async function updateStatus(orderId: any, newStatus: string) {
     const { error } = await supabase
@@ -80,9 +118,17 @@ export default function InterfaceCloserPage() {
   const handleCall = (phone: string) => { window.location.href = `tel:${phone}`; };
   const handleWhatsApp = (phone: string) => { window.open(`https://wa.me/${phone.replace(/\D/g, '')}`, '_blank'); };
 
+  const periods: { id: Period; label: string }[] = [
+    { id: 'TODAY', label: "Aujourd'hui" },
+    { id: 'YESTERDAY', label: 'Hier' },
+    { id: '7D', label: '7 Jours' },
+    { id: '30D', label: '30 Jours' },
+    { id: 'ALL', label: 'Tout' },
+  ];
+
   return (
     <div className="max-w-7xl mx-auto pb-10 px-4 text-slate-800 dark:text-slate-100 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
         <div>
           <div className="flex items-center gap-2 mb-2">
             <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
@@ -92,24 +138,59 @@ export default function InterfaceCloserPage() {
           </div>
           <h2 className="text-4xl font-black tracking-tighter">Interface Closer</h2>
         </div>
-        <div className="flex gap-4">
-          <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 p-4 rounded-2xl shadow-sm text-center min-w-[120px]">
-            <span className="text-[9px] font-black text-slate-400 uppercase block mb-1">Confirmés Aujourd'hui</span>
-            <span className="text-xl font-black text-emerald-600">{confirmedToday}</span>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-emerald-500 text-white p-5 rounded-2xl shadow-xl shadow-emerald-500/20 flex flex-col items-center justify-center min-w-[110px]">
+            <CheckCircle2 className="w-5 h-5 mb-1 opacity-70" />
+            <span className="text-2xl font-black">{confirmedToday}</span>
+            <span className="text-[8px] font-black uppercase tracking-widest opacity-80">Confirmés Aujourd'hui</span>
           </div>
-          <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 p-4 rounded-2xl shadow-sm text-center min-w-[120px]">
-            <span className="text-[9px] font-black text-slate-400 uppercase block mb-1">En Attente</span>
-            <span className="text-xl font-black text-primary-600">{orders.filter(o => o.status === 'A Confirmer').length}</span>
+          <div className="bg-primary-600 text-white p-5 rounded-2xl shadow-xl shadow-primary-500/20 flex flex-col items-center justify-center min-w-[110px]">
+            <Clock className="w-5 h-5 mb-1 opacity-70" />
+            <span className="text-2xl font-black">{orders.filter(o => o.status === 'A Confirmer').length}</span>
+            <span className="text-[8px] font-black uppercase tracking-widest opacity-80">En Attente</span>
           </div>
+          <div className="bg-rose-500 text-white p-5 rounded-2xl shadow-xl shadow-rose-500/20 flex flex-col items-center justify-center min-w-[110px]">
+            <XCircle className="w-5 h-5 mb-1 opacity-70" />
+            <span className="text-2xl font-black">{orders.filter(o => o.status === 'Annulé').length}</span>
+            <span className="text-[8px] font-black uppercase tracking-widest opacity-80">Annulées</span>
+          </div>
+          <div className="bg-slate-900 text-white p-5 rounded-2xl shadow-xl shadow-slate-900/20 flex flex-col items-center justify-center min-w-[110px]">
+            <DollarSign className="w-5 h-5 mb-1 opacity-70" />
+            <span className="text-lg font-black">{new Intl.NumberFormat('fr-FR').format(myEarnings)} {currency}</span>
+            <span className="text-[8px] font-black uppercase tracking-widest opacity-80">Mes Gains</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Date Selector */}
+      <div className="flex flex-wrap items-center gap-3 mb-6">
+        <div className="flex items-center gap-2 text-slate-400 mr-2">
+          <Calendar className="w-4 h-4" />
+          <span className="text-[9px] font-black uppercase tracking-widest">Période</span>
+        </div>
+        <div className="flex bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-1 shadow-sm">
+          {periods.map(p => (
+            <button
+              key={p.id}
+              onClick={() => setPeriod(p.id)}
+              className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                period === p.id
+                  ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/20'
+                  : 'text-slate-400 hover:text-slate-600'
+              }`}
+            >
+              {p.label}
+            </button>
+          ))}
         </div>
       </div>
 
       {/* Tabs */}
       <div className="flex gap-1 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-1 shadow-sm mb-8 w-fit">
         {[
-          { id: 'pending', label: 'À Confirmer', icon: Clock },
-          { id: 'confirmed', label: 'Confirmées', icon: CheckCircle2 },
-          { id: 'cancelled', label: 'Annulées', icon: XCircle },
+          { id: 'pending', label: 'À Confirmer', icon: Clock, count: orders.filter(o => o.status === 'A Confirmer').length },
+          { id: 'confirmed', label: 'Confirmées', icon: CheckCircle2, count: orders.filter(o => o.status === 'Confirmé').length },
+          { id: 'cancelled', label: 'Annulées', icon: XCircle, count: orders.filter(o => o.status === 'Annulé').length },
         ].map(t => (
           <button
             key={t.id}
@@ -122,6 +203,11 @@ export default function InterfaceCloserPage() {
           >
             <t.icon className="w-3.5 h-3.5" />
             {t.label}
+            {t.count > 0 && (
+              <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[8px] ${tab === t.id ? 'bg-white text-slate-900' : 'bg-slate-100 text-slate-400'}`}>
+                {t.count}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -163,7 +249,7 @@ export default function InterfaceCloserPage() {
                       </div>
                     </td>
                     <td className="px-8 py-4 text-right">
-                      <div className="font-black text-sm text-emerald-600">{item.price} {currency}</div>
+                      <div className="font-black text-sm text-emerald-600">{item.price} {item.currency || currency}</div>
                     </td>
                     <td className="px-8 py-4 text-right relative">
                       <button 

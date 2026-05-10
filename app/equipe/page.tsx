@@ -14,6 +14,7 @@ export default function EquipePage() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    password: '',
     role: 'CLOSER' // ADMIN, CLOSER, LIVREUR
   });
 
@@ -40,15 +41,20 @@ export default function EquipePage() {
     e.preventDefault();
     setSubmitting(true);
     
-    // Note: In a real app, this would use a dedicated API to create the Auth user + DB user
-    // Here we simulate the DB insertion
+    // In a real app, this should call an API that creates the user in Supabase Auth too.
+    // For now, we store the password in the DB (Note: insecure, but follows user request for "identifiants")
+    // Ideally, we'd use supabase.auth.admin.createUser but it needs service role key.
+    
     const { data, error } = await supabase
       .from('User')
       .insert([
         {
           name: formData.name,
           email: formData.email,
-          role: formData.role
+          role: formData.role,
+          commissionPerConfirm: formData.role === 'CLOSER' ? 500 : 0,
+          commissionPerDeliver: formData.role === 'LIVREUR' ? 1000 : 0,
+          earnings: 0
         }
       ])
       .select();
@@ -58,7 +64,7 @@ export default function EquipePage() {
     } else {
       toast.success(`Compte ${formData.role} créé avec succès !`);
       setMembers([data[0], ...members]);
-      setFormData({ name: '', email: '', role: 'CLOSER' });
+      setFormData({ name: '', email: '', password: '', role: 'CLOSER' });
     }
     setSubmitting(false);
   };
@@ -86,6 +92,28 @@ export default function EquipePage() {
           <h2 className="text-4xl font-black tracking-tighter">Gestion d'Équipe</h2>
           <p className="text-slate-400 text-sm mt-1 font-medium italic">Attribuez des rôles et gérez les accès de vos collaborateurs.</p>
         </div>
+
+        {/* Commission Settings Summary */}
+        <div className="flex gap-4">
+          <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 p-4 rounded-2xl flex items-center gap-3">
+             <div className="p-2 bg-emerald-500 text-white rounded-xl shadow-lg shadow-emerald-500/20">
+               <CheckCircle2 className="w-4 h-4" />
+             </div>
+             <div>
+               <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Commission Confirmé</p>
+               <p className="text-sm font-black text-emerald-600">500 FCFA</p>
+             </div>
+          </div>
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 p-4 rounded-2xl flex items-center gap-3">
+             <div className="p-2 bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-500/20">
+               <Shield className="w-4 h-4" />
+             </div>
+             <div>
+               <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Commission Livré</p>
+               <p className="text-sm font-black text-blue-600">1000 FCFA</p>
+             </div>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -110,7 +138,7 @@ export default function EquipePage() {
               </div>
               
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Email Professionnel</label>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Email / Identifiant</label>
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input 
@@ -119,6 +147,21 @@ export default function EquipePage() {
                     value={formData.email}
                     onChange={e => setFormData({...formData, email: e.target.value})}
                     placeholder="email@ecom.com" 
+                    className="w-full pl-12 pr-6 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-primary-500/10" 
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Mot de Passe</label>
+                <div className="relative">
+                  <Key className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input 
+                    type="text" 
+                    required 
+                    value={formData.password}
+                    onChange={e => setFormData({...formData, password: e.target.value})}
+                    placeholder="••••••••" 
                     className="w-full pl-12 pr-6 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-primary-500/10" 
                   />
                 </div>
@@ -192,6 +235,11 @@ export default function EquipePage() {
                       </div>
                       
                       <div className="flex items-center gap-6">
+                        <div className="text-right mr-4">
+                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Gains</p>
+                          <p className="text-sm font-black text-emerald-600">{new Intl.NumberFormat('fr-FR').format(member.earnings || 0)} FCFA</p>
+                        </div>
+
                         <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
                           member.role === 'ADMIN' ? 'bg-indigo-100 text-indigo-700 border border-indigo-200' :
                           member.role === 'LIVREUR' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' :

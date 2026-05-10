@@ -1,8 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { ShoppingCart, Search, Eye, MapPin, Phone, Package, X, Globe, User, Loader2, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ShoppingCart, Search, Eye, MapPin, Phone, Package, X, Globe, User, Loader2, RefreshCw, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+
+type Period = 'TODAY' | 'YESTERDAY' | '7D' | '30D' | 'ALL';
+type StatusFilter = 'ALL' | 'A Confirmer' | 'Confirmé' | 'Livré' | 'Annulé';
 
 const PAGE_SIZE = 50;
 
@@ -13,23 +16,59 @@ export default function CommandesPage() {
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(1);
+  const [period, setPeriod] = useState<Period>('ALL');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
+
+  function getDateRange(p: Period): { from: string | null; to: string | null } {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    switch (p) {
+      case 'TODAY': return { from: startOfToday.toISOString(), to: null };
+      case 'YESTERDAY': {
+        const y = new Date(startOfToday); y.setDate(y.getDate() - 1);
+        return { from: y.toISOString(), to: startOfToday.toISOString() };
+      }
+      case '7D': return { from: new Date(now.getTime() - 7*24*60*60*1000).toISOString(), to: null };
+      case '30D': return { from: new Date(now.getTime() - 30*24*60*60*1000).toISOString(), to: null };
+      default: return { from: null, to: null };
+    }
+  }
 
   async function fetchOrders(p = page, silent = false) {
     if (!silent) setLoading(true);
-    const { count } = await supabase.from('orders').select('*', { count: 'exact', head: true });
+
+    // Build count query
+    let countQuery = supabase.from('orders').select('*', { count: 'exact', head: true });
+    const { from, to } = getDateRange(period);
+    if (from) countQuery = countQuery.gte('created_at', from);
+    if (to) countQuery = countQuery.lt('created_at', to);
+    if (statusFilter !== 'ALL') countQuery = countQuery.eq('status', statusFilter);
+    
+    const { count } = await countQuery;
     if (count !== null) setTotalCount(count);
 
-    const from = (p - 1) * PAGE_SIZE;
-    const to = from + PAGE_SIZE - 1;
-    const { data, error } = await supabase
+    // Build data query
+    const rangeFrom = (p - 1) * PAGE_SIZE;
+    const rangeTo = rangeFrom + PAGE_SIZE - 1;
+    let query = supabase
       .from('orders')
       .select('*')
       .order('created_at', { ascending: false })
-      .range(from, to);
+      .range(rangeFrom, rangeTo);
 
+    if (from) query = query.gte('created_at', from);
+    if (to) query = query.lt('created_at', to);
+    if (statusFilter !== 'ALL') query = query.eq('status', statusFilter);
+
+    const { data, error } = await query;
     if (!error && data) setOrders(data);
     if (!silent) setLoading(false);
   }
+
+  useEffect(() => {
+    setPage(1);
+    fetchOrders(1);
+  }, [period, statusFilter]);
 
   useEffect(() => {
     fetchOrders(page);
@@ -51,11 +90,6 @@ export default function CommandesPage() {
   const cleanCity = (city: string) =>
     city?.split(',').map(s => s.trim()).filter((v, i, a) => a.indexOf(v) === i).join(', ') || '-';
 
-  const getCurrency = (city: string) => {
-    const gnCities = ['Conakry', 'Kankan', 'Labe', 'Kindia', 'Mamou', "N'Zerekore"];
-    return gnCities.some(c => city?.includes(c)) ? 'GNF' : 'FCFA';
-  };
-
   const statusColor = (s: string) => {
     if (s === 'Livré') return 'bg-emerald-100 text-emerald-700 border-emerald-200';
     if (s === 'Annulé') return 'bg-red-100 text-red-700 border-red-200';
@@ -63,9 +97,25 @@ export default function CommandesPage() {
     return 'bg-amber-100 text-amber-700 border-amber-200';
   };
 
+  const periods: { id: Period; label: string }[] = [
+    { id: 'TODAY', label: "Aujourd'hui" },
+    { id: 'YESTERDAY', label: 'Hier' },
+    { id: '7D', label: '7 Jours' },
+    { id: '30D', label: '30 Jours' },
+    { id: 'ALL', label: 'Tout' },
+  ];
+
+  const statuses: { id: StatusFilter; label: string }[] = [
+    { id: 'ALL', label: 'Tous' },
+    { id: 'A Confirmer', label: 'À Confirmer' },
+    { id: 'Confirmé', label: 'Confirmées' },
+    { id: 'Livré', label: 'Livrées' },
+    { id: 'Annulé', label: 'Annulées' },
+  ];
+
   return (
     <div className="max-w-7xl mx-auto pb-10 px-4 text-slate-800 dark:text-slate-100 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
         <div>
           <div className="flex items-center gap-2 mb-2">
             <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
@@ -96,6 +146,46 @@ export default function CommandesPage() {
           >
             <RefreshCw className="w-4 h-4" />
           </button>
+        </div>
+      </div>
+
+      {/* Filters Row */}
+      <div className="flex flex-wrap items-center gap-4 mb-6">
+        {/* Date Selector */}
+        <div className="flex items-center gap-2">
+          <Calendar className="w-4 h-4 text-slate-400" />
+          <div className="flex bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-1 shadow-sm">
+            {periods.map(p => (
+              <button
+                key={p.id}
+                onClick={() => setPeriod(p.id)}
+                className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
+                  period === p.id
+                    ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/20'
+                    : 'text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Status Filter */}
+        <div className="flex bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-1 shadow-sm">
+          {statuses.map(s => (
+            <button
+              key={s.id}
+              onClick={() => setStatusFilter(s.id)}
+              className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
+                statusFilter === s.id
+                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg'
+                  : 'text-slate-400 hover:text-slate-600'
+              }`}
+            >
+              {s.label}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -154,7 +244,7 @@ export default function CommandesPage() {
                     </td>
                     <td className="px-8 py-5 text-right">
                       <div className="font-black text-sm">{new Intl.NumberFormat('fr-FR').format(Number(String(order.price || '0').replace(/\s/g, '')))}</div>
-                      <div className="text-[9px] font-black text-slate-400 uppercase">{getCurrency(order.city)}</div>
+                      <div className="text-[9px] font-black text-slate-400 uppercase">{order.currency || 'FCFA'}</div>
                     </td>
                     <td className="px-8 py-5 text-right" onClick={e => e.stopPropagation()}>
                       <div className="flex justify-end gap-2">
@@ -251,7 +341,7 @@ export default function CommandesPage() {
                 </div>
                 <div className="text-right">
                   <span className="text-[9px] font-black text-primary-600 uppercase block">Total</span>
-                  <p className="text-lg font-black">{new Intl.NumberFormat('fr-FR').format(Number(String(selectedOrder.price || '0').replace(/\s/g, '')))} {getCurrency(selectedOrder.city)}</p>
+                  <p className="text-lg font-black">{new Intl.NumberFormat('fr-FR').format(Number(String(selectedOrder.price || '0').replace(/\s/g, '')))} {selectedOrder.currency || 'FCFA'}</p>
                 </div>
               </div>
               <div className="flex gap-3">

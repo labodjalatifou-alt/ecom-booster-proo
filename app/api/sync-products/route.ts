@@ -2,67 +2,73 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
 export async function GET() {
-  const shopifyUrl = process.env.SHOPIFY_STORE_URL || process.env.SHOPIFY_DOMAIN;
-  const accessToken = process.env.SHOPIFY_ACCESS_TOKEN;
-
-  if (!shopifyUrl || !accessToken) {
-    return NextResponse.json({ error: 'Shopify credentials missing' }, { status: 500 });
-  }
-
   try {
-    // Get store currency first
-    const shopRes = await fetch(`https://${shopifyUrl}/admin/api/2024-01/shop.json`, {
-      headers: { 'X-Shopify-Access-Token': accessToken },
-    });
-    const shopData = shopRes.ok ? await shopRes.json() : {};
-    const currency = shopData.shop?.currency || 'GNF';
+    // 1. Récupérer toutes les boutiques connectées
+    const { data: stores, error: storesError } = await supabase
+      .from('Store')
+      .select('*');
 
-    let allProducts: any[] = [];
-    let nextPageUrl: string | null =
-      `https://${shopifyUrl}/admin/api/2024-01/products.json?limit=250`;
+    if (storesError) throw storesError;
+    if (!stores || stores.length === 0) {
+      return NextResponse.json({ error: 'Aucune boutique connectée' }, { status: 400 });
+    }
 
-    while (nextPageUrl) {
-      const response: Response = await fetch(nextPageUrl, {
-        headers: {
-          'X-Shopify-Access-Token': accessToken,
-          'Content-Type': 'application/json',
-        },
-      });
+    let totalImported = 0;
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Shopify API error ${response.status}: ${errorText}`);
+    // 2. Pour chaque boutique, importer les produits
+    for (const store of stores) {
+      const shopifyUrl = store.shopifyUrl;
+      const accessToken = store.shopifyToken;
+      const currency = store.currency || 'FCFA';
+
+      let allProducts: any[] = [];
+      let nextPageUrl: string | null =
+        `https://${shopifyUrl}/admin/api/2024-01/products.json?limit=250`;
+
+      while (nextPageUrl) {
+        const response: Response = await fetch(nextPageUrl, {
+          headers: {
+            'X-Shopify-Access-Token': accessToken,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          console.error(`Shopify API error for ${store.name}:`, await response.text());
+          break;
+        }
+
+        const data = await response.json();
+        allProducts = [...allProducts, ...(data.products || [])];
+
+        const linkHeader = response.headers.get('Link') || '';
+        const nextMatch = linkHeader.match(/<([^>]+)>;\s*rel="next"/);
+        nextPageUrl = nextMatch ? nextMatch[1] : null;
       }
 
-      const data = await response.json();
-      allProducts = [...allProducts, ...(data.products || [])];
+      const productsToInsert = allProducts.map((p: any) => ({
+        shopify_id: p.id.toString(),
+        title: p.title,
+        price: p.variants?.[0]?.price || '0',
+        compare_price: p.variants?.[0]?.compare_at_price || null,
+        status: p.status,
+        stock: p.variants?.[0]?.inventory_quantity || 0,
+        image_url: p.image?.src || null,
+        currency,
+      }));
 
-      const linkHeader = response.headers.get('Link') || '';
-      const nextMatch = linkHeader.match(/<([^>]+)>;\s*rel="next"/);
-      nextPageUrl = nextMatch ? nextMatch[1] : null;
+      // Upsert in batches
+      for (let i = 0; i < productsToInsert.length; i += 100) {
+        const batch = productsToInsert.slice(i, i + 100);
+        const { error } = await supabase
+          .from('products')
+          .upsert(batch, { onConflict: 'shopify_id' });
+        if (error) console.error(`Upsert error for ${store.name}:`, error);
+      }
+      totalImported += productsToInsert.length;
     }
 
-    const productsToInsert = allProducts.map((p: any) => ({
-      shopify_id: p.id.toString(),
-      title: p.title,
-      price: p.variants?.[0]?.price || '0',
-      compare_price: p.variants?.[0]?.compare_at_price || null,
-      status: p.status,
-      stock: p.variants?.[0]?.inventory_quantity || 0,
-      image_url: p.image?.src || null,
-      currency,
-    }));
-
-    // Upsert in batches
-    for (let i = 0; i < productsToInsert.length; i += 100) {
-      const batch = productsToInsert.slice(i, i + 100);
-      const { error } = await supabase
-        .from('products')
-        .upsert(batch, { onConflict: 'shopify_id' });
-      if (error) throw error;
-    }
-
-    return NextResponse.json({ success: true, count: productsToInsert.length, currency });
+    return NextResponse.json({ success: true, count: totalImported });
   } catch (error: any) {
     console.error('[sync-products]', error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });

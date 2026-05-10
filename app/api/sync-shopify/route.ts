@@ -50,81 +50,100 @@ function resolveStatus(order: any): string {
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const storeCode = searchParams.get('store');
-
-  const shopifyUrl = process.env.SHOPIFY_STORE_URL;
-  const accessToken = process.env.SHOPIFY_ACCESS_TOKEN;
-
-  if (!shopifyUrl || !accessToken) {
-    return NextResponse.json({ error: 'Identifiants Shopify manquants' }, { status: 500 });
-  }
+  const storeId = searchParams.get('storeId');
 
   try {
-    let allOrders: any[] = [];
-    let nextPageUrl: string | null =
-      `https://${shopifyUrl}/admin/api/2024-01/orders.json?status=any&limit=250&fields=id,customer,shipping_address,billing_address,line_items,total_price,financial_status,fulfillment_status,created_at,updated_at`;
+    let storesToSync: any[] = [];
 
-    // Pagination — charge TOUTES les commandes
-    while (nextPageUrl) {
-      const response: Response = await fetch(nextPageUrl, {
-        headers: {
-          'X-Shopify-Access-Token': accessToken,
-          'Content-Type': 'application/json',
-        },
-      });
+    if (storeId) {
+      // Synchronisation d'une seule boutique
+      const { data: store, error: storeError } = await supabase
+        .from('Store')
+        .select('*')
+        .eq('id', storeId)
+        .single();
+      
+      if (storeError || !store) throw new Error('Boutique non trouvée');
+      storesToSync = [store];
+    } else {
+      // Synchronisation de TOUTES les boutiques
+      const { data: allStores, error: allStoresError } = await supabase
+        .from('Store')
+        .select('*');
+      
+      if (allStoresError) throw allStoresError;
+      storesToSync = allStores || [];
+    }
 
-      if (!response.ok) {
-        const err = await response.text();
-        throw new Error(`Shopify API ${response.status}: ${err}`);
+    let totalImported = 0;
+
+    for (const store of storesToSync) {
+      const shopifyUrl = store.shopifyUrl;
+      const accessToken = store.shopifyToken;
+      const storeCurrency = store.currency || 'FCFA';
+
+      let allOrders: any[] = [];
+      let nextPageUrl: string | null =
+        `https://${shopifyUrl}/admin/api/2024-01/orders.json?status=any&limit=250&fields=id,customer,shipping_address,billing_address,line_items,total_price,financial_status,fulfillment_status,created_at,updated_at`;
+
+      while (nextPageUrl) {
+        const response: Response = await fetch(nextPageUrl, {
+          headers: {
+            'X-Shopify-Access-Token': accessToken,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          console.error(`Error for store ${store.name}:`, await response.text());
+          break;
+        }
+
+        const data = await response.json();
+        allOrders = [...allOrders, ...(data.orders || [])];
+
+        const linkHeader = response.headers.get('Link') || '';
+        const nextMatch = linkHeader.match(/<([^>]+)>;\s*rel="next"/);
+        nextPageUrl = nextMatch ? nextMatch[1] : null;
       }
 
-      const data = await response.json();
-      allOrders = [...allOrders, ...(data.orders || [])];
+      const ordersToInsert = allOrders.map((order: any) => {
+        const city = resolveCity(order, null); // On passe null pour utiliser la ville réelle
+        const phone = resolvePhone(order);
+        const rawPrice = parseFloat(order.total_price || '0');
+        const firstName = order.customer?.first_name || '';
+        const lastName = order.customer?.last_name || '';
+        const customer = `${firstName} ${lastName}`.trim() || 'Client';
+        const product = order.line_items?.[0]?.title || 'Produit inconnu';
+        const status = resolveStatus(order);
 
-      const linkHeader = response.headers.get('Link') || '';
-      const nextMatch = linkHeader.match(/<([^>]+)>;\s*rel="next"/);
-      nextPageUrl = nextMatch ? nextMatch[1] : null;
+        return {
+          shopify_id: order.id.toString(),
+          store_id: store.id,
+          customer,
+          phone,
+          product,
+          price: Math.round(rawPrice).toString(),
+          currency: storeCurrency,
+          city,
+          status,
+          created_at: order.created_at,
+          updated_at: order.updated_at,
+        };
+      });
+
+      // Upsert par batch de 100
+      for (let i = 0; i < ordersToInsert.length; i += 100) {
+        const batch = ordersToInsert.slice(i, i + 100);
+        const { error } = await supabase
+          .from('orders')
+          .upsert(batch, { onConflict: 'shopify_id' });
+        if (error) console.error('Upsert error:', error);
+      }
+      totalImported += ordersToInsert.length;
     }
 
-    if (allOrders.length === 0) {
-      return NextResponse.json({ success: true, count: 0, message: 'Aucune commande Shopify trouvée' });
-    }
-
-    const ordersToInsert = allOrders.map((order: any) => {
-      const city = resolveCity(order, storeCode);
-      const phone = resolvePhone(order);
-      const rawPrice = parseFloat(order.total_price || '0');
-      const currency = resolveCurrency(city);
-      const firstName = order.customer?.first_name || '';
-      const lastName = order.customer?.last_name || '';
-      const customer = `${firstName} ${lastName}`.trim() || 'Client';
-      const product = order.line_items?.[0]?.title || 'Produit inconnu';
-      const status = resolveStatus(order);
-
-      return {
-        shopify_id: order.id.toString(),
-        customer,
-        phone,
-        product,
-        price: Math.round(rawPrice).toString(),
-        currency,
-        city,
-        status,
-        created_at: order.created_at,
-        updated_at: order.updated_at,
-      };
-    });
-
-    // Upsert par batch de 100
-    for (let i = 0; i < ordersToInsert.length; i += 100) {
-      const batch = ordersToInsert.slice(i, i + 100);
-      const { error } = await supabase
-        .from('orders')
-        .upsert(batch, { onConflict: 'shopify_id' });
-      if (error) throw error;
-    }
-
-    return NextResponse.json({ success: true, count: ordersToInsert.length });
+    return NextResponse.json({ success: true, count: totalImported });
   } catch (error: any) {
     console.error('[sync-shopify] Erreur:', error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });

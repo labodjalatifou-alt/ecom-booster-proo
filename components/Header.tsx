@@ -1,21 +1,18 @@
 "use client";
 
 import React from 'react';
-import { Search, Bell, ChevronDown, Store, Menu, Check } from 'lucide-react';
+import { ChevronDown, Store, Menu, Check } from 'lucide-react';
 import { useSidebar } from './SidebarProvider';
-import { useStore, StoreId } from './StoreProvider';
+import { useStore } from './StoreProvider';
 
 export default function Header() {
   const { toggle } = useSidebar();
-  const { selectedStore, setSelectedStore } = useStore();
+  const { selectedStore, setSelectedStore, stores, loadingStores } = useStore();
 
-  const getStoreName = (id: StoreId) => {
-    switch(id) {
-      case 'ALL': return 'Toutes les boutiques';
-      case 'ABIDJAN': return 'Boutique Abidjan';
-      case 'DAKAR': return 'Boutique Dakar';
-      case 'CONAKRY': return 'Boutique Conakry';
-    }
+  const getStoreName = (id: string) => {
+    if (id === 'ALL') return 'Toutes les boutiques';
+    const store = stores.find(s => s.id === id);
+    return store?.name || id;
   };
 
   return (
@@ -44,42 +41,52 @@ export default function Header() {
           
           <div className="absolute top-full right-0 sm:left-0 sm:right-auto mt-2 w-56 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 overflow-hidden transform origin-top-right sm:origin-top-left group-hover:translate-y-0 translate-y-2">
             <div className="p-2 space-y-1">
-              {(['ALL', 'ABIDJAN', 'DAKAR', 'CONAKRY'] as StoreId[]).map(store => (
-                <div 
-                  key={store}
-                  onClick={() => setSelectedStore(store)}
-                  className={`px-3 py-2.5 text-sm rounded-xl cursor-pointer font-medium flex items-center justify-between transition-all duration-200 ${
-                    selectedStore === store 
-                      ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400 shadow-sm' 
-                      : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    {store === 'ALL' && <Store className="w-4 h-4" />}
-                    {getStoreName(store)}
-                  </div>
-                  {selectedStore === store && <Check className="w-4 h-4" />}
+              {/* "All" option */}
+              <div 
+                onClick={() => setSelectedStore('ALL')}
+                className={`px-3 py-2.5 text-sm rounded-xl cursor-pointer font-medium flex items-center justify-between transition-all duration-200 ${
+                  selectedStore === 'ALL' 
+                    ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400 shadow-sm' 
+                    : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Store className="w-4 h-4" />
+                  Toutes les boutiques
                 </div>
-              ))}
+                {selectedStore === 'ALL' && <Check className="w-4 h-4" />}
+              </div>
+
+              {/* Separator */}
+              {stores.length > 0 && <div className="h-px bg-slate-100 dark:bg-slate-700 mx-2" />}
+
+              {/* Dynamic stores from DB */}
+              {loadingStores ? (
+                <div className="px-3 py-2 text-xs text-slate-400 italic">Chargement...</div>
+              ) : stores.length === 0 ? (
+                <div className="px-3 py-2 text-xs text-slate-400 italic">Aucune boutique connectée</div>
+              ) : (
+                stores.map(store => (
+                  <div 
+                    key={store.id}
+                    onClick={() => setSelectedStore(store.id)}
+                    className={`px-3 py-2.5 text-sm rounded-xl cursor-pointer font-medium flex items-center justify-between transition-all duration-200 ${
+                      selectedStore === store.id 
+                        ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400 shadow-sm' 
+                        : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-[9px] font-black bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded uppercase">{store.currency}</span>
+                      {store.name}
+                    </div>
+                    {selectedStore === store.id && <Check className="w-4 h-4" />}
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
-
-        {/* Search */}
-        <div className="relative hidden md:block group/search focus-within:z-10">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 group-hover/search:text-primary-500 group-focus-within/search:text-primary-600 dark:group-focus-within/search:text-primary-400 transition-colors duration-300 z-10" />
-          <input 
-            type="text" 
-            placeholder="Rechercher..." 
-            className="pl-9 pr-4 py-2 w-48 lg:w-64 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full text-sm focus:outline-none focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-300 hover:shadow-md hover:bg-white dark:hover:bg-slate-700/50 focus:bg-white dark:focus:bg-slate-900 focus:scale-[1.02] lg:focus:w-72 focus:shadow-lg text-slate-700 dark:text-slate-200 relative z-0"
-          />
-        </div>
-
-        {/* Notifications */}
-        <button className="relative p-2 text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 hover:scale-110 active:scale-95 transition-all">
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></span>
-        </button>
 
         {/* Profile */}
         <div className="flex items-center gap-3 pl-2 md:pl-4 border-l border-slate-200 dark:border-slate-800 cursor-pointer hover:opacity-80 active:scale-95 transition-all">

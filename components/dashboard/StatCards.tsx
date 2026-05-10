@@ -42,24 +42,28 @@ export default function StatCards() {
           query = query.gte('created_at', ninetyDaysAgo);
         }
 
-        // Filtrage par boutique
+        // Filtrage par boutique (utilise l'ID réel de la boutique depuis la DB)
         if (selectedStore !== 'ALL') {
-          query = query.eq('city', selectedStore === 'ABIDJAN' ? 'Abidjan' : selectedStore === 'DAKAR' ? 'Dakar' : 'Conakry');
+          query = query.eq('store_id', selectedStore);
         }
 
         const { data, error } = await query;
         if (error) throw error;
 
         if (data) {
-          const parsePrice = (p: string) => { const n = parseFloat((p || '0').replace(/\s/g, '')); return isNaN(n) ? 0 : n; };
+          const parsePrice = (p: string) => { 
+            if (typeof p === 'number') return p;
+            const n = parseFloat((String(p) || '0').replace(/\s/g, '')); 
+            return isNaN(n) ? 0 : n; 
+          };
 
           const caLivre = data
             .filter(o => o.status === 'Livré')
-            .reduce((acc, curr) => acc + parsePrice(curr.price), 0);
+            .reduce((acc, curr) => acc + (curr.cash_collected || parsePrice(curr.price)), 0);
           
           const cashInTransit = data
             .filter(o => o.status === 'Livré' && !o.cash_received)
-            .reduce((acc, curr) => acc + parsePrice(curr.price), 0);
+            .reduce((acc, curr) => acc + (curr.cash_collected || parsePrice(curr.price)), 0);
 
           const deliveredCount = data.filter(o => o.status === 'Livré').length;
           const confirmedCount = data.filter(o => ['Confirmé', 'Livré', 'Annulé'].includes(o.status)).length;
@@ -80,11 +84,8 @@ export default function StatCards() {
     
     // Abonnement en temps réel
     const channel = supabase
-      .channel('schema-db-changes')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, () => {
-        fetchMetrics(true);
-      })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, () => {
+      .channel('stat-cards-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
         fetchMetrics(true);
       })
       .subscribe();
@@ -110,7 +111,7 @@ export default function StatCards() {
       isPositive: null,
       icon: Clock,
       color: 'bg-amber-100 text-amber-600',
-      action: "Marquer Reçu"
+      action: "Valider Encaissement"
     },
     {
       title: 'Taux Livraison',
@@ -121,7 +122,7 @@ export default function StatCards() {
       color: 'bg-blue-100 text-blue-600',
     },
     {
-      title: 'Commandes Shopify',
+      title: 'Commandes à Confirmer',
       value: loading ? '...' : `${metrics.pendingOrders}`,
       trend: 'À traiter',
       isPositive: null,
@@ -131,8 +132,9 @@ export default function StatCards() {
   ];
 
   async function syncShopify() {
+    const url = selectedStore === 'ALL' ? '/api/sync-shopify' : `/api/sync-shopify?storeId=${selectedStore}`;
     toast.promise(
-      fetch(`/api/sync-shopify?store=${selectedStore}`).then(res => res.json()),
+      fetch(url).then(res => res.json()),
       {
         loading: 'Synchronisation Shopify...',
         success: (data) => `Synchronisé : ${data.count} commandes !`,
@@ -142,15 +144,19 @@ export default function StatCards() {
   }
 
   async function handleMarkReceived() {
-    if (confirm("Voulez-vous marquer tout le cash en transit comme reçu ?")) {
+    if (confirm("Voulez-vous marquer tout le cash en transit comme reçu et transféré en comptabilité ?")) {
       const { error } = await supabase
         .from('orders')
         .update({ cash_received: true })
         .eq('status', 'Livré')
         .eq('cash_received', false);
       
-      if (error) toast.error("Erreur : " + error.message);
-      else toast.success("Cash validé et transféré en comptabilité !");
+      if (error) {
+        toast.error("Erreur : " + error.message);
+      } else {
+        toast.success("Cash validé !");
+        // Les métriques se mettront à jour via le canal temps réel
+      }
     }
   }
 

@@ -33,6 +33,11 @@ model User {
   email         String   @unique
   name          String
   role          Role     @default(CLOSER)
+  
+  commissionPerConfirm Int @default(0)
+  commissionPerDeliver Int @default(0)
+  earnings             Int @default(0)
+  
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   
@@ -65,6 +70,8 @@ model Order {
   status          String   @default("A Confirmer")
   city            String?
   cashReceived    Boolean  @default(false) @map("cash_received")
+  cashCollected   Int?     @map("cash_collected")
+  programmedDate  DateTime? @map("programmed_date")
   
   closerId        String?  @map("closer_id")
   closer          User?    @relation("CloserOrders", fields: [closerId], references: [id])

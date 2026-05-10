@@ -76,6 +76,28 @@ export default function BoutiquesPage() {
     }
   };
 
+  const syncStore = async (storeId: string) => {
+    return toast.promise(
+      fetch(`/api/sync-shopify?storeId=${storeId}`).then(r => r.json()),
+      {
+        loading: 'Synchronisation de la boutique...',
+        success: (data) => `${data.count || 0} commandes synchronisées !`,
+        error: 'Échec de la synchronisation',
+      }
+    );
+  };
+
+  const syncAllStores = async () => {
+    return toast.promise(
+      fetch(`/api/sync-shopify`).then(r => r.json()),
+      {
+        loading: 'Synchronisation de toutes les boutiques...',
+        success: (data) => `${data.count || 0} commandes synchronisées au total !`,
+        error: 'Échec de la synchronisation globale',
+      }
+    );
+  };
+
   return (
     <div className="max-w-7xl mx-auto pb-10 px-4 text-slate-800 dark:text-slate-100 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
@@ -90,12 +112,20 @@ export default function BoutiquesPage() {
           <p className="text-slate-400 text-sm mt-1 font-medium italic">Gérez vos inventaires et synchronisations par boutique.</p>
         </div>
         
-        <button 
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-3 bg-primary-600 text-white px-8 py-4 rounded-[1.5rem] text-xs font-black uppercase tracking-widest shadow-xl shadow-primary-500/30 hover:bg-primary-700 hover:-translate-y-1 transition-all active:scale-95"
-        >
-          <Plus className="w-5 h-5" /> Connecter une boutique
-        </button>
+        <div className="flex items-center gap-4 flex-wrap">
+          <button 
+            onClick={syncAllStores}
+            className="flex items-center gap-3 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 text-slate-600 px-8 py-4 rounded-[1.5rem] text-xs font-black uppercase tracking-widest shadow-sm hover:text-primary-600 transition-all active:scale-95"
+          >
+            <RefreshCw className="w-5 h-5" /> Sync Tout
+          </button>
+          <button 
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-3 bg-primary-600 text-white px-8 py-4 rounded-[1.5rem] text-xs font-black uppercase tracking-widest shadow-xl shadow-primary-500/30 hover:bg-primary-700 hover:-translate-y-1 transition-all active:scale-95"
+          >
+            <Plus className="w-5 h-5" /> Connecter une boutique
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -155,7 +185,10 @@ export default function BoutiquesPage() {
                   </div>
                 </div>
 
-                <button className="w-full py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-2">
+                <button 
+                  onClick={() => syncStore(store.id)}
+                  className="w-full py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
+                >
                   <RefreshCw className="w-3.5 h-3.5" /> Synchroniser
                 </button>
               </div>
