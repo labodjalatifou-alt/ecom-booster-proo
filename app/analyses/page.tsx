@@ -93,7 +93,7 @@ Réponds UNIQUEMENT en JSON valide :
       setAnalysisResult(result);
 
       // Save to Supabase
-      await supabase.from('analyses').insert([{
+      const { data: savedData, error: saveError } = await supabase.from('analyses').insert([{
         product_name: productName,
         score: result.score,
         price_recommendation: result.price_recommendation,
@@ -102,7 +102,13 @@ Réponds UNIQUEMENT en JSON valide :
         shopify_page_content: result.shopify_page,
         facebook_ad_content: result.facebook_ad,
         voiceover_script: result.voiceover_script
-      }]);
+      }]).select();
+
+      if (saveError) throw saveError;
+
+      if (savedData && savedData[0]) {
+        localStorage.setItem('activeAnalysisId', savedData[0].id);
+      }
 
       toast.success('Analyse terminée !');
     } catch (err: any) {

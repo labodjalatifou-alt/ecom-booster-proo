@@ -10,16 +10,22 @@ export default function ScorePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchLatest() {
-      const { data } = await supabase
-        .from('analyses')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(1);
+    async function fetchAnalysis() {
+      const activeId = localStorage.getItem('activeAnalysisId');
+      
+      let query = supabase.from('analyses').select('*');
+      
+      if (activeId) {
+        query = query.eq('id', activeId);
+      } else {
+        query = query.order('created_at', { ascending: false }).limit(1);
+      }
+
+      const { data } = await query;
       if (data && data[0]) setLatestProduct(data[0]);
       setLoading(false);
     }
-    fetchLatest();
+    fetchAnalysis();
   }, []);
 
   if (loading) return (

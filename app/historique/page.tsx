@@ -54,6 +54,11 @@ export default function HistoriquePage() {
     a.product_name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const handleSelect = (id: string) => {
+    localStorage.setItem('activeAnalysisId', id);
+    toast.success("Analyse chargée !");
+  };
+
   return (
     <div className="max-w-7xl mx-auto pb-10 px-4 text-slate-800 dark:text-slate-100 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
@@ -119,7 +124,8 @@ export default function HistoriquePage() {
           {filtered.map((item, i) => (
             <div
               key={item.id}
-              className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-7 shadow-sm hover:shadow-2xl transition-all duration-300 group hover:-translate-y-1 relative overflow-hidden"
+              onClick={() => handleSelect(item.id)}
+              className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-7 shadow-sm hover:shadow-2xl transition-all duration-300 group hover:-translate-y-1 relative overflow-hidden cursor-pointer"
             >
               <div className="absolute top-0 right-0 w-20 h-20 bg-primary-500/5 rounded-full -mr-10 -mt-10 group-hover:scale-150 transition-transform duration-500" />
 
