@@ -38,17 +38,17 @@ export async function POST(req: Request) {
         const user = await tx.user.findUnique({ where: { id: userId } });
         if (user) {
           let commission = 0;
-          if (status === 'Confirmé' && order.status !== 'Confirmé') {
-            commission = user.commissionPerConfirm || 500;
-          } else if (status === 'Livré' && order.status !== 'Livré') {
-            commission = user.commissionPerDeliver || 1000;
+          if (status === 'Confirmé' && (order as any).status !== 'Confirmé') {
+            commission = (user as any).commissionPerConfirm || 500;
+          } else if (status === 'Livré' && (order as any).status !== 'Livré') {
+            commission = (user as any).commissionPerDeliver || 1000;
           }
 
           if (commission > 0) {
             await tx.user.update({
               where: { id: userId },
               data: { earnings: { increment: commission } }
-            });
+            } as any);
           }
         }
       }
