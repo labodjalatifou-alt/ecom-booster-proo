@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { useStore } from '@/components/StoreProvider';
 
-type Tab = 'pending' | 'confirmed' | 'cancelled';
+type Tab = 'pending' | 'confirmed' | 'cancelled' | 'programmed';
 type Period = 'TODAY' | 'YESTERDAY' | '7D' | '30D' | 'ALL';
 
 export default function InterfaceCloserPage() {
@@ -142,8 +142,9 @@ export default function InterfaceCloserPage() {
 
   const filteredOrders = orders.filter(o => {
     if (tab === 'pending') return o.status === 'A Confirmer';
-    if (tab === 'confirmed') return o.status === 'Confirmé';
+    if (tab === 'confirmed') return o.status === 'Confirmé' || o.status === 'Livré';
     if (tab === 'cancelled') return o.status === 'Annulé';
+    if (tab === 'programmed') return o.status === 'Programmé';
     return false;
   });
 
@@ -221,7 +222,8 @@ export default function InterfaceCloserPage() {
       <div className="flex gap-1 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-1 shadow-sm mb-8 w-fit">
         {[
           { id: 'pending', label: 'À Confirmer', icon: Clock, count: orders.filter(o => o.status === 'A Confirmer').length },
-          { id: 'confirmed', label: 'Confirmées', icon: CheckCircle2, count: orders.filter(o => o.status === 'Confirmé').length },
+          { id: 'confirmed', label: 'Confirmées', icon: CheckCircle2, count: orders.filter(o => o.status === 'Confirmé' || o.status === 'Livré').length },
+          { id: 'programmed', label: 'Programmées', icon: Calendar, count: orders.filter(o => o.status === 'Programmé').length },
           { id: 'cancelled', label: 'Annulées', icon: XCircle, count: orders.filter(o => o.status === 'Annulé').length },
         ].map(t => (
           <button

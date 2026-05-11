@@ -26,16 +26,16 @@ export default function InterfaceLivreurPage() {
   const [deliveryFee, setDeliveryFee] = useState('0');
   const [isDeliveryFeeIncluded, setIsDeliveryFeeIncluded] = useState(false);
 
-  useEffect(() => {
-    async function fetchUserEarnings() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setUserId(user.id);
-        const { data: userData } = await supabase.from('User').select('earnings').eq('id', user.id).single();
-        if (userData) setMyEarnings(userData.earnings || 0);
-      }
+  async function fetchUserEarnings() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      setUserId(user.id);
+      const { data: userData } = await supabase.from('User').select('earnings').eq('id', user.id).single();
+      if (userData) setMyEarnings(userData.earnings || 0);
     }
+  }
 
+  useEffect(() => {
     fetchUserEarnings();
   }, []);
 
@@ -103,14 +103,9 @@ export default function InterfaceLivreurPage() {
       .channel('livreur-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
         fetchOrders();
-        // Optionnel: rafraîchir les gains si besoin
-        const fetchUserEarnings = async () => {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            const { data: userData } = await supabase.from('User').select('earnings').eq('id', user.id).single();
-            if (userData) setMyEarnings(userData.earnings || 0);
-          }
-        };
+        fetchUserEarnings();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'User' }, () => {
         fetchUserEarnings();
       })
       .subscribe();
@@ -230,7 +225,7 @@ export default function InterfaceLivreurPage() {
         </div>
 
         {/* Stats cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           <div className="bg-blue-500 text-white p-5 rounded-2xl shadow-xl shadow-blue-500/20 flex flex-col items-center justify-center min-w-[110px]">
             <Package className="w-5 h-5 mb-1 opacity-70" />
             <span className="text-2xl font-black">{orders.filter((o: any) => o.status === 'Confirmé').length}</span>
