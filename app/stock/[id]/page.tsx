@@ -17,7 +17,8 @@ import {
   ImageIcon, 
   ExternalLink,
   ChevronRight,
-  ChevronLeft
+  ChevronLeft,
+  RefreshCw
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useStore } from '@/components/StoreProvider';
@@ -70,6 +71,57 @@ export default function ProductDetailPage() {
       router.push('/stock');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function refreshFromShopify() {
+    setSaving(true);
+    try {
+      // 1. Récupérer les infos de la boutique via le produit
+      const { data: store, error: storeError } = await supabase
+        .from('Store')
+        .select('*')
+        .eq('id', product.store_id)
+        .single();
+        
+      if (storeError) throw storeError;
+
+      const response = await fetch(`https://${store.shopifyUrl}/admin/api/2024-01/products/${product.shopify_id}.json`, {
+        headers: { 'X-Shopify-Access-Token': store.shopifyToken }
+      });
+
+      if (!response.ok) throw new Error("Erreur Shopify");
+      const { product: shopifyProduct } = await response.json();
+
+      // 2. Mettre à jour Supabase
+      const { data: updated, error: upError } = await supabase
+        .from('products')
+        .update({
+          title: shopifyProduct.title,
+          description: shopifyProduct.body_html,
+          price: shopifyProduct.variants[0].price,
+          stock: shopifyProduct.variants[0].inventory_quantity,
+          images: shopifyProduct.images.map((img: any) => img.src),
+          image_url: shopifyProduct.image?.src || shopifyProduct.images[0]?.src
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (upError) throw upError;
+      
+      setProduct(updated);
+      setTitle(updated.title);
+      setDescription(updated.description || '');
+      setPrice(updated.price);
+      setStock(updated.stock);
+      setImageUrls(updated.images || []);
+      toast.success("Synchronisé avec Shopify !");
+      
+    } catch (err: any) {
+      toast.error("Échec de la synchronisation : " + err.message);
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -129,15 +181,28 @@ export default function ProductDetailPage() {
     <div className="max-w-6xl mx-auto pb-20 px-4 animate-in fade-in duration-500">
       {/* Header Navigation */}
       <div className="flex items-center justify-between mb-10">
-        <button 
-          onClick={() => router.push('/stock')}
-          className="group flex items-center gap-3 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all"
-        >
-          <div className="p-2 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-xl group-hover:-translate-x-1 transition-transform">
-            <ArrowLeft className="w-4 h-4" />
-          </div>
-          <span className="text-[10px] font-black uppercase tracking-widest">Retour au Stock</span>
-        </button>
+        <div className="flex items-center gap-6">
+          <button 
+            onClick={() => router.push('/stock')}
+            className="group flex items-center gap-3 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all"
+          >
+            <div className="p-2 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-xl group-hover:-translate-x-1 transition-transform">
+              <ArrowLeft className="w-4 h-4" />
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-widest">Stock</span>
+          </button>
+          
+          <div className="h-4 w-[2px] bg-slate-100 dark:bg-slate-800" />
+          
+          <button 
+            onClick={refreshFromShopify}
+            disabled={saving}
+            className="flex items-center gap-2 text-slate-400 hover:text-primary-600 transition-all"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${saving ? 'animate-spin' : ''}`} />
+            <span className="text-[10px] font-black uppercase tracking-widest">Sync Shopify</span>
+          </button>
+        </div>
 
         <div className="flex items-center gap-3">
           {isEditing ? (
