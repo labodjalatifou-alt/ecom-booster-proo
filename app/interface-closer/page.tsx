@@ -77,7 +77,7 @@ export default function InterfaceCloserPage() {
       const startOfToday = new Date();
       startOfToday.setHours(0, 0, 0, 0);
       const todayConfirmed = data.filter(
-        o => o.status === 'Confirmé' && new Date(o.updated_at) >= startOfToday
+        o => o.status === 'Confirmé' && new Date(o.updated_at || o.created_at) >= startOfToday
       ).length;
       setConfirmedToday(todayConfirmed);
       
