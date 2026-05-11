@@ -167,7 +167,6 @@ export default function HistoriquePage() {
           ))}
         </div>
       )}
-      )}
 
       <ConfirmationModal
         isOpen={showClearConfirm}
