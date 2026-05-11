@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { ShoppingCart, Search, Eye, MapPin, Phone, Package, X, Globe, User, Loader2, RefreshCw, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useStore } from '@/components/StoreProvider';
-import { cleanCity } from '@/lib/utils';
+import { cleanCity, cleanCountry } from '@/lib/utils';
 
 type Period = 'TODAY' | 'YESTERDAY' | '7D' | '30D' | 'ALL';
 type StatusFilter = 'ALL' | 'A Confirmer' | 'Confirmé' | 'Livré' | 'Annulé';
@@ -218,8 +218,8 @@ export default function CommandesPage() {
             {!searchTerm && <p className="text-xs text-slate-400">Synchronisez vos commandes depuis le tableau de bord.</p>}
           </div>
         ) : (
-          <div className="overflow-visible">
-            <table className="w-full text-left border-collapse">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse min-w-[800px]">
               <thead>
                 <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b-2 border-slate-100 dark:border-slate-800">
                   <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest">Client</th>
@@ -247,7 +247,7 @@ export default function CommandesPage() {
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-600 uppercase">
                         <MapPin className="w-3 h-3 text-primary-500" />
-                        {cleanCity(order.city)}
+                        {cleanCity(order.city)} {order.country ? `, ${cleanCountry(order.country)}` : ', Non précisé'}
                       </div>
                       <div className="text-[9px] font-bold text-slate-400 mt-0.5 flex items-center gap-1">
                         <Phone className="w-2.5 h-2.5" /> {order.phone}
@@ -342,8 +342,8 @@ export default function CommandesPage() {
               </div>
               <div className="p-5 bg-slate-50 dark:bg-slate-800 rounded-2xl space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-[9px] font-black text-slate-400 uppercase flex items-center gap-1"><Globe className="w-3 h-3" /> Ville</span>
-                  <span className="text-xs font-black uppercase">{cleanCity(selectedOrder.city)}</span>
+                  <span className="text-[9px] font-black text-slate-400 uppercase flex items-center gap-1"><Globe className="w-3 h-3" /> Ville / Pays</span>
+                  <span className="text-xs font-black uppercase text-right">{cleanCity(selectedOrder.city)}, {cleanCountry(selectedOrder.country)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-[9px] font-black text-slate-400 uppercase flex items-center gap-1"><Package className="w-3 h-3" /> Statut</span>

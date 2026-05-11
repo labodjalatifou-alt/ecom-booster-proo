@@ -55,6 +55,8 @@ export async function GET() {
         status: p.status,
         stock: p.variants?.[0]?.inventory_quantity || 0,
         image_url: p.image?.src || null,
+        images: p.images?.map((img: any) => img.src) || [],
+        description: p.body_html || null,
         currency,
       }));
 

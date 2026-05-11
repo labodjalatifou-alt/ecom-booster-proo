@@ -5,7 +5,7 @@ import { Headset, PhoneForwarded, MessageSquare, CheckCircle2, MapPin, Edit3, Lo
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { useStore } from '@/components/StoreProvider';
-import { cleanCity, sanitizeError } from '@/lib/utils';
+import { cleanCity, cleanCountry, sanitizeError } from '@/lib/utils';
 import ConfirmationModal from '@/components/ConfirmationModal';
 
 type Tab = 'pending' | 'confirmed' | 'cancelled' | 'programmed';
@@ -258,8 +258,8 @@ export default function InterfaceCloserPage() {
             <p className="text-lg font-black text-slate-600">Aucune commande dans cette liste</p>
           </div>
         ) : (
-          <div className="overflow-visible">
-            <table className="w-full text-left border-collapse table-fixed">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse min-w-[800px] table-fixed">
               <thead>
                 <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b-2 border-slate-100 dark:border-slate-800">
                   <th className="w-[30%] px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest">Client</th>
@@ -284,7 +284,7 @@ export default function InterfaceCloserPage() {
                     <td className="px-8 py-4 text-xs font-black text-slate-600 dark:text-slate-300 truncate">{item.product}</td>
                     <td className="px-8 py-4">
                       <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500 uppercase">
-                        <MapPin className="w-3 h-3" /> {cleanCity(item.city)}
+                        <MapPin className="w-3 h-3" /> {cleanCity(item.city)}, {cleanCountry(item.country)}
                       </div>
                     </td>
                     <td className="px-8 py-4 text-right">

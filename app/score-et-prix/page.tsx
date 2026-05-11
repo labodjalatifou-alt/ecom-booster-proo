@@ -7,12 +7,12 @@ import Link from 'next/link';
 import { useStore } from '@/components/StoreProvider';
 
 const CRITERIA_LABELS: Record<string, { label: string; icon: string }> = {
-  resolution_probleme: { label: "Résolution d'un vrai problème", icon: '🎯' },
-  effet_wow: { label: 'Effet Wow', icon: '✨' },
-  disponibilite_locale: { label: 'Disponibilité locale', icon: '📍' },
-  transportabilite: { label: 'Transportabilité', icon: '📦' },
-  potentiel_marketing: { label: 'Potentiel marketing', icon: '📣' },
-  potentiel_viral: { label: 'Potentiel viral', icon: '🔥' },
+  problemSolving: { label: "Résolution d'un vrai problème", icon: '🎯' },
+  wowEffect: { label: 'Effet Wow', icon: '✨' },
+  localAvailability: { label: 'Disponibilité locale', icon: '📍' },
+  transportability: { label: 'Transportabilité', icon: '📦' },
+  marketingPotential: { label: 'Potentiel marketing', icon: '📣' },
+  viralPotential: { label: 'Potentiel viral', icon: '🔥' },
 };
 
 export default function ScorePage() {
@@ -168,18 +168,18 @@ export default function ScorePage() {
             <Star className="w-5 h-5 text-amber-500" /> Décomposition du Score ({score}/100)
           </h3>
           <div className="space-y-5">
-            {Object.entries(scoreCriteria).map(([key, value]: [string, any]) => {
-              const meta = CRITERIA_LABELS[key] || { label: key, icon: '📊' };
-              const note = value?.note || 0;
-              return (
-                <div key={key}>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm">{meta.icon}</span>
-                      <span className="text-xs font-black text-slate-700 dark:text-slate-200 uppercase tracking-wide">{meta.label}</span>
+              {Object.entries(scoreCriteria).map(([key, value]: [string, any]) => {
+                const meta = CRITERIA_LABELS[key] || { label: key, icon: '📊' };
+                const note = value?.score || value?.note || 0;
+                return (
+                  <div key={key}>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">{meta.icon}</span>
+                        <span className="text-xs font-black text-slate-700 dark:text-slate-200 uppercase tracking-wide">{meta.label}</span>
+                      </div>
+                      <span className={`text-sm font-black ${note >= 8 ? 'text-emerald-600' : note >= 6 ? 'text-amber-600' : 'text-red-600'}`}>{note}/10</span>
                     </div>
-                    <span className={`text-sm font-black ${note >= 8 ? 'text-emerald-600' : note >= 6 ? 'text-amber-600' : 'text-red-600'}`}>{note}/10</span>
-                  </div>
                   <div className="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mb-2">
                     <div className={`h-full rounded-full transition-all duration-700 ${getBarColor(note)}`} style={{ width: `${note * 10}%` }} />
                   </div>

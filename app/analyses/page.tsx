@@ -71,13 +71,13 @@ RÈGLES DE GÉNÉRATION DE CONTENU (AUCUNE INTERPRÉTATION LIBRE) :
    - Structure : { sexe, age, revenus, frustrations, peurs, désirs, objections, phrase_declenchante, comment_le_convaincre, declencheur_emotionnel }
 
 4. SCORE PRODUIT DÉTAILLÉ PAR CRITÈRE :
-   Chaque critère doit avoir une note sur 10 et une justification d'une phrase.
-   - "resolution_probleme" : { note: X, justification: "..." }
-   - "effet_wow" : { note: X, justification: "..." }
-   - "disponibilite_locale" : { note: X, justification: "..." }
-   - "transportabilite" : { note: X, justification: "..." }
-   - "potentiel_marketing" : { note: X, justification: "..." }
-   - "potentiel_viral" : { note: X, justification: "..." }
+   Chaque critère doit avoir un score sur 10 et une justification d'une phrase.
+   - "problemSolving" : { score: X, justification: "..." }
+   - "wowEffect" : { score: X, justification: "..." }
+   - "localAvailability" : { score: X, justification: "..." }
+   - "transportability" : { score: X, justification: "..." }
+   - "marketingPotential" : { score: X, justification: "..." }
+   - "viralPotential" : { score: X, justification: "..." }
    Puis un "total" calculé comme moyenne pondérée sur 100, et une "explication" globale.
 
 Réponds UNIQUEMENT en JSON valide :
@@ -86,12 +86,12 @@ Réponds UNIQUEMENT en JSON valide :
     "total": 85,
     "explication": "...",
     "criteria": {
-      "resolution_probleme": { "note": 8, "justification": "..." },
-      "effet_wow": { "note": 7, "justification": "..." },
-      "disponibilite_locale": { "note": 9, "justification": "..." },
-      "transportabilite": { "note": 8, "justification": "..." },
-      "potentiel_marketing": { "note": 9, "justification": "..." },
-      "potentiel_viral": { "note": 7, "justification": "..." }
+      "problemSolving": { "score": 8, "justification": "..." },
+      "wowEffect": { "score": 7, "justification": "..." },
+      "localAvailability": { "score": 9, "justification": "..." },
+      "transportability": { "score": 8, "justification": "..." },
+      "marketingPotential": { "score": 9, "justification": "..." },
+      "viralPotential": { "score": 7, "justification": "..." }
     }
   },
   "price_recommendation": "X ${currency}",

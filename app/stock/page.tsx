@@ -7,9 +7,10 @@ import toast from 'react-hot-toast';
 import { useStore } from '@/components/StoreProvider';
 import { sanitizeError } from '@/lib/utils';
 import ConfirmationModal from '@/components/ConfirmationModal';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function StockPage() {
+  const router = useRouter();
   const { currency } = useStore();
   const [stockItems, setStockItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -19,7 +20,6 @@ export default function StockPage() {
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
   const [newStockValue, setNewStockValue] = useState<number>(0);
   const [statusFilter, setStatusFilter] = useState('all');
-  const [detailProduct, setDetailProduct] = useState<any | null>(null);
 
   const [confirmDelete, setConfirmDelete] = useState<{ isOpen: boolean; id: string | null }>({
     isOpen: false,
@@ -190,7 +190,11 @@ export default function StockPage() {
               </thead>
               <tbody className="divide-y-2 divide-slate-100 dark:divide-slate-800">
                 {stockItems.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all group cursor-pointer" onClick={() => setDetailProduct(item)}>
+                  <tr 
+                    key={item.id} 
+                    className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all group cursor-pointer" 
+                    onClick={() => router.push(`/stock/${item.id}`)}
+                  >
                     <td className="px-8 py-5 overflow-hidden">
                       <div className="flex items-center gap-4">
                         {item.image_url ? (
@@ -272,78 +276,6 @@ export default function StockPage() {
               <button onClick={updateStock} className="w-full py-4 bg-primary-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-primary-700 transition-all">
                 Mettre à jour
               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Product Detail Modal */}
-      {detailProduct && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setDetailProduct(null)} />
-          <div className="relative bg-white dark:bg-slate-900 w-full max-w-lg rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-            {/* Header image */}
-            {detailProduct.image_url ? (
-              <div className="h-56 bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                <img src={detailProduct.image_url} alt={detailProduct.title} className="w-full h-full object-contain" />
-              </div>
-            ) : (
-              <div className="h-40 bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                <ImageIcon className="w-16 h-16 text-slate-300" />
-              </div>
-            )}
-            {/* Close button */}
-            <button onClick={() => setDetailProduct(null)} className="absolute top-4 right-4 p-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur rounded-full hover:bg-white transition-all shadow-lg">
-              <X className="w-5 h-5" />
-            </button>
-            {/* Content */}
-            <div className="p-8 space-y-5">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className={`w-2 h-2 rounded-full ${detailProduct.status === 'active' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{detailProduct.status === 'active' ? 'Actif' : 'Brouillon'}</span>
-                </div>
-                <h3 className="text-xl font-black tracking-tight">{detailProduct.title}</h3>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Prix</p>
-                  <p className="text-lg font-black text-primary-600">{new Intl.NumberFormat('fr-FR').format(parseInt(String(detailProduct.price || '0').replace(/\s/g, '')))} {detailProduct.currency || currency}</p>
-                </div>
-                <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Stock</p>
-                  <div className="flex items-center gap-2">
-                    <p className={`text-lg font-black ${(detailProduct.stock || 0) > 10 ? 'text-emerald-600' : 'text-red-600'}`}>{detailProduct.stock || 0}</p>
-                    <span className="text-[9px] font-bold text-slate-400 uppercase">unités</span>
-                  </div>
-                </div>
-              </div>
-              {detailProduct.compare_price && (
-                <div className="p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-800 rounded-2xl">
-                  <p className="text-[9px] font-black text-amber-600 uppercase tracking-widest mb-1">Prix Comparatif</p>
-                  <p className="text-sm font-black text-amber-700">{new Intl.NumberFormat('fr-FR').format(parseInt(String(detailProduct.compare_price || '0').replace(/\s/g, '')))} {detailProduct.currency || currency}</p>
-                </div>
-              )}
-              {detailProduct.shopify_id && (
-                <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400">
-                  <span className="uppercase">Shopify ID:</span>
-                  <span className="font-mono">{detailProduct.shopify_id}</span>
-                </div>
-              )}
-              <div className="flex gap-3">
-                <button
-                  onClick={() => { setDetailProduct(null); handleEditClick(detailProduct); }}
-                  className="flex-1 py-3 bg-primary-600 text-white rounded-xl font-black uppercase text-[10px] text-center hover:bg-primary-700 transition-all"
-                >
-                  ✏️ Modifier Stock
-                </button>
-                <button
-                  onClick={() => setDetailProduct(null)}
-                  className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl font-black uppercase text-[10px] text-center hover:bg-slate-200 transition-all"
-                >
-                  Fermer
-                </button>
-              </div>
             </div>
           </div>
         </div>

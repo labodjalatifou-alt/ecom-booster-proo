@@ -5,7 +5,7 @@ import { Truck, PhoneForwarded, MessageSquare, CheckCircle2, MapPin, DollarSign,
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { useStore } from '@/components/StoreProvider';
-import { cleanCity, sanitizeError } from '@/lib/utils';
+import { cleanCity, cleanCountry, sanitizeError } from '@/lib/utils';
 import ConfirmationModal from '@/components/ConfirmationModal';
 
 type Tab = 'pending' | 'delivered' | 'cancelled' | 'programmed';
@@ -317,8 +317,8 @@ export default function InterfaceLivreurPage() {
             </p>
           </div>
         ) : (
-          <div className="overflow-visible">
-            <table className="w-full text-left border-collapse table-fixed">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse min-w-[800px] table-fixed">
               <thead>
                 <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b-2 border-slate-100 dark:border-slate-800">
                   <th className="w-[28%] px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest">Client</th>
@@ -337,7 +337,7 @@ export default function InterfaceLivreurPage() {
                     <td className="px-8 py-4">
                       <div className="text-xs font-black text-slate-700 dark:text-slate-200 truncate">{item.product}</div>
                       <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 mt-0.5">
-                        <MapPin className="w-3 h-3" /> {cleanCity(item.city)}
+                        <MapPin className="w-3 h-3" /> {cleanCity(item.city)}, {cleanCountry(item.country)}
                       </div>
                     </td>
                     <td className="px-8 py-4 text-right">

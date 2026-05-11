@@ -63,10 +63,10 @@ export async function resolveUserProfile(supabase: any): Promise<any> {
 
 /**
  * Nettoie et formate le nom de la ville.
- * Retourne "Non défini" si la valeur est absente ou invalide.
+ * Retourne "Non précisé" si la valeur est absente ou invalide.
  */
 export function cleanCity(city: string | null | undefined): string {
-  if (!city || city === '-' || city.trim() === '' || city === 'Ville inconnue') return "Non défini";
+  if (!city || city === '-' || city.trim() === '' || city === 'Ville inconnue' || city === 'undefined') return "Non précisé";
   
   // Supprime les doublons (ex: "Abidjan, Abidjan") et nettoie les espaces
   return city
@@ -74,6 +74,14 @@ export function cleanCity(city: string | null | undefined): string {
     .map(s => s.trim())
     .filter((v, i, a) => v && a.indexOf(v) === i)
     .join(', ');
+}
+
+/**
+ * Nettoie et formate le pays.
+ */
+export function cleanCountry(country: string | null | undefined): string {
+  if (!country || country === '-' || country.trim() === '' || country === 'undefined') return "Non précisé";
+  return country;
 }
 
 /**
