@@ -13,11 +13,11 @@ export function useAppSounds() {
   });
 
   useEffect(() => {
-    // Préchargement des sons
-    soundsRef.current.order = new Audio('/sounds/shopify-notif.mp3');
-    soundsRef.current.confirm = new Audio('/sounds/phone-hangup.mp3');
-    soundsRef.current.deliver = new Audio('/sounds/klaxon.mp3');
-    soundsRef.current.cash = new Audio('/sounds/coins.mp3');
+    // Préchargement des sons avec version pour forcer le rafraîchissement du cache
+    soundsRef.current.order = new Audio('/sounds/shopify-notif.mp3?v=1');
+    soundsRef.current.confirm = new Audio('/sounds/phone-hangup.mp3?v=1');
+    soundsRef.current.deliver = new Audio('/sounds/klaxon.mp3?v=2');
+    soundsRef.current.cash = new Audio('/sounds/coins.mp3?v=1');
 
     // Configuration par défaut
     Object.values(soundsRef.current).forEach(audio => {
