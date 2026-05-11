@@ -7,12 +7,14 @@ import Link from 'next/link';
 import { useStore } from '@/components/StoreProvider';
 
 const CRITERIA_LABELS: Record<string, { label: string; icon: string }> = {
-  popularityInAfrica: { label: "Popularité en Afrique", icon: '🌍' },
-  marketingEase: { label: "Facilité à marketer", icon: '📈' },
+  problemSolving: { label: "Résolution Problème", icon: '🎯' },
+  wowEffect: { label: "Effet Wow", icon: '✨' },
+  localAvailability: { label: "Disponibilité locale", icon: '📍' },
+  shippingEase: { label: "Facilité Transport", icon: '📦' },
+  popularityInAfrica: { label: "Popularité Afrique", icon: '🌍' },
+  marketingEase: { label: "Facilité Marketing", icon: '📈' },
   competition: { label: "Concurrence", icon: '🤝' },
-  pricing: { label: "Prix adapté", icon: '💰' },
-  targetAudience: { label: "Audience cible", icon: '👥' },
-  marketTrend: { label: "Tendance marché", icon: '🔥' },
+  targetAudience: { label: "Audience Cible", icon: '👥' },
 };
 
 export default function ScorePage() {
@@ -56,9 +58,10 @@ export default function ScorePage() {
   );
 
   const rawScore = latestProduct.score;
-  const score = typeof rawScore === 'object' ? (rawScore?.total || 0) : (rawScore || 0);
-  const scoreExplication = typeof rawScore === 'object' ? rawScore?.explication : null;
-  const scoreCriteria = typeof rawScore === 'object' ? rawScore?.criteria : null;
+  const scoreDetails = latestProduct.score_details;
+  const score = scoreDetails?.total || (typeof rawScore === 'number' ? rawScore : 0);
+  const scoreExplication = scoreDetails?.explication || (typeof rawScore === 'object' ? rawScore?.explication : null);
+  const scoreCriteria = scoreDetails?.criteria || (typeof rawScore === 'object' ? rawScore?.criteria : null);
   const launchStrategy = latestProduct.launch_strategy;
 
   const scoreColor = score >= 80 ? 'text-emerald-500' : score >= 60 ? 'text-amber-500' : 'text-red-500';

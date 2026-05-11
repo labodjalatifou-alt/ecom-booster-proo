@@ -135,6 +135,7 @@ model ProductAnalysis {
   id                   String   @id @default(cuid())
   product_name         String
   score                Int
+  score_details        Json?
   price_recommendation String
   cost_price           String?
   customer_avatar      Json

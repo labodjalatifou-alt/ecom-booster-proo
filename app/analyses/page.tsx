@@ -70,15 +70,17 @@ RÈGLES DE GÉNÉRATION DE CONTENU (AUCUNE INTERPRÉTATION LIBRE) :
 3. AVATAR CLIENT DÉTAILLÉ :
    - Structure : { sexe, age, revenus, frustrations, peurs, désirs, objections, phrase_declenchante, comment_le_convaincre, declencheur_emotionnel }
 
-4. SCORE PRODUIT STRATÉGIQUE (6 CRITÈRES) :
+4. SCORE PRODUIT STRATÉGIQUE (8 CRITÈRES PRÉCIS) :
    Chaque critère doit avoir un score sur 100, une justification d'une phrase et un conseil (tip) d'une phrase.
+   - "problemSolving" : Résolution d'un vrai problème ou besoin.
+   - "wowEffect" : Effet visuel ou fonctionnel immédiat (Wow).
+   - "localAvailability" : Rareté ou difficulté à le trouver localement.
+   - "shippingEase" : Facilité de transport (poids, volume, fragilité).
    - "popularityInAfrica" : Popularité et demande spécifique en Afrique.
    - "marketingEase" : Facilité à créer du contenu viral et à marketer.
    - "competition" : Niveau de saturation du marché et différenciation.
-   - "pricing" : Adaptabilité du prix au pouvoir d'achat local et marges.
    - "targetAudience" : Clarté et taille de l'audience cible.
-   - "marketTrend" : Dynamique actuelle de la niche (croissante/saturée).
-   Puis un "total" (moyenne des 6), une "explication" (phrase courte sous le score).
+   Puis un "total" (moyenne des 8), une "explication" (phrase courte sous le score).
 
 5. STRATÉGIE DE LANCEMENT (launch_strategy) :
    - "should_launch" : Recommandation (Oui/Non/Prudence).
@@ -88,23 +90,22 @@ Réponds UNIQUEMENT en JSON valide suivant cette structure exacte :
 {
   "score": {
     "total": 68,
-    "explication": "Niche prometteuse, éducation nécessaire",
+    "explication": "...",
     "criteria": {
+      "problemSolving": { "score": 85, "justification": "...", "tip": "..." },
+      "wowEffect": { "score": 70, "justification": "...", "tip": "..." },
+      "localAvailability": { "score": 90, "justification": "...", "tip": "..." },
+      "shippingEase": { "score": 95, "justification": "...", "tip": "..." },
       "popularityInAfrica": { "score": 62, "justification": "...", "tip": "..." },
       "marketingEase": { "score": 78, "justification": "...", "tip": "..." },
       "competition": { "score": 55, "justification": "...", "tip": "..." },
-      "pricing": { "score": 72, "justification": "...", "tip": "..." },
-      "targetAudience": { "score": 74, "justification": "...", "tip": "..." },
-      "marketTrend": { "score": 65, "justification": "...", "tip": "..." }
+      "targetAudience": { "score": 74, "justification": "...", "tip": "..." }
     }
   },
-  "launch_strategy": {
-    "should_launch": "Oui",
-    "strategy_text": "Lancez avec 5$/jour pendant 3 jours en ciblant les femmes 20-38 ans urbaines à Lomé. Avantage : marge excellente... Risque : le mot 'glutathion' est inconnu..."
-  },
-  "price_recommendation": "X ${currency}",
-  "price_min": "Y ${currency}",
-  "price_max": "Z ${currency}",
+  "launch_strategy": { ... },
+  "price_recommendation": "...",
+  "price_min": "...",
+  "price_max": "...",
   "avatar": { ... },
   "shopify_page": { ... },
   "facebook_ads": [...],
@@ -143,6 +144,7 @@ Réponds UNIQUEMENT en JSON valide suivant cette structure exacte :
         id: crypto.randomUUID(),
         product_name: productName,
         score: result.score?.total || result.score,
+        score_details: result.score,
         price_recommendation: result.price_recommendation,
         cost_price: costPrice,
         customer_avatar: result.avatar,

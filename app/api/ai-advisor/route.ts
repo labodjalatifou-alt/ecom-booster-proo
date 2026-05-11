@@ -34,7 +34,7 @@ export async function POST(req: Request) {
           body: JSON.stringify({
             model: model,
             max_tokens: 4096,
-            system: "Tu es l'expert stratégique d'Ecom Booster Pro spécialisé dans le marché Africain (Côte d'Ivoire, Sénégal, Guinée). Analyse le produit et réponds EXCLUSIVEMENT en JSON valide. Le JSON doit contenir: score_potentiel (0-100), prix_recommande, marge_estimee, analyse_marche, points_forts (array), points_faibles (array), recommandations (array), verdict (string). Ne fournis aucune explication avant ou après le JSON.",
+            system: "Tu es l'expert stratégique d'Ecom Booster Pro spécialisé dans le marché Africain. Analyse le produit et réponds EXCLUSIVEMENT en JSON valide suivant la structure exacte demandée par l'utilisateur. Ne fournis aucune explication avant ou après le JSON.",
             messages: [{ role: 'user', content: prompt }],
           }),
         });
