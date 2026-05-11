@@ -77,33 +77,34 @@ export default function InterfaceCloserPage() {
       const startOfToday = new Date();
       startOfToday.setHours(0, 0, 0, 0);
       const todayConfirmed = data.filter(
-        o => o.status === 'Confirmé' && new Date(o.updated_at || o.created_at) >= startOfToday
+        o => (o.status === 'Confirmé' || o.status === 'Livré') && new Date(o.updated_at || o.created_at) >= startOfToday
       ).length;
       setConfirmedToday(todayConfirmed);
       
-      // Commission : 500 pour confirmation, 1000 si livré
-      // Gains non-cumulatifs : 500 confirmé, total 1000 si livré
-      const earnings = data.reduce((acc: number, o: any) => {
-        const paid = o.closer_paid || 0;
-        return acc + paid;
-      }, 0);
-      setMyEarnings(earnings);
+      setConfirmedToday(todayConfirmed);
     }
     
     setLoading(false);
   }
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) setUserId(data.user.id);
-    });
+    async function fetchUserEarnings() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+        const { data: userData } = await supabase.from('User').select('earnings').eq('id', user.id).single();
+        if (userData) setMyEarnings(userData.earnings || 0);
+      }
+    }
 
     fetchData();
+    fetchUserEarnings();
 
     const channel = supabase
       .channel('closer-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
         fetchData();
+        fetchUserEarnings();
       })
       .subscribe();
 
@@ -276,7 +277,7 @@ export default function InterfaceCloserPage() {
                     <td className="px-8 py-4 text-xs font-black text-slate-600 dark:text-slate-300 truncate">{item.product}</td>
                     <td className="px-8 py-4">
                       <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500 uppercase">
-                        <MapPin className="w-3 h-3" /> {item.city?.split(',').map((s: string) => s.trim()).filter((v: string, i: number, a: string[]) => a.indexOf(v) === i).join(', ')}
+                        <MapPin className="w-3 h-3" /> {(item.city || 'Non défini').split(',').map((s: string) => s.trim()).filter((v: string, i: number, a: string[]) => a.indexOf(v) === i).join(', ')}
                       </div>
                     </td>
                     <td className="px-8 py-4 text-right">

@@ -18,6 +18,7 @@ export default function InterfaceLivreurPage() {
   const [totalCashCollected, setTotalCashCollected] = useState(0);
   const [period, setPeriod] = useState<Period>('ALL');
   const [userId, setUserId] = useState<string | null>(null);
+  const [myEarnings, setMyEarnings] = useState(0);
   
   const [showCollectionModal, setShowCollectionModal] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<any>(null);
@@ -26,9 +27,16 @@ export default function InterfaceLivreurPage() {
   const [isDeliveryFeeIncluded, setIsDeliveryFeeIncluded] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data?.user) setUserId(data.user.id);
-    });
+    async function fetchUserEarnings() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+        const { data: userData } = await supabase.from('User').select('earnings').eq('id', user.id).single();
+        if (userData) setMyEarnings(userData.earnings || 0);
+      }
+    }
+
+    fetchUserEarnings();
   }, []);
 
   function getDateRange(p: Period): { from: string | null; to: string | null } {
@@ -93,7 +101,18 @@ export default function InterfaceLivreurPage() {
     fetchOrders();
     const channel = supabase
       .channel('livreur-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, fetchOrders)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+        fetchOrders();
+        // Optionnel: rafraîchir les gains si besoin
+        const fetchUserEarnings = async () => {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { data: userData } = await supabase.from('User').select('earnings').eq('id', user.id).single();
+            if (userData) setMyEarnings(userData.earnings || 0);
+          }
+        };
+        fetchUserEarnings();
+      })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [period, selectedStore]);
@@ -177,7 +196,7 @@ export default function InterfaceLivreurPage() {
     }
   }
 
-  const cleanCity = (city: string) => city?.split(',').map(s => s.trim()).filter((v, i, a) => a.indexOf(v) === i).join(', ') || '-';
+  const cleanCity = (city: string | null) => (city || 'Non défini').split(',').map(s => s.trim()).filter((v, i, a) => a.indexOf(v) === i).join(', ');
   const handleCall = (phone: string) => { window.location.href = `tel:${phone}`; };
   const handleWhatsApp = (phone: any) => { window.open(`https://wa.me/${String(phone || '').replace(/\D/g, '')}`, '_blank'); };
 
@@ -231,6 +250,11 @@ export default function InterfaceLivreurPage() {
             <CheckCircle2 className="w-5 h-5 mb-1 opacity-70" />
             <span className="text-lg font-black tracking-tight">{new Intl.NumberFormat('fr-FR').format(totalCashCollected)} {currency}</span>
             <span className="text-[8px] font-black uppercase tracking-widest opacity-80">Argent collecté</span>
+          </div>
+          <div className="bg-slate-900 text-white p-5 rounded-2xl shadow-xl shadow-slate-900/20 flex flex-col items-center justify-center min-w-[110px]">
+            <DollarSign className="w-5 h-5 mb-1 opacity-70" />
+            <span className="text-lg font-black tracking-tight">{new Intl.NumberFormat('fr-FR').format(myEarnings)} {currency}</span>
+            <span className="text-[8px] font-black uppercase tracking-widest opacity-80">Mes Gains</span>
           </div>
         </div>
       </div>

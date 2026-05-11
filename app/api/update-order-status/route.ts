@@ -38,13 +38,12 @@ export async function POST(req: Request) {
     if (status === 'Confirmé' && userId) updateData.closer_id = userId;
     if (status === 'Livré' && userId) updateData.livreur_id = userId;
 
-    // 3. GAINS CLOSER — Logique NON-CUMULATIVE (500 confirmé, 1000 livré)
-    //    - Confirmé : closer gagne 500, closer_paid = 500
-    //    - Livré : closer gagne (1000 - closer_paid), closer_paid = 1000
-    //    Ce n'est PAS cumulatif 500 + 1000.
+    // 3. GAINS CLOSER & LIVREUR
+    //    - Closer : +500 à la confirmation. Si livré, +500 de plus (total 1000).
+    //    - Livreur : +1500 à la livraison.
     
     if (status === 'Confirmé' && previousStatus !== 'Confirmé') {
-      updateData.closer_paid = 500;
+      updateData.closer_paid = 500; // Premier palier
 
       // Créditer le closer de 500
       if (userId) {
@@ -69,23 +68,24 @@ export async function POST(req: Request) {
       });
 
     } else if (status === 'Livré' && previousStatus !== 'Livré') {
-      const difference = 1000 - currentCloserPaid;
+      const closerBonus = 1000 - currentCloserPaid; // On complète pour arriver à 1000
       updateData.closer_paid = 1000;
+      updateData.delivered_at = new Date().toISOString();
 
-      // Créditer le closer du complément (1000 - ce qu'il a déjà reçu)
+      // Créditer le closer du bonus (500 si déjà confirmé, 1000 sinon)
       const closerId = order.closer_id;
-      if (closerId && difference > 0) {
+      if (closerId && closerBonus > 0) {
         const { data: closerUser } = await supabase.from('User').select('earnings').eq('id', closerId).single();
         if (closerUser) {
-          await supabase.from('User').update({ earnings: (closerUser.earnings || 0) + difference }).eq('id', closerId);
+          await supabase.from('User').update({ earnings: (closerUser.earnings || 0) + closerBonus }).eq('id', closerId);
         }
       }
 
-      // Créditer le livreur (commission livraison = 1000)
+      // Créditer le livreur (1500 par livraison)
       if (userId) {
         const { data: livreurUser } = await supabase.from('User').select('earnings').eq('id', userId).single();
         if (livreurUser) {
-          await supabase.from('User').update({ earnings: (livreurUser.earnings || 0) + 1000 }).eq('id', userId);
+          await supabase.from('User').update({ earnings: (livreurUser.earnings || 0) + 1500 }).eq('id', userId);
         }
       }
 
