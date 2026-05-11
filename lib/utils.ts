@@ -66,7 +66,7 @@ export async function resolveUserProfile(supabase: any): Promise<any> {
  * Retourne "Non défini" si la valeur est absente ou invalide.
  */
 export function cleanCity(city: string | null | undefined): string {
-  if (!city || city === '-' || city.trim() === '') return "Non défini";
+  if (!city || city === '-' || city.trim() === '' || city === 'Ville inconnue') return "Non défini";
   
   // Supprime les doublons (ex: "Abidjan, Abidjan") et nettoie les espaces
   return city

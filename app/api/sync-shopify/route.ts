@@ -1,20 +1,24 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
-function resolveCity(order: any, storeCode: string | null): string {
+function resolveCity(order: any, storeCountry: string | null): string {
   const shipping = order.shipping_address;
   const billing = order.billing_address;
   const addr = shipping || billing;
 
-  if (!addr) return 'Ville inconnue';
+  if (!addr) return storeCountry || 'Ville inconnue';
 
   const city = (addr.city || '').trim();
   const province = (addr.province || '').trim();
+  const address1 = (addr.address1 || '').trim();
 
+  // On privilégie la ville et province combinées si différentes
   if (city && province && city.toLowerCase() !== province.toLowerCase()) {
     return `${city}, ${province}`;
   }
-  return city || province || 'Ville inconnue';
+  
+  // Sinon ville, sinon province, sinon adresse1, sinon pays du store
+  return city || province || address1 || storeCountry || 'Ville inconnue';
 }
 
 /** Extrait le meilleur numéro de téléphone disponible */
@@ -99,7 +103,7 @@ export async function GET(req: Request) {
       }
 
       const ordersToInsert = allOrders.map((order: any) => {
-        const city = resolveCity(order, null); // On passe null pour utiliser la ville réelle
+        const city = resolveCity(order, store.country); 
         const phone = resolvePhone(order);
         const rawPrice = parseFloat(order.total_price || '0');
         const firstName = order.customer?.first_name || '';
