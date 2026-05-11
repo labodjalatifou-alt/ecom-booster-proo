@@ -82,19 +82,20 @@ RÈGLES DE GÉNÉRATION DE CONTENU (AUCUNE INTERPRÉTATION LIBRE) :
    - "targetAudience" : Clarté et taille de l'audience cible.
    Puis un "total" (moyenne des 8), une "explication" (phrase courte sous le score).
 
-5. SCRIPTS VIDÉO / VOIX OFF (GÉNÉRER EXACTEMENT 3 VERSIONS COMPLÈTES) :
-   Générer 3 scripts de 30-45 secondes avec ces angles : "Problème", "Transformation", "Urgence".
-   Chaque script doit être LONG et détaillé (environ 120-150 mots par script).
+5. SCRIPTS VIDÉO / VOIX OFF (GÉNÉRER EXACTEMENT 3 VERSIONS LONGUES ET COMPLÈTES) :
+   Générer 3 scripts de 45-60 secondes avec ces angles : "Problème", "Transformation", "Urgence".
+   Chaque script doit être TRÈS LONG et détaillé (environ 150-200 mots par script).
    Chaque script doit impérativement contenir les 5 phases : presentation_probleme, agitation_emotionnelle, presentation_solution, preuve_temoignage, call_to_action.
+   INTERDICTION de résumer ou d'écrire moins de 150 mots par script.
 
 6. PUBLICITÉS FACEBOOK (GÉNÉRER EXACTEMENT 3 VERSIONS COMPLÈTES) :
    Générer 3 publicités avec ces angles : "Angle Problème", "Angle Bénéfice", "Angle Émotion".
    Chaque publicité doit contenir : hook, explanation, benefits (array de 3), cta.
 
 7. PAGE SHOPIFY (GÉNÉRER EXACTEMENT 6 SECTIONS) :
-   Fournir un titre captivant, une accroche marketing, et EXACTEMENT 6 caractéristiques (features) uniques et persuasives.
+   Fournir un titre captivant, une accroche marketing, et EXACTEMENT 6 caractéristiques (features) uniques, longues et persuasives.
 
-RÈGLE D'OR : NE RÉSUME RIEN. REMPLIS CHAQUE CHAMP AVEC DU TEXTE PERSUASIF ET LONG. LES CHAMPS VIDES SONT INTERDITS.
+CONSIGNE DE VALIDATION : Si tu ne fournis pas exactement 3 scripts, 3 publicités et 6 caractéristiques, l'analyse sera rejetée. Ne me déçois pas.
 
 Réponds UNIQUEMENT en JSON valide suivant cette structure exacte :
 {
@@ -119,14 +120,14 @@ Réponds UNIQUEMENT en JSON valide suivant cette structure exacte :
   "avatar": { "sexe": "...", "age": "...", "revenus": "...", "frustrations": "...", "peurs": "...", "désirs": "...", "objections": "...", "phrase_declenchante": "...", "comment_le_convaincre": "...", "declencheur_emotionnel": "..." },
   "shopify_page": { "title": "...", "hook": "...", "features": ["...", "...", "...", "...", "...", "..."] },
   "facebook_ads": [
-    { "angle": "Angle Problème", "hook": "...", "explanation": "...", "benefits": ["...", "...", "..."], "cta": "..." },
+    { "angle": "Angle Problème", "hook": "Accroche longue...", "explanation": "Explication détaillée...", "benefits": ["...", "...", "..."], "cta": "..." },
     { "angle": "Angle Bénéfice", "hook": "...", "explanation": "...", "benefits": ["...", "...", "..."], "cta": "..." },
     { "angle": "Angle Émotion", "hook": "...", "explanation": "...", "benefits": ["...", "...", "..."], "cta": "..." }
   ],
   "video_scripts": [
-    { "angle": "Problème", "text": "...", "word_count": 140, "structure": { "presentation_probleme": "...", "agitation_emotionnelle": "...", "presentation_solution": "...", "preuve_temoignage": "...", "call_to_action": "..." } },
-    { "angle": "Transformation", "text": "...", "word_count": 140, "structure": { "presentation_probleme": "...", "agitation_emotionnelle": "...", "presentation_solution": "...", "preuve_temoignage": "...", "call_to_action": "..." } },
-    { "angle": "Urgence", "text": "...", "word_count": 140, "structure": { "presentation_probleme": "...", "agitation_emotionnelle": "...", "presentation_solution": "...", "preuve_temoignage": "...", "call_to_action": "..." } }
+    { "angle": "Problème", "text": "Script complet 1 (150-200 mots)...", "word_count": 165, "structure": { "presentation_probleme": "...", "agitation_emotionnelle": "...", "presentation_solution": "...", "preuve_temoignage": "...", "call_to_action": "..." } },
+    { "angle": "Transformation", "text": "Script complet 2 (150-200 mots)...", "word_count": 175, "structure": { "presentation_probleme": "...", "agitation_emotionnelle": "...", "presentation_solution": "...", "preuve_temoignage": "...", "call_to_action": "..." } },
+    { "angle": "Urgence", "text": "Script complet 3 (150-200 mots)...", "word_count": 160, "structure": { "presentation_probleme": "...", "agitation_emotionnelle": "...", "presentation_solution": "...", "preuve_temoignage": "...", "call_to_action": "..." } }
   ],
   "voiceover_script": "..."
 }

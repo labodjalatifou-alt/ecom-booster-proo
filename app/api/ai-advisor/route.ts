@@ -33,8 +33,8 @@ export async function POST(req: Request) {
           },
           body: JSON.stringify({
             model: model,
-            max_tokens: 4096,
-            system: "Tu es l'expert stratégique d'Ecom Booster Pro spécialisé dans le marché Africain. Analyse le produit et réponds EXCLUSIVEMENT en JSON valide suivant la structure exacte demandée par l'utilisateur. Ne fournis aucune explication avant ou après le JSON.",
+            max_tokens: 8192,
+            system: "Tu es l'expert stratégique d'Ecom Booster Pro spécialisé dans le marché Africain. Analyse le produit et réponds EXCLUSIVEMENT en JSON valide suivant la structure exacte demandée par l'utilisateur. Tu DOIS impérativement fournir EXACTEMENT 3 scripts complets dans 'video_scripts', 3 publicités complètes dans 'facebook_ads' et 6 caractéristiques détaillées dans 'shopify_page.features'. Ne résume jamais rien. Ne fournis aucune explication avant ou après le JSON.",
             messages: [{ role: 'user', content: prompt }],
           }),
         });
