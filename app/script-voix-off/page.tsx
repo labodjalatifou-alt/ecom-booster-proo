@@ -189,33 +189,6 @@ export default function ScriptVoixOffPage() {
         </p>
       </div>
 
-      {/* Structure breakdown */}
-      {hasStructure && (
-        <div className="space-y-4">
-          <h3 className="text-sm font-black uppercase tracking-widest text-slate-400 ml-2 mb-2">Décomposition par Phase</h3>
-          {STRUCTURE_LABELS.map((phase, idx) => {
-            const text = activeScript.structure[phase.key];
-            if (!text) return null;
-            return (
-              <div key={idx} className={`bg-white dark:bg-slate-900 border-l-4 ${phase.color} border border-slate-100 dark:border-slate-800 rounded-2xl p-6 shadow-sm`}>
-                <div className="flex justify-between items-start mb-3">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
-                    {phase.icon} {phase.label}
-                  </span>
-                  <button
-                    onClick={() => handleCopy(text, `${activeTab}-${idx}`)}
-                    className="text-[9px] font-black text-purple-600 uppercase hover:underline flex items-center gap-1"
-                  >
-                    {copiedIdx === `${activeTab}-${idx}` ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                    {copiedIdx === `${activeTab}-${idx}` ? 'Copié' : 'Copier'}
-                  </button>
-                </div>
-                <p className="text-sm font-medium leading-relaxed text-slate-700 dark:text-slate-200">{text}</p>
-              </div>
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 }
