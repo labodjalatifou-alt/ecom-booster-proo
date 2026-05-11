@@ -62,7 +62,7 @@ export async function POST(req: Request) {
       await supabase.from('notifications').insert({
         type: 'ORDER_CONFIRMED',
         title: 'Commande Confirmée',
-        message: `Commande #${orderId.slice(-6)} confirmée. +500 ${order.currency || 'FCFA'} crédités.`,
+        message: `Commande #${orderId.slice(-6)} confirmée. +500 ${order.currency || ''} crédités.`,
         target_role: 'ADMIN',
         order_id: orderId,
         store_id: order.store_id,
@@ -94,7 +94,7 @@ export async function POST(req: Request) {
         {
           type: 'ORDER_DELIVERED',
           title: 'Commande Livrée',
-          message: `Commande #${orderId.slice(-6)} livrée. Cash encaissé: ${cashCollected || order.price} ${order.currency || 'FCFA'}`,
+          message: `Commande #${orderId.slice(-6)} livrée. Cash encaissé: ${cashCollected || order.price} ${order.currency || ''}`,
           target_role: 'ADMIN',
           order_id: orderId,
           store_id: order.store_id,
@@ -102,7 +102,7 @@ export async function POST(req: Request) {
         {
           type: 'MONEY_ADDED',
           title: 'Encaissement',
-          message: `${cashCollected || order.price} ${order.currency || 'FCFA'} encaissés sur commande #${orderId.slice(-6)}`,
+          message: `${cashCollected || order.price} ${order.currency || ''} encaissés sur commande #${orderId.slice(-6)}`,
           target_role: 'ADMIN',
           order_id: orderId,
           store_id: order.store_id,

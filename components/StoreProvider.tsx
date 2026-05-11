@@ -53,10 +53,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const activeStore = stores.find(s => s.id === selectedStore) || null;
 
   // Currency from the active store
-  const currency: Currency = (() => {
-    if (activeStore?.currency === 'GNF') return 'GNF';
-    return activeStore?.currency as Currency || 'FCFA';
-  })();
+  const currency = (activeStore?.currency || 'FCFA') as string;
+  const country = activeStore?.country || 'Côte d\'Ivoire';
 
   const noStoreConnected = !loadingStores && stores.length === 0;
 
@@ -64,7 +62,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     <StoreContext.Provider value={{ 
       selectedStore, 
       setSelectedStore, 
-      currency, 
+      currency: currency as any, 
       stores, 
       loadingStores, 
       noStoreConnected,

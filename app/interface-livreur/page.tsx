@@ -121,6 +121,7 @@ export default function InterfaceLivreurPage() {
     const fee = parseInt(deliveryFee) || 0;
     
     try {
+      console.log("Submitting Collection for Order:", selectedOrderId, "Amount:", amount);
       const res = await fetch('/api/update-order-status', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -134,18 +135,24 @@ export default function InterfaceLivreurPage() {
         })
       });
 
-      if (!res.ok) throw new Error("Erreur API");
+      if (!res.ok) {
+        const errData = await res.json();
+        console.error("Collection API Error:", errData);
+        throw new Error(errData.error || "Erreur API");
+      }
 
       toast.success(`💰 Colis livré ! (${new Intl.NumberFormat('fr-FR').format(amount)} ${currency} encaissés)`);
       setShowCollectionModal(false);
       fetchOrders();
-    } catch (error) {
-      toast.error("Erreur lors de la mise à jour");
+    } catch (error: any) {
+      console.error("Collection Catch Error:", error);
+      toast.error("Erreur lors de la mise à jour : " + error.message);
     }
   }
 
   async function markFailed(orderId: any) {
     try {
+      console.log("Marking Failed Order:", orderId);
       const res = await fetch('/api/update-order-status', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -156,12 +163,17 @@ export default function InterfaceLivreurPage() {
         })
       });
 
-      if (!res.ok) throw new Error("Erreur API");
+      if (!res.ok) {
+        const errData = await res.json();
+        console.error("Cancel API Error:", errData);
+        throw new Error(errData.error || "Erreur API");
+      }
 
       toast.error("Livraison annulée");
       fetchOrders();
-    } catch {
-      toast.error("Erreur");
+    } catch (err: any) {
+      console.error("Cancel Catch Error:", err);
+      toast.error("Erreur : " + err.message);
     }
   }
 
@@ -269,7 +281,7 @@ export default function InterfaceLivreurPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] shadow-sm overflow-hidden min-h-[300px]">
+      <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] shadow-sm overflow-visible min-h-[300px]">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-40 gap-4 text-slate-400">
             <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
@@ -290,7 +302,7 @@ export default function InterfaceLivreurPage() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-visible">
             <table className="w-full text-left border-collapse table-fixed">
               <thead>
                 <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b-2 border-slate-100 dark:border-slate-800">

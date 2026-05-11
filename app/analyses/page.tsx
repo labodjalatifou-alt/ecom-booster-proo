@@ -266,7 +266,7 @@ Réponds UNIQUEMENT en JSON valide :
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-slate-400">
                 <DollarSign className="w-4 h-4" />
-                <label className="text-[10px] font-black uppercase tracking-widest">Prix d'Achat (FCFA) *</label>
+                <label className="text-[10px] font-black uppercase tracking-widest">Prix d'Achat ({currency}) *</label>
               </div>
               <input
                 required

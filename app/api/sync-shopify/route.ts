@@ -71,7 +71,7 @@ export async function GET(req: Request) {
     for (const store of storesToSync) {
       const shopifyUrl = store.shopifyUrl;
       const accessToken = store.shopifyToken;
-      const storeCurrency = store.currency || 'FCFA';
+      const storeCurrency = store.currency || '';
 
       let allOrders: any[] = [];
       let nextPageUrl: string | null =

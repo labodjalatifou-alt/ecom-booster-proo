@@ -111,21 +111,31 @@ export default function InterfaceCloserPage() {
   }, [period, selectedStore]);
 
   async function updateStatus(orderId: any, newStatus: string) {
-    const updateData: any = { status: newStatus };
-    if (newStatus === 'Confirmé' && userId) {
-      updateData.closer_id = userId;
-    }
+    console.log("Updating Order ID:", orderId, "to Status:", newStatus);
+    
+    try {
+      const res = await fetch('/api/update-order-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId,
+          status: newStatus,
+          userId: userId
+        })
+      });
 
-    const { error } = await supabase
-      .from('orders')
-      .update(updateData)
-      .eq('id', orderId);
+      const data = await res.json();
+      
+      if (!res.ok) {
+        console.error("Update Error:", data.error);
+        throw new Error(data.error || "Erreur API");
+      }
 
-    if (error) {
-      toast.error("Erreur lors de la mise à jour");
-    } else {
       toast.success(newStatus === 'Confirmé' ? "Commande propulsée ! 🚀" : "Commande annulée");
       fetchData();
+    } catch (err: any) {
+      console.error("Catch Error:", err);
+      toast.error("Erreur lors de la mise à jour : " + err.message);
     }
   }
 
@@ -233,7 +243,7 @@ export default function InterfaceCloserPage() {
         ))}
       </div>
 
-      <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] shadow-sm overflow-hidden min-h-[400px]">
+      <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] shadow-sm overflow-visible min-h-[400px]">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-40 gap-4 text-slate-400">
             <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
@@ -245,7 +255,7 @@ export default function InterfaceCloserPage() {
             <p className="text-lg font-black text-slate-600">Aucune commande dans cette liste</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-visible">
             <table className="w-full text-left border-collapse table-fixed">
               <thead>
                 <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b-2 border-slate-100 dark:border-slate-800">

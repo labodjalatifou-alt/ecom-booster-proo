@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Users, Search, Phone, Star, Loader2, MapPin } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { useStore } from '@/components/StoreProvider';
 
 interface Client {
   customer: string;
@@ -15,6 +16,7 @@ interface Client {
 }
 
 export default function ClientsPage() {
+  const { currency } = useStore();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -47,7 +49,7 @@ export default function ClientsPage() {
               totalOrders: 1,
               totalSpent: price,
               lastOrder: order.created_at,
-              currency: order.currency || 'FCFA',
+              currency: order.currency || currency,
             });
           }
         });

@@ -22,9 +22,9 @@ function resolveCity(order: any): string {
 
 /** Résout la devise dynamiquement selon le store_id */
 async function resolveStoreCurrency(storeId: string | null): Promise<string> {
-  if (!storeId) return 'FCFA';
+  if (!storeId) return '';
   const { data } = await supabase.from('Store').select('currency').eq('id', storeId).single();
-  return data?.currency || 'FCFA';
+  return data?.currency || '';
 }
 
 export async function POST(req: Request) {

@@ -6,8 +6,10 @@ import toast from 'react-hot-toast';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import EmptyAnalysisState from '@/components/dashboard/EmptyAnalysisState';
+import { useStore } from '@/components/StoreProvider';
 
 export default function PageShopifyPage() {
+  const { currency } = useStore();
   const [copied, setCopied] = useState(false);
   const [selectedTitle, setSelectedTitle] = useState(0);
   const [selectedSections, setSelectedSections] = useState<number[]>([0, 1, 2, 3]);
@@ -191,7 +193,7 @@ export default function PageShopifyPage() {
             <h3 className="text-[10px] font-black mb-5 uppercase tracking-widest text-slate-400">3. Prix & Inventaire</h3>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Prix (FCFA)</label>
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Prix ({currency})</label>
                 <div className="relative">
                   <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
@@ -235,7 +237,7 @@ export default function PageShopifyPage() {
               <div className="grid grid-cols-2 gap-3 pt-4 border-t border-white/10">
                 <div>
                   <span className="text-[9px] font-black text-white/30 uppercase block mb-1">Prix</span>
-                  <p className="text-base font-black text-emerald-400">{new Intl.NumberFormat('fr-FR').format(parseInt(price || '0'))} FCFA</p>
+                  <p className="text-base font-black text-emerald-400">{new Intl.NumberFormat('fr-FR').format(parseInt(price || '0'))} {currency}</p>
                 </div>
                 <div>
                   <span className="text-[9px] font-black text-white/30 uppercase block mb-1">Stock</span>

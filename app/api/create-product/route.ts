@@ -57,15 +57,25 @@ export async function POST(req: Request) {
     const shopifyProduct = data.product;
 
     // 2. Sauvegarder dans la base de données locale Supabase
-    // On utilise shopify_id pour le mapping
+    // Récupérer la devise du store
+    const { data: storeData } = await supabase
+      .from('Store')
+      .select('currency, id')
+      .eq('shopifyUrl', shopifyUrl)
+      .single();
+    
+    const storeCurrency = storeData?.currency || 'FCFA';
+    const storeId = storeData?.id || null;
+
     const { error: dbError } = await supabase.from('products').upsert({
       shopify_id: shopifyProduct.id.toString(),
+      store_id: storeId,
       title: shopifyProduct.title,
       price: priceFormatted,
       status: 'active',
       stock: inventoryQty,
       image_url: shopifyProduct.image?.src || null,
-      currency: 'FCFA' // TODO: Récupérer dynamiquement
+      currency: storeCurrency
     }, { onConflict: 'shopify_id' });
 
     if (dbError) {

@@ -4,8 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { Users, UserPlus, Mail, Send, Trash2, Key, Shield, Loader2, CheckCircle2, UserCircle2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
+import { useStore } from '@/components/StoreProvider';
 
 export default function EquipePage() {
+  const { currency } = useStore();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [members, setMembers] = useState<any[]>([]);
@@ -102,7 +104,7 @@ export default function EquipePage() {
              </div>
              <div>
                <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Commission Confirmé</p>
-               <p className="text-sm font-black text-emerald-600">500 FCFA</p>
+               <p className="text-sm font-black text-emerald-600">500 {currency}</p>
              </div>
           </div>
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 p-4 rounded-2xl flex items-center gap-3">
@@ -111,7 +113,7 @@ export default function EquipePage() {
              </div>
              <div>
                <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Commission Livré</p>
-               <p className="text-sm font-black text-blue-600">1000 FCFA</p>
+               <p className="text-sm font-black text-blue-600">1000 {currency}</p>
              </div>
           </div>
         </div>
@@ -238,7 +240,7 @@ export default function EquipePage() {
                       <div className="flex items-center gap-6">
                         <div className="text-right mr-4">
                           <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Gains</p>
-                          <p className="text-sm font-black text-emerald-600">{new Intl.NumberFormat('fr-FR').format(member.earnings || 0)} FCFA</p>
+                          <p className="text-sm font-black text-emerald-600">{new Intl.NumberFormat('fr-FR').format(member.earnings || 0)} {currency}</p>
                         </div>
 
                         <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${

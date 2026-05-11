@@ -2,7 +2,7 @@
  * Formate un prix avec la devise dynamique de la boutique.
  * AUCUNE devise hardcodée — toujours basé sur shop.currency.
  */
-export function formatPrice(amount: number | string, currency: string = 'FCFA'): string {
+export function formatPrice(amount: number | string, currency: string): string {
   const num = typeof amount === 'string' 
     ? parseFloat(amount.replace(/\s/g, '').replace(/[^\d.,]/g, '').replace(',', '.'))
     : amount;

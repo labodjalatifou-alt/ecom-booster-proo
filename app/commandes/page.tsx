@@ -207,7 +207,7 @@ export default function CommandesPage() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[3rem] shadow-sm overflow-hidden min-h-[400px]">
+      <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[3rem] shadow-sm overflow-visible min-h-[400px]">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-40 gap-4 text-slate-400">
             <Loader2 className="w-10 h-10 animate-spin text-primary-500" />
@@ -220,7 +220,7 @@ export default function CommandesPage() {
             {!searchTerm && <p className="text-xs text-slate-400">Synchronisez vos commandes depuis le tableau de bord.</p>}
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-visible">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b-2 border-slate-100 dark:border-slate-800">
