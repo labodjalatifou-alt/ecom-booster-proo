@@ -80,6 +80,10 @@ RÈGLES DE GÉNÉRATION DE CONTENU (AUCUNE INTERPRÉTATION LIBRE) :
    - "viralPotential" : { score: X, justification: "..." }
    Puis un "total" calculé comme moyenne pondérée sur 100, et une "explication" globale.
 
+5. SCRIPT VOIX OFF (VOICEOVER) :
+   - Un script complet de 30-45 secondes optimisé pour la conversion.
+   - Ton : Persuasif, énergique, centré sur les bénéfices.
+
 Réponds UNIQUEMENT en JSON valide :
 {
   "score": {
@@ -99,16 +103,24 @@ Réponds UNIQUEMENT en JSON valide :
   "price_max": "Z ${currency}",
   "avatar": { ... },
   "shopify_page": { "title": "...", "hook": "...", "features": [] },
-  "facebook_ads": [
-    { "angle": "...", "hook": "...", "explanation": "...", "benefits": [], "cta": "..." },
-    { "angle": "...", "hook": "...", "explanation": "...", "benefits": [], "cta": "..." },
-    { "angle": "...", "hook": "...", "explanation": "...", "benefits": [], "cta": "..." }
-  ],
+  "facebook_ads": [...],
   "video_scripts": [
-    { "angle": "Problème", "text": "...", "word_count": 0, "structure": { ... } },
-    { "angle": "Transformation", "text": "...", "word_count": 0, "structure": { ... } },
-    { "angle": "Urgence", "text": "...", "word_count": 0, "structure": { ... } }
-  ]
+    { 
+      "angle": "Problème", 
+      "text": "Script complet...", 
+      "word_count": 120, 
+      "structure": { 
+        "presentation_probleme": "...", 
+        "agitation_emotionnelle": "...", 
+        "presentation_solution": "...", 
+        "preuve_temoignage": "...", 
+        "call_to_action": "..." 
+      } 
+    },
+    { "angle": "Transformation", "text": "...", "word_count": 110, "structure": { "presentation_probleme": "...", "agitation_emotionnelle": "...", "presentation_solution": "...", "preuve_temoignage": "...", "call_to_action": "..." } },
+    { "angle": "Urgence", "text": "...", "word_count": 130, "structure": { "presentation_probleme": "...", "agitation_emotionnelle": "...", "presentation_solution": "...", "preuve_temoignage": "...", "call_to_action": "..." } }
+  ],
+  "voiceover_script": "Script principal unifié..."
 }`;
 
       const res = await fetch('/api/ai-advisor', {
@@ -147,7 +159,7 @@ Réponds UNIQUEMENT en JSON valide :
         customer_avatar: result.avatar,
         shopify_page_content: result.shopify_page,
         facebook_ad_content: result.facebook_ads || result.facebook_ad,
-        voiceover_script: result.video_scripts || result.video_script
+        voiceover_script: result.voiceover_script || (Array.isArray(result.video_scripts) ? result.video_scripts[0]?.text : '')
       }]).select();
 
       if (saveError) throw saveError;

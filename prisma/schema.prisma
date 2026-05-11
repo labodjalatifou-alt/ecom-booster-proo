@@ -140,7 +140,7 @@ model ProductAnalysis {
   customer_avatar      Json
   shopify_page_content Json
   facebook_ad_content  Json
-  voiceover_script     String
+  voiceover_script     Json
   createdAt            DateTime @default(now()) @map("created_at")
   updatedAt            DateTime @default(now()) @updatedAt @map("updated_at")
 
