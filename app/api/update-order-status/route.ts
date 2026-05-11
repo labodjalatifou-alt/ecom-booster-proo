@@ -48,14 +48,14 @@ export async function POST(req: Request) {
 
       // Créditer le closer de 500
       if (userId) {
-        // Increment direct via RPC ou update manuel
-        const { data: user, error: userError } = await supabase.from('User').select('earnings').eq('id', userId).single();
-        
-        if (userError && userError.code === 'PGRST116') {
-          // L'utilisateur n'existe pas dans la table User, on le crée
-          await supabase.from('User').insert({ id: userId, earnings: 500, name: 'Closer' });
-        } else if (user) {
-          await supabase.from('User').update({ earnings: (user.earnings || 0) + 500 }).eq('id', userId);
+        console.log("Crediting Closer 500:", userId);
+        const { error: rpcError } = await supabase.rpc('increment_user_earnings', { target_user_id: userId, amount: 500 });
+        if (rpcError) {
+          console.error("RPC Error (500):", rpcError);
+          // Fallback : update direct (si l'RPC n'est pas encore créé)
+          const { data: user } = await supabase.from('User').select('earnings').eq('id', userId).single();
+          if (user) await supabase.from('User').update({ earnings: (user.earnings || 0) + 500 }).eq('id', userId);
+          else await supabase.from('User').insert({ id: userId, earnings: 500, name: 'Closer' });
         }
       }
 
@@ -77,21 +77,23 @@ export async function POST(req: Request) {
       // Créditer le closer du bonus (500 si déjà confirmé, 1000 sinon)
       const closerId = order.closer_id;
       if (closerId && closerBonus > 0) {
-        const { data: closerUser, error: closerError } = await supabase.from('User').select('earnings').eq('id', closerId).single();
-        if (closerError && closerError.code === 'PGRST116') {
-           await supabase.from('User').insert({ id: closerId, earnings: closerBonus, name: 'Closer' });
-        } else if (closerUser) {
-          await supabase.from('User').update({ earnings: (closerUser.earnings || 0) + closerBonus }).eq('id', closerId);
+        console.log("Crediting Closer Bonus:", closerId, closerBonus);
+        const { error: rpcError } = await supabase.rpc('increment_user_earnings', { target_user_id: closerId, amount: closerBonus });
+        if (rpcError) {
+          const { data: closerUser } = await supabase.from('User').select('earnings').eq('id', closerId).single();
+          if (closerUser) await supabase.from('User').update({ earnings: (closerUser.earnings || 0) + closerBonus }).eq('id', closerId);
+          else await supabase.from('User').insert({ id: closerId, earnings: closerBonus, name: 'Closer' });
         }
       }
 
       // Créditer le livreur (1500 par livraison)
       if (userId) {
-        const { data: livreurUser, error: livreurError } = await supabase.from('User').select('earnings').eq('id', userId).single();
-        if (livreurError && livreurError.code === 'PGRST116') {
-           await supabase.from('User').insert({ id: userId, earnings: 1500, name: 'Livreur' });
-        } else if (livreurUser) {
-          await supabase.from('User').update({ earnings: (livreurUser.earnings || 0) + 1500 }).eq('id', userId);
+        console.log("Crediting Livreur 1500:", userId);
+        const { error: rpcError } = await supabase.rpc('increment_user_earnings', { target_user_id: userId, amount: 1500 });
+        if (rpcError) {
+          const { data: livreurUser } = await supabase.from('User').select('earnings').eq('id', userId).single();
+          if (livreurUser) await supabase.from('User').update({ earnings: (livreurUser.earnings || 0) + 1500 }).eq('id', userId);
+          else await supabase.from('User').insert({ id: userId, earnings: 1500, name: 'Livreur' });
         }
       }
 
