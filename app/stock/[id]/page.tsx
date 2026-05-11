@@ -92,7 +92,7 @@ export default function ProductDetailPage() {
       const data = await res.json();
       if (data.product) {
         const p = data.product;
-        setProduct(prev => ({ ...prev, ...p, description: p.body_html }));
+        setProduct((prev: any) => ({ ...prev, ...p, description: p.body_html }));
         setTitle(p.title);
         setDescription(p.body_html || '');
         setPrice(p.variants[0]?.price || '0');
