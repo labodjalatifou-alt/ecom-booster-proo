@@ -79,6 +79,17 @@ export default function SalesChart() {
     }
 
     fetchChartData();
+
+    const channel = supabase
+      .channel('sales-chart-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+        fetchChartData();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [period, selectedStore]);
 
   function getEmptyData(p: string) {

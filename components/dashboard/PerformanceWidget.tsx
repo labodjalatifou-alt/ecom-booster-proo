@@ -97,6 +97,17 @@ export default function PerformanceWidget() {
     }
 
     fetchPerformance();
+
+    const channel = supabase
+      .channel('performance-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+        fetchPerformance();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [selectedStore]);
 
   if (loading) return (

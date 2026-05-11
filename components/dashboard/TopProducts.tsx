@@ -47,6 +47,17 @@ export default function TopProducts() {
       }
     }
     fetchTopProducts();
+
+    const channel = supabase
+      .channel('top-products-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+        fetchTopProducts();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [selectedStore]);
 
   const emojis = ['✨', '🎥', '⌚', '🛍️', '🔥'];
