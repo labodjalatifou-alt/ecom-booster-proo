@@ -71,7 +71,7 @@ RÈGLES DE GÉNÉRATION DE CONTENU (AUCUNE INTERPRÉTATION LIBRE) :
    - Structure : { sexe, age, revenus, frustrations, peurs, désirs, objections, phrase_declenchante, comment_le_convaincre, declencheur_emotionnel }
 
 4. SCORE PRODUIT DÉTAILLÉ PAR CRITÈRE :
-   Chaque critère doit avoir un score sur 10 et une justification d'une phrase.
+   Chaque critère doit avoir un score sur 10 et une justification DÉTAILLÉE (minimum 2 phrases) expliquant POURQUOI cette note est donnée en se basant sur les caractéristiques du produit.
    - "problemSolving" : { score: X, justification: "..." }
    - "wowEffect" : { score: X, justification: "..." }
    - "localAvailability" : { score: X, justification: "..." }
@@ -80,34 +80,38 @@ RÈGLES DE GÉNÉRATION DE CONTENU (AUCUNE INTERPRÉTATION LIBRE) :
    - "viralPotential" : { score: X, justification: "..." }
    Puis un "total" calculé comme moyenne pondérée sur 100, et une "explication" globale.
 
-5. SCRIPT VOIX OFF (VOICEOVER) :
-   - Un script complet de 30-45 secondes optimisé pour la conversion.
-   - Ton : Persuasif, énergique, centré sur les bénéfices.
+5. SCRIPTS VIDÉO / VOIX OFF (Générer exactement 3 versions) :
+   Générer 3 scripts de 30-45 secondes avec ces angles : "Problème", "Transformation", "Urgence".
+   Chaque script doit avoir une structure décomposée en 5 phases.
 
-Réponds UNIQUEMENT en JSON valide :
+Réponds UNIQUEMENT en JSON valide suivant cette structure exacte :
 {
   "score": {
     "total": 85,
     "explication": "...",
     "criteria": {
-      "problemSolving": { "score": 8, "justification": "..." },
-      "wowEffect": { "score": 7, "justification": "..." },
-      "localAvailability": { "score": 9, "justification": "..." },
-      "transportability": { "score": 8, "justification": "..." },
-      "marketingPotential": { "score": 9, "justification": "..." },
-      "viralPotential": { "score": 7, "justification": "..." }
+      "problemSolving": { "score": 8, "justification": "Expliquez ici précisément pourquoi le produit résout un problème..." },
+      "wowEffect": { "score": 7, "justification": "Détaillez l'aspect visuel ou fonctionnel qui crée l'effet wow..." },
+      "localAvailability": { "score": 9, "justification": "Analyse de la rareté du produit en magasin physique..." },
+      "transportability": { "score": 8, "justification": "Analyse du poids/volume et des risques de casse..." },
+      "marketingPotential": { "score": 9, "justification": "Pourquoi ce produit est facile à vendre avec de la pub..." },
+      "viralPotential": { "score": 7, "justification": "Capacité du produit à être partagé sur TikTok/Reels..." }
     }
   },
   "price_recommendation": "X ${currency}",
   "price_min": "Y ${currency}",
   "price_max": "Z ${currency}",
-  "avatar": { ... },
-  "shopify_page": { "title": "...", "hook": "...", "features": [] },
-  "facebook_ads": [...],
+  "avatar": { "sexe": "...", "age": "...", "revenus": "...", "frustrations": "...", "peurs": "...", "désirs": "...", "objections": "...", "phrase_declenchante": "...", "comment_le_convaincre": "...", "declencheur_emotionnel": "..." },
+  "shopify_page": { "title": "...", "hook": "...", "features": ["...", "..."] },
+  "facebook_ads": [
+    { "angle": "Angle Problème", "hook": "Accroche choc...", "explanation": "Phrase d'explication persuasive...", "benefits": ["Bénéfice 1", "Bénéfice 2", "Bénéfice 3"], "cta": "Boutique du bouton..." },
+    { "angle": "Angle Bénéfice", "hook": "Accroche bénéfice...", "explanation": "Phrase d'explication...", "benefits": ["...", "...", "..."], "cta": "..." },
+    { "angle": "Angle Émotion", "hook": "Accroche émotion...", "explanation": "Phrase d'explication...", "benefits": ["...", "...", "..."], "cta": "..." }
+  ],
   "video_scripts": [
     { 
       "angle": "Problème", 
-      "text": "Script complet...", 
+      "text": "Script complet 1...", 
       "word_count": 120, 
       "structure": { 
         "presentation_probleme": "...", 
@@ -117,10 +121,10 @@ Réponds UNIQUEMENT en JSON valide :
         "call_to_action": "..." 
       } 
     },
-    { "angle": "Transformation", "text": "...", "word_count": 110, "structure": { "presentation_probleme": "...", "agitation_emotionnelle": "...", "presentation_solution": "...", "preuve_temoignage": "...", "call_to_action": "..." } },
-    { "angle": "Urgence", "text": "...", "word_count": 130, "structure": { "presentation_probleme": "...", "agitation_emotionnelle": "...", "presentation_solution": "...", "preuve_temoignage": "...", "call_to_action": "..." } }
+    { "angle": "Transformation", "text": "Script complet 2...", "word_count": 110, "structure": { "presentation_probleme": "...", "agitation_emotionnelle": "...", "presentation_solution": "...", "preuve_temoignage": "...", "call_to_action": "..." } },
+    { "angle": "Urgence", "text": "Script complet 3...", "word_count": 130, "structure": { "presentation_probleme": "...", "agitation_emotionnelle": "...", "presentation_solution": "...", "preuve_temoignage": "...", "call_to_action": "..." } }
   ],
-  "voiceover_script": "Script principal unifié..."
+  "voiceover_script": "Un script bonus unifié pour voix off rapide..."
 }`;
 
       const res = await fetch('/api/ai-advisor', {
