@@ -76,6 +76,9 @@ export default function InterfaceCloserPage() {
       // Calcul des confirmés aujourd'hui (toujours basé sur "aujourd'hui")
       const startOfToday = new Date();
       startOfToday.setHours(0, 0, 0, 0);
+      const todayConfirmed = data.filter(
+        o => (o.status === 'Confirmé' || o.status === 'Livré') && new Date(o.updated_at || o.created_at) >= startOfToday
+      ).length;
       setConfirmedToday(todayConfirmed);
 
       // 1. Calcul des gains filtrés (pour info ou logs)
