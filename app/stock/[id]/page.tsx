@@ -77,45 +77,21 @@ export default function ProductDetailPage() {
   async function refreshFromShopify() {
     setSaving(true);
     try {
-      // 1. Récupérer les infos de la boutique via le produit
-      const { data: store, error: storeError } = await supabase
-        .from('Store')
-        .select('*')
-        .eq('id', product.store_id)
-        .single();
-        
-      if (storeError) throw storeError;
-
-      const response = await fetch(`https://${store.shopifyUrl}/admin/api/2024-01/products/${product.shopify_id}.json`, {
-        headers: { 'X-Shopify-Access-Token': store.shopifyToken }
+      const res = await fetch('/api/shopify/sync-single', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: id }),
       });
 
-      if (!response.ok) throw new Error("Erreur Shopify");
-      const { product: shopifyProduct } = await response.json();
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
 
-      // 2. Mettre à jour Supabase
-      const { data: updated, error: upError } = await supabase
-        .from('products')
-        .update({
-          title: shopifyProduct.title,
-          description: shopifyProduct.body_html,
-          price: shopifyProduct.variants[0].price,
-          stock: shopifyProduct.variants[0].inventory_quantity,
-          images: shopifyProduct.images.map((img: any) => img.src),
-          image_url: shopifyProduct.image?.src || shopifyProduct.images[0]?.src
-        })
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (upError) throw upError;
-      
-      setProduct(updated);
-      setTitle(updated.title);
-      setDescription(updated.description || '');
-      setPrice(updated.price);
-      setStock(updated.stock);
-      setImageUrls(updated.images || []);
+      setProduct(data.product);
+      setTitle(data.product.title);
+      setDescription(data.product.description || '');
+      setPrice(data.product.price);
+      setStock(data.product.stock);
+      setImageUrls(data.product.images || []);
       toast.success("Synchronisé avec Shopify !");
       
     } catch (err: any) {
