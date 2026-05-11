@@ -79,32 +79,30 @@ export default function PageShopifyPage() {
     }
   };
 
-  const handleCreateOnShopify = async () => {
+  const handleCreateOnShopify = async (data: { title: string, price: string, stock: string, description: string }) => {
     if (!parsedPage || !latestProduct) return;
     setIsCreating(true);
     try {
-      const html = shopifyPageToHtml(parsedPage);
       const res = await fetch('/api/create-product', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: parsedPage.titres[selectedTitle],
-          price: latestProduct.price_recommendation?.match(/\d+/)?.[0] || latestProduct.cost_price,
-          stock: 100,
-          description: html,
+          name: data.title,
+          price: data.price,
+          stock: parseInt(data.stock),
+          description: data.description,
           category: 'AI Generated',
           store_id: storeId
         }),
       });
 
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
+      const resData = await res.json();
+      if (resData.error) throw new Error(resData.error);
 
       toast.success('🚀 Produit créé sur Shopify !');
     } catch (err: any) {
       toast.error(sanitizeError(err));
     } finally {
-      setIsCreating(true); // Wait, should be false? Yes, fixed below.
       setIsCreating(false);
     }
   };
@@ -159,6 +157,8 @@ export default function PageShopifyPage() {
           onCreateProduct={handleCreateOnShopify}
           hasShopify={!!storeId}
           isCreating={isCreating}
+          currency={currency}
+          initialPrice={latestProduct.price_recommendation?.match(/\d+/)?.[0]}
         />
       ) : (
         <div className="bg-white dark:bg-slate-900 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[3rem] p-20 text-center">
