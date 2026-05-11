@@ -49,13 +49,22 @@ export async function POST(req: Request) {
       // Créditer le closer de 500
       if (userId) {
         console.log("Crediting Closer 500:", userId);
-        const { error: rpcError } = await supabase.rpc('increment_user_earnings', { target_user_id: userId, amount: 500 });
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        const email = authUser?.email || '';
+        const name = authUser?.user_metadata?.full_name || 'Closer';
+
+        const { error: rpcError } = await supabase.rpc('increment_user_earnings', { 
+          target_user_id: userId, 
+          amount: 500,
+          target_email: email,
+          target_name: name
+        });
+        
         if (rpcError) {
           console.error("RPC Error (500):", rpcError);
-          // Fallback : update direct (si l'RPC n'est pas encore créé)
+          // Fallback : update direct
           const { data: user } = await supabase.from('User').select('earnings').eq('id', userId).single();
           if (user) await supabase.from('User').update({ earnings: (user.earnings || 0) + 500 }).eq('id', userId);
-          else await supabase.from('User').insert({ id: userId, earnings: 500, name: 'Closer' });
         }
       }
 
@@ -78,22 +87,34 @@ export async function POST(req: Request) {
       const closerId = order.closer_id;
       if (closerId && closerBonus > 0) {
         console.log("Crediting Closer Bonus:", closerId, closerBonus);
-        const { error: rpcError } = await supabase.rpc('increment_user_earnings', { target_user_id: closerId, amount: closerBonus });
+        const { error: rpcError } = await supabase.rpc('increment_user_earnings', { 
+          target_user_id: closerId, 
+          amount: closerBonus,
+          target_email: '', // On n'a pas forcément l'email du closer ici, l'insert échouera si l'email est requis et manquant
+          target_name: 'Closer'
+        });
         if (rpcError) {
           const { data: closerUser } = await supabase.from('User').select('earnings').eq('id', closerId).single();
           if (closerUser) await supabase.from('User').update({ earnings: (closerUser.earnings || 0) + closerBonus }).eq('id', closerId);
-          else await supabase.from('User').insert({ id: closerId, earnings: closerBonus, name: 'Closer' });
         }
       }
 
       // Créditer le livreur (1500 par livraison)
       if (userId) {
         console.log("Crediting Livreur 1500:", userId);
-        const { error: rpcError } = await supabase.rpc('increment_user_earnings', { target_user_id: userId, amount: 1500 });
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        const email = authUser?.email || '';
+        const name = authUser?.user_metadata?.full_name || 'Livreur';
+
+        const { error: rpcError } = await supabase.rpc('increment_user_earnings', { 
+          target_user_id: userId, 
+          amount: 1500,
+          target_email: email,
+          target_name: name
+        });
         if (rpcError) {
           const { data: livreurUser } = await supabase.from('User').select('earnings').eq('id', userId).single();
           if (livreurUser) await supabase.from('User').update({ earnings: (livreurUser.earnings || 0) + 1500 }).eq('id', userId);
-          else await supabase.from('User').insert({ id: userId, earnings: 1500, name: 'Livreur' });
         }
       }
 
