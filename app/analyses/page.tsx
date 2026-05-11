@@ -56,45 +56,25 @@ RÈGLES DE PRIX STRICTES :
 
 RÈGLES DE GÉNÉRATION DE CONTENU (AUCUNE INTERPRÉTATION LIBRE) :
 
-1. FACEBOOK ADS (3 VERSIONS, 3 ANGLES DIFFÉRENTS) :
-   - Structure par Ad : { hook_grand_format, phrase_explication, liste_benefices (3-5 puces), cta_clair }
-   - Optimisé Neuro-marketing et mentalité Afrique (confiance, urgence).
+1. FACEBOOK ADS (GÉNÉRER EXACTEMENT 3 VERSIONS) :
+   - Angles : Problème/Solution, Preuve sociale, Urgence/Rareté.
+   - Structure : { hook, explanation (2-3 phrases), benefits (array of 3), cta }
 
-2. SCRIPTS VIDÉO (3 SCRIPTS, 3 ANGLES, 20-45 SECONDES CHACUN) :
-   - Script 1 — Angle PROBLÈME : Présente le problème que le produit résout. Ton empathique.
-   - Script 2 — Angle TRANSFORMATION : Montre la vie avant/après le produit. Ton aspirationnel.
-   - Script 3 — Angle URGENCE/OPPORTUNITÉ : Crée un sentiment de rareté et d'opportunité. Ton persuasif.
-   - Chaque script : { angle, text (80-180 mots), word_count, structure: { presentation_probleme, agitation_emotionnelle, presentation_solution, preuve_temoignage, call_to_action } }
-   - Langage simple, naturel, vendeur, adapté à l'Afrique (Cash on Delivery).
+2. SCRIPTS VOIX OFF (GÉNÉRER EXACTEMENT 3 SCRIPTS CONTINUS) :
+   - Script 1 (Choc Émotionnel) : 50-60 mots, texte continu sans labels internes.
+   - Script 2 (Transformation) : 75-90 mots, texte continu sans labels internes.
+   - Script 3 (Preuve Sociale) : 100-115 mots, texte continu sans labels internes.
+   - Format JSON : { "angle": "...", "text": "...", "word_count": ... }
 
-3. AVATAR CLIENT DÉTAILLÉ :
-   - Structure : { sexe, age, revenus, frustrations, peurs, désirs, objections, phrase_declenchante, comment_le_convaincre, declencheur_emotionnel }
+3. PAGE SHOPIFY (6 PARAGRAPHES NEUROMARKETING) :
+   - EXACTEMENT 6 paragraphes.
+   - Chaque paragraphe : { "title": "3 à 5 mots MAX", "text": "EXACTEMENT 3 phrases courtes" }
+   - Titre SEO principal, Titre bénéfice, Titre preuve sociale (3 titres séparés).
+   - EXACTEMENT 5 bullet points (8 mots max par point).
 
 4. SCORE PRODUIT STRATÉGIQUE (8 CRITÈRES PRÉCIS) :
    Chaque critère doit avoir un score sur 100, une justification d'une phrase et un conseil (tip) d'une phrase.
-   - "problemSolving" : Résolution d'un vrai problème ou besoin.
-   - "wowEffect" : Effet visuel ou fonctionnel immédiat (Wow).
-   - "localAvailability" : Rareté ou difficulté à le trouver localement.
-   - "shippingEase" : Facilité de transport (poids, volume, fragilité).
-   - "popularityInAfrica" : Popularité et demande spécifique en Afrique.
-   - "marketingEase" : Facilité à créer du contenu viral et à marketer.
-   - "competition" : Niveau de saturation du marché et différenciation.
-   - "targetAudience" : Clarté et taille de l'audience cible.
-   Puis un "total" (moyenne des 8), une "explication" (phrase courte sous le score).
-
-5. SCRIPTS VIDÉO / VOIX OFF (GÉNÉRER EXACTEMENT 3 VERSIONS) :
-   Générer 3 scripts de 20-45 secondes avec ces angles : "Problème", "Transformation", "Urgence".
-   Chaque script doit faire entre 60 et 100 mots (lecture rapide et efficace).
-   Chaque script doit être unique et percutant.
-
-6. PUBLICITÉS FACEBOOK (GÉNÉRER EXACTEMENT 3 VERSIONS COMPLÈTES) :
-   Générer 3 publicités avec ces angles : "Angle Problème", "Angle Bénéfice", "Angle Émotion".
-   Chaque publicité doit contenir : hook, explanation, benefits (array de 3), cta.
-
-7. PAGE SHOPIFY (GÉNÉRER EXACTEMENT 6 SECTIONS) :
-   Fournir un titre captivant, une accroche marketing, et EXACTEMENT 6 caractéristiques (features) uniques et persuasives.
-
-CONSIGNE DE VALIDATION : Si tu ne fournis pas exactement 3 scripts, 3 publicités et 6 caractéristiques, l'analyse sera rejetée.
+   - "problemSolving", "wowEffect", "localAvailability", "shippingEase", "popularityInAfrica", "marketingEase", "competition", "targetAudience".
 
 Réponds UNIQUEMENT en JSON valide suivant cette structure exacte :
 {
@@ -103,13 +83,7 @@ Réponds UNIQUEMENT en JSON valide suivant cette structure exacte :
     "explication": "...",
     "criteria": {
       "problemSolving": { "score": 85, "justification": "...", "tip": "..." },
-      "wowEffect": { "score": 70, "justification": "...", "tip": "..." },
-      "localAvailability": { "score": 90, "justification": "...", "tip": "..." },
-      "shippingEase": { "score": 95, "justification": "...", "tip": "..." },
-      "popularityInAfrica": { "score": 62, "justification": "...", "tip": "..." },
-      "marketingEase": { "score": 78, "justification": "...", "tip": "..." },
-      "competition": { "score": 55, "justification": "...", "tip": "..." },
-      "targetAudience": { "score": 74, "justification": "...", "tip": "..." }
+      ... (tous les 8 critères)
     }
   },
   "launch_strategy": { "should_launch": "...", "strategy_text": "..." },
@@ -117,18 +91,21 @@ Réponds UNIQUEMENT en JSON valide suivant cette structure exacte :
   "price_min": "...",
   "price_max": "...",
   "avatar": { "sexe": "...", "age": "...", "revenus": "...", "frustrations": "...", "peurs": "...", "désirs": "...", "objections": "...", "phrase_declenchante": "...", "comment_le_convaincre": "...", "declencheur_emotionnel": "..." },
-  "shopify_page": { "title": "...", "hook": "...", "features": ["...", "...", "...", "...", "...", "..."] },
-  "facebook_ads": [
-    { "angle": "Angle Problème", "hook": "...", "explanation": "...", "benefits": ["...", "...", "..."], "cta": "..." },
-    { "angle": "Angle Bénéfice", "hook": "...", "explanation": "...", "benefits": ["...", "...", "..."], "cta": "..." },
-    { "angle": "Angle Émotion", "hook": "...", "explanation": "...", "benefits": ["...", "...", "..."], "cta": "..." }
-  ],
-  "video_scripts": [
-    { "angle": "Problème", "text": "Script 1 (60-100 mots)...", "word_count": 80 },
-    { "angle": "Transformation", "text": "Script 2 (60-100 mots)...", "word_count": 90 },
-    { "angle": "Urgence", "text": "Script 3 (60-100 mots)...", "word_count": 85 }
-  ],
-  "voiceover_script": "..."
+  "shopify_page": { 
+    "titles": ["Titre 1", "Titre 2", "Titre 3"],
+    "hook": "...",
+    "paragraphs": [
+      { "title": "...", "text": "..." },
+      { "title": "...", "text": "..." },
+      { "title": "...", "text": "..." },
+      { "title": "...", "text": "..." },
+      { "title": "...", "text": "..." },
+      { "title": "...", "text": "..." }
+    ],
+    "bullets": ["...", "...", "...", "...", "..."]
+  },
+  "facebook_ads": [...],
+  "video_scripts": [...]
 }
 `;
 
@@ -158,7 +135,25 @@ Réponds UNIQUEMENT en JSON valide suivant cette structure exacte :
 
       setAnalysisResult(result);
 
-      // Save to Supabase — support new multi-script format
+      // Convert JSON to Raw format for immediate availability in sub-pages
+      const shopifyRaw = `---TITRES---
+${result.shopify_page?.titles?.map((t: string, i: number) => `TITRE_${i+1}: ${t}`).join('\n')}
+
+---ACCROCHES---
+ACCROCHE_1: ${result.shopify_page?.hook || ''}
+
+---PARAGRAPHES---
+${result.shopify_page?.paragraphs?.map((p: any, i: number) => `§${i+1}_TITRE: ${p.title}\n§${i+1}_TEXTE: ${p.text}`).join('\n\n')}
+
+---BULLETS---
+${result.shopify_page?.bullets?.map((b: string) => `• ${b}`).join('\n')}
+`;
+
+      const scriptsRaw = result.video_scripts?.map((s: any, i: number) => 
+        `═══ SCRIPT ${i+1} — Technique : ${s.angle} ═══\n${s.text}\n⏱ ${s.word_count || 0} mots`
+      ).join('\n\n') || '';
+
+      // Save to Supabase
       const { data: savedData, error: saveError } = await supabase.from('analyses').insert([{
         id: crypto.randomUUID(),
         product_name: productName,
@@ -168,9 +163,11 @@ Réponds UNIQUEMENT en JSON valide suivant cette structure exacte :
         cost_price: costPrice,
         customer_avatar: result.avatar,
         shopify_page_content: result.shopify_page,
+        shopify_page_raw: shopifyRaw,
         facebook_ad_content: result.facebook_ads,
         launch_strategy: result.launch_strategy,
-        voiceover_script: result.video_scripts || result.voiceover_script
+        voiceover_script: result.video_scripts,
+        voiceover_script_raw: scriptsRaw
       }]).select();
 
       if (saveError) throw saveError;

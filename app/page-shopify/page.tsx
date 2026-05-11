@@ -1,32 +1,30 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Store, Copy, Check, DollarSign, Database, Send, CheckCircle2, Eye, Loader2 } from 'lucide-react';
+import { Store, Loader2, Sparkles, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import EmptyAnalysisState from '@/components/dashboard/EmptyAnalysisState';
 import { useStore } from '@/components/StoreProvider';
 import { sanitizeError } from '@/lib/utils';
+import { genererPageShopify, parseShopifyPage, ShopifyPageParsed, shopifyPageToHtml } from '@/lib/claude-prompts';
+import { ShopifyPageDisplay } from '@/components/analyse/ShopifyPageDisplay';
 
 export default function PageShopifyPage() {
-  const { currency } = useStore();
-  const [copied, setCopied] = useState(false);
-  const [selectedTitle, setSelectedTitle] = useState(0);
-  const [selectedSections, setSelectedSections] = useState<number[]>([0, 1, 2, 3]);
-  const [price, setPrice] = useState('25000');
-  const [stock, setStock] = useState('100');
-  const [loading, setLoading] = useState(false);
-
-  const [latestProduct, setLatestProduct] = useState<any>(null);
+  const { currency, storeId } = useStore();
   const [loadingLatest, setLoadingLatest] = useState(true);
+  const [latestProduct, setLatestProduct] = useState<any>(null);
+  const [parsedPage, setParsedPage] = useState<ShopifyPageParsed | null>(null);
+  const [selectedTitle, setSelectedTitle] = useState(0);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
   React.useEffect(() => {
     async function fetchAnalysis() {
       const activeId = localStorage.getItem('activeAnalysisId');
       
       let query = supabase.from('analyses').select('*');
-      
       if (activeId) {
         query = query.eq('id', activeId);
       } else {
@@ -36,11 +34,13 @@ export default function PageShopifyPage() {
       const { data } = await query;
       if (data && data[0]) {
         setLatestProduct(data[0]);
-        // Pre-fill price from recommendation
-        const rec = data[0].price_recommendation;
-        if (rec) {
-          const match = rec.match(/[\d\s]+/);
-          if (match) setPrice(match[0].replace(/\s/g, ''));
+        
+        // If we already have the new format (raw string starting with ---TITRES--- or similar)
+        // or if it's the old object format, we need to handle it.
+        if (data[0].shopify_page_raw) {
+          setParsedPage(parseShopifyPage(data[0].shopify_page_raw));
+        } else if (data[0].shopify_page_content) {
+          // It's the old format, we'll suggest re-generating
         }
       }
       setLoadingLatest(false);
@@ -48,60 +48,65 @@ export default function PageShopifyPage() {
     fetchAnalysis();
   }, []);
 
-  const getProductData = () => {
-    if (!latestProduct?.shopify_page_content) return { titles: [], sections: [] };
-    const content = latestProduct.shopify_page_content;
-    return {
-      titles: [
-        content.title,
-        `${content.title} — Offre Spéciale`,
-        `Promotion : ${content.title}`
-      ],
-      sections: (content.features || []).map((f: string, i: number) => ({
-        id: i,
-        h2: f,
-        p: `${content.hook} — Découvrez comment notre ${latestProduct.product_name} peut transformer votre quotidien grâce à ${f.toLowerCase()}.`
-      }))
-    };
+  const handleGenerate = async () => {
+    if (!latestProduct) return;
+    setIsGenerating(true);
+    try {
+      // Get country from analysis or default to Senegal/Guinea
+      const country = latestProduct.pays || 'Sénégal';
+      const raw = await genererPageShopify(
+        latestProduct.product_name,
+        parseInt(latestProduct.price_recommendation || latestProduct.cost_price || '0'),
+        currency,
+        country,
+        latestProduct.marketing || '',
+        latestProduct.marketing || '' // Advantages
+      );
+
+      const parsed = parseShopifyPage(raw);
+      setParsedPage(parsed);
+
+      // Save to Supabase
+      await supabase.from('analyses').update({
+        shopify_page_raw: raw
+      }).eq('id', latestProduct.id);
+
+      toast.success('Page de vente générée avec succès !');
+    } catch (err: any) {
+      toast.error(sanitizeError(err));
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
-  const productData = getProductData();
-
-  const handleExport = async () => {
-    setLoading(true);
+  const handleCreateOnShopify = async () => {
+    if (!parsedPage || !latestProduct) return;
+    setIsCreating(true);
     try {
-      const selectedContent = productData.sections
-        .filter((s: any) => selectedSections.includes(s.id))
-        .map((s: any) => `<h2>${s.h2}</h2><p>${s.p}</p>`)
-        .join('');
-
+      const html = shopifyPageToHtml(parsedPage);
       const res = await fetch('/api/create-product', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: productData.titles[selectedTitle],
-          price,
-          stock,
-          description: selectedContent,
-          category: 'Shopify Builder'
+          name: parsedPage.titres[selectedTitle],
+          price: latestProduct.price_recommendation?.match(/\d+/)?.[0] || latestProduct.cost_price,
+          stock: 100,
+          description: html,
+          category: 'AI Generated',
+          store_id: storeId
         }),
       });
 
       const data = await res.json();
       if (data.error) throw new Error(data.error);
 
-      toast.success('🚀 Produit créé sur Shopify !', { duration: 5000 });
+      toast.success('🚀 Produit créé sur Shopify !');
     } catch (err: any) {
       toast.error(sanitizeError(err));
     } finally {
-      setLoading(false);
+      setIsCreating(true); // Wait, should be false? Yes, fixed below.
+      setIsCreating(false);
     }
-  };
-
-  const toggleSection = (id: number) => {
-    setSelectedSections(prev =>
-      prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]
-    );
   };
 
   if (loadingLatest) return (
@@ -115,26 +120,13 @@ export default function PageShopifyPage() {
       <EmptyAnalysisState 
         icon={<Store />} 
         title="Shopify Builder" 
-        description="Créez votre page de vente Shopify en un clin d'œil dès que l'analyse du produit est prête." 
+        description="Analysez un produit d'abord pour générer sa page de vente." 
       />
     </div>
   );
 
-  if (!latestProduct.shopify_page_content) return (
-    <div className="max-w-7xl mx-auto pb-10 px-4 flex flex-col items-center justify-center min-h-[50vh] text-center">
-      <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl mb-4 opacity-40">
-        <Store className="w-8 h-8 text-slate-400" />
-      </div>
-      <p className="text-sm font-black text-slate-600 mb-1">Données Shopify incomplètes</p>
-      <p className="text-[10px] font-bold text-slate-400 mb-6">Relancez une analyse pour générer la page.</p>
-      <Link href="/analyses" className="flex items-center gap-2 px-5 py-3 bg-primary-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary-700 transition-all">
-        Nouvelle Analyse
-      </Link>
-    </div>
-  );
-
   return (
-    <div className="max-w-7xl mx-auto pb-10 px-4 text-slate-800 dark:text-slate-100 animate-in fade-in duration-500">
+    <div className="max-w-6xl mx-auto pb-20 px-4 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
         <div>
           <div className="flex items-center gap-2 mb-2">
@@ -143,131 +135,62 @@ export default function PageShopifyPage() {
             </div>
             <span className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em]">Shopify Builder · {latestProduct.product_name}</span>
           </div>
-          <h2 className="text-4xl font-black tracking-tighter">Générateur de Page</h2>
+          <h2 className="text-4xl font-black tracking-tighter">Copywriting Neuromarketing</h2>
+          <p className="text-slate-400 text-sm font-bold mt-1">Structure optimisée pour le taux de conversion (CRO).</p>
         </div>
+
+        {!parsedPage && (
+          <button
+            onClick={handleGenerate}
+            disabled={isGenerating}
+            className="px-8 py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl flex items-center gap-2 disabled:opacity-50"
+          >
+            {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+            Générer la Page (Format 2024)
+          </button>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left — Config */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Titre */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-7 shadow-sm">
-            <h3 className="text-[10px] font-black mb-5 uppercase tracking-widest text-slate-400">1. Titre du Produit</h3>
-            <div className="space-y-3">
-              {productData.titles.map((title, i) => (
-                <button
-                  key={i}
-                  onClick={() => setSelectedTitle(i)}
-                  className={`w-full text-left p-4 rounded-2xl border-2 transition-all flex items-center justify-between ${selectedTitle === i ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-slate-100 dark:border-slate-800 hover:border-slate-200'}`}
-                >
-                  <span className={`text-sm font-black ${selectedTitle === i ? 'text-primary-700 dark:text-primary-400' : 'text-slate-600 dark:text-slate-300'}`}>{title}</span>
-                  {selectedTitle === i && <CheckCircle2 className="w-5 h-5 text-primary-500 shrink-0" />}
-                </button>
-              ))}
-            </div>
+      {parsedPage ? (
+        <ShopifyPageDisplay
+          parsed={parsedPage}
+          selectedTitle={selectedTitle}
+          onSelectTitle={setSelectedTitle}
+          onCreateProduct={handleCreateOnShopify}
+          hasShopify={!!storeId}
+          isCreating={isCreating}
+        />
+      ) : (
+        <div className="bg-white dark:bg-slate-900 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[3rem] p-20 text-center">
+          <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Store className="w-10 h-10 text-slate-300" />
           </div>
+          <h3 className="text-xl font-black mb-2">Générez une page irrésistible</h3>
+          <p className="text-slate-500 text-sm max-w-md mx-auto mb-8 font-medium">
+            Notre IA va créer 6 paragraphes basés sur le neuromarketing, avec des titres percutants de 3-5 mots et exactement 3 phrases par section.
+          </p>
+          <button
+            onClick={handleGenerate}
+            disabled={isGenerating}
+            className="px-10 py-5 bg-blue-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20 flex items-center gap-3 mx-auto"
+          >
+            {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
+            Lancer le Copywriter IA
+          </button>
+        </div>
+      )}
 
-          {/* Paragraphes */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-7 shadow-sm">
-            <h3 className="text-[10px] font-black mb-5 uppercase tracking-widest text-slate-400">2. Sections à inclure</h3>
-            <div className="space-y-3">
-              {productData.sections.map((section: any, i: number) => (
-                <div
-                  key={i}
-                  onClick={() => toggleSection(section.id)}
-                  className={`p-5 rounded-2xl border-2 cursor-pointer transition-all ${selectedSections.includes(section.id) ? 'border-emerald-500 bg-emerald-50/30 dark:bg-emerald-900/10' : 'border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}
-                >
-                  <div className="flex items-center gap-3 mb-1">
-                    <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 ${selectedSections.includes(section.id) ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-200'}`}>
-                      {selectedSections.includes(section.id) && <Check className="w-3 h-3" />}
-                    </div>
-                    <h4 className="text-sm font-black tracking-tight">{section.h2}</h4>
-                  </div>
-                  <p className="text-[11px] font-bold text-slate-500 leading-relaxed italic ml-8 line-clamp-2">{section.p}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Prix & Stock */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-7 shadow-sm">
-            <h3 className="text-[10px] font-black mb-5 uppercase tracking-widest text-slate-400">3. Prix & Inventaire</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Prix ({currency})</label>
-                <div className="relative">
-                  <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    type="number"
-                    value={price}
-                    onChange={e => setPrice(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm font-black outline-none focus:ring-4 focus:ring-primary-500/10"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Stock Initial</label>
-                <div className="relative">
-                  <Database className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    type="number"
-                    value={stock}
-                    onChange={e => setStock(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm font-black outline-none focus:ring-4 focus:ring-primary-500/10"
-                  />
-                </div>
-              </div>
-            </div>
+      {latestProduct.shopify_page_content && !parsedPage && (
+        <div className="mt-12 p-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-3xl flex items-start gap-4">
+          <AlertCircle className="w-6 h-6 text-amber-600 shrink-0 mt-1" />
+          <div>
+            <h4 className="text-sm font-black text-amber-800 dark:text-amber-400 mb-1">Ancien format détecté</h4>
+            <p className="text-xs font-bold text-amber-700/70 dark:text-amber-400/70 leading-relaxed">
+              Une page a été générée avec l'ancien format. Cliquez sur "Générer la Page" pour obtenir la nouvelle structure optimisée avec 6 paragraphes de 3 phrases.
+            </p>
           </div>
         </div>
-
-        {/* Right — Preview & Export */}
-        <div>
-          <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl sticky top-24 overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full -mr-12 -mt-12 blur-2xl" />
-            <h3 className="text-base font-black mb-6 flex items-center gap-3 relative z-10">
-              <Eye className="w-5 h-5 text-emerald-400" /> Aperçu Shopify
-            </h3>
-
-            <div className="space-y-5 mb-8 max-h-[400px] overflow-y-auto pr-2 relative z-10">
-              <div>
-                <span className="text-[9px] font-black text-white/30 uppercase block mb-1">Titre</span>
-                <p className="text-sm font-black leading-relaxed">{productData.titles[selectedTitle]}</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 pt-4 border-t border-white/10">
-                <div>
-                  <span className="text-[9px] font-black text-white/30 uppercase block mb-1">Prix</span>
-                  <p className="text-base font-black text-emerald-400">{new Intl.NumberFormat('fr-FR').format(parseInt(price || '0'))} {currency}</p>
-                </div>
-                <div>
-                  <span className="text-[9px] font-black text-white/30 uppercase block mb-1">Stock</span>
-                  <p className="text-base font-black text-amber-400">{stock} PCS</p>
-                </div>
-              </div>
-
-              <div className="space-y-4 pt-4 border-t border-white/10">
-                <span className="text-[9px] font-black text-white/30 uppercase block">{selectedSections.length} section(s)</span>
-                {productData.sections.filter((s: any) => selectedSections.includes(s.id)).map((s: any, i: number) => (
-                  <div key={i}>
-                    <h5 className="text-[10px] font-black uppercase text-emerald-400 mb-1">{s.h2}</h5>
-                    <p className="text-[10px] font-bold text-white/60 italic leading-relaxed line-clamp-2">{s.p}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <button
-              disabled={loading}
-              onClick={handleExport}
-              className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-emerald-500/20 hover:bg-emerald-700 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 relative z-10"
-            >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              {loading ? 'Création...' : 'Créer sur Shopify'}
-            </button>
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
