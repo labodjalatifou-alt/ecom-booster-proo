@@ -26,21 +26,8 @@ export default function InterfaceLivreurPage() {
   const [deliveryFee, setDeliveryFee] = useState('0');
   const [isDeliveryFeeIncluded, setIsDeliveryFeeIncluded] = useState(false);
 
-  async function fetchUserEarnings() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      setUserId(user.id);
-      const { data: userData, error: userError } = await supabase.from('User').select('earnings').eq('id', user.id).single();
-      if (userError && userError.code === 'PGRST116') {
-        setMyEarnings(0);
-      } else if (userData) {
-        setMyEarnings(userData.earnings || 0);
-      }
-    }
-  }
-
   useEffect(() => {
-    fetchUserEarnings();
+    // Plus besoin de fetchUserEarnings pour les comptes fictifs
   }, []);
 
   function getDateRange(p: Period): { from: string | null; to: string | null } {
@@ -96,6 +83,14 @@ export default function InterfaceLivreurPage() {
 
       setTotalCashPending(pending.reduce((acc, o) => acc + parseFloat(String(o.price || '0').replace(/\s/g, '')), 0));
       setTotalCashCollected(delivered.reduce((acc, o) => acc + (o.cash_collected || parseFloat(String(o.price || '0').replace(/\s/g, ''))), 0));
+      
+      // Calcul des gains TOTAUX (Indépendant du filtre de date)
+      let totalQuery = supabase.from('orders').select('livreur_paid');
+      if (selectedStore) totalQuery = totalQuery.eq('store_id', selectedStore);
+      const { data: allData } = await totalQuery;
+      const allTimeGains = allData?.reduce((acc, o) => acc + (o.livreur_paid || 0), 0) || 0;
+      setMyEarnings(allTimeGains);
+
       setOrders(data);
     }
     setLoading(false);
@@ -107,10 +102,6 @@ export default function InterfaceLivreurPage() {
       .channel('livreur-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
         fetchOrders();
-        fetchUserEarnings();
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'User' }, () => {
-        fetchUserEarnings();
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };

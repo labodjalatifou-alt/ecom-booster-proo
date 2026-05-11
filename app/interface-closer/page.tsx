@@ -76,39 +76,30 @@ export default function InterfaceCloserPage() {
       // Calcul des confirmés aujourd'hui (toujours basé sur "aujourd'hui")
       const startOfToday = new Date();
       startOfToday.setHours(0, 0, 0, 0);
-      const todayConfirmed = data.filter(
-        o => (o.status === 'Confirmé' || o.status === 'Livré') && new Date(o.updated_at || o.created_at) >= startOfToday
-      ).length;
       setConfirmedToday(todayConfirmed);
+
+      // 1. Calcul des gains filtrés (pour info ou logs)
+      // const filteredCommissions = data.reduce((acc: number, o: any) => acc + (o.closer_paid || 0), 0);
       
-      setConfirmedToday(todayConfirmed);
+      // 2. Calcul des gains TOTAUX (Indépendant du filtre de date)
+      let totalQuery = supabase.from('orders').select('closer_paid');
+      if (selectedStore) totalQuery = totalQuery.eq('store_id', selectedStore);
+      const { data: allData } = await totalQuery;
+      const allTimeGains = allData?.reduce((acc, o) => acc + (o.closer_paid || 0), 0) || 0;
+      setMyEarnings(allTimeGains);
     }
     
     setLoading(false);
   }
 
   useEffect(() => {
-    async function fetchUserEarnings() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setUserId(user.id);
-        const { data: userData, error: userError } = await supabase.from('User').select('earnings').eq('id', user.id).single();
-        if (userError && userError.code === 'PGRST116') {
-          setMyEarnings(0);
-        } else if (userData) {
-          setMyEarnings(userData.earnings || 0);
-        }
-      }
-    }
-
     fetchData();
-    fetchUserEarnings();
+    // Plus besoin de fetchUserEarnings ici pour les comptes fictifs
 
     const channel = supabase
       .channel('closer-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
         fetchData();
-        fetchUserEarnings();
       })
       .subscribe();
 

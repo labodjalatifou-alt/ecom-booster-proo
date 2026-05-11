@@ -39,33 +39,16 @@ export async function POST(req: Request) {
     if (status === 'Confirmé' && userId) updateData.closer_id = userId;
     if (status === 'Livré' && userId) updateData.livreur_id = userId;
 
-    // 3. GAINS CLOSER & LIVREUR
-    //    - Closer : +500 à la confirmation. Si livré, +500 de plus (total 1000).
-    //    - Livreur : +1500 à la livraison.
+    // 3. GAINS (Enregistrés directement dans la commande)
+    //    - Closer : 500 à la confirmation. Total 1000 si livré.
+    //    - Livreur : 1500 à la livraison.
     
-    if (status === 'Confirmé' && previousStatus !== 'Confirmé') {
-      updateData.closer_paid = 500; // Premier palier
+    if (status === 'Confirmé') {
+      updateData.closer_paid = 500;
 
-      // Créditer le closer de 500
+      // Créditer le closer (background)
       if (userId) {
-        console.log("Crediting Closer 500:", userId);
-        const { data: { user: authUser } } = await supabase.auth.getUser();
-        const email = authUser?.email || '';
-        const name = authUser?.user_metadata?.full_name || 'Closer';
-
-        const { error: rpcError } = await supabase.rpc('increment_user_earnings', { 
-          target_user_id: userId, 
-          amount: 500,
-          target_email: email,
-          target_name: name
-        });
-        
-        if (rpcError) {
-          console.error("RPC Error (500):", rpcError);
-          // Fallback : update direct
-          const { data: user } = await supabase.from('User').select('earnings').eq('id', userId).single();
-          if (user) await supabase.from('User').update({ earnings: (user.earnings || 0) + 500 }).eq('id', userId);
-        }
+        supabase.rpc('increment_user_earnings', { target_user_id: userId, amount: 500 }).then();
       }
 
       // Notification
@@ -78,44 +61,17 @@ export async function POST(req: Request) {
         store_id: order.store_id,
       });
 
-    } else if (status === 'Livré' && previousStatus !== 'Livré') {
-      const closerBonus = 1000 - currentCloserPaid; // On complète pour arriver à 1000
+    } else if (status === 'Livré') {
       updateData.closer_paid = 1000;
+      updateData.livreur_paid = 1500;
       updateData.delivered_at = new Date().toISOString();
 
-      // Créditer le closer du bonus (500 si déjà confirmé, 1000 sinon)
-      const closerId = order.closer_id;
-      if (closerId && closerBonus > 0) {
-        console.log("Crediting Closer Bonus:", closerId, closerBonus);
-        const { error: rpcError } = await supabase.rpc('increment_user_earnings', { 
-          target_user_id: closerId, 
-          amount: closerBonus,
-          target_email: '', // On n'a pas forcément l'email du closer ici, l'insert échouera si l'email est requis et manquant
-          target_name: 'Closer'
-        });
-        if (rpcError) {
-          const { data: closerUser } = await supabase.from('User').select('earnings').eq('id', closerId).single();
-          if (closerUser) await supabase.from('User').update({ earnings: (closerUser.earnings || 0) + closerBonus }).eq('id', closerId);
-        }
+      // Créditer le closer et le livreur (background)
+      if (order.closer_id) {
+        supabase.rpc('increment_user_earnings', { target_user_id: order.closer_id, amount: 500 }).then();
       }
-
-      // Créditer le livreur (1500 par livraison)
       if (userId) {
-        console.log("Crediting Livreur 1500:", userId);
-        const { data: { user: authUser } } = await supabase.auth.getUser();
-        const email = authUser?.email || '';
-        const name = authUser?.user_metadata?.full_name || 'Livreur';
-
-        const { error: rpcError } = await supabase.rpc('increment_user_earnings', { 
-          target_user_id: userId, 
-          amount: 1500,
-          target_email: email,
-          target_name: name
-        });
-        if (rpcError) {
-          const { data: livreurUser } = await supabase.from('User').select('earnings').eq('id', userId).single();
-          if (livreurUser) await supabase.from('User').update({ earnings: (livreurUser.earnings || 0) + 1500 }).eq('id', userId);
-        }
+        supabase.rpc('increment_user_earnings', { target_user_id: userId, amount: 1500 }).then();
       }
 
       // Notifications
