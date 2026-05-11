@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useStore } from '@/components/StoreProvider';
+import { cleanCity } from '@/lib/utils';
 
 const PAGE_SIZE = 50;
 
@@ -13,11 +14,6 @@ const PAGE_SIZE = 50;
 function parsePrice(val: any): number {
   if (!val) return 0;
   return parseFloat(String(val).replace(/\s/g, '').replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
-}
-
-function cleanCity(city: string | null): string {
-  if (!city) return '-';
-  return city.split(',').map(s => s.trim()).filter((v, i, a) => a.indexOf(v) === i).join(', ');
 }
 
 

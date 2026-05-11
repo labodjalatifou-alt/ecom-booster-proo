@@ -5,6 +5,8 @@ import { Package, Plus, Edit3, Trash2, MoreVertical, X, Loader2, RefreshCw, Imag
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { useStore } from '@/components/StoreProvider';
+import { sanitizeError } from '@/lib/utils';
+import ConfirmationModal from '@/components/ConfirmationModal';
 import Link from 'next/link';
 
 export default function StockPage() {
@@ -18,6 +20,11 @@ export default function StockPage() {
   const [newStockValue, setNewStockValue] = useState<number>(0);
   const [statusFilter, setStatusFilter] = useState('all');
   const [detailProduct, setDetailProduct] = useState<any | null>(null);
+
+  const [confirmDelete, setConfirmDelete] = useState<{ isOpen: boolean; id: string | null }>({
+    isOpen: false,
+    id: null
+  });
 
   useEffect(() => {
     fetchStock();
@@ -89,15 +96,14 @@ export default function StockPage() {
       setShowEditModal(false);
       fetchStock();
     } catch (err: any) {
-      toast.error('Erreur : ' + err.message);
+      toast.error(sanitizeError(err));
     }
   }
 
   async function deleteProduct(id: string) {
-    if (!confirm("Supprimer ce produit de l'inventaire ?")) return;
     const { error } = await supabase.from('products').delete().eq('id', id);
     if (error) {
-      toast.error("Erreur suppression");
+      toast.error(sanitizeError(error));
     } else {
       toast.success("Produit supprimé");
       setStockItems(prev => prev.filter(p => p.id !== id));
@@ -231,7 +237,7 @@ export default function StockPage() {
                             <button onClick={() => handleEditClick(item)} className="w-full flex items-center gap-3 px-5 py-3 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors">
                               <Edit3 className="w-4 h-4 text-blue-500" /> Modifier Stock
                             </button>
-                            <button onClick={() => { deleteProduct(item.id); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-5 py-3 text-[10px] font-black uppercase text-red-500 hover:bg-red-50 transition-colors">
+                            <button onClick={() => setConfirmDelete({ isOpen: true, id: item.id })} className="w-full flex items-center gap-3 px-5 py-3 text-[10px] font-black uppercase text-red-500 hover:bg-red-50 transition-colors">
                               <Trash2 className="w-4 h-4" /> Supprimer
                             </button>
                           </div>
@@ -342,6 +348,16 @@ export default function StockPage() {
           </div>
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={confirmDelete.isOpen}
+        onClose={() => setConfirmDelete({ isOpen: false, id: null })}
+        onConfirm={() => confirmDelete.id && deleteProduct(confirmDelete.id)}
+        title="Supprimer du stock ?"
+        message="Êtes-vous sûr de vouloir retirer ce produit de votre inventaire ? Cette action est irréversible."
+        confirmLabel="Supprimer"
+        variant="danger"
+      />
     </div>
   );
 }

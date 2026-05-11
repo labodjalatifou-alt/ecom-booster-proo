@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { ShoppingCart, Search, Eye, MapPin, Phone, Package, X, Globe, User, Loader2, RefreshCw, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useStore } from '@/components/StoreProvider';
+import { cleanCity } from '@/lib/utils';
 
 type Period = 'TODAY' | 'YESTERDAY' | '7D' | '30D' | 'ALL';
 type StatusFilter = 'ALL' | 'A Confirmer' | 'Confirmé' | 'Livré' | 'Annulé';
@@ -104,9 +105,6 @@ export default function CommandesPage() {
   );
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
-
-  const cleanCity = (city: string) =>
-    city?.split(',').map(s => s.trim()).filter((v, i, a) => a.indexOf(v) === i).join(', ') || '-';
 
   const statusColor = (s: string) => {
     if (s === 'Livré') return 'bg-emerald-100 text-emerald-700 border-emerald-200';

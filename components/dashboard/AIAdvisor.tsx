@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Sparkles, Send, Bot, User, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { sanitizeError } from '@/lib/utils';
 
 export default function AIAdvisor() {
   const [prompt, setPrompt] = useState('');
@@ -25,7 +26,7 @@ export default function AIAdvisor() {
       if (data.error) throw new Error(data.error);
       setResponse(data.text);
     } catch (err: any) {
-      toast.error("Erreur IA : " + err.message);
+      toast.error(sanitizeError(err));
     } finally {
       setLoading(false);
     }

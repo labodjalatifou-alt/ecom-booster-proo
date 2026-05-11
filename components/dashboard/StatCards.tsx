@@ -6,6 +6,8 @@ import { useStore } from '../StoreProvider';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { useShopifySound } from '@/lib/hooks/useShopifySound';
+import { sanitizeError } from '@/lib/utils';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 export default function StatCards() {
   const { currency, selectedStore } = useStore();
@@ -18,6 +20,7 @@ export default function StatCards() {
     pendingOrders: 0
   });
   const [period, setPeriod] = useState('ALL'); // TODAY, YESTERDAY, 30D, 90D, ALL
+  const [showMarkReceivedConfirm, setShowMarkReceivedConfirm] = useState(false);
 
   useEffect(() => {
     async function fetchMetrics(silent = false) {
@@ -144,19 +147,17 @@ export default function StatCards() {
   }
 
   async function handleMarkReceived() {
-    if (confirm("Voulez-vous marquer tout le cash en transit comme reçu et transféré en comptabilité ?")) {
-      const { error } = await supabase
-        .from('orders')
-        .update({ cash_received: true })
-        .eq('status', 'Livré')
-        .eq('cash_received', false);
-      
-      if (error) {
-        toast.error("Erreur : " + error.message);
-      } else {
-        toast.success("Cash validé !");
-        // Les métriques se mettront à jour via le canal temps réel
-      }
+    setShowMarkReceivedConfirm(false);
+    const { error } = await supabase
+      .from('orders')
+      .update({ cash_received: true })
+      .eq('status', 'Livré')
+      .eq('cash_received', false);
+    
+    if (error) {
+      toast.error(sanitizeError(error));
+    } else {
+      toast.success("Cash validé !");
     }
   }
 
@@ -221,7 +222,7 @@ export default function StatCards() {
 
             {stat.action && metrics.cashInTransit > 0 && (
               <button 
-                onClick={(e) => { e.stopPropagation(); handleMarkReceived(); }}
+                onClick={(e) => { e.stopPropagation(); setShowMarkReceivedConfirm(true); }}
                 className="mt-4 py-2 px-4 bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95 shadow-lg shadow-amber-500/20"
               >
                 {stat.action}
@@ -231,6 +232,15 @@ export default function StatCards() {
         );
       })}
     </div>
+    <ConfirmationModal
+      isOpen={showMarkReceivedConfirm}
+      onClose={() => setShowMarkReceivedConfirm(false)}
+      onConfirm={handleMarkReceived}
+      title="Valider l'Encaissement ?"
+      message="Voulez-vous marquer tout le cash en transit comme reçu et transféré en comptabilité ?"
+      confirmLabel="Valider tout"
+      variant="warning"
+    />
     </>
   );
 }

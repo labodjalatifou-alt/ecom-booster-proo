@@ -7,11 +7,14 @@ import { supabase } from '@/lib/supabase';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import toast from 'react-hot-toast';
+import { sanitizeError } from '@/lib/utils';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 export default function HistoriquePage() {
   const [analyses, setAnalyses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   useEffect(() => {
     fetchAnalyses();
@@ -28,7 +31,7 @@ export default function HistoriquePage() {
   }
 
   const handleClearHistory = async () => {
-    if (!confirm("⚠️ Action Irréversible ! Voulez-vous vraiment supprimer tout l'historique et les données de test ?")) return;
+    setShowClearConfirm(false);
     
     setLoading(true);
     try {
@@ -44,7 +47,7 @@ export default function HistoriquePage() {
       toast.success("Base de données nettoyée ! Tout est à zéro.");
       fetchAnalyses();
     } catch (err: any) {
-      toast.error("Erreur : " + err.message);
+      toast.error(sanitizeError(err));
     } finally {
       setLoading(false);
     }
@@ -86,7 +89,7 @@ export default function HistoriquePage() {
                 />
               </div>
               <button 
-                onClick={handleClearHistory}
+                onClick={() => setShowClearConfirm(true)}
                 className="p-3 bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white rounded-2xl transition-all border-2 border-rose-100"
                 title="Vider l'historique"
               >
@@ -164,6 +167,17 @@ export default function HistoriquePage() {
           ))}
         </div>
       )}
+      )}
+
+      <ConfirmationModal
+        isOpen={showClearConfirm}
+        onClose={() => setShowClearConfirm(false)}
+        onConfirm={handleClearHistory}
+        title="⚠️ Action Irréversible !"
+        message="Voulez-vous vraiment supprimer tout l'historique des analyses et les données de test ? Cette action videra complètement votre base de données."
+        confirmLabel="Vider tout"
+        variant="danger"
+      />
     </div>
   );
 }

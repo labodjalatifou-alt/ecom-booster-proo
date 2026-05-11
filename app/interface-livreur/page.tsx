@@ -5,6 +5,8 @@ import { Truck, PhoneForwarded, MessageSquare, CheckCircle2, MapPin, DollarSign,
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { useStore } from '@/components/StoreProvider';
+import { cleanCity, sanitizeError } from '@/lib/utils';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 type Tab = 'pending' | 'delivered' | 'cancelled' | 'programmed';
 type Period = 'TODAY' | 'YESTERDAY' | '7D' | '30D' | 'ALL';
@@ -155,7 +157,7 @@ export default function InterfaceLivreurPage() {
       fetchOrders();
     } catch (error: any) {
       console.error("Collection Catch Error:", error);
-      toast.error("Erreur lors de la mise à jour : " + error.message);
+      toast.error(sanitizeError(error));
     }
   }
 
@@ -182,11 +184,10 @@ export default function InterfaceLivreurPage() {
       fetchOrders();
     } catch (err: any) {
       console.error("Cancel Catch Error:", err);
-      toast.error("Erreur : " + err.message);
+      toast.error(sanitizeError(err));
     }
   }
 
-  const cleanCity = (city: string | null) => (city || 'Non défini').split(',').map(s => s.trim()).filter((v, i, a) => a.indexOf(v) === i).join(', ');
   const handleCall = (phone: string) => { window.location.href = `tel:${phone}`; };
   const handleWhatsApp = (phone: any) => { window.open(`https://wa.me/${String(phone || '').replace(/\D/g, '')}`, '_blank'); };
 

@@ -4,12 +4,19 @@ import React, { useState, useEffect } from 'react';
 import { Store, Plus, MoreVertical, Globe, Key, X, RefreshCw, Loader2, Trash2, Edit3, ShoppingCart, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
+import { sanitizeError } from '@/lib/utils';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 export default function BoutiquesPage() {
   const [stores, setStores] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  const [confirmDelete, setConfirmDelete] = useState<{ isOpen: boolean; id: string | null }>({
+    isOpen: false,
+    id: null
+  });
   
   // Form fields
   const [formData, setFormData] = useState({
@@ -76,7 +83,7 @@ export default function BoutiquesPage() {
       .select();
 
     if (error) {
-      toast.error("Erreur : " + error.message);
+      toast.error(sanitizeError(error));
     } else {
       toast.success("Boutique connectée avec succès !");
       setStores([data[0], ...stores]);
@@ -87,10 +94,8 @@ export default function BoutiquesPage() {
   };
 
   const deleteStore = async (id: string) => {
-    if (!confirm("Supprimer cette boutique ? Cela n'effacera pas les commandes déjà synchronisées.")) return;
-    
     const { error } = await supabase.from('Store').delete().eq('id', id);
-    if (error) toast.error("Erreur suppression");
+    if (error) toast.error(sanitizeError(error));
     else {
       toast.success("Boutique supprimée");
       setStores(stores.filter(s => s.id !== id));
@@ -182,7 +187,7 @@ export default function BoutiquesPage() {
                 </div>
                 <div className="flex gap-2">
                   <button className="p-2 text-slate-400 hover:text-primary-600 transition-colors"><Edit3 className="w-4 h-4" /></button>
-                  <button onClick={() => deleteStore(store.id)} className="p-2 text-slate-400 hover:text-red-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                  <button onClick={() => setConfirmDelete({ isOpen: true, id: store.id })} className="p-2 text-slate-400 hover:text-red-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
                 </div>
               </div>
 
@@ -313,6 +318,16 @@ export default function BoutiquesPage() {
           </div>
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={confirmDelete.isOpen}
+        onClose={() => setConfirmDelete({ isOpen: false, id: null })}
+        onConfirm={() => confirmDelete.id && deleteStore(confirmDelete.id)}
+        title="Supprimer cette boutique ?"
+        message="Cette action est irréversible. Les commandes déjà synchronisées resteront dans la base, mais aucune nouvelle commande ne pourra être importée."
+        confirmLabel="Supprimer"
+        variant="danger"
+      />
     </div>
   );
 }

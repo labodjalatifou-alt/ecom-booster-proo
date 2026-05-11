@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { useStore } from '@/components/StoreProvider';
+import { sanitizeError } from '@/lib/utils';
 
 export default function AnalysesPage() {
   const { currency } = useStore();
@@ -157,7 +158,7 @@ Réponds UNIQUEMENT en JSON valide :
 
       toast.success('Analyse terminée !');
     } catch (err: any) {
-      toast.error(err.message || 'Erreur lors de l\'analyse');
+      toast.error(sanitizeError(err));
     } finally {
       setLoading(false);
     }

@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import EmptyAnalysisState from '@/components/dashboard/EmptyAnalysisState';
 import { useStore } from '@/components/StoreProvider';
+import { sanitizeError } from '@/lib/utils';
 
 export default function PageShopifyPage() {
   const { currency } = useStore();
@@ -91,7 +92,7 @@ export default function PageShopifyPage() {
 
       toast.success('🚀 Produit créé sur Shopify !', { duration: 5000 });
     } catch (err: any) {
-      toast.error('Erreur : ' + err.message);
+      toast.error(sanitizeError(err));
     } finally {
       setLoading(false);
     }

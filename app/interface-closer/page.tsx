@@ -5,6 +5,8 @@ import { Headset, PhoneForwarded, MessageSquare, CheckCircle2, MapPin, Edit3, Lo
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { useStore } from '@/components/StoreProvider';
+import { cleanCity, sanitizeError } from '@/lib/utils';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 type Tab = 'pending' | 'confirmed' | 'cancelled' | 'programmed';
 type Period = 'TODAY' | 'YESTERDAY' | '7D' | '30D' | 'ALL';
@@ -134,7 +136,7 @@ export default function InterfaceCloserPage() {
       fetchData();
     } catch (err: any) {
       console.error("Catch Error:", err);
-      toast.error("Erreur lors de la mise à jour : " + err.message);
+      toast.error(sanitizeError(err));
     }
   }
 
@@ -282,7 +284,7 @@ export default function InterfaceCloserPage() {
                     <td className="px-8 py-4 text-xs font-black text-slate-600 dark:text-slate-300 truncate">{item.product}</td>
                     <td className="px-8 py-4">
                       <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500 uppercase">
-                        <MapPin className="w-3 h-3" /> {(item.city || 'Non défini').split(',').map((s: string) => s.trim()).filter((v: string, i: number, a: string[]) => a.indexOf(v) === i).join(', ')}
+                        <MapPin className="w-3 h-3" /> {cleanCity(item.city)}
                       </div>
                     </td>
                     <td className="px-8 py-4 text-right">
@@ -360,7 +362,7 @@ export default function InterfaceCloserPage() {
                   setNoteText(''); 
                   fetchData();
                 } catch (err: any) {
-                  toast.error(err.message);
+                  toast.error(sanitizeError(err));
                 }
               }} 
               className="w-full py-4 bg-amber-500 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-amber-600 transition-all"

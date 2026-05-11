@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Package, Plus, Image as ImageIcon, Tag, DollarSign, List, ArrowLeft, Loader2, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
+import { sanitizeError } from '@/lib/utils';
 
 export default function AjouterProduitPage() {
   const [loading, setLoading] = useState(false);
@@ -41,7 +42,7 @@ export default function AjouterProduitPage() {
       toast.success(`✅ "${formData.name}" créé sur Shopify !`);
       setFormData({ name: '', price: '', category: 'Beauté', stock: '', description: '' });
     } catch (err: any) {
-      toast.error(err.message, { duration: 6000 });
+      toast.error(sanitizeError(err), { duration: 6000 });
     } finally {
       setLoading(false);
     }

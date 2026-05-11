@@ -5,6 +5,8 @@ import { Users, UserPlus, Mail, Send, Trash2, Key, Shield, Loader2, CheckCircle2
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { useStore } from '@/components/StoreProvider';
+import { sanitizeError } from '@/lib/utils';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 export default function EquipePage() {
   const { currency } = useStore();
@@ -18,6 +20,11 @@ export default function EquipePage() {
     email: '',
     password: '',
     role: 'CLOSER' // ADMIN, CLOSER, LIVREUR
+  });
+
+  const [confirmDelete, setConfirmDelete] = useState<{ isOpen: boolean; id: string | null }>({
+    isOpen: false,
+    id: null
   });
 
   useEffect(() => {
@@ -63,7 +70,7 @@ export default function EquipePage() {
       .select();
 
     if (error) {
-      toast.error("Erreur : " + error.message);
+      toast.error(sanitizeError(error));
     } else {
       toast.success(`Compte ${formData.role} créé avec succès !`);
       setMembers([data[0], ...members]);
@@ -73,9 +80,8 @@ export default function EquipePage() {
   };
 
   const deleteMember = async (id: string) => {
-    if (!confirm("Supprimer ce membre ?")) return;
     const { error } = await supabase.from('User').delete().eq('id', id);
-    if (error) toast.error("Erreur suppression");
+    if (error) toast.error(sanitizeError(error));
     else {
       toast.success("Membre supprimé");
       setMembers(members.filter(m => m.id !== id));
@@ -252,7 +258,7 @@ export default function EquipePage() {
                         </span>
                         
                         <div className="flex gap-1">
-                          <button onClick={() => deleteMember(member.id)} className="p-2 text-slate-300 hover:text-red-500 transition-colors">
+                          <button onClick={() => setConfirmDelete({ isOpen: true, id: member.id })} className="p-2 text-slate-300 hover:text-red-500 transition-colors">
                             <Trash2 className="w-5 h-5" />
                           </button>
                         </div>
@@ -265,6 +271,16 @@ export default function EquipePage() {
           </div>
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={confirmDelete.isOpen}
+        onClose={() => setConfirmDelete({ isOpen: false, id: null })}
+        onConfirm={() => confirmDelete.id && deleteMember(confirmDelete.id)}
+        title="Supprimer ce membre ?"
+        message="Cette action est irréversible. Le collaborateur perdra immédiatement ses accès au dashboard."
+        confirmLabel="Supprimer"
+        variant="danger"
+      />
     </div>
   );
 }

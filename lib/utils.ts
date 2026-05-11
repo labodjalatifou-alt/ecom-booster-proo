@@ -60,3 +60,39 @@ export async function resolveUserProfile(supabase: any): Promise<any> {
     return getDefaultAdminProfile();
   }
 }
+
+/**
+ * Nettoie et formate le nom de la ville.
+ * Retourne "Non défini" si la valeur est absente ou invalide.
+ */
+export function cleanCity(city: string | null | undefined): string {
+  if (!city || city === '-' || city.trim() === '') return "Non défini";
+  
+  // Supprime les doublons (ex: "Abidjan, Abidjan") et nettoie les espaces
+  return city
+    .split(',')
+    .map(s => s.trim())
+    .filter((v, i, a) => v && a.indexOf(v) === i)
+    .join(', ');
+}
+
+/**
+ * Nettoie les messages d'erreur pour l'utilisateur final.
+ * Masque les détails techniques comme "localhost", "fetch", etc.
+ */
+export function sanitizeError(err: any): string {
+  if (!err) return "Une erreur inattendue est survenue";
+  
+  const message = typeof err === 'string' ? err : err.message || "Erreur système";
+  
+  // Liste des motifs techniques à masquer
+  const techKeywords = ['localhost', 'fetch', 'network', 'database', 'supabase', 'prisma', 'auth'];
+  
+  const isTechnical = techKeywords.some(key => message.toLowerCase().includes(key));
+  
+  if (isTechnical) {
+    return "Action impossible pour le moment. Veuillez réessayer.";
+  }
+  
+  return message;
+}
