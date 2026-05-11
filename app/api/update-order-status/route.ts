@@ -31,8 +31,8 @@ export async function POST(req: Request) {
 
     // Cash collecté (livreur)
     if (cashCollected !== undefined) updateData.cash_collected = parseInt(cashCollected);
-    if (deliveryFee !== undefined) updateData.delivery_fee = parseInt(deliveryFee);
-    if (deliveryFeeIncluded !== undefined) updateData.delivery_fee_included = deliveryFeeIncluded;
+    if (deliveryFee !== undefined) updateData.cash_from_customer = parseInt(deliveryFee);
+    if (deliveryFeeIncluded !== undefined) updateData.is_included_in_total = deliveryFeeIncluded;
 
     // Assigner le closer ou livreur
     if (status === 'Confirmé' && userId) updateData.closer_id = userId;
