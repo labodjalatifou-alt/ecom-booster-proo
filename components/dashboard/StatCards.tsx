@@ -5,13 +5,13 @@ import { Truck, ShoppingBag, ArrowUpRight, ArrowDownRight, Clock, CheckCircle2, 
 import { useStore } from '../StoreProvider';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
-import { useShopifySound } from '@/lib/hooks/useShopifySound';
+import { useAppSounds } from '@/lib/hooks/useAppSounds';
 import { sanitizeError } from '@/lib/utils';
 import ConfirmationModal from '@/components/ConfirmationModal';
 
 export default function StatCards() {
   const { currency, selectedStore } = useStore();
-  const { playKaching } = useShopifySound();
+  const { playSound } = useAppSounds();
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState({
     caLivre: 0,

@@ -2,14 +2,16 @@
 
 import { useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useShopifySound } from '@/lib/hooks/useShopifySound';
+import { useAppSounds } from '@/lib/hooks/useAppSounds';
 import toast from 'react-hot-toast';
+import { useStore } from './StoreProvider';
 
 export default function RealtimeNotifications() {
-  const { playKaching } = useShopifySound();
+  const { playSound } = useAppSounds();
+  const { selectedStore } = useStore();
 
   useEffect(() => {
-    console.log('[Realtime] Initializing global listener...');
+    console.log('[Realtime] Initializing global listener with sounds...');
     
     const channel = supabase
       .channel('global-orders')
@@ -21,11 +23,16 @@ export default function RealtimeNotifications() {
           table: 'orders'
         },
         (payload) => {
+          // --- FILTRE PAR BOUTIQUE ---
+          if (selectedStore && payload.new.store_id !== selectedStore) {
+            return; 
+          }
+
           console.log('[Realtime] Order event:', payload.eventType, payload.new);
 
           // NOUVELLE COMMANDE (INSERT)
           if (payload.eventType === 'INSERT') {
-            playKaching();
+            playSound('order'); // Son Shopify
             toast.success("Nouvelle commande Shopify !", { 
               icon: '💰',
               duration: 6000,
@@ -42,20 +49,28 @@ export default function RealtimeNotifications() {
             });
           }
 
-          // CHANGEMENT DE STATUT (UPDATE)
+          // CHANGEMENT DE STATUT OU CASH (UPDATE)
           if (payload.eventType === 'UPDATE') {
             const oldOrder = payload.old;
             const newOrder = payload.new;
 
+            // 1. Changement de Statut
             if (newOrder.status !== oldOrder.status) {
               if (newOrder.status === 'Confirmé') {
+                playSound('confirm'); // Son Téléphone raccroché
                 toast.success(`Commande de ${newOrder.customer} CONFIRMÉE`, { icon: '✅' });
               } else if (newOrder.status === 'Livré') {
-                playKaching(); // Son pour la livraison aussi
+                playSound('deliver'); // Son Klaxon
                 toast.success(`Commande de ${newOrder.customer} LIVRÉE !`, { icon: '📦' });
               } else if (newOrder.status === 'Annulé') {
                 toast.error(`Commande de ${newOrder.customer} ANNULÉE`, { icon: '❌' });
               }
+            }
+
+            // 2. Réception du Cash (cash_received passe de false à true)
+            if (newOrder.cash_received === true && oldOrder.cash_received === false) {
+              playSound('cash'); // Son Pièces
+              toast.success("💰 Cash validé en comptabilité !", { icon: '💵' });
             }
           }
         }
@@ -71,7 +86,7 @@ export default function RealtimeNotifications() {
       console.log('[Realtime] Cleaning up global listener...');
       supabase.removeChannel(channel);
     };
-  }, [playKaching]);
+  }, [playSound, selectedStore]);
 
-  return null; // Component invisible
+  return null;
 }
