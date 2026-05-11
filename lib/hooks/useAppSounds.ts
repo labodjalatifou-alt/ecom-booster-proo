@@ -22,7 +22,7 @@ export function useAppSounds() {
     // Configuration par défaut
     Object.values(soundsRef.current).forEach(audio => {
       if (audio) {
-        audio.volume = 0.7;
+        audio.volume = 1.0;
         audio.load();
       }
     });
@@ -31,9 +31,10 @@ export function useAppSounds() {
   const playSound = (type: SoundType) => {
     const audio = soundsRef.current[type];
     if (audio) {
+      console.log(`[Audio] Tentative de lecture : ${type}`);
       audio.currentTime = 0;
       audio.play().catch(e => {
-        console.warn(`[Audio] Autoplay blocked or error for ${type}:`, e);
+        console.warn(`[Audio] Lecture bloquée pour ${type}. Cliquez sur la page pour autoriser le son.`, e);
       });
     }
   };
