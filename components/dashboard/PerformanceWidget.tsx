@@ -38,9 +38,9 @@ export default function PerformanceWidget() {
 
     function processStats(orders: any[]) {
       // Filtering by store
-      const filtered = selectedStore === 'ALL' 
-        ? orders 
-        : orders.filter(o => o.city === (selectedStore === 'ABIDJAN' ? 'Abidjan' : selectedStore === 'DAKAR' ? 'Dakar' : 'Conakry'));
+      const filtered = selectedStore 
+        ? orders.filter(o => o.store_id === selectedStore)
+        : orders;
 
       // Tunnel Stats
       const confirmedStatus = ['Confirmé', 'Livré', 'Annulé'];

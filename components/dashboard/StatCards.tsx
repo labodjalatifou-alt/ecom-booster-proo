@@ -43,7 +43,7 @@ export default function StatCards() {
         }
 
         // Filtrage par boutique (utilise l'ID réel de la boutique depuis la DB)
-        if (selectedStore !== 'ALL') {
+        if (selectedStore) {
           query = query.eq('store_id', selectedStore);
         }
 
@@ -132,7 +132,7 @@ export default function StatCards() {
   ];
 
   async function syncShopify() {
-    const url = selectedStore === 'ALL' ? '/api/sync-shopify' : `/api/sync-shopify?storeId=${selectedStore}`;
+    const url = selectedStore ? `/api/sync-shopify?storeId=${selectedStore}` : '/api/sync-shopify';
     toast.promise(
       fetch(url).then(res => res.json()),
       {

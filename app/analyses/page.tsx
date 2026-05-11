@@ -59,20 +59,40 @@ RÈGLES DE GÉNÉRATION DE CONTENU (AUCUNE INTERPRÉTATION LIBRE) :
    - Structure par Ad : { hook_grand_format, phrase_explication, liste_benefices (3-5 puces), cta_clair }
    - Optimisé Neuro-marketing et mentalité Afrique (confiance, urgence).
 
-2. SCRIPT VIDÉO (20-45 SECONDES) :
-   - Structure : { presentation_probleme, agitation_emotionnelle, presentation_solution, preuve_temoignage, call_to_action }
-   - Longueur : 80 à 180 mots. Ton émotionnel, adapté à l'Afrique (Cash on Delivery).
+2. SCRIPTS VIDÉO (3 SCRIPTS, 3 ANGLES, 20-45 SECONDES CHACUN) :
+   - Script 1 — Angle PROBLÈME : Présente le problème que le produit résout. Ton empathique.
+   - Script 2 — Angle TRANSFORMATION : Montre la vie avant/après le produit. Ton aspirationnel.
+   - Script 3 — Angle URGENCE/OPPORTUNITÉ : Crée un sentiment de rareté et d'opportunité. Ton persuasif.
+   - Chaque script : { angle, text (80-180 mots), word_count, structure: { presentation_probleme, agitation_emotionnelle, presentation_solution, preuve_temoignage, call_to_action } }
+   - Langage simple, naturel, vendeur, adapté à l'Afrique (Cash on Delivery).
 
 3. AVATAR CLIENT DÉTAILLÉ :
    - Structure : { sexe, age, revenus, frustrations, peurs, désirs, objections, phrase_declenchante, comment_le_convaincre, declencheur_emotionnel }
 
-4. SCORE PRODUIT PONDÉRÉ :
-   - Critères : Résout un problème, Effet waouh, Viral potentiel, Livraison facile Afrique, Poids, Disponibilité locale, Marge, Créatifs, Saturation, Impulsif, Compatible CoD.
-   - Fournir un score total et une explication détaillée.
+4. SCORE PRODUIT DÉTAILLÉ PAR CRITÈRE :
+   Chaque critère doit avoir une note sur 10 et une justification d'une phrase.
+   - "resolution_probleme" : { note: X, justification: "..." }
+   - "effet_wow" : { note: X, justification: "..." }
+   - "disponibilite_locale" : { note: X, justification: "..." }
+   - "transportabilite" : { note: X, justification: "..." }
+   - "potentiel_marketing" : { note: X, justification: "..." }
+   - "potentiel_viral" : { note: X, justification: "..." }
+   Puis un "total" calculé comme moyenne pondérée sur 100, et une "explication" globale.
 
 Réponds UNIQUEMENT en JSON valide :
 {
-  "score": { "total": 85, "explication": "..." },
+  "score": {
+    "total": 85,
+    "explication": "...",
+    "criteria": {
+      "resolution_probleme": { "note": 8, "justification": "..." },
+      "effet_wow": { "note": 7, "justification": "..." },
+      "disponibilite_locale": { "note": 9, "justification": "..." },
+      "transportabilite": { "note": 8, "justification": "..." },
+      "potentiel_marketing": { "note": 9, "justification": "..." },
+      "potentiel_viral": { "note": 7, "justification": "..." }
+    }
+  },
   "price_recommendation": "X ${currency}",
   "price_min": "Y ${currency}",
   "price_max": "Z ${currency}",
@@ -83,7 +103,11 @@ Réponds UNIQUEMENT en JSON valide :
     { "angle": "...", "hook": "...", "explanation": "...", "benefits": [], "cta": "..." },
     { "angle": "...", "hook": "...", "explanation": "...", "benefits": [], "cta": "..." }
   ],
-  "video_script": { "text": "...", "word_count": 0, "structure": { ... } }
+  "video_scripts": [
+    { "angle": "Problème", "text": "...", "word_count": 0, "structure": { ... } },
+    { "angle": "Transformation", "text": "...", "word_count": 0, "structure": { ... } },
+    { "angle": "Urgence", "text": "...", "word_count": 0, "structure": { ... } }
+  ]
 }`;
 
       const res = await fetch('/api/ai-advisor', {
@@ -102,7 +126,6 @@ Réponds UNIQUEMENT en JSON valide :
 
       let result;
       try {
-        // Recherche plus robuste du JSON
         const jsonMatch = data.text.match(/\{[\s\S]*\}/);
         const jsonStr = jsonMatch ? jsonMatch[0] : data.text;
         result = JSON.parse(jsonStr);
@@ -113,17 +136,17 @@ Réponds UNIQUEMENT en JSON valide :
 
       setAnalysisResult(result);
 
-      // Save to Supabase
+      // Save to Supabase — support new multi-script format
       const { data: savedData, error: saveError } = await supabase.from('analyses').insert([{
-        id: crypto.randomUUID(), // Satisfy the not-null constraint
+        id: crypto.randomUUID(),
         product_name: productName,
-        score: result.score.total || result.score,
+        score: result.score?.total || result.score,
         price_recommendation: result.price_recommendation,
         cost_price: costPrice,
         customer_avatar: result.avatar,
         shopify_page_content: result.shopify_page,
         facebook_ad_content: result.facebook_ads || result.facebook_ad,
-        voiceover_script: result.video_script?.text || result.voiceover_script
+        voiceover_script: result.video_scripts || result.video_script
       }]).select();
 
       if (saveError) throw saveError;

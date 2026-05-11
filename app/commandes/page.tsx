@@ -42,14 +42,12 @@ export default function CommandesPage() {
     // Build count query
     let countQuery = supabase.from('orders').select('*', { count: 'exact', head: true });
     
-    // Store filtering — ne PAS bloquer si stores pas encore chargés
-    if (selectedStore !== 'ALL') {
+    // Store filtering — filtre obligatoire par boutique active
+    if (selectedStore) {
       countQuery = countQuery.eq('store_id', selectedStore);
     } else if (stores.length > 0) {
-      const storeIds = stores.map(s => s.id);
-      countQuery = countQuery.in('store_id', storeIds);
+      countQuery = countQuery.in('store_id', stores.map(s => s.id));
     }
-    // Si stores.length === 0 et selectedStore === 'ALL', on montre TOUTES les commandes
 
     const { from, to } = getDateRange(period);
     if (from) countQuery = countQuery.gte('created_at', from);
@@ -69,11 +67,10 @@ export default function CommandesPage() {
       .range(rangeFrom, rangeTo);
 
     // Re-apply same store filter
-    if (selectedStore !== 'ALL') {
+    if (selectedStore) {
       query = query.eq('store_id', selectedStore);
     } else if (stores.length > 0) {
-      const storeIds = stores.map(s => s.id);
-      query = query.in('store_id', storeIds);
+      query = query.in('store_id', stores.map(s => s.id));
     }
 
     if (from) query = query.gte('created_at', from);

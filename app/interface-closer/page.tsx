@@ -56,8 +56,8 @@ export default function InterfaceCloserPage() {
       .select('*')
       .order('created_at', { ascending: false });
 
-    // Store filtering
-    if (selectedStore !== 'ALL') {
+    // Store filtering — filtre par boutique active
+    if (selectedStore) {
       query = query.eq('store_id', selectedStore);
     } else if (stores.length > 0) {
       query = query.in('store_id', stores.map(s => s.id));

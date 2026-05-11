@@ -30,12 +30,11 @@ export default function ComptabilitePage() {
       try {
         let query = supabase.from('orders').select('price, status');
         
-        if (selectedStore !== 'ALL') {
+        if (selectedStore) {
           query = query.eq('store_id', selectedStore);
         } else if (stores.length > 0) {
           query = query.in('store_id', stores.map(s => s.id));
         }
-        // Si stores vide et ALL, on montre tout
 
         const { data, error } = await query;
 

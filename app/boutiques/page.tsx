@@ -16,8 +16,27 @@ export default function BoutiquesPage() {
     name: '',
     shopifyUrl: '',
     shopifyToken: '',
+    country: '',
     currency: 'FCFA'
   });
+
+  const countryOptions = [
+    { value: 'Côte d\'Ivoire', currency: 'FCFA' },
+    { value: 'Sénégal', currency: 'FCFA' },
+    { value: 'Guinée', currency: 'GNF' },
+    { value: 'Mali', currency: 'FCFA' },
+    { value: 'Burkina Faso', currency: 'FCFA' },
+    { value: 'Cameroun', currency: 'FCFA' },
+    { value: 'Togo', currency: 'FCFA' },
+    { value: 'Bénin', currency: 'FCFA' },
+    { value: 'Niger', currency: 'FCFA' },
+    { value: 'Congo (RDC)', currency: 'CDF' },
+  ];
+
+  const handleCountryChange = (country: string) => {
+    const found = countryOptions.find(c => c.value === country);
+    setFormData({ ...formData, country, currency: found?.currency || 'FCFA' });
+  };
 
   useEffect(() => {
     fetchStores();
@@ -46,10 +65,11 @@ export default function BoutiquesPage() {
       .from('Store')
       .insert([
         {
-          id: crypto.randomUUID(), // Generate a unique ID to satisfy the not-null constraint
+          id: crypto.randomUUID(),
           name: formData.name,
           shopifyUrl: formData.shopifyUrl,
           shopifyToken: formData.shopifyToken,
+          country: formData.country,
           currency: formData.currency
         }
       ])
@@ -61,7 +81,7 @@ export default function BoutiquesPage() {
       toast.success("Boutique connectée avec succès !");
       setStores([data[0], ...stores]);
       setShowAddModal(false);
-      setFormData({ name: '', shopifyUrl: '', shopifyToken: '', currency: 'FCFA' });
+      setFormData({ name: '', shopifyUrl: '', shopifyToken: '', country: '', currency: 'FCFA' });
     }
     setSubmitting(false);
   };
@@ -246,6 +266,31 @@ export default function BoutiquesPage() {
                     placeholder="shpat_xxxxxxxxxxxxxxxxxxxx" 
                     className="w-full pl-12 pr-6 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-primary-500/10" 
                   />
+                </div>
+              </div>
+
+              {/* Pays et Devise */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Pays *</label>
+                  <select
+                    required
+                    value={formData.country}
+                    onChange={e => handleCountryChange(e.target.value)}
+                    className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-primary-500/10 appearance-none cursor-pointer"
+                  >
+                    <option value="">Sélectionner...</option>
+                    {countryOptions.map(c => (
+                      <option key={c.value} value={c.value}>{c.value}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Devise</label>
+                  <div className="flex items-center px-6 py-4 bg-slate-100 dark:bg-slate-700 rounded-2xl">
+                    <span className="text-sm font-black text-primary-600">{formData.currency || '—'}</span>
+                    <span className="text-[9px] font-bold text-slate-400 ml-2 uppercase">Auto-détectée</span>
+                  </div>
                 </div>
               </div>
 

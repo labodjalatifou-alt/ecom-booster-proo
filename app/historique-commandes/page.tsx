@@ -9,6 +9,7 @@ import { useStore } from '@/components/StoreProvider';
 
 const PAGE_SIZE = 50;
 
+
 function parsePrice(val: any): number {
   if (!val) return 0;
   return parseFloat(String(val).replace(/\s/g, '').replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
@@ -19,11 +20,7 @@ function cleanCity(city: string | null): string {
   return city.split(',').map(s => s.trim()).filter((v, i, a) => a.indexOf(v) === i).join(', ');
 }
 
-function getCurrency(city: string | null): string {
-  if (!city) return 'FCFA';
-  const gnKeywords = ['conakry', 'kankan', 'kindia', 'labe', 'mamou', 'nzerekore'];
-  return gnKeywords.some(k => city.toLowerCase().includes(k)) ? 'GNF' : 'FCFA';
-}
+
 
 const statusColor = (s: string) => {
   if (s === 'Livré') return 'bg-emerald-50 text-emerald-700 border border-emerald-100';
@@ -33,7 +30,7 @@ const statusColor = (s: string) => {
 };
 
 export default function HistoriqueCommandesPage() {
-  const { currency: storeCurrency } = useStore();
+  const { currency: storeCurrency, selectedStore, stores } = useStore();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -46,6 +43,12 @@ export default function HistoriqueCommandesPage() {
     try {
       // Count
       let countQ = supabase.from('orders').select('*', { count: 'exact', head: true });
+      // Store filtering
+      if (selectedStore) {
+        countQ = countQ.eq('store_id', selectedStore);
+      } else if (stores.length > 0) {
+        countQ = countQ.in('store_id', stores.map(s => s.id));
+      }
       if (statusFilter !== 'all') countQ = countQ.eq('status', statusFilter);
       const { count } = await countQ;
       if (count !== null) setTotalCount(count);
@@ -54,6 +57,12 @@ export default function HistoriqueCommandesPage() {
       const from = (p - 1) * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
       let q = supabase.from('orders').select('*').order('created_at', { ascending: false }).range(from, to);
+      // Store filtering
+      if (selectedStore) {
+        q = q.eq('store_id', selectedStore);
+      } else if (stores.length > 0) {
+        q = q.in('store_id', stores.map(s => s.id));
+      }
       if (statusFilter !== 'all') q = q.eq('status', statusFilter);
 
       const { data, error } = await q;
@@ -69,7 +78,7 @@ export default function HistoriqueCommandesPage() {
   useEffect(() => {
     setPage(1);
     fetchOrders(1);
-  }, [statusFilter]);
+  }, [statusFilter, selectedStore]);
 
   useEffect(() => {
     fetchOrders(page);

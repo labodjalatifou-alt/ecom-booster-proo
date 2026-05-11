@@ -28,12 +28,7 @@ function resolvePhone(order: any): string {
   );
 }
 
-/** Détermine la devise selon la ville */
-function resolveCurrency(city: string): string {
-  const gnKeywords = ['conakry', 'kankan', 'kindia', 'labe', 'labé', 'mamou', 'nzerekore', 'guinée', 'guinea'];
-  const cityLower = city.toLowerCase();
-  return gnKeywords.some(k => cityLower.includes(k)) ? 'GNF' : 'FCFA';
-}
+/** Devise provient directement du store — aucun hardcode */
 
 /** Traduit le statut Shopify en statut interne */
 function resolveStatus(order: any): string {

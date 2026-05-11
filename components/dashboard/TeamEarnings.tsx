@@ -24,7 +24,7 @@ export default function TeamEarnings() {
       try {
         let query = supabase.from('orders').select('*');
         
-        if (selectedStore !== 'ALL') {
+        if (selectedStore) {
           query = query.eq('store_id', selectedStore);
         }
         

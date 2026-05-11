@@ -37,11 +37,8 @@ export default function SalesChart() {
       try {
         let query = supabase.from('orders').select('price, created_at, status').eq('status', 'Livré');
 
-        if (selectedStore !== 'ALL') {
-          const cityMap: Record<string, string> = {
-            ABIDJAN: 'Abidjan', DAKAR: 'Dakar', CONAKRY: 'Conakry'
-          };
-          query = query.eq('city', cityMap[selectedStore] || 'Abidjan');
+        if (selectedStore) {
+          query = query.eq('store_id', selectedStore);
         }
 
         const { data: orders, error } = await query;

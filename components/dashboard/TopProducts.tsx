@@ -15,8 +15,8 @@ export default function TopProducts() {
       setLoading(true);
       try {
         let query = supabase.from('orders').select('product, price, status');
-        if (selectedStore !== 'ALL') {
-          query = query.eq('city', selectedStore === 'ABIDJAN' ? 'Abidjan' : selectedStore === 'DAKAR' ? 'Dakar' : 'Conakry');
+        if (selectedStore) {
+          query = query.eq('store_id', selectedStore);
         }
         const { data: orders, error } = await query;
         if (error) throw error;
