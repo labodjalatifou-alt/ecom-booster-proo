@@ -42,7 +42,7 @@ const menuGroups = [
     ]
   },
   {
-    title: 'IA & E-COMMERCE',
+    title: 'ANALYSE & IA',
     items: [
       { name: 'Analyse IA', icon: Bot, href: '/analyses' },
       { name: 'Historique Analyses', icon: ClipboardList, href: '/historique' },
@@ -50,11 +50,6 @@ const menuGroups = [
       { name: 'Avatar Client', icon: User, href: '/avatar' },
       { name: 'Analyse Concurrent', icon: Trophy, href: '/analyse-concurrent' },
       { name: 'Page Shopify', icon: Store, href: '/page-shopify' },
-    ]
-  },
-  {
-    title: 'MARKETING & VENTE',
-    items: [
       { name: 'Publicité Facebook', icon: Megaphone, href: '/publicite-facebook' },
       { name: 'Script Voix Off', icon: Mic, href: '/script-voix-off' },
     ]

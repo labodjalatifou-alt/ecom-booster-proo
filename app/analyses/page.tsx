@@ -82,9 +82,16 @@ RÈGLES DE GÉNÉRATION DE CONTENU (AUCUNE INTERPRÉTATION LIBRE) :
    - "targetAudience" : Clarté et taille de l'audience cible.
    Puis un "total" (moyenne des 8), une "explication" (phrase courte sous le score).
 
-5. STRATÉGIE DE LANCEMENT (launch_strategy) :
-   - "should_launch" : Recommandation (Oui/Non/Prudence).
-   - "strategy_text" : Paragraphe expliquant le budget conseillé, la cible précise, l'avantage majeur et le risque identifié.
+5. SCRIPTS VIDÉO / VOIX OFF (GÉNÉRER EXACTEMENT 3 VERSIONS COMPLÈTES) :
+   Générer 3 scripts de 30-45 secondes avec ces angles : "Problème", "Transformation", "Urgence".
+   Chaque script doit être LONG et détaillé (environ 120-150 mots par script).
+   Chaque script doit impérativement contenir les 5 phases : presentation_probleme, agitation_emotionnelle, presentation_solution, preuve_temoignage, call_to_action.
+
+6. PUBLICITÉS FACEBOOK (GÉNÉRER EXACTEMENT 3 VERSIONS COMPLÈTES) :
+   Générer 3 publicités avec ces angles : "Angle Problème", "Angle Bénéfice", "Angle Émotion".
+   Chaque publicité doit contenir : hook, explanation, benefits (array de 3), cta.
+
+RÈGLE D'OR : NE RÉSUME RIEN. REMPLIS CHAQUE CHAMP AVEC DU TEXTE PERSUASIF ET LONG. LES CHAMPS VIDES SONT INTERDITS.
 
 Réponds UNIQUEMENT en JSON valide suivant cette structure exacte :
 {
@@ -102,16 +109,36 @@ Réponds UNIQUEMENT en JSON valide suivant cette structure exacte :
       "targetAudience": { "score": 74, "justification": "...", "tip": "..." }
     }
   },
-  "launch_strategy": { ... },
+  "launch_strategy": { "should_launch": "Oui / Non / Prudence", "strategy_text": "..." },
   "price_recommendation": "...",
   "price_min": "...",
   "price_max": "...",
-  "avatar": { ... },
-  "shopify_page": { ... },
-  "facebook_ads": [...],
-  "video_scripts": [...],
+  "avatar": { "sexe": "...", "age": "...", "revenus": "...", "frustrations": "...", "peurs": "...", "désirs": "...", "objections": "...", "phrase_declenchante": "...", "comment_le_convaincre": "...", "declencheur_emotionnel": "..." },
+  "shopify_page": { "title": "...", "hook": "...", "features": ["...", "...", "..."] },
+  "facebook_ads": [
+    { "angle": "Angle Problème", "hook": "Accroche longue...", "explanation": "Explication détaillée...", "benefits": ["Bénéfice 1", "Bénéfice 2", "Bénéfice 3"], "cta": "..." },
+    { "angle": "Angle Bénéfice", "hook": "...", "explanation": "...", "benefits": ["...", "...", "..."], "cta": "..." },
+    { "angle": "Angle Émotion", "hook": "...", "explanation": "...", "benefits": ["...", "...", "..."], "cta": "..." }
+  ],
+  "video_scripts": [
+    { 
+      "angle": "Problème", 
+      "text": "Script complet 1...", 
+      "word_count": 120, 
+      "structure": { 
+        "presentation_probleme": "...", 
+        "agitation_emotionnelle": "...", 
+        "presentation_solution": "...", 
+        "preuve_temoignage": "...", 
+        "call_to_action": "..." 
+      } 
+    },
+    { "angle": "Transformation", "text": "...", "word_count": 110, "structure": { "presentation_probleme": "...", "agitation_emotionnelle": "...", "presentation_solution": "...", "preuve_temoignage": "...", "call_to_action": "..." } },
+    { "angle": "Urgence", "text": "...", "word_count": 130, "structure": { "presentation_probleme": "...", "agitation_emotionnelle": "...", "presentation_solution": "...", "preuve_temoignage": "...", "call_to_action": "..." } }
+  ],
   "voiceover_script": "..."
-}`;
+}
+`;
 
       const res = await fetch('/api/ai-advisor', {
         method: 'POST',
