@@ -181,7 +181,7 @@ export default function ProductDetailPage() {
           <div className="h-4 w-[2px] bg-slate-100 dark:bg-slate-800" />
           
           <button 
-            onClick={refreshFromShopify}
+            onClick={() => refreshFromShopify()}
             disabled={saving}
             className="flex items-center gap-2 text-slate-400 hover:text-primary-600 transition-all"
           >
