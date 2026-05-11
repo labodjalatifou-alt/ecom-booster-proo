@@ -48,6 +48,7 @@ export async function GET() {
 
       const productsToInsert = allProducts.map((p: any) => ({
         shopify_id: p.id.toString(),
+        store_id: store.id, // Ajout du lien boutique
         title: p.title,
         price: p.variants?.[0]?.price || '0',
         compare_price: p.variants?.[0]?.compare_at_price || null,

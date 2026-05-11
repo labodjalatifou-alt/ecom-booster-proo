@@ -14,13 +14,14 @@ model Store {
   name            String   // e.g. "Boutique Abidjan"
   country         String   @default("Côte d'Ivoire")
   currency        String   // "FCFA", "GNF", etc.
-  shopifyUrl      String   // e.g. "mystore.myshopify.com"
-  shopifyToken    String   // shpat_...
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @default(now()) @updatedAt
+  shopifyUrl      String   @map("shopifyUrl")
+  shopifyToken    String   @map("shopifyToken")
+  createdAt       DateTime @default(now()) @map("createdAt")
+  updatedAt       DateTime @default(now()) @updatedAt @map("updatedAt")
   
   // Relations
   orders          Order[]
+  products        Product[]
   users           UserStore[]
 
   @@schema("public")
@@ -109,8 +110,11 @@ enum OrderStatus {
 }
 
 model Product {
-  id            String   @id @default(cuid())
+  id            String   @id @default(uuid())
   shopifyId     String   @unique @map("shopify_id")
+  storeId       String?  @map("store_id")
+  store         Store?   @relation(fields: [storeId], references: [id])
+  
   title         String
   price         String
   comparePrice  String?  @map("compare_price")
@@ -118,8 +122,8 @@ model Product {
   stock         Int      @default(0)
   imageUrl      String?  @map("image_url")
   currency      String   @default("FCFA")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @default(now()) @updatedAt
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@map("products")
   @@schema("public")
