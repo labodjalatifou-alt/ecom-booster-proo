@@ -92,8 +92,12 @@ export default function InterfaceCloserPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setUserId(user.id);
-        const { data: userData } = await supabase.from('User').select('earnings').eq('id', user.id).single();
-        if (userData) setMyEarnings(userData.earnings || 0);
+        const { data: userData, error: userError } = await supabase.from('User').select('earnings').eq('id', user.id).single();
+        if (userError && userError.code === 'PGRST116') {
+          setMyEarnings(0);
+        } else if (userData) {
+          setMyEarnings(userData.earnings || 0);
+        }
       }
     }
 
@@ -275,6 +279,11 @@ export default function InterfaceCloserPage() {
                     <td className="px-8 py-4">
                       <div className="font-black text-sm">{item.customer}</div>
                       <div className="text-[10px] font-bold text-primary-500 mt-0.5">{item.phone}</div>
+                      {item.note && (
+                        <div className="text-[9px] font-black text-amber-600 mt-1 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-md border border-amber-100 dark:border-amber-800/30">
+                          📝 {item.note}
+                        </div>
+                      )}
                     </td>
                     <td className="px-8 py-4 text-xs font-black text-slate-600 dark:text-slate-300 truncate">{item.product}</td>
                     <td className="px-8 py-4">
@@ -338,7 +347,32 @@ export default function InterfaceCloserPage() {
               onChange={e => setNoteText(e.target.value)}
               className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border-none font-bold mb-6 h-32 outline-none resize-none"
             />
-            <button onClick={() => { toast.success("Note enregistrée !"); setShowNote(false); setNoteText(''); }} className="w-full py-4 bg-amber-500 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-amber-600 transition-all">Enregistrer</button>
+            <button 
+              onClick={async () => { 
+                try {
+                  const res = await fetch('/api/update-order-status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      orderId: selectedOrder.id,
+                      status: 'Programmé',
+                      note: noteText,
+                      userId: userId
+                    })
+                  });
+                  if (!res.ok) throw new Error("Erreur lors de l'enregistrement");
+                  toast.success("Note enregistrée et commande programmée ! 📅");
+                  setShowNote(false); 
+                  setNoteText(''); 
+                  fetchData();
+                } catch (err: any) {
+                  toast.error(err.message);
+                }
+              }} 
+              className="w-full py-4 bg-amber-500 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-amber-600 transition-all"
+            >
+              Enregistrer & Programmer
+            </button>
           </div>
         </div>
       )}

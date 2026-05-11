@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 
 export async function POST(req: Request) {
   try {
-    const { orderId, status, userId, cashCollected, deliveryFee, deliveryFeeIncluded } = await req.json();
+    const { orderId, status, userId, cashCollected, deliveryFee, deliveryFeeIncluded, note } = await req.json();
 
     if (!orderId || !status) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -33,6 +33,7 @@ export async function POST(req: Request) {
     if (cashCollected !== undefined) updateData.cash_collected = parseInt(cashCollected);
     if (deliveryFee !== undefined) updateData.cash_from_customer = parseInt(deliveryFee);
     if (deliveryFeeIncluded !== undefined) updateData.is_included_in_total = deliveryFeeIncluded;
+    if (note !== undefined) updateData.note = note;
 
     // Assigner le closer ou livreur
     if (status === 'Confirmé' && userId) updateData.closer_id = userId;
@@ -47,13 +48,14 @@ export async function POST(req: Request) {
 
       // Créditer le closer de 500
       if (userId) {
-        const { error: rpcError } = await supabase.rpc('increment_earnings', { user_id: userId, amount: 500 });
-        if (rpcError) {
-          // Fallback : update direct
-          const { data: user } = await supabase.from('User').select('earnings').eq('id', userId).single();
-          if (user) {
-            await supabase.from('User').update({ earnings: (user.earnings || 0) + 500 }).eq('id', userId);
-          }
+        // Increment direct via RPC ou update manuel
+        const { data: user, error: userError } = await supabase.from('User').select('earnings').eq('id', userId).single();
+        
+        if (userError && userError.code === 'PGRST116') {
+          // L'utilisateur n'existe pas dans la table User, on le crée
+          await supabase.from('User').insert({ id: userId, earnings: 500, name: 'Closer' });
+        } else if (user) {
+          await supabase.from('User').update({ earnings: (user.earnings || 0) + 500 }).eq('id', userId);
         }
       }
 
@@ -75,16 +77,20 @@ export async function POST(req: Request) {
       // Créditer le closer du bonus (500 si déjà confirmé, 1000 sinon)
       const closerId = order.closer_id;
       if (closerId && closerBonus > 0) {
-        const { data: closerUser } = await supabase.from('User').select('earnings').eq('id', closerId).single();
-        if (closerUser) {
+        const { data: closerUser, error: closerError } = await supabase.from('User').select('earnings').eq('id', closerId).single();
+        if (closerError && closerError.code === 'PGRST116') {
+           await supabase.from('User').insert({ id: closerId, earnings: closerBonus, name: 'Closer' });
+        } else if (closerUser) {
           await supabase.from('User').update({ earnings: (closerUser.earnings || 0) + closerBonus }).eq('id', closerId);
         }
       }
 
       // Créditer le livreur (1500 par livraison)
       if (userId) {
-        const { data: livreurUser } = await supabase.from('User').select('earnings').eq('id', userId).single();
-        if (livreurUser) {
+        const { data: livreurUser, error: livreurError } = await supabase.from('User').select('earnings').eq('id', userId).single();
+        if (livreurError && livreurError.code === 'PGRST116') {
+           await supabase.from('User').insert({ id: userId, earnings: 1500, name: 'Livreur' });
+        } else if (livreurUser) {
           await supabase.from('User').update({ earnings: (livreurUser.earnings || 0) + 1500 }).eq('id', userId);
         }
       }

@@ -30,8 +30,12 @@ export default function InterfaceLivreurPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       setUserId(user.id);
-      const { data: userData } = await supabase.from('User').select('earnings').eq('id', user.id).single();
-      if (userData) setMyEarnings(userData.earnings || 0);
+      const { data: userData, error: userError } = await supabase.from('User').select('earnings').eq('id', user.id).single();
+      if (userError && userError.code === 'PGRST116') {
+        setMyEarnings(0);
+      } else if (userData) {
+        setMyEarnings(userData.earnings || 0);
+      }
     }
   }
 
