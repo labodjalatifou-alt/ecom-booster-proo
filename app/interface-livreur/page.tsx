@@ -179,7 +179,7 @@ export default function InterfaceLivreurPage() {
 
   const cleanCity = (city: string) => city?.split(',').map(s => s.trim()).filter((v, i, a) => a.indexOf(v) === i).join(', ') || '-';
   const handleCall = (phone: string) => { window.location.href = `tel:${phone}`; };
-  const handleWhatsApp = (phone: string) => { window.open(`https://wa.me/${phone.replace(/\D/g, '')}`, '_blank'); };
+  const handleWhatsApp = (phone: any) => { window.open(`https://wa.me/${String(phone || '').replace(/\D/g, '')}`, '_blank'); };
 
   const tabs: { id: Tab; label: string; color: string }[] = [
     { id: 'pending', label: 'À Livrer', color: 'text-blue-600' },

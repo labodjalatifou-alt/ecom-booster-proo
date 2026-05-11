@@ -147,7 +147,7 @@ export default function InterfaceCloserPage() {
   });
 
   const handleCall = (phone: string) => { window.location.href = `tel:${phone}`; };
-  const handleWhatsApp = (phone: string) => { window.open(`https://wa.me/${phone.replace(/\D/g, '')}`, '_blank'); };
+  const handleWhatsApp = (phone: any) => { window.open(`https://wa.me/${String(phone || '').replace(/\D/g, '')}`, '_blank'); };
 
   const periods: { id: Period; label: string }[] = [
     { id: 'TODAY', label: "Aujourd'hui" },
