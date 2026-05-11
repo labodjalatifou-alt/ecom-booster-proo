@@ -12,11 +12,12 @@ datasource db {
 model Store {
   id              String   @id @default(cuid())
   name            String   // e.g. "Boutique Abidjan"
+  country         String   @default("Côte d'Ivoire")
   currency        String   // "FCFA", "GNF", etc.
   shopifyUrl      String   // e.g. "mystore.myshopify.com"
   shopifyToken    String   // shpat_...
   createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  updatedAt       DateTime @default(now()) @updatedAt
   
   // Relations
   orders          Order[]
@@ -43,7 +44,7 @@ model User {
   earnings             Int @default(0)
   
   createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  updatedAt     DateTime @default(now()) @updatedAt
   
   // Relations
   stores        UserStore[]
@@ -118,7 +119,7 @@ model Product {
   imageUrl      String?  @map("image_url")
   currency      String   @default("FCFA")
   createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  updatedAt     DateTime @default(now()) @updatedAt
 
   @@map("products")
   @@schema("public")
@@ -135,7 +136,7 @@ model ProductAnalysis {
   facebook_ad_content  Json
   voiceover_script     String
   createdAt            DateTime @default(now()) @map("created_at")
-  updatedAt            DateTime @updatedAt @map("updated_at")
+  updatedAt            DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@map("analyses")
   @@schema("public")
