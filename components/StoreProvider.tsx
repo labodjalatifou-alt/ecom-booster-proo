@@ -15,6 +15,7 @@ export type StoreInfo = {
 
 type StoreContextType = {
   selectedStore: string | null;
+  storeId: string | null;
   setSelectedStore: (store: string) => void;
   currency: Currency;
   stores: StoreInfo[];
@@ -61,6 +62,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   return (
     <StoreContext.Provider value={{ 
       selectedStore, 
+      storeId: selectedStore,
       setSelectedStore, 
       currency: currency as any, 
       stores, 
