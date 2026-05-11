@@ -325,7 +325,7 @@ export default function ProductDetailPage() {
                         <p className="text-xs font-bold font-mono">{product.shopify_id || 'Non connecté'}</p>
                       </div>
                     </div>
-                    <h2 className="text-4xl font-black tracking-tighter leading-tight mb-2">{product.title}</h2>
+                    <h2 className="text-5xl font-black tracking-tighter leading-[1.1] mb-2 bg-gradient-to-br from-slate-900 to-slate-600 dark:from-white dark:to-slate-400 bg-clip-text text-transparent">{product.title}</h2>
                   </div>
 
                   <div className="grid grid-cols-2 gap-6">
@@ -367,21 +367,6 @@ export default function ProductDetailPage() {
               )}
             </div>
           </div>
-
-          {!isEditing && (
-            <div className="bg-emerald-50 dark:bg-emerald-900/10 border-2 border-emerald-100 dark:border-emerald-800 p-8 rounded-[2.5rem] flex items-center justify-between group">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-emerald-500 text-white rounded-2xl shadow-lg shadow-emerald-500/20 group-hover:rotate-12 transition-transform">
-                  <ExternalLink className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Voir sur Shopify</p>
-                  <p className="text-xs font-bold text-emerald-700/60">Gérez les variantes complexes dans l'admin Shopify.</p>
-                </div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-emerald-500 group-hover:translate-x-1 transition-transform" />
-            </div>
-          )}
         </div>
       </div>
     </div>
