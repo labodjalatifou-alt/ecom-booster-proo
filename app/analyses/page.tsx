@@ -70,61 +70,46 @@ RÈGLES DE GÉNÉRATION DE CONTENU (AUCUNE INTERPRÉTATION LIBRE) :
 3. AVATAR CLIENT DÉTAILLÉ :
    - Structure : { sexe, age, revenus, frustrations, peurs, désirs, objections, phrase_declenchante, comment_le_convaincre, declencheur_emotionnel }
 
-4. SCORE PRODUIT DÉTAILLÉ PAR CRITÈRE :
-   Chaque critère doit avoir un score sur 10 et une justification DÉTAILLÉE (minimum 2 phrases) expliquant POURQUOI cette note est donnée en se basant sur les caractéristiques du produit.
-   - "problemSolving" : { score: X, justification: "..." }
-   - "wowEffect" : { score: X, justification: "..." }
-   - "localAvailability" : { score: X, justification: "..." }
-   - "transportability" : { score: X, justification: "..." }
-   - "marketingPotential" : { score: X, justification: "..." }
-   - "viralPotential" : { score: X, justification: "..." }
-   Puis un "total" calculé comme moyenne pondérée sur 100, et une "explication" globale.
+4. SCORE PRODUIT STRATÉGIQUE (6 CRITÈRES) :
+   Chaque critère doit avoir un score sur 100, une justification d'une phrase et un conseil (tip) d'une phrase.
+   - "popularityInAfrica" : Popularité et demande spécifique en Afrique.
+   - "marketingEase" : Facilité à créer du contenu viral et à marketer.
+   - "competition" : Niveau de saturation du marché et différenciation.
+   - "pricing" : Adaptabilité du prix au pouvoir d'achat local et marges.
+   - "targetAudience" : Clarté et taille de l'audience cible.
+   - "marketTrend" : Dynamique actuelle de la niche (croissante/saturée).
+   Puis un "total" (moyenne des 6), une "explication" (phrase courte sous le score).
 
-5. SCRIPTS VIDÉO / VOIX OFF (Générer exactement 3 versions) :
-   Générer 3 scripts de 30-45 secondes avec ces angles : "Problème", "Transformation", "Urgence".
-   Chaque script doit avoir une structure décomposée en 5 phases.
+5. STRATÉGIE DE LANCEMENT (launch_strategy) :
+   - "should_launch" : Recommandation (Oui/Non/Prudence).
+   - "strategy_text" : Paragraphe expliquant le budget conseillé, la cible précise, l'avantage majeur et le risque identifié.
 
 Réponds UNIQUEMENT en JSON valide suivant cette structure exacte :
 {
   "score": {
-    "total": 85,
-    "explication": "...",
+    "total": 68,
+    "explication": "Niche prometteuse, éducation nécessaire",
     "criteria": {
-      "problemSolving": { "score": 8, "justification": "Expliquez ici précisément pourquoi le produit résout un problème..." },
-      "wowEffect": { "score": 7, "justification": "Détaillez l'aspect visuel ou fonctionnel qui crée l'effet wow..." },
-      "localAvailability": { "score": 9, "justification": "Analyse de la rareté du produit en magasin physique..." },
-      "transportability": { "score": 8, "justification": "Analyse du poids/volume et des risques de casse..." },
-      "marketingPotential": { "score": 9, "justification": "Pourquoi ce produit est facile à vendre avec de la pub..." },
-      "viralPotential": { "score": 7, "justification": "Capacité du produit à être partagé sur TikTok/Reels..." }
+      "popularityInAfrica": { "score": 62, "justification": "...", "tip": "..." },
+      "marketingEase": { "score": 78, "justification": "...", "tip": "..." },
+      "competition": { "score": 55, "justification": "...", "tip": "..." },
+      "pricing": { "score": 72, "justification": "...", "tip": "..." },
+      "targetAudience": { "score": 74, "justification": "...", "tip": "..." },
+      "marketTrend": { "score": 65, "justification": "...", "tip": "..." }
     }
+  },
+  "launch_strategy": {
+    "should_launch": "Oui",
+    "strategy_text": "Lancez avec 5$/jour pendant 3 jours en ciblant les femmes 20-38 ans urbaines à Lomé. Avantage : marge excellente... Risque : le mot 'glutathion' est inconnu..."
   },
   "price_recommendation": "X ${currency}",
   "price_min": "Y ${currency}",
   "price_max": "Z ${currency}",
-  "avatar": { "sexe": "...", "age": "...", "revenus": "...", "frustrations": "...", "peurs": "...", "désirs": "...", "objections": "...", "phrase_declenchante": "...", "comment_le_convaincre": "...", "declencheur_emotionnel": "..." },
-  "shopify_page": { "title": "...", "hook": "...", "features": ["...", "..."] },
-  "facebook_ads": [
-    { "angle": "Angle Problème", "hook": "Accroche choc...", "explanation": "Phrase d'explication persuasive...", "benefits": ["Bénéfice 1", "Bénéfice 2", "Bénéfice 3"], "cta": "Boutique du bouton..." },
-    { "angle": "Angle Bénéfice", "hook": "Accroche bénéfice...", "explanation": "Phrase d'explication...", "benefits": ["...", "...", "..."], "cta": "..." },
-    { "angle": "Angle Émotion", "hook": "Accroche émotion...", "explanation": "Phrase d'explication...", "benefits": ["...", "...", "..."], "cta": "..." }
-  ],
-  "video_scripts": [
-    { 
-      "angle": "Problème", 
-      "text": "Script complet 1...", 
-      "word_count": 120, 
-      "structure": { 
-        "presentation_probleme": "...", 
-        "agitation_emotionnelle": "...", 
-        "presentation_solution": "...", 
-        "preuve_temoignage": "...", 
-        "call_to_action": "..." 
-      } 
-    },
-    { "angle": "Transformation", "text": "Script complet 2...", "word_count": 110, "structure": { "presentation_probleme": "...", "agitation_emotionnelle": "...", "presentation_solution": "...", "preuve_temoignage": "...", "call_to_action": "..." } },
-    { "angle": "Urgence", "text": "Script complet 3...", "word_count": 130, "structure": { "presentation_probleme": "...", "agitation_emotionnelle": "...", "presentation_solution": "...", "preuve_temoignage": "...", "call_to_action": "..." } }
-  ],
-  "voiceover_script": "Un script bonus unifié pour voix off rapide..."
+  "avatar": { ... },
+  "shopify_page": { ... },
+  "facebook_ads": [...],
+  "video_scripts": [...],
+  "voiceover_script": "..."
 }`;
 
       const res = await fetch('/api/ai-advisor', {
@@ -163,6 +148,7 @@ Réponds UNIQUEMENT en JSON valide suivant cette structure exacte :
         customer_avatar: result.avatar,
         shopify_page_content: result.shopify_page,
         facebook_ad_content: result.facebook_ads || result.facebook_ad,
+        launch_strategy: result.launch_strategy,
         voiceover_script: result.voiceover_script || (Array.isArray(result.video_scripts) ? result.video_scripts[0]?.text : '')
       }]).select();
 
