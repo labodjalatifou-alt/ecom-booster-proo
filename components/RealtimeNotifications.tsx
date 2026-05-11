@@ -23,12 +23,15 @@ export default function RealtimeNotifications() {
           table: 'orders'
         },
         (payload) => {
+          const newOrder = payload.new as any;
+          const oldOrder = payload.old as any;
+
           // --- FILTRE PAR BOUTIQUE ---
-          if (selectedStore && payload.new.store_id !== selectedStore) {
+          if (selectedStore && newOrder.store_id !== selectedStore) {
             return; 
           }
 
-          console.log('[Realtime] Order event:', payload.eventType, payload.new);
+          console.log('[Realtime] Order event:', payload.eventType, newOrder);
 
           // NOUVELLE COMMANDE (INSERT)
           if (payload.eventType === 'INSERT') {
@@ -51,9 +54,6 @@ export default function RealtimeNotifications() {
 
           // CHANGEMENT DE STATUT OU CASH (UPDATE)
           if (payload.eventType === 'UPDATE') {
-            const oldOrder = payload.old;
-            const newOrder = payload.new;
-
             // 1. Changement de Statut
             if (newOrder.status !== oldOrder.status) {
               if (newOrder.status === 'Confirmé') {
