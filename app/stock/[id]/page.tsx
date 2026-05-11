@@ -53,18 +53,22 @@ export default function ProductDetailPage() {
     try {
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select('*, store_id')
         .eq('id', id)
         .single();
         
       if (error) throw error;
-      
       setProduct(data);
+      
+      // On pré-remplit les champs d'édition depuis la DB
       setTitle(data.title || '');
       setDescription(data.description || '');
       setPrice(data.price || '0');
       setStock(data.stock || 0);
       setImageUrls(data.images || (data.image_url ? [data.image_url] : []));
+      
+      // On peut rafraîchir les données Shopify en arrière-plan
+      refreshFromShopify(data.store_id, data.shopify_id);
       
     } catch (err: any) {
       toast.error("Produit introuvable");
@@ -74,46 +78,51 @@ export default function ProductDetailPage() {
     }
   }
 
-  async function refreshFromShopify() {
-    setSaving(true);
+  async function refreshFromShopify(storeId?: string, shopifyId?: string) {
+    const sId = storeId || product?.store_id;
+    const pId = shopifyId || product?.shopify_id;
+    if (!sId || !pId) return;
+
     try {
-      const res = await fetch('/api/shopify/sync-single', {
+      const res = await fetch('/api/shopify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId: id }),
+        body: JSON.stringify({ action: 'get_product', productId: pId, storeId: sId }),
       });
-
       const data = await res.json();
-      if (data.error) throw new Error(data.error);
-
-      setProduct(data.product);
-      setTitle(data.product.title);
-      setDescription(data.product.description || '');
-      setPrice(data.product.price);
-      setStock(data.product.stock);
-      setImageUrls(data.product.images || []);
-      toast.success("Synchronisé avec Shopify !");
-      
-    } catch (err: any) {
-      toast.error("Échec de la synchronisation : " + err.message);
-    } finally {
-      setSaving(false);
+      if (data.product) {
+        const p = data.product;
+        setProduct(prev => ({ ...prev, ...p, description: p.body_html }));
+        setTitle(p.title);
+        setDescription(p.body_html || '');
+        setPrice(p.variants[0]?.price || '0');
+        setStock(p.variants[0]?.inventory_quantity || 0);
+        setImageUrls(p.images.map((img: any) => img.src));
+      }
+    } catch (err) {
+      console.warn("Sync failed", err);
     }
   }
 
   async function handleSave() {
     setSaving(true);
     try {
-      const res = await fetch('/api/shopify/update-product', {
-        method: 'PUT',
+      const res = await fetch('/api/shopify', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id,
-          title,
-          description,
-          price,
-          inventory: stock,
-          imageUrls: imageUrls.length > 0 ? imageUrls : undefined
+          action: 'update_product',
+          storeId: product.store_id,
+          productId: product.shopify_id,
+          updateData: {
+            title,
+            body_html: description,
+            variants: [{ 
+              id: product.variants?.[0]?.id, // On essaie de garder l'ID si possible
+              price,
+              inventory_quantity: stock
+            }]
+          }
         }),
       });
 
@@ -122,7 +131,8 @@ export default function ProductDetailPage() {
 
       toast.success("Produit mis à jour avec succès !");
       setIsEditing(false);
-      setProduct(data.product);
+      // Re-charger les données pour être à jour
+      fetchProduct();
       
     } catch (err: any) {
       toast.error(sanitizeError(err));

@@ -64,15 +64,38 @@ export default function StockPage() {
   }
 
   async function syncProducts() {
+    const { data: stores } = await supabase.from('Store').select('id').single();
+    if (!stores) {
+      toast.error("Aucune boutique connectée");
+      return;
+    }
+
     return toast.promise(
-      fetch('/api/sync-products').then(r => r.json()).then(data => {
+      fetch('/api/shopify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_products', storeId: stores.id }),
+      }).then(r => r.json()).then(async data => {
         if (data.error) throw new Error(data.error);
+        
+        const productsToUpsert = data.products.map((p: any) => ({
+          shopify_id: p.id.toString(),
+          store_id: stores.id,
+          title: p.title,
+          price: p.variants?.[0]?.price || '0',
+          status: p.status,
+          stock: p.variants?.[0]?.inventory_quantity || 0,
+          image_url: p.image?.src || null,
+          description: p.body_html || null,
+        }));
+
+        await supabase.from('products').upsert(productsToUpsert, { onConflict: 'shopify_id' });
         fetchStock();
         return data;
       }),
       {
         loading: 'Synchronisation des produits Shopify...',
-        success: (d) => `${d.count || 0} produits synchronisés !`,
+        success: (d) => `${d.products.length || 0} produits synchronisés !`,
         error: (e) => `Erreur: ${e.message || 'Synchronisation échouée'}`,
       }
     );
