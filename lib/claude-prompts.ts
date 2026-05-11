@@ -19,7 +19,7 @@ export async function genererPageShopify(
 
 Crée une fiche produit Shopify pour "${produit}" vendu à ${prix} ${currency} au marché ${pays}.
 
-RÈGLE N°1 — TITRES DE PARAGRAPHES : 3 à 5 mots MAXIMUM. Exemples corrects : "Résultats Visibles Dès J1", "Elles En Parlent Toutes", "Livraison Rapide Garantie". Exemples INTERDITS : "Pourquoi ce produit va transformer votre routine beauté quotidienne".
+RÈGLE N°1 — TITRES DE PARAGRAPHES : Une phrase courte et percutante. Exemples corrects : "Obtenez enfin des résultats visibles.", "Rejoignez des milliers de clientes satisfaites.", "Commandez avant la rupture de stock.".
 
 RÈGLE N°2 — TEXTE DE PARAGRAPHE : EXACTEMENT 3 phrases. Pas 2, pas 4. 3 phrases courtes et percutantes.
 

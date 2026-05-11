@@ -68,7 +68,7 @@ RÈGLES DE GÉNÉRATION DE CONTENU (AUCUNE INTERPRÉTATION LIBRE) :
 
 3. PAGE SHOPIFY (6 PARAGRAPHES NEUROMARKETING) :
    - EXACTEMENT 6 paragraphes.
-   - Chaque paragraphe : { "title": "3 à 5 mots MAX", "text": "EXACTEMENT 3 phrases courtes" }
+   - Chaque paragraphe : { "title": "Une phrase courte et percutante", "text": "EXACTEMENT 3 phrases courtes" }
    - Titre SEO principal, Titre bénéfice, Titre preuve sociale (3 titres séparés).
    - EXACTEMENT 5 bullet points (8 mots max par point).
 
