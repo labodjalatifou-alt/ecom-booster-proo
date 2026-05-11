@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { useStore } from '@/components/StoreProvider';
 import { sanitizeError } from '@/lib/utils';
 import ConfirmationModal from '@/components/ConfirmationModal';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 export default function StockPage() {
