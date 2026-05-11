@@ -91,6 +91,9 @@ RÈGLES DE GÉNÉRATION DE CONTENU (AUCUNE INTERPRÉTATION LIBRE) :
    Générer 3 publicités avec ces angles : "Angle Problème", "Angle Bénéfice", "Angle Émotion".
    Chaque publicité doit contenir : hook, explanation, benefits (array de 3), cta.
 
+7. PAGE SHOPIFY (GÉNÉRER EXACTEMENT 6 SECTIONS) :
+   Fournir un titre captivant, une accroche marketing, et EXACTEMENT 6 caractéristiques (features) uniques et persuasives.
+
 RÈGLE D'OR : NE RÉSUME RIEN. REMPLIS CHAQUE CHAMP AVEC DU TEXTE PERSUASIF ET LONG. LES CHAMPS VIDES SONT INTERDITS.
 
 Réponds UNIQUEMENT en JSON valide suivant cette structure exacte :
@@ -114,27 +117,16 @@ Réponds UNIQUEMENT en JSON valide suivant cette structure exacte :
   "price_min": "...",
   "price_max": "...",
   "avatar": { "sexe": "...", "age": "...", "revenus": "...", "frustrations": "...", "peurs": "...", "désirs": "...", "objections": "...", "phrase_declenchante": "...", "comment_le_convaincre": "...", "declencheur_emotionnel": "..." },
-  "shopify_page": { "title": "...", "hook": "...", "features": ["...", "...", "..."] },
+  "shopify_page": { "title": "...", "hook": "...", "features": ["...", "...", "...", "...", "...", "..."] },
   "facebook_ads": [
-    { "angle": "Angle Problème", "hook": "Accroche longue...", "explanation": "Explication détaillée...", "benefits": ["Bénéfice 1", "Bénéfice 2", "Bénéfice 3"], "cta": "..." },
+    { "angle": "Angle Problème", "hook": "...", "explanation": "...", "benefits": ["...", "...", "..."], "cta": "..." },
     { "angle": "Angle Bénéfice", "hook": "...", "explanation": "...", "benefits": ["...", "...", "..."], "cta": "..." },
     { "angle": "Angle Émotion", "hook": "...", "explanation": "...", "benefits": ["...", "...", "..."], "cta": "..." }
   ],
   "video_scripts": [
-    { 
-      "angle": "Problème", 
-      "text": "Script complet 1...", 
-      "word_count": 120, 
-      "structure": { 
-        "presentation_probleme": "...", 
-        "agitation_emotionnelle": "...", 
-        "presentation_solution": "...", 
-        "preuve_temoignage": "...", 
-        "call_to_action": "..." 
-      } 
-    },
-    { "angle": "Transformation", "text": "...", "word_count": 110, "structure": { "presentation_probleme": "...", "agitation_emotionnelle": "...", "presentation_solution": "...", "preuve_temoignage": "...", "call_to_action": "..." } },
-    { "angle": "Urgence", "text": "...", "word_count": 130, "structure": { "presentation_probleme": "...", "agitation_emotionnelle": "...", "presentation_solution": "...", "preuve_temoignage": "...", "call_to_action": "..." } }
+    { "angle": "Problème", "text": "...", "word_count": 140, "structure": { "presentation_probleme": "...", "agitation_emotionnelle": "...", "presentation_solution": "...", "preuve_temoignage": "...", "call_to_action": "..." } },
+    { "angle": "Transformation", "text": "...", "word_count": 140, "structure": { "presentation_probleme": "...", "agitation_emotionnelle": "...", "presentation_solution": "...", "preuve_temoignage": "...", "call_to_action": "..." } },
+    { "angle": "Urgence", "text": "...", "word_count": 140, "structure": { "presentation_probleme": "...", "agitation_emotionnelle": "...", "presentation_solution": "...", "preuve_temoignage": "...", "call_to_action": "..." } }
   ],
   "voiceover_script": "..."
 }
@@ -176,9 +168,9 @@ Réponds UNIQUEMENT en JSON valide suivant cette structure exacte :
         cost_price: costPrice,
         customer_avatar: result.avatar,
         shopify_page_content: result.shopify_page,
-        facebook_ad_content: result.facebook_ads || result.facebook_ad,
+        facebook_ad_content: result.facebook_ads,
         launch_strategy: result.launch_strategy,
-        voiceover_script: result.voiceover_script || (Array.isArray(result.video_scripts) ? result.video_scripts[0]?.text : '')
+        voiceover_script: result.video_scripts || result.voiceover_script
       }]).select();
 
       if (saveError) throw saveError;
