@@ -1,6 +1,6 @@
 // app/api/images/search/route.ts
-// Recherche d'images qualité via Serper.dev
-// Stratégie : site: ciblés (Pinterest, Amazon, AliExpress, Shein, Etsy) pour des images e-com réelles
+// Recherche d'images stricte via Serper.dev
+// Objectif : Trouver le modèle exact + Photos en action (Lifestyle) + Filtrage impitoyable
 
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -10,20 +10,14 @@ interface ProductImage {
   url: string
   title: string
   source: string
-  type: 'pinterest' | 'amazon' | 'ecom' | 'lifestyle'
+  type: 'pinterest' | 'amazon' | 'aliexpress'
+  style: 'product' | 'lifestyle'
   thumbnail?: string
   width?: number
   height?: number
 }
 
-interface SearchQueries {
-  pinterest: string;
-  aesthetic: string;
-  ugc: string;
-  infographic: string;
-}
-
-// Traduit le nom produit en terme de recherche anglais générique via Claude Haiku
+// Traduit le nom produit en terme de recherche très précis via Claude
 async function translateToSearchTerm(produit: string): Promise<string> {
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -35,16 +29,10 @@ async function translateToSearchTerm(produit: string): Promise<string> {
       },
       body: JSON.stringify({
         model: 'claude-3-haiku-20240307',
-        max_tokens: 30,
+        max_tokens: 40,
         messages: [{
           role: 'user',
-          content: `Translate this product name to a short generic English search term (2-4 words max, no brand names). Reply with ONLY the search term, nothing else.
-
-Examples:
-"rasoir électrique homme" → electric shaver men
-"crème éclaircissante visage" → face brightening cream
-"gel exfoliant" → exfoliating gel
-"mètre laser" → laser tape measure
+          content: `Extract the EXACT product name and model from this text, and translate it to English for an e-commerce search. Keep brand names or specific model numbers if present. Do NOT add generic words. Reply ONLY with the search term.
 
 Product: "${produit}"`
         }]
@@ -53,135 +41,124 @@ Product: "${produit}"`
     const data = await res.json()
     const raw = (data.content?.[0]?.text || '').trim()
     const term = raw.replace(/^["'→\-\s]+|["'\s]+$/g, '').trim()
-    if (!term || term.toLowerCase() === 'undefined' || term.length < 2) {
-      return produit
-    }
-    console.log(`[images/search] "${produit}" → "${term}"`)
+    if (!term || term.toLowerCase() === 'undefined' || term.length < 2) return produit
+    console.log(`[images/search] Terme précis : "${produit}" → "${term}"`)
     return term
   } catch {
     return produit
   }
 }
 
-// Appel Serper avec gestion d'erreur
+// Appel Serper
 async function serperSearch(
   query: string,
-  num: number,
-  page = 1
+  num: number
 ): Promise<{ items: any[]; error?: string }> {
   try {
     const res = await fetch('https://google.serper.dev/images', {
       method: 'POST',
       headers: { 'X-API-KEY': SERPER_API_KEY!, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ q: query, num, gl: 'us', hl: 'en', page }),
+      body: JSON.stringify({ q: query, num, gl: 'us', hl: 'en' }),
     })
     const data = await res.json()
-    if (!res.ok) {
-      const msg = data.message || `HTTP ${res.status}`
-      if (res.status === 401 || res.status === 403) return { items: [], error: 'Clé Serper.dev invalide. Vérifiez SERPER_API_KEY.' }
-      if (res.status === 429) return { items: [], error: 'Quota Serper.dev épuisé.' }
-      return { items: [], error: `Serper ${res.status}: ${msg}` }
-    }
+    if (!res.ok) return { items: [], error: data.message || `HTTP ${res.status}` }
     return { items: data.images || [] }
   } catch (err: any) {
-    return { items: [], error: `Erreur réseau: ${err.message}` }
+    return { items: [], error: err.message }
   }
 }
 
-// Mappe un item Serper
-function mapItem(item: any, type: ProductImage['type']): ProductImage {
-  return {
-    url: item.imageUrl || '',
-    thumbnail: item.thumbnailUrl || item.imageUrl || '',
-    title: item.title || '',
-    source: item.source || item.domain || '',
-    type,
-    width: item.imageWidth,
-    height: item.imageHeight,
-  }
-}
+// Le Garde du Corps : Filtre ultra-strict
+function filterStrictImages(images: any[], sourceName: ProductImage['type'], style: ProductImage['style'], allowedDomains: string[]): ProductImage[] {
+  const filtered: ProductImage[] = []
+  
+  for (const img of images) {
+    if (!img.imageUrl) continue
+    
+    const url = img.imageUrl.toLowerCase()
+    const sourceDomain = (img.source || img.domain || '').toLowerCase()
 
-// Filtre : exclut uniquement les URLs vides, gif, svg, et sources inutiles
-function filterImages(images: ProductImage[]): ProductImage[] {
-  // Sources à exclure absolument
-  const blocked = [
-    'youtube.com', 'youtu.be',
-    'twitter.com', 'x.com',
-    'facebook.com', 'fb.com',
-    'tiktok.com',
-    'reddit.com',
-  ]
-  return images.filter(img => {
-    if (!img.url?.trim()) return false
-    const clean = img.url.toLowerCase().split('?')[0]
-    if (clean.endsWith('.gif') || clean.endsWith('.svg')) return false
-    // On ne filtre plus par taille pour ne pas rater de bonnes images Pinterest
-    const src = img.source.toLowerCase()
-    if (blocked.some(d => src.includes(d))) return false
-    return true
-  })
+    // 1. Bloquer les mauvaises extensions
+    if (url.includes('.gif') || url.includes('.svg') || url.includes('base64')) continue
+
+    // 2. Bloquer les images trop petites (pixelisées)
+    if (img.imageWidth && img.imageWidth < 400) continue
+    if (img.imageHeight && img.imageHeight < 400) continue
+
+    // 3. Forcer la provenance : L'image DOIT venir du domaine autorisé
+    const isFromAllowedDomain = allowedDomains.some(domain => sourceDomain.includes(domain))
+    if (!isFromAllowedDomain) continue
+
+    // 4. Bloquer explicitement les blogs/youtube au cas où ça passerait
+    const blocked = ['youtube', 'blog', 'article', 'news', 'wordpress', 'tiktok']
+    if (blocked.some(b => url.includes(b) || sourceDomain.includes(b))) continue
+
+    filtered.push({
+      url: img.imageUrl,
+      thumbnail: img.thumbnailUrl || img.imageUrl,
+      title: img.title || '',
+      source: sourceDomain,
+      type: sourceName,
+      style: style,
+      width: img.imageWidth,
+      height: img.imageHeight,
+    })
+  }
+
+  return filtered
 }
 
 export async function POST(req: NextRequest) {
   try {
     const { produit } = await req.json()
 
-    if (!produit?.trim()) {
-      return NextResponse.json({ error: 'Nom du produit requis' }, { status: 400 })
-    }
-    if (!SERPER_API_KEY || SERPER_API_KEY === 'COLLE_TA_CLE_ICI') {
-      return NextResponse.json({
-        error: 'Clé Serper manquante. Ajoutez SERPER_API_KEY dans .env.local',
-        hint: 'Compte gratuit (2500 req/mois) sur https://serper.dev',
-      }, { status: 500 })
-    }
+    if (!produit?.trim()) return NextResponse.json({ error: 'Nom du produit requis' }, { status: 400 })
+    if (!SERPER_API_KEY) return NextResponse.json({ error: 'SERPER_API_KEY manquante.' }, { status: 500 })
 
     const term = await translateToSearchTerm(produit.trim())
 
-    // ── Stratégie : 3 sources directes sans mots-clés restrictifs (3 crédits) ──
-    const [pinterestRes, amazonRes, aliRes] = await Promise.all([
-      // 1. Pinterest — pour l'esthétique et le lifestyle
-      serperSearch(`site:pinterest.com "${term}"`, 10, 1),
-
-      // 2. Amazon — pour les photos produit pro
-      serperSearch(`site:amazon.com "${term}"`, 6, 1),
-
-      // 3. AliExpress — pour les déclinaisons e-commerce
-      serperSearch(`site:aliexpress.com "${term}"`, 6, 1),
+    // On lance 6 recherches en parallèle : (Produit normal + Lifestyle) x 3 sources
+    const [
+      aliProduct, aliLifestyle,
+      amazonProduct, amazonLifestyle,
+      pinProduct, pinLifestyle
+    ] = await Promise.all([
+      serperSearch(`site:aliexpress.com "${term}"`, 15),
+      serperSearch(`site:aliexpress.com "${term}" (lifestyle OR model OR in use OR holding)`, 15),
+      
+      serperSearch(`site:amazon.com "${term}"`, 10),
+      serperSearch(`site:amazon.com "${term}" (lifestyle OR model OR in use)`, 10),
+      
+      serperSearch(`site:pinterest.com "${term}" aesthetic`, 15),
+      serperSearch(`site:pinterest.com "${term}" (model OR lifestyle OR using OR drinking OR hands)`, 15)
     ])
 
-    const allFailed = [pinterestRes, amazonRes, aliRes].every(r => r.error && !r.items.length)
-    if (allFailed) {
-      return NextResponse.json({
-        error: pinterestRes.error || 'Aucun résultat.',
-        images: [], searchTerm: term, total: 0,
-      }, { status: 502 })
-    }
-
-    // Assembler dans l'ordre de priorité qualité
+    // Filtrage très strict
     const allImages: ProductImage[] = [
-      ...filterImages(pinterestRes.items.map(i => mapItem(i, 'pinterest'))),
-      ...filterImages(amazonRes.items.map(i => mapItem(i, 'amazon'))),
-      ...filterImages(aliRes.items.map(i => mapItem(i, 'ecom'))),
+      ...filterStrictImages(aliProduct.items, 'aliexpress', 'product', ['aliexpress.com', 'alicdn']),
+      ...filterStrictImages(aliLifestyle.items, 'aliexpress', 'lifestyle', ['aliexpress.com', 'alicdn']),
+      
+      ...filterStrictImages(amazonProduct.items, 'amazon', 'product', ['amazon.com', 'ssl-images-amazon']),
+      ...filterStrictImages(amazonLifestyle.items, 'amazon', 'lifestyle', ['amazon.com', 'ssl-images-amazon']),
+      
+      ...filterStrictImages(pinProduct.items, 'pinterest', 'product', ['pinterest.com', 'pinimg.com']),
+      ...filterStrictImages(pinLifestyle.items, 'pinterest', 'lifestyle', ['pinterest.com', 'pinimg.com'])
     ]
 
     // Dédupliquer par URL
     const seen = new Set<string>()
     const unique = allImages.filter(img => {
-      if (!img.url || seen.has(img.url)) return false
+      if (seen.has(img.url)) return false
       seen.add(img.url)
       return true
     })
 
-    console.log(`[images/search] ✅ ${unique.length} images`)
-
-    const warning = [pinterestRes, amazonRes, aliRes].find(r => r.error)?.error
+    console.log(`[images/search] ✅ ${unique.length} images ultra-filtrées trouvées`)
 
     return NextResponse.json({
-      images: unique.slice(0, 15), // Max 15 images
+      images: unique.slice(0, 20), // Max 20 images
       searchTerm: term,
-      total: unique.length,
-      ...(warning ? { warning } : {}),
+      total: unique.length
     })
 
   } catch (err: any) {
