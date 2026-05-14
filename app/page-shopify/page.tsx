@@ -159,6 +159,8 @@ export default function PageShopifyPage() {
           isCreating={isCreating}
           currency={currency}
           initialPrice={latestProduct.price_recommendation?.match(/\d+/)?.[0]}
+          produit={latestProduct.product_name || ''}
+          pays={latestProduct.pays || 'Sénégal'}
         />
       ) : (
         <div className="bg-white dark:bg-slate-900 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[3rem] p-20 text-center">

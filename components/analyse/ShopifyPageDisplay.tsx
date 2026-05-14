@@ -1,25 +1,40 @@
 import React, { useState } from 'react';
-import { ShopifyPageParsed, shopifyPageToHtml } from '@/lib/claude-prompts';
-import { Check, Copy, Eye, Send, Store, DollarSign, Database, CheckCircle2 } from 'lucide-react';
+import { ShopifyPageParsed } from '@/lib/claude-prompts';
+import { Check, Copy, Eye, Send, DollarSign, Database, CheckCircle2, ChevronDown, ChevronUp, Image as ImageIcon, Layers } from 'lucide-react';
+import ShopifyImagePicker, { ImagePickerState } from './ShopifyImagePicker';
 
 interface Props {
   parsed: ShopifyPageParsed;
   selectedTitle: number;
   onSelectTitle: (i: number) => void;
-  onCreateProduct: (data: { title: string, price: string, stock: string, description: string }) => void;
+  onCreateProduct: (data: { title: string; price: string; stock: string; description: string }) => void;
   hasShopify: boolean;
   isCreating?: boolean;
   currency: string;
   initialPrice?: string;
+  produit?: string;
+  pays?: string;
 }
 
-export function ShopifyPageDisplay({ parsed, selectedTitle, onSelectTitle, onCreateProduct, hasShopify, isCreating, currency, initialPrice }: Props) {
+export function ShopifyPageDisplay({
+  parsed, selectedTitle, onSelectTitle, onCreateProduct,
+  hasShopify, isCreating, currency, initialPrice,
+  produit = '', pays = 'Sénégal',
+}: Props) {
   const [selectedParagraphs, setSelectedParagraphs] = useState<number[]>([0, 1, 2, 3, 4, 5]);
   const [price, setPrice] = useState(initialPrice || '25000');
   const [stock, setStock] = useState('100');
+  const [showImagePicker, setShowImagePicker] = useState(false);
+  const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
+
+  // État images synchronisé depuis ShopifyImagePicker → pour Live Preview
+  const [pickerState, setPickerState] = useState<ImagePickerState>({
+    mediaSelected: [],
+    paraImages: {},
+  });
 
   const toggleParagraph = (idx: number) => {
-    setSelectedParagraphs(prev => 
+    setSelectedParagraphs(prev =>
       prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]
     );
   };
@@ -29,69 +44,70 @@ export function ShopifyPageDisplay({ parsed, selectedTitle, onSelectTitle, onCre
     let html = '';
     selected.forEach(p => {
       html += `<h2>${p.titre}</h2>\n`;
-      const phrases = p.texte.split(/(?<=\.)\s+/).filter(s => s.trim());
-      phrases.forEach(phrase => {
+      p.texte.split(/(?<=\.)\s+/).filter(s => s.trim()).forEach(phrase => {
         html += `<p>${phrase.trim()}</p>\n`;
       });
-      html += `\n`;
+      html += '\n';
     });
-    
     if (parsed.bullets.length > 0) {
-      html += `<ul>\n`;
-      parsed.bullets.forEach(b => {
-        html += `  <li>${b}</li>\n`;
-      });
-      html += `</ul>\n`;
+      html += `<ul>\n${parsed.bullets.map(b => `  <li>${b}</li>`).join('\n')}\n</ul>\n`;
     }
     return html;
   };
 
   const handleCopy = () => {
-    const selected = parsed.paragraphes.filter((_, i) => selectedParagraphs.includes(i));
-    const text = selected.map(p => `${p.titre}\n\n${p.texte}`).join('\n\n');
+    const text = parsed.paragraphes
+      .filter((_, i) => selectedParagraphs.includes(i))
+      .map(p => `${p.titre}\n\n${p.texte}`)
+      .join('\n\n');
     navigator.clipboard.writeText(text);
   };
 
+  const selectedParas = parsed.paragraphes.filter((_, i) => selectedParagraphs.includes(i));
+  const { mediaSelected, paraImages } = pickerState;
+
+  // Image principale pour le preview (première image galerie)
+  const heroImage = mediaSelected[0] || null;
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-      {/* Left Column — Selection (8/12) */}
+
+      {/* ── Colonne gauche (7/12) ──────────────────────────── */}
       <div className="lg:col-span-7 space-y-8">
-        
-        {/* Titres */}
+
+        {/* 1. Titres */}
         <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-sm">
           <h3 className="text-[10px] font-black mb-6 uppercase tracking-widest text-slate-400">1. Sélectionnez votre Titre</h3>
           <div className="space-y-3">
             {parsed.titres.map((titre, i) => (
               <button
-                key={i}
-                onClick={() => onSelectTitle(i)}
+                key={i} onClick={() => onSelectTitle(i)}
                 className={`w-full text-left p-5 rounded-2xl border-2 transition-all flex items-center justify-between group ${
-                  selectedTitle === i 
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
+                  selectedTitle === i
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                     : 'border-slate-100 dark:border-slate-800 hover:border-slate-200'
                 }`}
               >
                 <span className={`text-sm font-black ${selectedTitle === i ? 'text-blue-700 dark:text-blue-400' : 'text-slate-600 dark:text-slate-300'}`}>
                   {titre}
                 </span>
-                {selectedTitle === i && <CheckCircle2 className="w-5 h-5 text-blue-500" />}
+                {selectedTitle === i && <CheckCircle2 className="w-5 h-5 text-blue-500 flex-shrink-0" />}
               </button>
             ))}
           </div>
         </section>
 
-        {/* Paragraphes */}
+        {/* 2. Paragraphes */}
         <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-sm">
-          <h3 className="text-[10px] font-black mb-6 uppercase tracking-widest text-slate-400">2. Description Neuromarketing (SÉLECTIONNEZ VOS PARAGRAPHES)</h3>
+          <h3 className="text-[10px] font-black mb-6 uppercase tracking-widest text-slate-400">2. Description Neuromarketing</h3>
           <div className="space-y-4">
             {parsed.paragraphes.map((p, i) => (
               <div
-                key={i}
-                onClick={() => toggleParagraph(i)}
+                key={i} onClick={() => toggleParagraph(i)}
                 className={`p-5 rounded-2xl border-2 cursor-pointer transition-all ${
                   selectedParagraphs.includes(i)
                     ? 'border-emerald-500 bg-emerald-50/30 dark:bg-emerald-900/10'
-                    : 'border-slate-100 dark:border-slate-800 opacity-60 grayscale'
+                    : 'border-slate-100 dark:border-slate-800 opacity-50 grayscale'
                 }`}
               >
                 <div className="flex items-center gap-4 mb-3">
@@ -100,7 +116,15 @@ export function ShopifyPageDisplay({ parsed, selectedTitle, onSelectTitle, onCre
                   }`}>
                     {selectedParagraphs.includes(i) && <Check className="w-4 h-4" />}
                   </div>
-                  <h4 className="text-sm font-black tracking-tight">{p.titre}</h4>
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <h4 className="text-sm font-black tracking-tight truncate">{p.titre}</h4>
+                    {/* Badge image assignée */}
+                    {paraImages[i] && (
+                      <span className="flex-shrink-0 flex items-center gap-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[9px] font-black px-2 py-0.5 rounded-full">
+                        <ImageIcon className="w-2.5 h-2.5" /> IMG
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed pl-10">
                   {p.texte.split(/(?<=\.)\s+/).filter(s => s.trim()).map((phrase, j) => (
@@ -112,114 +136,227 @@ export function ShopifyPageDisplay({ parsed, selectedTitle, onSelectTitle, onCre
           </div>
         </section>
 
-        {/* Prix & Stock */}
+        {/* 3. Configuration boutique */}
         <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-sm">
           <h3 className="text-[10px] font-black mb-6 uppercase tracking-widest text-slate-400">3. Configuration Boutique</h3>
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-3">
-              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block ml-2">Prix de Vente ({currency})</label>
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block ml-2">Prix ({currency})</label>
               <div className="relative">
                 <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input
-                  type="number"
-                  value={price}
-                  onChange={e => setPrice(e.target.value)}
-                  className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-black outline-none focus:ring-4 focus:ring-blue-500/10"
-                />
+                <input type="number" value={price} onChange={e => setPrice(e.target.value)}
+                  className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-black outline-none focus:ring-4 focus:ring-blue-500/10" />
               </div>
             </div>
             <div className="space-y-3">
               <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block ml-2">Stock Initial</label>
               <div className="relative">
                 <Database className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input
-                  type="number"
-                  value={stock}
-                  onChange={e => setStock(e.target.value)}
-                  className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-black outline-none focus:ring-4 focus:ring-blue-500/10"
-                />
+                <input type="number" value={stock} onChange={e => setStock(e.target.value)}
+                  className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-black outline-none focus:ring-4 focus:ring-blue-500/10" />
               </div>
             </div>
           </div>
         </section>
+
+        {/* 4. Images + Publication */}
+        <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-sm">
+          <button
+            onClick={() => setShowImagePicker(prev => !prev)}
+            className="w-full flex items-center justify-between group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-xl group-hover:rotate-12 transition-transform">
+                <ImageIcon className="w-5 h-5" />
+              </div>
+              <div className="text-left">
+                <h3 className="text-sm font-black text-slate-900 dark:text-white">4. Images Produit & Publication</h3>
+                <p className="text-[10px] text-slate-400 mt-0.5">
+                  {mediaSelected.length > 0
+                    ? `${mediaSelected.length} image(s) galerie · ${Object.keys(paraImages).length} inline`
+                    : 'Google Images · Fond blanc · Lifestyle · Action · Gros plan'
+                  }
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-slate-400">
+              <span className="text-[10px] font-bold uppercase tracking-wider">
+                {showImagePicker ? 'Masquer' : 'Ouvrir'}
+              </span>
+              {showImagePicker ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </div>
+          </button>
+
+          {showImagePicker && (
+            <ShopifyImagePicker
+              produit={produit}
+              pays={pays}
+              prix={parseInt(price) || 0}
+              currency={currency}
+              paragraphes={selectedParas}
+              bullets={parsed.bullets}
+              titre={parsed.titres[selectedTitle] || ''}
+              tags={produit}
+              quantite={parseInt(stock) || 10}
+              onPublished={url => setPublishedUrl(url)}
+              onImagesChange={state => setPickerState(state)}
+            />
+          )}
+
+          {publishedUrl && !showImagePicker && (
+            <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <a href={publishedUrl} target="_blank" rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black uppercase tracking-widest text-xs transition-all"
+              >
+                ✅ Voir le produit sur Shopify ↗
+              </a>
+            </div>
+          )}
+        </section>
       </div>
 
-      {/* Right Column — Preview (4/12) */}
+      {/* ── Colonne droite — Live Preview (5/12) ──────────── */}
       <div className="lg:col-span-5">
-        <div className="sticky top-24 bg-slate-900 rounded-[3rem] p-8 text-white shadow-2xl overflow-hidden border border-white/5">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full -mr-16 -mt-16 blur-3xl" />
-          
-          <div className="flex items-center justify-between mb-8 relative z-10">
-            <h3 className="text-base font-black flex items-center gap-3">
+        <div className="sticky top-24 bg-slate-900 rounded-[3rem] text-white shadow-2xl overflow-hidden border border-white/5">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full -mr-16 -mt-16 blur-3xl pointer-events-none" />
+
+          {/* Header preview */}
+          <div className="flex items-center justify-between px-8 pt-8 pb-4 relative z-10">
+            <h3 className="text-base font-black flex items-center gap-2">
               <Eye className="w-5 h-5 text-blue-400" /> Aperçu Shopify
             </h3>
-            <span className="text-[10px] font-black text-white/30 uppercase tracking-widest bg-white/5 px-3 py-1 rounded-full">LIVE PREVIEW</span>
+            <span className="text-[10px] font-black text-white/30 uppercase tracking-widest bg-white/5 px-3 py-1 rounded-full">
+              LIVE PREVIEW
+            </span>
           </div>
 
-          <div className="space-y-6 mb-10 max-h-[500px] overflow-y-auto pr-4 scrollbar-hide relative z-10">
-            {/* Title Preview */}
-            <div className="pb-6 border-b border-white/10">
-              <span className="text-[9px] font-black text-white/30 uppercase block mb-2">Titre du produit</span>
-              <h2 className="text-xl font-black text-blue-400 leading-tight">
-                {parsed.titres[selectedTitle]}
-              </h2>
-            </div>
+          <div className="space-y-0 max-h-[600px] overflow-y-auto scrollbar-hide relative z-10">
 
-            {/* Price Preview */}
-            <div className="flex items-center justify-between py-4 border-b border-white/10">
-              <div>
-                <span className="text-[9px] font-black text-white/30 uppercase block mb-1">Prix de vente</span>
-                <p className="text-2xl font-black text-white">{new Intl.NumberFormat().format(parseInt(price || '0'))} {currency}</p>
-              </div>
-              <div className="text-right">
-                <span className="text-[9px] font-black text-white/30 uppercase block mb-1">Stock</span>
-                <p className="text-sm font-bold text-emerald-400">{stock} unités</p>
-              </div>
-            </div>
-
-            {/* Description Preview */}
-            <div className="space-y-6">
-              <span className="text-[9px] font-black text-white/30 uppercase block mb-2">{selectedParagraphs.length} section(s) sélectionnée(s)</span>
-              {parsed.paragraphes.filter((_, i) => selectedParagraphs.includes(i)).map((p, i) => (
-                <div key={i} className="space-y-2">
-                  <h4 className="text-xs font-black uppercase text-blue-400 tracking-wider">{p.titre}</h4>
-                  <div className="text-xs text-white/60 leading-relaxed font-medium">
-                    {p.texte}
+            {/* Image hero principale */}
+            {heroImage ? (
+              <div className="px-8 pb-5">
+                <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-white/5">
+                  <img
+                    src={heroImage}
+                    alt="Image principale produit"
+                    className="w-full aspect-square object-cover"
+                    onError={e => (e.target as HTMLImageElement).style.display = 'none'}
+                  />
+                  <div className="absolute top-3 left-3 bg-black/60 text-white text-[10px] font-black px-2.5 py-1 rounded-full backdrop-blur-sm">
+                    Photo 1/{mediaSelected.length}
                   </div>
                 </div>
-              ))}
-
-              {/* Bullets Preview */}
-              {parsed.bullets.length > 0 && (
-                <div className="pt-4 border-t border-white/10">
-                  <ul className="space-y-2">
-                    {parsed.bullets.map((b, i) => (
-                      <li key={i} className="flex items-start gap-2 text-[10px] text-white/50">
-                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1 shrink-0" />
-                        {b}
-                      </li>
+                {/* Bande miniatures */}
+                {mediaSelected.length > 1 && (
+                  <div className="flex gap-2.5 mt-3 overflow-x-auto pb-2 scrollbar-hide">
+                    {mediaSelected.slice(1).map((url, i) => (
+                      <div key={i} className="relative flex-shrink-0">
+                        <img src={url} alt=""
+                          className="w-20 h-20 object-cover rounded-xl border-2 border-white/10 hover:border-blue-400 transition-colors"
+                          onError={e => (e.target as HTMLImageElement).style.display = 'none'}
+                        />
+                        <span className="absolute bottom-1 right-1 bg-black/70 text-white text-[9px] font-black px-1.5 py-0.5 rounded backdrop-blur-sm">
+                          {i + 2}
+                        </span>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="mx-8 mb-5 h-40 rounded-2xl border-2 border-dashed border-white/10 flex flex-col items-center justify-center gap-2 bg-white/[0.02]">
+                <ImageIcon className="w-10 h-10 text-white/15" />
+                <p className="text-[10px] text-white/30 font-bold text-center px-4">
+                  Sélectionnez des images dans<br/>la section "4. Images Produit"
+                </p>
+              </div>
+            )}
+
+            <div className="px-8 pb-8 space-y-5">
+              {/* Titre */}
+              <div className="border-b border-white/10 pb-4">
+                <span className="text-[9px] font-black text-white/30 uppercase block mb-1">Titre</span>
+                <h2 className="text-lg font-black text-blue-400 leading-tight">
+                  {parsed.titres[selectedTitle]}
+                </h2>
+              </div>
+
+              {/* Prix + Stock */}
+              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                <div>
+                  <span className="text-[9px] font-black text-white/30 uppercase block mb-0.5">Prix</span>
+                  <p className="text-xl font-black">{new Intl.NumberFormat().format(parseInt(price || '0'))} {currency}</p>
                 </div>
-              )}
+                <div className="text-right">
+                  <span className="text-[9px] font-black text-white/30 uppercase block mb-0.5">Stock</span>
+                  <p className="text-sm font-bold text-emerald-400">{stock} unités</p>
+                </div>
+              </div>
+
+              {/* Description avec images inline */}
+              <div>
+                <span className="text-[9px] font-black text-white/30 uppercase block mb-3">
+                  {selectedParagraphs.length} section(s)
+                </span>
+                <div className="space-y-4">
+                  {parsed.paragraphes.filter((_, i) => selectedParagraphs.includes(i)).map((p, idx) => {
+                    // L'index dans selectedParas correspond à idx
+                    const paraIdx = selectedParagraphs[idx]
+                    const assignedImg = paraImages[paraIdx]
+                    return (
+                      <div key={idx} className="space-y-1.5">
+                        <h4 className="text-xs font-black uppercase text-blue-400 tracking-wider">{p.titre}</h4>
+                        <p className="text-[11px] text-white/60 leading-relaxed">{p.texte}</p>
+                        {/* Image inline assignée */}
+                        {assignedImg && (
+                          <div className="pt-2 pb-1">
+                            <img
+                              src={assignedImg}
+                              alt={p.titre}
+                              className="w-full aspect-square object-cover rounded-2xl border border-white/10 shadow-lg"
+                              onError={e => (e.target as HTMLImageElement).style.display = 'none'}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* Bullets */}
+                {parsed.bullets.length > 0 && (
+                  <div className="pt-4 border-t border-white/10 mt-4">
+                    <ul className="space-y-1.5">
+                      {parsed.bullets.map((b, i) => (
+                        <li key={i} className="flex items-start gap-2 text-[10px] text-white/50">
+                          <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1 shrink-0" />
+                          {b}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="space-y-3 relative z-10">
-            <button
-              onClick={handleCopy}
-              className="w-full py-4 bg-white/5 text-white/70 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-white/10 transition-all flex items-center justify-center gap-2"
+          {/* Actions */}
+          <div className="px-8 pb-8 space-y-3 relative z-10 border-t border-white/5 pt-4">
+            <button onClick={handleCopy}
+              className="w-full py-3.5 bg-white/5 text-white/70 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-white/10 transition-all flex items-center justify-center gap-2"
             >
-              <Copy className="w-4 h-4" /> Copier le contenu HTML
+              <Copy className="w-4 h-4" /> Copier HTML
             </button>
-            <button
-              disabled={isCreating || !hasShopify}
-              onClick={() => onCreateProduct({ title: parsed.titres[selectedTitle], price, stock, description: getPreviewHtml() })}
-              className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-blue-500/20 hover:bg-blue-700 hover:-translate-y-1 transition-all flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50"
-            >
-              {isCreating ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Send className="w-5 h-5" />}
-              {isCreating ? 'PUBLICATION...' : 'PUBLIER SUR SHOPIFY'}
-            </button>
+            {!showImagePicker && (
+              <button
+                disabled={isCreating || !hasShopify}
+                onClick={() => onCreateProduct({ title: parsed.titres[selectedTitle], price, stock, description: getPreviewHtml() })}
+                className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+              >
+                {isCreating ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Send className="w-4 h-4" />}
+                {isCreating ? 'Publication...' : 'Publier sans images'}
+              </button>
+            )}
             {!hasShopify && (
               <p className="text-[9px] text-center text-white/30 font-bold uppercase tracking-wider">Connectez une boutique pour publier</p>
             )}
