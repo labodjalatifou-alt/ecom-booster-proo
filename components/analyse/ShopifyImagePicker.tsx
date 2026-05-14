@@ -285,7 +285,7 @@ export default function ShopifyImagePicker({
                     <img
                       src={url}
                       alt=""
-                      className="w-20 h-20 object-cover rounded-xl border-2 border-blue-300"
+                      className="w-20 h-20 object-contain bg-white dark:bg-slate-800 rounded-xl border-2 border-blue-300"
                       onError={e => (e.target as HTMLImageElement).style.display = 'none'}
                     />
                     <span className="absolute top-0.5 left-0.5 w-4 h-4 bg-blue-600 text-white text-[9px] font-black rounded-full flex items-center justify-center">
@@ -335,7 +335,7 @@ export default function ShopifyImagePicker({
                         <img
                           src={paraImages[i]}
                           alt={p.titre}
-                          className="w-14 h-14 object-cover rounded-xl border-2 border-blue-300"
+                          className="w-14 h-14 object-contain bg-white dark:bg-slate-800 rounded-xl border-2 border-blue-300"
                           onError={e => (e.target as HTMLImageElement).style.display = 'none'}
                         />
                         <button
@@ -434,7 +434,7 @@ function ImageCard({ img, isMediaSelected, isAssigning, onClick }: ImageCardProp
       <img
         src={img.thumbnail || img.url}
         alt={img.title}
-        className={`w-full aspect-square object-cover transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0 absolute inset-0'}`}
+        className={`w-full aspect-square object-contain bg-white dark:bg-slate-800 transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0 absolute inset-0'}`}
         onLoad={() => setLoaded(true)}
         onError={() => setError(true)}
       />
