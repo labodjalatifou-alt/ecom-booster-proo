@@ -288,7 +288,7 @@ export default function DateRangePicker({ value, onChange, align = 'right' }: Pr
         <div
           className={`absolute top-full mt-2 z-[200] bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-3xl shadow-2xl overflow-y-auto max-h-[80vh] sm:max-h-none animate-in fade-in zoom-in-95 duration-200 ${
             align === 'right' ? 'right-0' : 'left-0'
-          } ${showCustom ? 'w-[calc(100vw-2rem)] sm:w-[580px]' : 'w-56'}`}
+          } ${showCustom ? 'w-[calc(100vw-2rem)] sm:w-[580px]' : 'w-[calc(100vw-2rem)] sm:w-56'} max-w-[95vw] -translate-x-2 sm:translate-x-0`}
         >
           {!showCustom ? (
             /* Preset list */
@@ -360,15 +360,17 @@ export default function DateRangePicker({ value, onChange, align = 'right' }: Pr
                   onDayClick={handleDayClick}
                   onDayHover={setHoveredDay}
                 />
-                <MiniCalendar
-                  viewMonth={viewMonth2}
-                  onChangeMonth={setViewMonth2}
-                  rangeStart={pickStart}
-                  rangeEnd={pickEnd}
-                  hovered={hoveredDay}
-                  onDayClick={handleDayClick}
-                  onDayHover={setHoveredDay}
-                />
+                <div className="hidden sm:block">
+                  <MiniCalendar
+                    viewMonth={viewMonth2}
+                    onChangeMonth={setViewMonth2}
+                    rangeStart={pickStart}
+                    rangeEnd={pickEnd}
+                    hovered={hoveredDay}
+                    onDayClick={handleDayClick}
+                    onDayHover={setHoveredDay}
+                  />
+                </div>
               </div>
 
               {/* Apply button */}
