@@ -45,8 +45,13 @@ export default function InterfaceLivreurPage() {
       query = query.in('store_id', stores.map(s => s.id));
     }
 
-    if (dateRange.from) query = query.gte('created_at', dateRange.from);
-    if (dateRange.to) query = query.lte('created_at', dateRange.to);
+    if (dateRange.from && dateRange.to) {
+      query = query.or(`status.in.(Confirmé,Programmé),and(created_at.gte.${new Date(dateRange.from).toISOString()},created_at.lte.${new Date(dateRange.to).toISOString()})`);
+    } else if (dateRange.from) {
+      query = query.or(`status.in.(Confirmé,Programmé),created_at.gte.${new Date(dateRange.from).toISOString()}`);
+    } else if (dateRange.to) {
+      query = query.or(`status.in.(Confirmé,Programmé),created_at.lte.${new Date(dateRange.to).toISOString()}`);
+    }
 
     const { data, error } = await query;
 
@@ -82,10 +87,10 @@ export default function InterfaceLivreurPage() {
 
   const filteredOrders = orders.filter(o => {
     if (tab === 'pending') return o.status === 'Confirmé';
-    if (tab === 'delivered') return o.status === 'Livré';
-    if (tab === 'cancelled') return o.status === 'Annulé';
+    if (tab === 'delivered') return o.status === 'Livré' && (!dateRange.from || new Date(o.created_at) >= new Date(dateRange.from)) && (!dateRange.to || new Date(o.created_at) <= new Date(dateRange.to));
+    if (tab === 'cancelled') return o.status === 'Annulé' && (!dateRange.from || new Date(o.created_at) >= new Date(dateRange.from)) && (!dateRange.to || new Date(o.created_at) <= new Date(dateRange.to));
     if (tab === 'programmed') return o.status === 'Programmé';
-    return true;
+    return false;
   });
 
   const openCollectionModal = (orderId: any, price: any) => {
@@ -238,8 +243,8 @@ export default function InterfaceLivreurPage() {
                     {active && <span className="ml-2 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 text-[10px]">{
                       active.id === 'pending' ? orders.filter(o => o.status === 'Confirmé').length :
                       active.id === 'programmed' ? orders.filter(o => o.status === 'Programmé').length :
-                      active.id === 'delivered' ? orders.filter(o => o.status === 'Livré').length :
-                      orders.filter(o => o.status === 'Annulé').length
+                      active.id === 'delivered' ? orders.filter(o => o.status === 'Livré' && (!dateRange.from || new Date(o.created_at) >= new Date(dateRange.from)) && (!dateRange.to || new Date(o.created_at) <= new Date(dateRange.to))).length :
+                      orders.filter(o => o.status === 'Annulé' && (!dateRange.from || new Date(o.created_at) >= new Date(dateRange.from)) && (!dateRange.to || new Date(o.created_at) <= new Date(dateRange.to))).length
                     }</span>}
                   </>
                 );
@@ -255,8 +260,8 @@ export default function InterfaceLivreurPage() {
                 {tabs.map(t => {
                   const count = t.id === 'pending' ? orders.filter(o => o.status === 'Confirmé').length :
                                t.id === 'programmed' ? orders.filter(o => o.status === 'Programmé').length :
-                               t.id === 'delivered' ? orders.filter(o => o.status === 'Livré').length :
-                               orders.filter(o => o.status === 'Annulé').length;
+                               t.id === 'delivered' ? orders.filter(o => o.status === 'Livré' && (!dateRange.from || new Date(o.created_at) >= new Date(dateRange.from)) && (!dateRange.to || new Date(o.created_at) <= new Date(dateRange.to))).length :
+                               orders.filter(o => o.status === 'Annulé' && (!dateRange.from || new Date(o.created_at) >= new Date(dateRange.from)) && (!dateRange.to || new Date(o.created_at) <= new Date(dateRange.to))).length;
                   return (
                     <button
                       key={t.id}
@@ -293,8 +298,8 @@ export default function InterfaceLivreurPage() {
               <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[8px] ${tab === t.id ? 'bg-white text-slate-900' : 'bg-slate-100 text-slate-400'}`}>
                 {t.id === 'pending' ? orders.filter(o => o.status === 'Confirmé').length :
                 t.id === 'programmed' ? orders.filter(o => o.status === 'Programmé').length :
-                t.id === 'delivered' ? orders.filter(o => o.status === 'Livré').length :
-                orders.filter(o => o.status === 'Annulé').length}
+                t.id === 'delivered' ? orders.filter(o => o.status === 'Livré' && (!dateRange.from || new Date(o.created_at) >= new Date(dateRange.from)) && (!dateRange.to || new Date(o.created_at) <= new Date(dateRange.to))).length :
+                orders.filter(o => o.status === 'Annulé' && (!dateRange.from || new Date(o.created_at) >= new Date(dateRange.from)) && (!dateRange.to || new Date(o.created_at) <= new Date(dateRange.to))).length}
               </span>
             </button>
           ))}

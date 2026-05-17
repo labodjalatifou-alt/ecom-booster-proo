@@ -9,7 +9,7 @@ import { cleanCity, cleanCountry, sanitizeError } from '@/lib/utils';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import DateRangePicker, { DateRange, DEFAULT_RANGE } from '@/components/DateRangePicker';
 
-type Tab = 'pending' | 'confirmed' | 'cancelled' | 'programmed';
+type Tab = 'pending' | 'notes' | 'confirmed' | 'cancelled' | 'programmed';
 
 export default function InterfaceCloserPage() {
   const { currency, selectedStore, stores } = useStore();
@@ -45,8 +45,13 @@ export default function InterfaceCloserPage() {
     }
 
     // Filtrage par période
-    if (dateRange.from) query = query.gte('created_at', dateRange.from);
-    if (dateRange.to) query = query.lte('created_at', dateRange.to);
+    if (dateRange.from && dateRange.to) {
+      query = query.or(`status.in.(A Confirmer,Programmé),and(created_at.gte.${new Date(dateRange.from).toISOString()},created_at.lte.${new Date(dateRange.to).toISOString()})`);
+    } else if (dateRange.from) {
+      query = query.or(`status.in.(A Confirmer,Programmé),created_at.gte.${new Date(dateRange.from).toISOString()}`);
+    } else if (dateRange.to) {
+      query = query.or(`status.in.(A Confirmer,Programmé),created_at.lte.${new Date(dateRange.to).toISOString()}`);
+    }
 
     const { data, error } = await query;
 
@@ -115,9 +120,12 @@ export default function InterfaceCloserPage() {
   }
 
   const filteredOrders = orders.filter(o => {
-    if (tab === 'pending') return o.status === 'A Confirmer';
-    if (tab === 'confirmed') return o.status === 'Confirmé' || o.status === 'Livré';
-    if (tab === 'cancelled') return o.status === 'Annulé';
+    // Only pending without specific note (or note is empty)
+    if (tab === 'pending') return o.status === 'A Confirmer' && (!o.note || o.note.trim() === '');
+    // Notes tab: A Confirmer with a note
+    if (tab === 'notes') return o.status === 'A Confirmer' && o.note && o.note.trim() !== '';
+    if (tab === 'confirmed') return (o.status === 'Confirmé' || o.status === 'Livré') && (!dateRange.from || new Date(o.created_at) >= new Date(dateRange.from)) && (!dateRange.to || new Date(o.created_at) <= new Date(dateRange.to));
+    if (tab === 'cancelled') return o.status === 'Annulé' && (!dateRange.from || new Date(o.created_at) >= new Date(dateRange.from)) && (!dateRange.to || new Date(o.created_at) <= new Date(dateRange.to));
     if (tab === 'programmed') return o.status === 'Programmé';
     return false;
   });
@@ -180,7 +188,8 @@ export default function InterfaceCloserPage() {
             <div className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-slate-800 dark:text-slate-100">
               {(() => {
                 const active = [
-                  { id: 'pending', label: 'À Confirmer', icon: Clock, count: orders.filter(o => o.status === 'A Confirmer').length },
+                  { id: 'pending', label: 'À Confirmer', icon: Clock, count: orders.filter(o => o.status === 'A Confirmer' && (!o.note || o.note.trim() === '')).length },
+                  { id: 'notes', label: 'Suivi / Notes', icon: MessageSquare, count: orders.filter(o => o.status === 'A Confirmer' && o.note && o.note.trim() !== '').length },
                   { id: 'confirmed', label: 'Confirmées', icon: CheckCircle2, count: orders.filter(o => o.status === 'Confirmé' || o.status === 'Livré').length },
                   { id: 'programmed', label: 'Programmées', icon: Calendar, count: orders.filter(o => o.status === 'Programmé').length },
                   { id: 'cancelled', label: 'Annulées', icon: XCircle, count: orders.filter(o => o.status === 'Annulé').length },
@@ -203,10 +212,11 @@ export default function InterfaceCloserPage() {
               <div className="fixed inset-0 z-40" onClick={() => setIsTabDropdownOpen(false)} />
               <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
                 {[
-                  { id: 'pending', label: 'À Confirmer', icon: Clock, count: orders.filter(o => o.status === 'A Confirmer').length },
-                  { id: 'confirmed', label: 'Confirmées', icon: CheckCircle2, count: orders.filter(o => o.status === 'Confirmé' || o.status === 'Livré').length },
+                  { id: 'pending', label: 'À Confirmer', icon: Clock, count: orders.filter(o => o.status === 'A Confirmer' && (!o.note || o.note.trim() === '')).length },
+                  { id: 'notes', label: 'Suivi / Notes', icon: MessageSquare, count: orders.filter(o => o.status === 'A Confirmer' && o.note && o.note.trim() !== '').length },
+                  { id: 'confirmed', label: 'Confirmées', icon: CheckCircle2, count: orders.filter(o => (o.status === 'Confirmé' || o.status === 'Livré') && (!dateRange.from || new Date(o.created_at) >= new Date(dateRange.from)) && (!dateRange.to || new Date(o.created_at) <= new Date(dateRange.to))).length },
                   { id: 'programmed', label: 'Programmées', icon: Calendar, count: orders.filter(o => o.status === 'Programmé').length },
-                  { id: 'cancelled', label: 'Annulées', icon: XCircle, count: orders.filter(o => o.status === 'Annulé').length },
+                  { id: 'cancelled', label: 'Annulées', icon: XCircle, count: orders.filter(o => o.status === 'Annulé' && (!dateRange.from || new Date(o.created_at) >= new Date(dateRange.from)) && (!dateRange.to || new Date(o.created_at) <= new Date(dateRange.to))).length },
                 ].map(t => (
                   <button
                     key={t.id}
@@ -230,10 +240,11 @@ export default function InterfaceCloserPage() {
         {/* Desktop Tabs */}
         <div className="hidden md:flex gap-1 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-1 shadow-sm overflow-x-auto w-fit">
           {[
-            { id: 'pending', label: 'À Confirmer', icon: Clock, count: orders.filter(o => o.status === 'A Confirmer').length },
-            { id: 'confirmed', label: 'Confirmées', icon: CheckCircle2, count: orders.filter(o => o.status === 'Confirmé' || o.status === 'Livré').length },
+            { id: 'pending', label: 'À Confirmer', icon: Clock, count: orders.filter(o => o.status === 'A Confirmer' && (!o.note || o.note.trim() === '')).length },
+            { id: 'notes', label: 'Suivi / Notes', icon: MessageSquare, count: orders.filter(o => o.status === 'A Confirmer' && o.note && o.note.trim() !== '').length },
+            { id: 'confirmed', label: 'Confirmées', icon: CheckCircle2, count: orders.filter(o => (o.status === 'Confirmé' || o.status === 'Livré') && (!dateRange.from || new Date(o.created_at) >= new Date(dateRange.from)) && (!dateRange.to || new Date(o.created_at) <= new Date(dateRange.to))).length },
             { id: 'programmed', label: 'Programmées', icon: Calendar, count: orders.filter(o => o.status === 'Programmé').length },
-            { id: 'cancelled', label: 'Annulées', icon: XCircle, count: orders.filter(o => o.status === 'Annulé').length },
+            { id: 'cancelled', label: 'Annulées', icon: XCircle, count: orders.filter(o => o.status === 'Annulé' && (!dateRange.from || new Date(o.created_at) >= new Date(dateRange.from)) && (!dateRange.to || new Date(o.created_at) <= new Date(dateRange.to))).length },
           ].map(t => (
             <button
               key={t.id}
