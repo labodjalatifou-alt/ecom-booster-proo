@@ -48,8 +48,8 @@ export default function ScriptVoixOffPage() {
         parseInt(latestProduct.price_recommendation || latestProduct.cost_price || '0'),
         currency,
         country,
-        latestProduct.shopify_page_raw || latestProduct.product_name,
-        JSON.stringify(latestProduct.customer_avatar) || ''
+        latestProduct.marketing || '',
+        latestProduct.marketing || ''
       );
 
       const scripts = parseScriptsVoixOff(raw);

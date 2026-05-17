@@ -178,18 +178,24 @@ export async function genererScriptsVoixOff(
   RÈGLE ABSOLUE 2 : NE MENTIONNE JAMAIS de prénoms inventés (ex: Aminata, etc.). Reste général.
   
   STRUCTURE OBLIGATOIRE POUR TOUS LES SCRIPTS :
-  1. Problème (Hook) : Remuer le couteau dans la plaie en 2 ou 3 phrases maximum.
-  2. Solution : Présenter le produit.
-  3. Preuve / Fonctionnement : Dire comment le produit fonctionne, ses bénéfices ou donner une preuve sociale.
-  4. Appel à l'action EXACT : termine par une variante très proche de "n'hésitez pas à cliquer sur le bouton en bas de la vidéo, remplir le formulaire pour commander".
+  1. Poser le Problème (Hook) : Prends le temps de bien poser le problème ! Ne fais pas juste une petite phrase. Explique la situation, donne une stat, ou raconte l'inconfort (comme dans les exemples ci-dessous).
+  2. Solution : Présente le produit comme LA solution.
+  3. Preuve / Fonctionnement : Comment ça marche ? Quels sont les bénéfices directs ?
+  4. Appel à l'action EXACT : termine par une variante très proche de "Cliquez sur le bouton en bas de la vidéo, remplissez le formulaire et commandez le vôtre".
   
+  EXEMPLES DE STRUCTURE ET DE TON ATTENDUS (Inspire-toi de ce niveau de détail et de conviction) :
+  
+  Exemple 1 :
+  "Arrêtez d’abîmer vos yeux avec les colles pour faux cils. Les yeux sont fragiles. Ils méritent d’être protégés. Optez plutôt pour nos cils magnétiques, sans colle et sans risque pour vos yeux. En moins de 5 minutes, vous obtenez un regard intense et séduisant. Ils se fixent rapidement, s’enlèvent facilement, tiennent toute la journée et sont réutilisables plusieurs fois. Vous gagnez du temps chaque matin et vous faites des économies sur le long terme. Alors, qu’attendez-vous pour laisser la colle de côté ? Commandez vos cils magnétiques dès maintenant."
+
+  Exemple 2 :
+  "Tu en as marre de cette poitrine molle qui te complexe quand tu enlèves ton t-shirt ? Voici Alpha Chest, l’huile au venin d’abeille conçue pour aider à raffermir et tonifier la poitrine masculine. Sa formule active stimule la zone ciblée, aide à réduire l’excès de graisse et améliore progressivement la fermeté. Les premiers résultats sont visibles dès les premiers flacons utilisés régulièrement. Clique maintenant sur le bouton en bas de la vidéo, remplis le formulaire et commande le tien avant rupture de stock !"
+
   RÈGLE DURÉE ET LONGUEUR (TRES IMPORTANT) : 
-  - Script 1 : 80 à 95 mots (environ 35 secondes)
-  - Script 2 : 95 à 110 mots (environ 45 secondes)
-  - Script 3 : 100 à 120 mots (environ 50 secondes)
-  Chaque script doit faire MINIMUM 80 mots et MAXIMUM 120 mots.
-  
-  Compte les mots avant d'écrire chaque script.
+  - Script 1 : 80 à 95 mots (Prends le temps de poser le problème !)
+  - Script 2 : 95 à 110 mots (Insiste sur la douleur et le détail du fonctionnement)
+  - Script 3 : 100 à 120 mots (Preuve sociale, transformation)
+  Chaque script doit faire MINIMUM 80 mots et MAXIMUM 120 mots. Rédige des phrases riches pour atteindre ce quota sans paraître artificiel.
   
   Réponds UNIQUEMENT avec ce format exact :
   
@@ -205,21 +211,20 @@ export async function genererScriptsVoixOff(
   [Texte continu du script, respectant la structure en insistant sur la preuve sociale et la transformation avant/après, 100-120 mots]
   ⏱ mots | 50 secondes
   
-  Infos produit : ${description || produit}
+  Infos produit : ${description}
   Points forts : ${avantages}
   `
   
     return await callClaude(prompt, {
-      system: `Tu es un expert en scripts publicitaires pour l'Afrique francophone. 
+      system: \`Tu es un expert en scripts publicitaires pour l'Afrique francophone. 
   RÈGLES STRICTES :
-  1. Chaque script = texte continu lu au micro, SANS labels internes (pas de "Accroche:", "Corps:", "CTA:")
+  1. Chaque script = texte continu lu au micro, SANS labels internes.
   2. PAS DE PRÉNOMS INVENTÉS.
-  3. STRUCTURE OBLIGATOIRE : Problème (2-3 phrases) > Solution > Fonctionnement/Preuve > Appel à l'action.
+  3. PRENDS LE TEMPS DE POSER LE PROBLÈME. Ne fais pas juste une phrase.
   4. Script 1 = 80-95 mots
   5. Script 2 = 95-110 mots  
   6. Script 3 = 100-120 mots
-  7. Compte les mots avant d'écrire
-  8. Format avec ═══ SCRIPT N ═══ obligatoire`,
+  7. Compte les mots avant d'écrire et ASSURE-TOI d'atteindre le minimum de 80 mots en détaillant le problème et la solution.\`,
       max_tokens: 1500,
     })
 }
