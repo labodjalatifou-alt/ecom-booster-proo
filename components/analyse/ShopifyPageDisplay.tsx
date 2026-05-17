@@ -80,13 +80,50 @@ export function ShopifyPageDisplay({
     return html;
   };
 
-  const handleDownloadHtml = () => {
+  const handleDownloadCsv = () => {
     const htmlContent = getPreviewHtml();
-    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const cleanTitle = (editableTitres[selectedTitle] || produit || 'Produit').trim();
+    const handle = cleanTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    
+    // Échapper les guillemets pour le CSV
+    const escapeCsv = (str: string) => `"${String(str).replace(/"/g, '""')}"`;
+    
+    // Colonnes standards de Shopify
+    const headers = [
+      'Handle', 'Title', 'Body (HTML)', 'Vendor', 'Type', 'Tags', 'Published',
+      'Option1 Name', 'Option1 Value', 'Variant Inventory Tracker', 'Variant Inventory Qty',
+      'Variant Inventory Policy', 'Variant Fulfillment Service', 'Variant Price',
+      'Variant Requires Shipping', 'Variant Taxable', 'Status'
+    ];
+    
+    const row = [
+      escapeCsv(handle),
+      escapeCsv(cleanTitle),
+      escapeCsv(htmlContent),
+      escapeCsv('ECOM BOOSTER PRO'),
+      escapeCsv(''),
+      escapeCsv(produit || ''),
+      'TRUE',
+      escapeCsv('Title'),
+      escapeCsv('Default Title'),
+      escapeCsv('shopify'),
+      escapeCsv(stock || '100'),
+      escapeCsv('deny'),
+      escapeCsv('manual'),
+      escapeCsv(price || '0'),
+      'TRUE',
+      'TRUE',
+      escapeCsv('draft')
+    ];
+    
+    const csvContent = headers.join(',') + '\n' + row.join(',');
+    
+    // Ajout du BOM pour l'encodage UTF-8 dans Excel
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `page_produit_${produit.replace(/\s+/g, '_').toLowerCase()}.html`;
+    a.download = `shopify_${handle}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -412,10 +449,10 @@ export function ShopifyPageDisplay({
 
           {/* Actions */}
           <div className="px-8 pb-8 space-y-3 relative z-10 border-t border-white/5 pt-4">
-            <button onClick={handleDownloadHtml}
+            <button onClick={handleDownloadCsv}
               className="w-full py-3.5 bg-white/5 text-white/70 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-white/10 transition-all flex items-center justify-center gap-2"
             >
-              <Copy className="w-4 h-4" /> Télécharger HTML
+              <Database className="w-4 h-4" /> Télécharger CSV Shopify
             </button>
             {!showImagePicker && (
               <button
