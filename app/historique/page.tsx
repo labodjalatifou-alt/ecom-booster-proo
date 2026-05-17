@@ -53,6 +53,21 @@ export default function HistoriquePage() {
     }
   };
 
+  const handleDeleteSingle = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm("Voulez-vous vraiment supprimer cette analyse de l'historique ?")) return;
+
+    try {
+      const { error } = await supabase.from('analyses').delete().eq('id', id);
+      if (error) throw error;
+
+      setAnalyses(prev => prev.filter(a => a.id !== id));
+      toast.success("Analyse supprimée avec succès !");
+    } catch (err: any) {
+      toast.error(sanitizeError(err));
+    }
+  };
+
   const filtered = analyses.filter(a =>
     a.product_name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -136,7 +151,16 @@ export default function HistoriquePage() {
                 <div className="w-12 h-12 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center group-hover:rotate-6 transition-transform">
                   <Zap className={`w-6 h-6 ${item.score > 80 ? 'text-amber-500' : 'text-primary-500'}`} />
                 </div>
-                <span className="px-3 py-1 rounded-full text-[9px] font-black uppercase border bg-blue-50 text-blue-600 border-blue-100">Analysé</span>
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 rounded-full text-[9px] font-black uppercase border bg-blue-50 text-blue-600 border-blue-100">Analysé</span>
+                  <button 
+                    onClick={(e) => handleDeleteSingle(item.id, e)}
+                    className="p-1.5 text-rose-400 hover:text-white hover:bg-rose-500 rounded-lg transition-colors bg-rose-50 dark:bg-rose-500/10"
+                    title="Supprimer cette analyse"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
 
               <h3 className="text-lg font-black tracking-tight mb-2 line-clamp-1 relative z-10">{item.product_name}</h3>
