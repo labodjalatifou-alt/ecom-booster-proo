@@ -25,13 +25,14 @@ interface ShopifyImagePickerProps {
   titre: string
   tags?: string
   quantite?: number
+  status?: 'draft' | 'active'
   onPublished?: (productUrl: string) => void
   onImagesChange?: (state: ImagePickerState) => void
 }
 
 export default function ShopifyImagePicker({
   produit, prix = 0, currency = 'FCFA',
-  paragraphes, bullets = [], titre, tags, quantite = 10,
+  paragraphes, bullets = [], titre, tags, quantite = 10, status = 'draft',
   onPublished, onImagesChange,
 }: ShopifyImagePickerProps) {
 
@@ -136,7 +137,7 @@ export default function ShopifyImagePicker({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: titre, paragraphes, bullets, prix, currency,
-          tags: tags || produit, status: 'draft',
+          tags: tags || produit, status: status,
           mediaImages: mediaSelected, paragraphImages: paraImages, quantite,
         }),
       })
@@ -387,7 +388,7 @@ export default function ShopifyImagePicker({
           </button>
         )}
         <p className="text-[10px] text-slate-400 text-center mt-2 font-medium">
-          Produit créé en <strong>brouillon</strong> — activez dans Shopify après vérification.
+          Produit créé en statut : <strong>{status === 'active' ? 'ACTIF' : 'BROUILLON'}</strong>.
         </p>
       </div>
     </div>

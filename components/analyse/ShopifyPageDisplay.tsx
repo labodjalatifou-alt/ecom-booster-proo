@@ -24,6 +24,7 @@ export function ShopifyPageDisplay({
   const [selectedParagraphs, setSelectedParagraphs] = useState<number[]>([0, 1, 2, 3, 4, 5]);
   const [price, setPrice] = useState(initialPrice || '25000');
   const [stock, setStock] = useState('100');
+  const [publishStatus, setPublishStatus] = useState<'draft' | 'active'>('draft');
   const [showImagePicker, setShowImagePicker] = useState(false);
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
 
@@ -113,7 +114,7 @@ export function ShopifyPageDisplay({
       escapeCsv(price || '0'),
       'TRUE',
       'TRUE',
-      escapeCsv('draft')
+      escapeCsv(publishStatus)
     ];
     
     const csvContent = headers.join(',') + '\n' + row.join(',');
@@ -246,7 +247,7 @@ export function ShopifyPageDisplay({
         {/* 3. Configuration boutique */}
         <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-sm">
           <h3 className="text-[10px] font-black mb-6 uppercase tracking-widest text-slate-400">3. Configuration Boutique</h3>
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-3">
               <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block ml-2">Prix ({currency})</label>
               <div className="relative">
@@ -261,6 +262,19 @@ export function ShopifyPageDisplay({
                 <Database className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input type="number" value={stock} onChange={e => setStock(e.target.value)}
                   className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-black outline-none focus:ring-4 focus:ring-blue-500/10" />
+              </div>
+            </div>
+            <div className="space-y-3">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block ml-2">Statut Shopify</label>
+              <div className="flex bg-slate-50 dark:bg-slate-800 p-1.5 rounded-2xl h-[56px] items-center">
+                <button 
+                  onClick={() => setPublishStatus('draft')}
+                  className={`flex-1 h-full flex items-center justify-center text-xs font-black rounded-xl transition-all ${publishStatus === 'draft' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-400 hover:text-slate-600'}`}
+                >Brouillon</button>
+                <button 
+                  onClick={() => setPublishStatus('active')}
+                  className={`flex-1 h-full flex items-center justify-center text-xs font-black rounded-xl transition-all ${publishStatus === 'active' ? 'bg-emerald-500 shadow-sm text-white' : 'text-slate-400 hover:text-slate-600'}`}
+                >Actif</button>
               </div>
             </div>
           </div>
@@ -305,6 +319,7 @@ export function ShopifyPageDisplay({
               titre={editableTitres[selectedTitle] || ''}
               tags={produit}
               quantite={parseInt(stock) || 10}
+              status={publishStatus}
               onPublished={url => setPublishedUrl(url)}
               onImagesChange={state => setPickerState(state)}
             />
