@@ -10,7 +10,7 @@ import { LayoutDashboard } from 'lucide-react';
 
 export default function DashboardPage() {
   return (
-    <div className="max-w-7xl mx-auto pb-10 px-4 animate-in fade-in duration-500">
+    <div className="max-w-7xl mx-auto pb-10 px-2 md:px-4 text-slate-800 dark:text-slate-100 animate-in fade-in duration-500">
       <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <div className="flex items-center gap-2 mb-2">
