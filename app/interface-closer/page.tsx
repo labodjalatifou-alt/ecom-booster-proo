@@ -201,7 +201,7 @@ export default function InterfaceCloserPage() {
           <Calendar className="w-4 h-4" />
           <span className="text-[9px] font-black uppercase tracking-widest">Période</span>
         </div>
-        <div className="flex bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-1 shadow-sm">
+        <div className="flex flex-wrap bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-1 shadow-sm">
           {periods.map(p => (
             <button
               key={p.id}
@@ -219,7 +219,7 @@ export default function InterfaceCloserPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-1 shadow-sm mb-8 w-fit">
+      <div className="flex gap-1 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-1 shadow-sm mb-8 overflow-x-auto">
         {[
           { id: 'pending', label: 'À Confirmer', icon: Clock, count: orders.filter(o => o.status === 'A Confirmer').length },
           { id: 'confirmed', label: 'Confirmées', icon: CheckCircle2, count: orders.filter(o => o.status === 'Confirmé' || o.status === 'Livré').length },

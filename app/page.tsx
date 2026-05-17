@@ -19,7 +19,7 @@ export default function DashboardPage() {
             </div>
             <span className="text-[10px] font-black text-primary-600 uppercase tracking-[0.2em]">Vue d'ensemble</span>
           </div>
-          <h2 className="text-4xl font-black text-slate-800 dark:text-slate-100 tracking-tighter">Tableau de bord</h2>
+          <h2 className="text-3xl md:text-4xl font-black text-slate-800 dark:text-slate-100 tracking-tighter">Tableau de bord</h2>
           <p className="text-slate-400 text-sm mt-1 font-medium italic">Analysez la santé de vos boutiques en temps réel.</p>
         </div>
         

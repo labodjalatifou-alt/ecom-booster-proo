@@ -164,7 +164,7 @@ export default function PubliciteFacebookPage() {
 
                 {/* CTA */}
                 <div className="pt-4 border-t-2 border-dashed border-slate-100 dark:border-slate-800">
-                  <div className="flex items-center justify-between p-4 bg-indigo-50 dark:bg-indigo-900/10 rounded-2xl">
+                  <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-indigo-50 dark:bg-indigo-900/10 rounded-2xl">
                     <div className="flex items-center gap-3">
                       <Send className="w-5 h-5 text-indigo-600" />
                       <span className="text-[10px] font-black uppercase tracking-widest text-indigo-700">Call to Action</span>

@@ -111,7 +111,7 @@ export default function AvatarPage() {
 
       {/* Frustrations & Peurs */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div className="bg-rose-50 dark:bg-rose-900/10 border-2 border-rose-100 dark:border-rose-800 p-8 rounded-[2.5rem]">
+        <div className="bg-rose-50 dark:bg-rose-900/10 border-2 border-rose-100 dark:border-rose-800 p-5 md:p-8 rounded-[2.5rem]">
           <h3 className="text-lg font-black mb-5 flex items-center gap-3 text-rose-600">
             <ShieldAlert className="w-5 h-5" /> Frustrations
           </h3>
@@ -125,7 +125,7 @@ export default function AvatarPage() {
           </ul>
         </div>
 
-        <div className="bg-amber-50 dark:bg-amber-900/10 border-2 border-amber-100 dark:border-amber-800 p-8 rounded-[2.5rem]">
+        <div className="bg-amber-50 dark:bg-amber-900/10 border-2 border-amber-100 dark:border-amber-800 p-5 md:p-8 rounded-[2.5rem]">
           <h3 className="text-lg font-black mb-5 flex items-center gap-3 text-amber-600">
             <AlertTriangle className="w-5 h-5" /> Peurs
           </h3>
@@ -142,7 +142,7 @@ export default function AvatarPage() {
 
       {/* Désirs & Objections */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div className="bg-emerald-50 dark:bg-emerald-900/10 border-2 border-emerald-100 dark:border-emerald-800 p-8 rounded-[2.5rem]">
+        <div className="bg-emerald-50 dark:bg-emerald-900/10 border-2 border-emerald-100 dark:border-emerald-800 p-5 md:p-8 rounded-[2.5rem]">
           <h3 className="text-lg font-black mb-5 flex items-center gap-3 text-emerald-600">
             <Heart className="w-5 h-5" /> Désirs
           </h3>
@@ -156,7 +156,7 @@ export default function AvatarPage() {
           </ul>
         </div>
 
-        <div className="bg-slate-50 dark:bg-slate-800/50 border-2 border-slate-200 dark:border-slate-700 p-8 rounded-[2.5rem]">
+        <div className="bg-slate-50 dark:bg-slate-800/50 border-2 border-slate-200 dark:border-slate-700 p-5 md:p-8 rounded-[2.5rem]">
           <h3 className="text-lg font-black mb-5 flex items-center gap-3 text-slate-600">
             <MessageCircle className="w-5 h-5" /> Objections
           </h3>

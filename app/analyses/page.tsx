@@ -192,7 +192,7 @@ ${result.shopify_page?.bullets?.map((b: string) => `• ${b}`).join('\n')}
           <div className="inline-flex items-center gap-2 px-5 py-2 bg-emerald-500/10 text-emerald-500 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 border border-emerald-500/20">
             <CheckCircle2 className="w-4 h-4" /> Analyse Stratégique Prête
           </div>
-          <h2 className="text-5xl font-black tracking-tighter mb-2">{productName}</h2>
+          <h2 className="text-3xl md:text-5xl font-black tracking-tighter mb-2">{productName}</h2>
           <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.3em]">IA Engine Version 2.1</p>
         </div>
 
@@ -257,11 +257,11 @@ ${result.shopify_page?.bullets?.map((b: string) => `• ${b}`).join('\n')}
         <div className="p-5 bg-primary-600 text-white rounded-[2rem] mb-6 shadow-xl shadow-primary-500/20 rotate-3">
           <Sparkles className="w-8 h-8" />
         </div>
-        <h2 className="text-5xl font-black tracking-tighter mb-3">Intelligence Stratégique</h2>
+        <h2 className="text-3xl md:text-5xl font-black tracking-tighter mb-3">Intelligence Stratégique</h2>
         <p className="text-slate-400 text-sm font-bold uppercase tracking-[0.2em]">Transformez un produit en succès commercial</p>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[4rem] p-10 md:p-16 shadow-2xl relative overflow-hidden group">
+      <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[4rem] p-6 md:p-10 lg:p-16 shadow-2xl relative overflow-hidden group">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/5 rounded-full -mr-32 -mt-32 blur-3xl" />
         
         <form onSubmit={handleAnalyze} className="relative z-10 space-y-10">

@@ -38,3 +38,30 @@ body {
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
+
+/* ── Mobile Global Responsive ─────────────────────────── */
+/* Scale down big headings on small screens */
+@media (max-width: 640px) {
+  .text-4xl { font-size: 1.75rem !important; }
+  .text-5xl { font-size: 2rem !important; }
+  .text-6xl { font-size: 2.5rem !important; }
+
+  /* Give tables horizontal scroll context */
+  .overflow-x-auto { -webkit-overflow-scrolling: touch; }
+
+  /* Modal inner padding reduction on tiny screens */
+  .rounded-\[3rem\] { border-radius: 1.5rem !important; }
+  .rounded-\[2\.5rem\] { border-radius: 1.25rem !important; }
+  .rounded-\[4rem\] { border-radius: 1.75rem !important; }
+
+  /* Card padding reduction */
+  .p-10 { padding: 1.25rem !important; }
+  .p-8 { padding: 1rem !important; }
+  .p-9 { padding: 1rem !important; }
+
+  /* Touch target minimum */
+  button, a { min-height: 40px; }
+}
+
+/* Prevent full-width tables from stretching modal */
+table { min-width: max-content; }

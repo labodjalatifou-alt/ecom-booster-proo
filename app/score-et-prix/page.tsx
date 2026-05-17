@@ -158,7 +158,7 @@ export default function ScorePage() {
       )}
 
       {/* PRICING FOOTER */}
-      <div className="mt-12 pt-10 border-t border-slate-100 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-8">
+      <div className="mt-12 pt-10 border-t border-slate-100 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-left">
         <div className="flex items-center gap-5">
           <div className="p-4 bg-primary-600 text-white rounded-[2rem] shadow-xl shadow-primary-500/20">
              <TrendingUp className="w-6 h-6" />

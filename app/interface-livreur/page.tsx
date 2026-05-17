@@ -256,7 +256,7 @@ export default function InterfaceLivreurPage() {
           <Calendar className="w-4 h-4" />
           <span className="text-[9px] font-black uppercase tracking-widest">Période</span>
         </div>
-        <div className="flex bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-1 shadow-sm">
+        <div className="flex flex-wrap bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-1 shadow-sm">
           {periods.map(p => (
             <button
               key={p.id}
