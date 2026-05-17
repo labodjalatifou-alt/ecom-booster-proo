@@ -286,9 +286,9 @@ export default function DateRangePicker({ value, onChange, align = 'right' }: Pr
       {/* Dropdown */}
       {open && (
         <div
-          className={`absolute top-full mt-2 z-[200] bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 ${
+          className={`absolute top-full mt-2 z-[200] bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-3xl shadow-2xl overflow-y-auto max-h-[80vh] sm:max-h-none animate-in fade-in zoom-in-95 duration-200 ${
             align === 'right' ? 'right-0' : 'left-0'
-          } ${showCustom ? 'w-[580px] max-w-[95vw]' : 'w-56'}`}
+          } ${showCustom ? 'w-[calc(100vw-2rem)] sm:w-[580px]' : 'w-56'}`}
         >
           {!showCustom ? (
             /* Preset list */
@@ -350,7 +350,7 @@ export default function DateRangePicker({ value, onChange, align = 'right' }: Pr
               </p>
 
               {/* Dual calendar */}
-              <div className="grid grid-cols-2 gap-6 border-t border-slate-100 dark:border-slate-800 pt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 border-t border-slate-100 dark:border-slate-800 pt-4">
                 <MiniCalendar
                   viewMonth={viewMonth1}
                   onChangeMonth={setViewMonth1}

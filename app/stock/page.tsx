@@ -202,81 +202,142 @@ export default function StockPage() {
             </button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse table-fixed">
-              <thead>
-                <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b-2 border-slate-100 dark:border-slate-800">
-                  <th className="w-[40%] px-8 py-5 text-[10px] font-black uppercase text-slate-400 tracking-widest">Produit</th>
-                  <th className="w-[20%] px-8 py-5 text-[10px] font-black uppercase text-slate-400 tracking-widest text-center">Stock</th>
-                  <th className="w-[20%] px-8 py-5 text-[10px] font-black uppercase text-slate-400 tracking-widest">Prix</th>
-                  <th className="w-[20%] px-8 py-5 text-[10px] font-black uppercase text-slate-400 tracking-widest text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y-2 divide-slate-100 dark:divide-slate-800">
-                {stockItems.map((item) => (
-                  <tr 
-                    key={item.id} 
-                    className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all group cursor-pointer" 
-                    onClick={() => router.push(`/stock/${item.id}`)}
-                  >
-                    <td className="px-8 py-5 overflow-hidden">
-                      <div className="flex items-center gap-4">
-                        {item.image_url ? (
-                          <img src={item.image_url} alt="" className="w-12 h-12 rounded-xl object-cover border-2 border-slate-100 dark:border-slate-800" />
-                        ) : (
-                          <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                            <ImageIcon className="w-5 h-5 text-slate-300" />
-                          </div>
-                        )}
-                        <div>
-                          <div className="font-black text-sm truncate max-w-[250px]">{item.title}</div>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className={`w-1.5 h-1.5 rounded-full ${item.status === 'active' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{item.status === 'active' ? 'Actif' : 'Brouillon'}</span>
-                          </div>
-                        </div>
+          <>
+            {/* VUE MOBILE */}
+            <div className="md:hidden flex flex-col gap-4 p-4">
+              {stockItems.map((item) => (
+                <div 
+                  key={item.id} 
+                  className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col gap-4 cursor-pointer active:scale-[0.98] transition-all" 
+                  onClick={() => router.push(`/stock/${item.id}`)}
+                >
+                  <div className="flex gap-4">
+                    {item.image_url ? (
+                      <img src={item.image_url} alt="" className="w-16 h-16 rounded-xl object-cover border-2 border-slate-100 dark:border-slate-800 flex-shrink-0" />
+                    ) : (
+                      <div className="w-16 h-16 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
+                        <ImageIcon className="w-6 h-6 text-slate-300" />
                       </div>
-                    </td>
-                    <td className="px-8 py-5">
-                      <div className="flex flex-col items-center gap-1.5">
-                        <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden max-w-[100px]">
-                          <div
-                            className={`h-full ${(item.stock || 0) > 50 ? 'bg-emerald-500' : (item.stock || 0) > 10 ? 'bg-amber-500' : 'bg-red-500'}`}
-                            style={{ width: `${Math.min(item.stock || 0, 100)}%` }}
-                          />
-                        </div>
-                        <span className={`text-[10px] font-black uppercase ${!item.stock ? 'text-red-500' : 'text-slate-400'}`}>{item.stock || 0} unités</span>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="font-black text-sm text-slate-800 dark:text-slate-100 mb-1 leading-tight line-clamp-2">{item.title}</div>
+                      <div className="flex items-center gap-2">
+                        <span className={`w-1.5 h-1.5 rounded-full ${item.status === 'active' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{item.status === 'active' ? 'Actif' : 'Brouillon'}</span>
                       </div>
-                    </td>
-                    <td className="px-8 py-5 font-black text-sm">
-                      {new Intl.NumberFormat('fr-FR').format(parseInt(String(item.price || '0').replace(/\s/g, '')))} {item.currency || currency}
-                    </td>
-                    <td className="px-8 py-5 text-right relative" onClick={e => e.stopPropagation()}>
+                    </div>
+                  </div>
+                  <div className="pt-4 border-t border-slate-200 dark:border-slate-700 flex justify-between items-end">
+                    <div>
+                      <div className="text-[9px] font-black text-slate-400 uppercase mb-1">Stock & Prix</div>
+                      <div className="flex items-center gap-3">
+                        <span className={`text-xs font-black uppercase ${!item.stock ? 'text-red-500' : 'text-slate-600 dark:text-slate-300'}`}>{item.stock || 0} U</span>
+                        <span className="text-sm font-black text-emerald-600">{new Intl.NumberFormat('fr-FR').format(parseInt(String(item.price || '0').replace(/\s/g, '')))} {item.currency || currency}</span>
+                      </div>
+                    </div>
+                    <div className="relative" onClick={e => e.stopPropagation()}>
                       <button
                         onClick={() => setActiveMenu(activeMenu === item.id ? null : item.id)}
-                        className="p-2 bg-slate-50 dark:bg-slate-800 rounded-xl hover:bg-primary-600 hover:text-white transition-all"
+                        className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm rounded-xl text-slate-500 hover:text-primary-600 transition-all"
                       >
                         <MoreVertical className="w-4 h-4" />
                       </button>
                       {activeMenu === item.id && (
                         <>
                           <div className="fixed inset-0 z-40" onClick={() => setActiveMenu(null)} />
-                          <div className="absolute right-8 top-full mt-2 w-44 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden py-2 animate-in zoom-in-95 duration-200">
-                            <button onClick={() => handleEditClick(item)} className="w-full flex items-center gap-3 px-5 py-3 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors">
+                          <div className="absolute bottom-full right-0 mb-2 w-44 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden py-2 animate-in fade-in zoom-in-95 duration-200">
+                            <button onClick={() => { handleEditClick(item); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-5 py-3 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors">
                               <Edit3 className="w-4 h-4 text-blue-500" /> Modifier Stock
                             </button>
-                            <button onClick={() => setConfirmDelete({ isOpen: true, id: item.id })} className="w-full flex items-center gap-3 px-5 py-3 text-[10px] font-black uppercase text-red-500 hover:bg-red-50 transition-colors">
+                            <button onClick={() => { setConfirmDelete({ isOpen: true, id: item.id }); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-5 py-3 text-[10px] font-black uppercase text-red-500 hover:bg-red-50 transition-colors">
                               <Trash2 className="w-4 h-4" /> Supprimer
                             </button>
                           </div>
                         </>
                       )}
-                    </td>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* VUE DESKTOP */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left border-collapse table-fixed">
+                <thead>
+                  <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b-2 border-slate-100 dark:border-slate-800">
+                    <th className="w-[40%] px-8 py-5 text-[10px] font-black uppercase text-slate-400 tracking-widest">Produit</th>
+                    <th className="w-[20%] px-8 py-5 text-[10px] font-black uppercase text-slate-400 tracking-widest text-center">Stock</th>
+                    <th className="w-[20%] px-8 py-5 text-[10px] font-black uppercase text-slate-400 tracking-widest">Prix</th>
+                    <th className="w-[20%] px-8 py-5 text-[10px] font-black uppercase text-slate-400 tracking-widest text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y-2 divide-slate-100 dark:divide-slate-800">
+                  {stockItems.map((item) => (
+                    <tr 
+                      key={item.id} 
+                      className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all group cursor-pointer" 
+                      onClick={() => router.push(`/stock/${item.id}`)}
+                    >
+                      <td className="px-8 py-5 overflow-hidden">
+                        <div className="flex items-center gap-4">
+                          {item.image_url ? (
+                            <img src={item.image_url} alt="" className="w-12 h-12 rounded-xl object-cover border-2 border-slate-100 dark:border-slate-800" />
+                          ) : (
+                            <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                              <ImageIcon className="w-5 h-5 text-slate-300" />
+                            </div>
+                          )}
+                          <div>
+                            <div className="font-black text-sm truncate max-w-[250px]">{item.title}</div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className={`w-1.5 h-1.5 rounded-full ${item.status === 'active' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{item.status === 'active' ? 'Actif' : 'Brouillon'}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-8 py-5">
+                        <div className="flex flex-col items-center gap-1.5">
+                          <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden max-w-[100px]">
+                            <div
+                              className={`h-full ${(item.stock || 0) > 50 ? 'bg-emerald-500' : (item.stock || 0) > 10 ? 'bg-amber-500' : 'bg-red-500'}`}
+                              style={{ width: `${Math.min(item.stock || 0, 100)}%` }}
+                            />
+                          </div>
+                          <span className={`text-[10px] font-black uppercase ${!item.stock ? 'text-red-500' : 'text-slate-400'}`}>{item.stock || 0} unités</span>
+                        </div>
+                      </td>
+                      <td className="px-8 py-5 font-black text-sm">
+                        {new Intl.NumberFormat('fr-FR').format(parseInt(String(item.price || '0').replace(/\s/g, '')))} {item.currency || currency}
+                      </td>
+                      <td className="px-8 py-5 text-right relative" onClick={e => e.stopPropagation()}>
+                        <button
+                          onClick={() => setActiveMenu(activeMenu === item.id ? null : item.id)}
+                          className="p-2 bg-slate-50 dark:bg-slate-800 rounded-xl hover:bg-primary-600 hover:text-white transition-all"
+                        >
+                          <MoreVertical className="w-4 h-4" />
+                        </button>
+                        {activeMenu === item.id && (
+                          <>
+                            <div className="fixed inset-0 z-40" onClick={() => setActiveMenu(null)} />
+                            <div className="absolute right-8 top-full mt-2 w-44 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden py-2 animate-in zoom-in-95 duration-200">
+                              <button onClick={() => { handleEditClick(item); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-5 py-3 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors">
+                                <Edit3 className="w-4 h-4 text-blue-500" /> Modifier Stock
+                              </button>
+                              <button onClick={() => { setConfirmDelete({ isOpen: true, id: item.id }); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-5 py-3 text-[10px] font-black uppercase text-red-500 hover:bg-red-50 transition-colors">
+                                <Trash2 className="w-4 h-4" /> Supprimer
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 

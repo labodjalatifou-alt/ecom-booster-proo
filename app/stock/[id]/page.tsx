@@ -166,7 +166,7 @@ export default function ProductDetailPage() {
   return (
     <div className="max-w-6xl mx-auto pb-20 px-4 animate-in fade-in duration-500">
       {/* Header Navigation */}
-      <div className="flex items-center justify-between mb-10">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
         <div className="flex items-center gap-6">
           <button 
             onClick={() => router.push('/stock')}
@@ -190,19 +190,19 @@ export default function ProductDetailPage() {
           </button>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
           {isEditing ? (
             <>
               <button 
                 onClick={() => setIsEditing(false)}
-                className="px-6 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all"
+                className="flex-1 sm:flex-none px-4 sm:px-6 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all text-center"
               >
                 Annuler
               </button>
               <button 
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center gap-2 px-6 py-2.5 bg-primary-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary-500/20 hover:bg-primary-700 transition-all disabled:opacity-50"
+                className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-4 sm:px-6 py-2.5 bg-primary-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary-500/20 hover:bg-primary-700 transition-all disabled:opacity-50"
               >
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 Enregistrer
@@ -211,7 +211,7 @@ export default function ProductDetailPage() {
           ) : (
             <button 
               onClick={() => setIsEditing(true)}
-              className="flex items-center gap-2 px-6 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-slate-100 transition-all shadow-xl"
+              className="w-full sm:w-auto flex justify-center items-center gap-2 px-6 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-slate-100 transition-all shadow-xl"
             >
               <Edit3 className="w-4 h-4" />
               Modifier
@@ -355,13 +355,14 @@ export default function ProductDetailPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Description HTML (Shopify)</label>
-                    <textarea 
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      rows={8}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-6 py-4 text-sm font-medium outline-none focus:ring-4 focus:ring-primary-500/10 resize-none"
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Description Visuelle (Éditeur de texte)</label>
+                    <div 
+                      contentEditable
+                      onBlur={(e) => setDescription(e.currentTarget.innerHTML)}
+                      dangerouslySetInnerHTML={{ __html: description }}
+                      className="w-full min-h-[200px] bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-6 py-4 text-sm font-medium outline-none focus:ring-4 focus:ring-primary-500/10 [&>h1]:text-2xl [&>h1]:font-black [&>h1]:mb-4 [&>h2]:text-xl [&>h2]:font-bold [&>h2]:mb-3 [&>h3]:text-lg [&>h3]:font-bold [&>h3]:mb-2 [&>p]:mb-4 [&>ul]:list-disc [&>ul]:ml-4 [&>ul]:mb-4 [&>strong]:font-bold overflow-y-auto"
                     />
+                    <p className="text-[9px] text-slate-400 mt-2 px-2 italic">Astuce : Vous pouvez copier-coller du texte enrichi (Word, Google Docs) directement dans ce cadre.</p>
                   </div>
                 </div>
               ) : (
@@ -376,7 +377,7 @@ export default function ProductDetailPage() {
                         <p className="text-xs font-bold font-mono">{product.shopify_id || 'Non connecté'}</p>
                       </div>
                     </div>
-                    <h2 className="text-5xl font-black tracking-tighter leading-[1.1] mb-2 bg-gradient-to-br from-slate-900 to-slate-600 dark:from-white dark:to-slate-400 bg-clip-text text-transparent">{product.title}</h2>
+                    <h2 className="text-3xl sm:text-5xl font-black tracking-tighter leading-[1.1] mb-2 bg-gradient-to-br from-slate-900 to-slate-600 dark:from-white dark:to-slate-400 bg-clip-text text-transparent">{product.title}</h2>
                   </div>
 
                   <div className="grid grid-cols-2 gap-6">
@@ -410,7 +411,7 @@ export default function ProductDetailPage() {
                       <span className="text-[9px] font-black uppercase tracking-widest">Description Produit</span>
                     </div>
                     <div 
-                      className="prose prose-slate dark:prose-invert max-w-none text-sm text-slate-600 dark:text-slate-400 leading-relaxed"
+                      className="prose prose-sm sm:prose-base dark:prose-invert max-w-none text-slate-600 dark:text-slate-400 leading-relaxed [&>h1]:text-2xl [&>h1]:font-black [&>h1]:mb-4 [&>h2]:text-xl [&>h2]:font-bold [&>h2]:mb-3 [&>h3]:text-lg [&>h3]:font-bold [&>h3]:mb-2 [&>p]:mb-4 [&>ul]:list-disc [&>ul]:ml-4 [&>ul]:mb-4 [&>strong]:font-bold"
                       dangerouslySetInnerHTML={{ __html: product.description || '<p className="italic">Aucune description disponible.</p>' }}
                     />
                   </div>

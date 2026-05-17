@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { History, Search, Filter, MapPin, Loader2, ShoppingCart, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { History, Search, Filter, MapPin, Loader2, ShoppingCart, RefreshCw, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -33,6 +33,7 @@ export default function HistoriqueCommandesPage() {
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [isTabDropdownOpen, setIsTabDropdownOpen] = useState(false);
 
   async function fetchOrders(p = page) {
     setLoading(true);
@@ -136,27 +137,55 @@ export default function HistoriqueCommandesPage() {
       </div>
 
       {/* Status filter tabs */}
-      <div className="flex gap-1 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-1 shadow-sm mb-8 w-fit flex-wrap">
-          <button
-            key="analyses"
-            onClick={() => window.location.href='/historique'}
-            className="px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all bg-amber-500/10 text-amber-600 hover:bg-amber-500 hover:text-white"
+      <div className="mb-8">
+        {/* Mobile Dropdown */}
+        <div className="md:hidden relative w-full mt-2">
+          <button 
+            onClick={() => setIsTabDropdownOpen(!isTabDropdownOpen)}
+            className="w-full flex items-center justify-between p-4 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm"
           >
-            🔥 Produits Analysés
+            <span className="text-xs font-black uppercase tracking-widest text-slate-800 dark:text-slate-100">
+              {statusLabels[statusFilter] || 'Tous'}
+            </span>
+            <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${isTabDropdownOpen ? 'rotate-180' : ''}`} />
           </button>
-        {statuses.map(s => (
-          <button
-            key={s}
-            onClick={() => setStatusFilter(s)}
-            className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
-              statusFilter === s
-                ? 'bg-slate-900 dark:bg-primary-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-slate-600'
-            }`}
-          >
-            {statusLabels[s]}
-          </button>
-        ))}
+          
+          {isTabDropdownOpen && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setIsTabDropdownOpen(false)} />
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                {statuses.map(s => (
+                  <button
+                    key={s}
+                    onClick={() => { setStatusFilter(s); setIsTabDropdownOpen(false); }}
+                    className={`w-full flex items-center p-4 text-xs font-black uppercase tracking-widest transition-colors ${
+                      statusFilter === s ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    {statusLabels[s]}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Desktop Tabs */}
+        <div className="hidden md:flex gap-1 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-1 shadow-sm w-fit flex-wrap">
+          {statuses.map(s => (
+            <button
+              key={s}
+              onClick={() => setStatusFilter(s)}
+              className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
+                statusFilter === s
+                  ? 'bg-slate-900 dark:bg-primary-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-slate-600'
+              }`}
+            >
+              {statusLabels[s]}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[3rem] shadow-sm overflow-hidden min-h-[400px]">
