@@ -29,7 +29,7 @@ export default function Header() {
   };
 
   return (
-    <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 md:px-8 sticky top-0 z-10">
+    <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 md:px-8 sticky top-0 z-40">
       <div className="flex items-center gap-3">
         <button onClick={toggle} className="md:hidden p-2 text-slate-500 hover:text-primary-600 transition-colors">
           <Menu className="w-6 h-6" />

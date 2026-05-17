@@ -205,73 +205,134 @@ export default function InterfaceCloserPage() {
             <p className="text-lg font-black text-slate-600">Aucune commande dans cette liste</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[800px] table-fixed">
-              <thead>
-                <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b-2 border-slate-100 dark:border-slate-800">
-                  <th className="w-[30%] px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest">Client</th>
-                  <th className="w-[25%] px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest">Produit</th>
-                  <th className="w-[15%] px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest">Ville</th>
-                  <th className="w-[15%] px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest text-right">Prix</th>
-                  <th className="w-[15%] px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y-2 divide-slate-100 dark:divide-slate-800">
-                {filteredOrders.map((item: any) => (
-                  <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group">
-                    <td className="px-8 py-4">
+          <>
+            {/* VUE MOBILE */}
+            <div className="md:hidden flex flex-col gap-4 p-4">
+              {filteredOrders.map((item: any) => (
+                <div key={item.id} className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col gap-3 relative">
+                  <div className="flex justify-between items-start">
+                    <div>
                       <div className="font-black text-sm">{item.customer}</div>
                       <div className="text-[10px] font-bold text-primary-500 mt-0.5">{item.phone}</div>
-                      {item.note && (
-                        <div className="text-[9px] font-black text-amber-600 mt-1 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-md border border-amber-100 dark:border-amber-800/30">
-                          📝 {item.note}
+                    </div>
+                    <button 
+                      onClick={() => setActiveMenu(activeMenu === item.id ? null : item.id)}
+                      className="p-2 -mr-2 -mt-2 text-slate-400 hover:text-primary-600 rounded-xl transition-all"
+                    >
+                      <MoreVertical className="w-5 h-5" />
+                    </button>
+                    {activeMenu === item.id && (
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setActiveMenu(null)} />
+                        <div className="absolute right-4 top-10 w-48 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden py-2 animate-in zoom-in-95 duration-200">
+                          <button onClick={() => { handleCall(item.phone); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors"><PhoneForwarded className="w-4 h-4 text-emerald-500" /> Appeler</button>
+                          <button onClick={() => { handleWhatsApp(item.phone); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors"><MessageSquare className="w-4 h-4 text-green-500" /> WhatsApp</button>
+                          <button onClick={() => { setSelectedOrder(item); setShowNote(true); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors"><Edit3 className="w-4 h-4 text-amber-500" /> Note</button>
+                          <div className="h-px bg-slate-100 dark:bg-slate-800 my-2" />
+                          {tab === 'pending' ? (
+                            <>
+                              <button onClick={() => { updateStatus(item.id, 'Confirmé'); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-primary-600 hover:bg-primary-50 transition-colors"><CheckCircle2 className="w-4 h-4" /> Confirmer</button>
+                              <button onClick={() => { updateStatus(item.id, 'Annulé'); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-rose-600 hover:bg-rose-50 transition-colors"><XCircle className="w-4 h-4" /> Annuler</button>
+                            </>
+                          ) : tab === 'cancelled' ? (
+                            <button onClick={() => { updateStatus(item.id, 'A Confirmer'); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-blue-600 hover:bg-blue-50 transition-colors"><Clock className="w-4 h-4" /> Remettre en attente</button>
+                          ) : (
+                            <button onClick={() => { updateStatus(item.id, 'A Confirmer'); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-slate-400 hover:bg-slate-50 transition-colors"><XCircle className="w-4 h-4" /> Annuler Confirmation</button>
+                          )}
                         </div>
-                      )}
-                    </td>
-                    <td className="px-8 py-4 text-xs font-black text-slate-600 dark:text-slate-300 truncate">{item.product}</td>
-                    <td className="px-8 py-4">
-                      <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500 uppercase">
-                        <MapPin className="w-3 h-3" /> {cleanCity(item.city)}, {cleanCountry(item.country)}
-                      </div>
-                    </td>
-                    <td className="px-8 py-4 text-right">
-                      <div className="font-black text-sm text-emerald-600">{item.price} {item.currency || currency}</div>
-                    </td>
-                    <td className="px-8 py-4 text-right relative">
-                      <button 
-                        onClick={() => setActiveMenu(activeMenu === item.id ? null : item.id)}
-                        className="p-2.5 text-slate-400 hover:text-primary-600 rounded-xl transition-all"
-                      >
-                        <MoreVertical className="w-4 h-4" />
-                      </button>
+                      </>
+                    )}
+                  </div>
+                  
+                  {item.note && (
+                    <div className="text-[9px] font-black text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-md border border-amber-100 dark:border-amber-800/30 w-fit">
+                      📝 {item.note}
+                    </div>
+                  )}
 
-                      {activeMenu === item.id && (
-                        <>
-                          <div className="fixed inset-0 z-40" onClick={() => setActiveMenu(null)} />
-                          <div className="absolute right-8 top-full mt-2 w-48 bg-white dark:bg-slate-900 border-2 border-slate-100 rounded-2xl shadow-2xl z-50 overflow-hidden py-2 animate-in zoom-in-95 duration-200">
-                            <button onClick={() => { handleCall(item.phone); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors"><PhoneForwarded className="w-4 h-4 text-emerald-500" /> Appeler</button>
-                            <button onClick={() => { handleWhatsApp(item.phone); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors"><MessageSquare className="w-4 h-4 text-green-500" /> WhatsApp</button>
-                            <button onClick={() => { setSelectedOrder(item); setShowNote(true); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors"><Edit3 className="w-4 h-4 text-amber-500" /> Note</button>
-                            <div className="h-px bg-slate-100 my-2" />
-                            {tab === 'pending' ? (
-                              <>
-                                <button onClick={() => { updateStatus(item.id, 'Confirmé'); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-primary-600 hover:bg-primary-50 transition-colors"><CheckCircle2 className="w-4 h-4" /> Confirmer</button>
-                                <button onClick={() => { updateStatus(item.id, 'Annulé'); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-rose-600 hover:bg-rose-50 transition-colors"><XCircle className="w-4 h-4" /> Annuler</button>
-                              </>
-                            ) : tab === 'cancelled' ? (
-                              <button onClick={() => { updateStatus(item.id, 'A Confirmer'); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-blue-600 hover:bg-blue-50 transition-colors"><Clock className="w-4 h-4" /> Remettre en attente</button>
-                            ) : (
-                              <button onClick={() => { updateStatus(item.id, 'A Confirmer'); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-slate-400 hover:bg-slate-50 transition-colors"><XCircle className="w-4 h-4" /> Annuler Confirmation</button>
-                            )}
-                          </div>
-                        </>
-                      )}
-                    </td>
+                  <div>
+                    <div className="text-xs font-black text-slate-700 dark:text-slate-200 line-clamp-2">{item.product}</div>
+                    <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500 uppercase mt-1">
+                      <MapPin className="w-3 h-3" /> {cleanCity(item.city)}, {cleanCountry(item.country)}
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-200 dark:border-slate-700">
+                    <div className="font-black text-sm text-emerald-600">{item.price} {item.currency || currency}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* VUE DESKTOP */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-[800px] table-fixed">
+                <thead>
+                  <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b-2 border-slate-100 dark:border-slate-800">
+                    <th className="w-[30%] px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest">Client</th>
+                    <th className="w-[25%] px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest">Produit</th>
+                    <th className="w-[15%] px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest">Ville</th>
+                    <th className="w-[15%] px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest text-right">Prix</th>
+                    <th className="w-[15%] px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y-2 divide-slate-100 dark:divide-slate-800">
+                  {filteredOrders.map((item: any) => (
+                    <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group">
+                      <td className="px-8 py-4">
+                        <div className="font-black text-sm">{item.customer}</div>
+                        <div className="text-[10px] font-bold text-primary-500 mt-0.5">{item.phone}</div>
+                        {item.note && (
+                          <div className="text-[9px] font-black text-amber-600 mt-1 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-md border border-amber-100 dark:border-amber-800/30 w-fit">
+                            📝 {item.note}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-8 py-4 text-xs font-black text-slate-600 dark:text-slate-300 truncate">{item.product}</td>
+                      <td className="px-8 py-4">
+                        <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500 uppercase">
+                          <MapPin className="w-3 h-3" /> {cleanCity(item.city)}, {cleanCountry(item.country)}
+                        </div>
+                      </td>
+                      <td className="px-8 py-4 text-right">
+                        <div className="font-black text-sm text-emerald-600">{item.price} {item.currency || currency}</div>
+                      </td>
+                      <td className="px-8 py-4 text-right relative">
+                        <button 
+                          onClick={() => setActiveMenu(activeMenu === item.id ? null : item.id)}
+                          className="p-2.5 text-slate-400 hover:text-primary-600 rounded-xl transition-all"
+                        >
+                          <MoreVertical className="w-4 h-4" />
+                        </button>
+
+                        {activeMenu === item.id && (
+                          <>
+                            <div className="fixed inset-0 z-40" onClick={() => setActiveMenu(null)} />
+                            <div className="absolute right-8 top-full mt-2 w-48 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden py-2 animate-in zoom-in-95 duration-200">
+                              <button onClick={() => { handleCall(item.phone); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors"><PhoneForwarded className="w-4 h-4 text-emerald-500" /> Appeler</button>
+                              <button onClick={() => { handleWhatsApp(item.phone); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors"><MessageSquare className="w-4 h-4 text-green-500" /> WhatsApp</button>
+                              <button onClick={() => { setSelectedOrder(item); setShowNote(true); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors"><Edit3 className="w-4 h-4 text-amber-500" /> Note</button>
+                              <div className="h-px bg-slate-100 dark:bg-slate-800 my-2" />
+                              {tab === 'pending' ? (
+                                <>
+                                  <button onClick={() => { updateStatus(item.id, 'Confirmé'); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-primary-600 hover:bg-primary-50 transition-colors"><CheckCircle2 className="w-4 h-4" /> Confirmer</button>
+                                  <button onClick={() => { updateStatus(item.id, 'Annulé'); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-rose-600 hover:bg-rose-50 transition-colors"><XCircle className="w-4 h-4" /> Annuler</button>
+                                </>
+                              ) : tab === 'cancelled' ? (
+                                <button onClick={() => { updateStatus(item.id, 'A Confirmer'); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-blue-600 hover:bg-blue-50 transition-colors"><Clock className="w-4 h-4" /> Remettre en attente</button>
+                              ) : (
+                                <button onClick={() => { updateStatus(item.id, 'A Confirmer'); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-slate-400 hover:bg-slate-50 transition-colors"><XCircle className="w-4 h-4" /> Annuler Confirmation</button>
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 

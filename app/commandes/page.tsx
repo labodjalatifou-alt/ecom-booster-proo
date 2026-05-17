@@ -177,71 +177,111 @@ export default function CommandesPage() {
             {!searchTerm && <p className="text-xs text-slate-400">Synchronisez vos commandes depuis le tableau de bord.</p>}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[800px]">
-              <thead>
-                <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b-2 border-slate-100 dark:border-slate-800">
-                  <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest">Client</th>
-                  <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest">Produit</th>
-                  <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest">Ville</th>
-                  <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest text-center">Statut</th>
-                  <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest text-right">Montant</th>
-                  <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y-2 divide-slate-100 dark:divide-slate-800">
-                {filtered.map((order) => (
-                  <tr
-                    key={order.id}
-                    className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all cursor-pointer"
-                    onClick={() => setSelectedOrder(order)}
-                  >
-                    <td className="px-8 py-5">
+          <>
+            {/* VUE MOBILE */}
+            <div className="md:hidden flex flex-col gap-4 p-4">
+              {filtered.map((order) => (
+                <div 
+                  key={order.id} 
+                  className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col gap-3 cursor-pointer active:scale-[0.98] transition-all" 
+                  onClick={() => setSelectedOrder(order)}
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
                       <div className="font-black text-sm uppercase">{order.customer}</div>
-                      <div className="text-[9px] font-bold text-slate-400 mt-0.5">#{String(order.shopify_id || order.id).slice(-6)}</div>
-                    </td>
-                    <td className="px-8 py-5 text-xs font-bold text-slate-700 dark:text-slate-200 max-w-[200px] truncate">
-                      {order.product}
-                    </td>
-                    <td className="px-8 py-5">
-                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-600 uppercase">
-                        <MapPin className="w-3 h-3 text-primary-500" />
-                        {cleanCity(order.city)} {order.country ? `, ${cleanCountry(order.country)}` : ', Non précisé'}
-                      </div>
-                      <div className="text-[9px] font-bold text-slate-400 mt-0.5 flex items-center gap-1">
-                        <Phone className="w-2.5 h-2.5" /> {order.phone}
-                      </div>
-                    </td>
-                    <td className="px-8 py-5 text-center">
-                      <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${statusColor(order.status)}`}>
-                        {order.status}
-                      </span>
-                    </td>
-                    <td className="px-8 py-5 text-right">
-                      <div className="font-black text-sm">{new Intl.NumberFormat('fr-FR').format(Number(String(order.price || '0').replace(/\s/g, '')))}</div>
-                      <div className="text-[9px] font-black text-slate-400 uppercase">{order.currency || 'FCFA'}</div>
-                    </td>
-                    <td className="px-8 py-5 text-right" onClick={e => e.stopPropagation()}>
-                      <div className="flex justify-end gap-2">
-                        <button
-                          onClick={() => setSelectedOrder(order)}
-                          className="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-primary-600 hover:text-white transition-all"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <a
-                          href={`tel:${order.phone}`}
-                          className="p-2 bg-emerald-100 text-emerald-600 rounded-xl hover:bg-emerald-600 hover:text-white transition-all"
-                        >
-                          <Phone className="w-4 h-4" />
-                        </a>
-                      </div>
-                    </td>
+                      <div className="text-[10px] font-bold text-primary-500 mt-0.5 flex items-center gap-1"><Phone className="w-3 h-3" /> {order.phone}</div>
+                    </div>
+                    <span className={`px-2.5 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border ${statusColor(order.status)}`}>
+                      {order.status}
+                    </span>
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-slate-700 dark:text-slate-200 line-clamp-2">{order.product}</div>
+                    <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 mt-1 uppercase">
+                      <MapPin className="w-3 h-3" /> {cleanCity(order.city)} {order.country ? `, ${cleanCountry(order.country)}` : ''}
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-end pt-3 border-t border-slate-200 dark:border-slate-700">
+                    <div>
+                      <div className="text-[9px] font-black text-slate-400 uppercase mb-0.5">Total</div>
+                      <div className="font-black text-sm">{new Intl.NumberFormat('fr-FR').format(Number(String(order.price || '0').replace(/\s/g, '')))} {order.currency || 'FCFA'}</div>
+                    </div>
+                    <div className="flex gap-2">
+                       <button onClick={(e) => { e.stopPropagation(); setSelectedOrder(order); }} className="p-2.5 bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-700 rounded-xl text-slate-500"><Eye className="w-4 h-4" /></button>
+                       <a href={`tel:${order.phone}`} onClick={e => e.stopPropagation()} className="p-2.5 bg-emerald-100 text-emerald-600 rounded-xl"><Phone className="w-4 h-4" /></a>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* VUE DESKTOP */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-[800px]">
+                <thead>
+                  <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b-2 border-slate-100 dark:border-slate-800">
+                    <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest">Client</th>
+                    <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest">Produit</th>
+                    <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest">Ville</th>
+                    <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest text-center">Statut</th>
+                    <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest text-right">Montant</th>
+                    <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y-2 divide-slate-100 dark:divide-slate-800">
+                  {filtered.map((order) => (
+                    <tr
+                      key={order.id}
+                      className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all cursor-pointer"
+                      onClick={() => setSelectedOrder(order)}
+                    >
+                      <td className="px-8 py-5">
+                        <div className="font-black text-sm uppercase">{order.customer}</div>
+                        <div className="text-[9px] font-bold text-slate-400 mt-0.5">#{String(order.shopify_id || order.id).slice(-6)}</div>
+                      </td>
+                      <td className="px-8 py-5 text-xs font-bold text-slate-700 dark:text-slate-200 max-w-[200px] truncate">
+                        {order.product}
+                      </td>
+                      <td className="px-8 py-5">
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-600 uppercase">
+                          <MapPin className="w-3 h-3 text-primary-500" />
+                          {cleanCity(order.city)} {order.country ? `, ${cleanCountry(order.country)}` : ', Non précisé'}
+                        </div>
+                        <div className="text-[9px] font-bold text-slate-400 mt-0.5 flex items-center gap-1">
+                          <Phone className="w-2.5 h-2.5" /> {order.phone}
+                        </div>
+                      </td>
+                      <td className="px-8 py-5 text-center">
+                        <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${statusColor(order.status)}`}>
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="px-8 py-5 text-right">
+                        <div className="font-black text-sm">{new Intl.NumberFormat('fr-FR').format(Number(String(order.price || '0').replace(/\s/g, '')))}</div>
+                        <div className="text-[9px] font-black text-slate-400 uppercase">{order.currency || 'FCFA'}</div>
+                      </td>
+                      <td className="px-8 py-5 text-right" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => setSelectedOrder(order)}
+                            className="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-primary-600 hover:text-white transition-all"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <a
+                            href={`tel:${order.phone}`}
+                            className="p-2 bg-emerald-100 text-emerald-600 rounded-xl hover:bg-emerald-600 hover:text-white transition-all"
+                          >
+                            <Phone className="w-4 h-4" />
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 

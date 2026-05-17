@@ -264,66 +264,118 @@ export default function InterfaceLivreurPage() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[800px] table-fixed">
-              <thead>
-                <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b-2 border-slate-100 dark:border-slate-800">
-                  <th className="w-[28%] px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest">Client</th>
-                  <th className="w-[28%] px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest">Produit & Ville</th>
-                  <th className="w-[16%] px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest text-right">Montant</th>
-                  <th className="w-[28%] px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y-2 divide-slate-100 dark:divide-slate-800">
-                {filteredOrders.map((item: any) => (
-                  <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all">
-                    <td className="px-8 py-4">
+          <>
+            {/* VUE MOBILE */}
+            <div className="md:hidden flex flex-col gap-4 p-4">
+              {filteredOrders.map((item: any) => (
+                <div key={item.id} className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col gap-3">
+                  <div className="flex justify-between items-start">
+                    <div>
                       <div className="font-black text-sm">{item.customer}</div>
                       <div className="text-[10px] font-bold text-primary-500 mt-0.5">{item.phone}</div>
-                    </td>
-                    <td className="px-8 py-4">
-                      <div className="text-xs font-black text-slate-700 dark:text-slate-200 truncate">{item.product}</div>
-                      <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 mt-0.5">
-                        <MapPin className="w-3 h-3" /> {cleanCity(item.city)}, {cleanCountry(item.country)}
-                      </div>
-                    </td>
-                    <td className="px-8 py-4 text-right">
+                    </div>
+                    {tab === 'delivered' && <span className="px-3 py-1 bg-emerald-100 text-emerald-600 rounded-xl text-[8px] font-black uppercase">✓ Livré</span>}
+                    {tab === 'cancelled' && <span className="px-3 py-1 bg-red-100 text-red-500 rounded-xl text-[8px] font-black uppercase">✗ Annulé</span>}
+                  </div>
+                  <div>
+                    <div className="text-xs font-black text-slate-700 dark:text-slate-200 line-clamp-2">{item.product}</div>
+                    <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 mt-1 uppercase">
+                      <MapPin className="w-3 h-3" /> {cleanCity(item.city)} {item.country ? `, ${cleanCountry(item.country)}` : ''}
+                    </div>
+                  </div>
+                  <div className="pt-3 border-t border-slate-200 dark:border-slate-700 flex justify-between items-end">
+                    <div>
+                      <div className="text-[9px] font-black text-slate-400 uppercase mb-0.5">Montant</div>
                       <div className="font-black text-sm text-emerald-600">{item.price} {item.currency || currency}</div>
                       {item.cash_collected != null && item.cash_collected > 0 && (
-                        <div className="text-[9px] font-bold text-slate-400 mt-1 italic">Reçu: {new Intl.NumberFormat('fr-FR').format(item.cash_collected)} {item.currency || currency}</div>
+                        <div className="text-[9px] font-bold text-slate-400 mt-0.5 italic">Reçu: {new Intl.NumberFormat('fr-FR').format(item.cash_collected)} {item.currency || currency}</div>
                       )}
-                    </td>
-                    <td className="px-8 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => handleCall(item.phone)} className="p-2 bg-emerald-100 text-emerald-600 rounded-xl hover:bg-emerald-600 hover:text-white transition-all" title="Appeler">
-                          <PhoneForwarded className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => handleWhatsApp(item.phone)} className="p-2 bg-green-100 text-green-600 rounded-xl hover:bg-green-600 hover:text-white transition-all" title="WhatsApp">
-                          <MessageSquare className="w-4 h-4" />
-                        </button>
-                        {(tab === 'pending' || tab === 'programmed') && (
-                          <>
-                            <button onClick={() => openCollectionModal(item.id, item.price)} className="px-3 py-2 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all active:scale-95">
-                              ✓ Livré
-                            </button>
-                            <button onClick={() => markFailed(item.id)} className="px-3 py-2 bg-red-100 text-red-500 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all active:scale-95">
-                              ✗ Annuler
-                            </button>
-                          </>
-                        )}
-                        {tab === 'delivered' && (
-                          <span className="px-3 py-1.5 bg-emerald-100 text-emerald-600 rounded-xl text-[9px] font-black uppercase">✓ Livré</span>
-                        )}
-                        {tab === 'cancelled' && (
-                          <span className="px-3 py-1.5 bg-red-100 text-red-500 rounded-xl text-[9px] font-black uppercase">✗ Annulé</span>
-                        )}
-                      </div>
-                    </td>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => handleCall(item.phone)} className="p-2.5 bg-emerald-100 text-emerald-600 rounded-xl hover:bg-emerald-600 hover:text-white transition-all">
+                        <PhoneForwarded className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => handleWhatsApp(item.phone)} className="p-2.5 bg-green-100 text-green-600 rounded-xl hover:bg-green-600 hover:text-white transition-all">
+                        <MessageSquare className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                  {(tab === 'pending' || tab === 'programmed') && (
+                    <div className="flex gap-2 pt-2">
+                      <button onClick={() => openCollectionModal(item.id, item.price)} className="flex-1 py-3 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all active:scale-95">
+                        ✓ Livré
+                      </button>
+                      <button onClick={() => markFailed(item.id)} className="flex-1 py-3 bg-red-100 text-red-500 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all active:scale-95">
+                        ✗ Annuler
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* VUE DESKTOP */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-[800px] table-fixed">
+                <thead>
+                  <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b-2 border-slate-100 dark:border-slate-800">
+                    <th className="w-[28%] px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest">Client</th>
+                    <th className="w-[28%] px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest">Produit & Ville</th>
+                    <th className="w-[16%] px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest text-right">Montant</th>
+                    <th className="w-[28%] px-8 py-4 text-[9px] font-black uppercase text-slate-400 tracking-widest text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y-2 divide-slate-100 dark:divide-slate-800">
+                  {filteredOrders.map((item: any) => (
+                    <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all">
+                      <td className="px-8 py-4">
+                        <div className="font-black text-sm">{item.customer}</div>
+                        <div className="text-[10px] font-bold text-primary-500 mt-0.5">{item.phone}</div>
+                      </td>
+                      <td className="px-8 py-4">
+                        <div className="text-xs font-black text-slate-700 dark:text-slate-200 truncate">{item.product}</div>
+                        <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 mt-0.5">
+                          <MapPin className="w-3 h-3" /> {cleanCity(item.city)}, {cleanCountry(item.country)}
+                        </div>
+                      </td>
+                      <td className="px-8 py-4 text-right">
+                        <div className="font-black text-sm text-emerald-600">{item.price} {item.currency || currency}</div>
+                        {item.cash_collected != null && item.cash_collected > 0 && (
+                          <div className="text-[9px] font-bold text-slate-400 mt-1 italic">Reçu: {new Intl.NumberFormat('fr-FR').format(item.cash_collected)} {item.currency || currency}</div>
+                        )}
+                      </td>
+                      <td className="px-8 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button onClick={() => handleCall(item.phone)} className="p-2 bg-emerald-100 text-emerald-600 rounded-xl hover:bg-emerald-600 hover:text-white transition-all" title="Appeler">
+                            <PhoneForwarded className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => handleWhatsApp(item.phone)} className="p-2 bg-green-100 text-green-600 rounded-xl hover:bg-green-600 hover:text-white transition-all" title="WhatsApp">
+                            <MessageSquare className="w-4 h-4" />
+                          </button>
+                          {(tab === 'pending' || tab === 'programmed') && (
+                            <>
+                              <button onClick={() => openCollectionModal(item.id, item.price)} className="px-3 py-2 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all active:scale-95">
+                                ✓ Livré
+                              </button>
+                              <button onClick={() => markFailed(item.id)} className="px-3 py-2 bg-red-100 text-red-500 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all active:scale-95">
+                                ✗ Annuler
+                              </button>
+                            </>
+                          )}
+                          {tab === 'delivered' && (
+                            <span className="px-3 py-1.5 bg-emerald-100 text-emerald-600 rounded-xl text-[9px] font-black uppercase">✓ Livré</span>
+                          )}
+                          {tab === 'cancelled' && (
+                            <span className="px-3 py-1.5 bg-red-100 text-red-500 rounded-xl text-[9px] font-black uppercase">✗ Annulé</span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 
