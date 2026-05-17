@@ -15,6 +15,7 @@ export default function HistoriquePage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchAnalyses();
@@ -53,18 +54,19 @@ export default function HistoriquePage() {
     }
   };
 
-  const handleDeleteSingle = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!confirm("Voulez-vous vraiment supprimer cette analyse de l'historique ?")) return;
+  const handleDeleteSingle = async () => {
+    if (!deleteId) return;
 
     try {
-      const { error } = await supabase.from('analyses').delete().eq('id', id);
+      const { error } = await supabase.from('analyses').delete().eq('id', deleteId);
       if (error) throw error;
 
-      setAnalyses(prev => prev.filter(a => a.id !== id));
+      setAnalyses(prev => prev.filter(a => a.id !== deleteId));
       toast.success("Analyse supprimée avec succès !");
     } catch (err: any) {
       toast.error(sanitizeError(err));
+    } finally {
+      setDeleteId(null);
     }
   };
 
@@ -154,7 +156,7 @@ export default function HistoriquePage() {
                 <div className="flex items-center gap-2">
                   <span className="px-3 py-1 rounded-full text-[9px] font-black uppercase border bg-blue-50 text-blue-600 border-blue-100">Analysé</span>
                   <button 
-                    onClick={(e) => handleDeleteSingle(item.id, e)}
+                    onClick={(e) => { e.stopPropagation(); setDeleteId(item.id); }}
                     className="p-1.5 text-rose-400 hover:text-white hover:bg-rose-500 rounded-lg transition-colors bg-rose-50 dark:bg-rose-500/10"
                     title="Supprimer cette analyse"
                   >
@@ -199,6 +201,16 @@ export default function HistoriquePage() {
         title="⚠️ Action Irréversible !"
         message="Voulez-vous vraiment supprimer tout l'historique des analyses et les données de test ? Cette action videra complètement votre base de données."
         confirmLabel="Vider tout"
+        variant="danger"
+      />
+
+      <ConfirmationModal
+        isOpen={deleteId !== null}
+        onClose={() => setDeleteId(null)}
+        onConfirm={handleDeleteSingle}
+        title="⚠️ Supprimer l'analyse"
+        message="Voulez-vous vraiment supprimer cette analyse de l'historique ?"
+        confirmLabel="Supprimer"
         variant="danger"
       />
     </div>
