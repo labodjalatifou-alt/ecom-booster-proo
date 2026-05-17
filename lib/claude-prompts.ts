@@ -216,15 +216,7 @@ export async function genererScriptsVoixOff(
   `
   
     return await callClaude(prompt, {
-      system: \`Tu es un expert en scripts publicitaires pour l'Afrique francophone. 
-  RÈGLES STRICTES :
-  1. Chaque script = texte continu lu au micro, SANS labels internes.
-  2. PAS DE PRÉNOMS INVENTÉS.
-  3. PRENDS LE TEMPS DE POSER LE PROBLÈME. Ne fais pas juste une phrase.
-  4. Script 1 = 80-95 mots
-  5. Script 2 = 95-110 mots  
-  6. Script 3 = 100-120 mots
-  7. Compte les mots avant d'écrire et ASSURE-TOI d'atteindre le minimum de 80 mots en détaillant le problème et la solution.\`,
+      system: "Tu es un expert en scripts publicitaires pour l'Afrique francophone. RÈGLES STRICTES : 1. Chaque script = texte continu lu au micro, SANS labels internes. 2. PAS DE PRÉNOMS INVENTÉS. 3. PRENDS LE TEMPS DE POSER LE PROBLÈME. Ne fais pas juste une phrase. 4. Script 1 = 80-95 mots. 5. Script 2 = 95-110 mots. 6. Script 3 = 100-120 mots. 7. Compte les mots avant d'écrire et ASSURE-TOI d'atteindre le minimum de 80 mots en détaillant le problème et la solution.",
       max_tokens: 1500,
     })
 }
