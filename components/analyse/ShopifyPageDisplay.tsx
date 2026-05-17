@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShopifyPageParsed } from '@/lib/claude-prompts';
-import { Check, Copy, Eye, Send, DollarSign, Database, CheckCircle2, ChevronDown, ChevronUp, Image as ImageIcon, Layers } from 'lucide-react';
+import { Check, Copy, Eye, Send, DollarSign, Database, CheckCircle2, ChevronDown, ChevronUp, Image as ImageIcon, Layers, Edit2 } from 'lucide-react';
 import ShopifyImagePicker, { ImagePickerState } from './ShopifyImagePicker';
 
 interface Props {
@@ -27,6 +27,19 @@ export function ShopifyPageDisplay({
   const [showImagePicker, setShowImagePicker] = useState(false);
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
 
+  // État local d'édition
+  const [editableTitres, setEditableTitres] = useState<string[]>([]);
+  const [editableParagraphes, setEditableParagraphes] = useState<{ titre: string; texte: string }[]>([]);
+  const [editableBullets, setEditableBullets] = useState<string[]>([]);
+  const [editingPara, setEditingPara] = useState<number | null>(null);
+
+  // Synchronisation avec les données de l'IA
+  useEffect(() => {
+    setEditableTitres([...parsed.titres]);
+    setEditableParagraphes([...parsed.paragraphes]);
+    setEditableBullets([...parsed.bullets]);
+  }, [parsed]);
+
   // État images synchronisé depuis ShopifyImagePicker → pour Live Preview
   const [pickerState, setPickerState] = useState<ImagePickerState>({
     mediaSelected: [],
@@ -39,8 +52,20 @@ export function ShopifyPageDisplay({
     );
   };
 
+  const handleTitleChange = (i: number, val: string) => {
+    const newTitres = [...editableTitres];
+    newTitres[i] = val;
+    setEditableTitres(newTitres);
+  };
+
+  const handleParaChange = (i: number, field: 'titre' | 'texte', val: string) => {
+    const newParas = [...editableParagraphes];
+    newParas[i] = { ...newParas[i], [field]: val };
+    setEditableParagraphes(newParas);
+  };
+
   const getPreviewHtml = () => {
-    const selected = parsed.paragraphes.filter((_, i) => selectedParagraphs.includes(i));
+    const selected = editableParagraphes.filter((_, i) => selectedParagraphs.includes(i));
     let html = '';
     selected.forEach(p => {
       html += `<h2>${p.titre}</h2>\n`;
@@ -49,21 +74,26 @@ export function ShopifyPageDisplay({
       });
       html += '\n';
     });
-    if (parsed.bullets.length > 0) {
-      html += `<ul>\n${parsed.bullets.map(b => `  <li>${b}</li>`).join('\n')}\n</ul>\n`;
+    if (editableBullets.length > 0) {
+      html += `<ul>\n${editableBullets.map(b => `  <li>${b}</li>`).join('\n')}\n</ul>\n`;
     }
     return html;
   };
 
-  const handleCopy = () => {
-    const text = parsed.paragraphes
-      .filter((_, i) => selectedParagraphs.includes(i))
-      .map(p => `${p.titre}\n\n${p.texte}`)
-      .join('\n\n');
-    navigator.clipboard.writeText(text);
+  const handleDownloadHtml = () => {
+    const htmlContent = getPreviewHtml();
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `page_produit_${produit.replace(/\s+/g, '_').toLowerCase()}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
-  const selectedParas = parsed.paragraphes.filter((_, i) => selectedParagraphs.includes(i));
+  const selectedParas = editableParagraphes.filter((_, i) => selectedParagraphs.includes(i));
   const { mediaSelected, paraImages } = pickerState;
 
   // Image principale pour le preview (première image galerie)
@@ -77,47 +107,69 @@ export function ShopifyPageDisplay({
 
         {/* 1. Titres */}
         <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-sm">
-          <h3 className="text-[10px] font-black mb-6 uppercase tracking-widest text-slate-400">1. Sélectionnez votre Titre</h3>
+          <h3 className="text-[10px] font-black mb-6 uppercase tracking-widest text-slate-400">1. Sélectionnez & Modifiez votre Titre</h3>
           <div className="space-y-3">
-            {parsed.titres.map((titre, i) => (
-              <button
-                key={i} onClick={() => onSelectTitle(i)}
-                className={`w-full text-left p-5 rounded-2xl border-2 transition-all flex items-center justify-between group ${
+            {editableTitres.map((titre, i) => (
+              <div
+                key={i} 
+                onClick={() => { if (selectedTitle !== i) onSelectTitle(i); }}
+                className={`w-full text-left p-5 rounded-2xl border-2 transition-all flex items-center justify-between group cursor-pointer ${
                   selectedTitle === i
                     ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                     : 'border-slate-100 dark:border-slate-800 hover:border-slate-200'
                 }`}
               >
-                <span className={`text-sm font-black ${selectedTitle === i ? 'text-blue-700 dark:text-blue-400' : 'text-slate-600 dark:text-slate-300'}`}>
-                  {titre}
-                </span>
+                {selectedTitle === i ? (
+                  <input 
+                    type="text"
+                    value={titre}
+                    onChange={(e) => handleTitleChange(i, e.target.value)}
+                    className="text-sm font-black text-blue-700 dark:text-blue-400 bg-transparent border-none outline-none w-full mr-2"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                ) : (
+                  <span className="text-sm font-black text-slate-600 dark:text-slate-300">
+                    {titre}
+                  </span>
+                )}
                 {selectedTitle === i && <CheckCircle2 className="w-5 h-5 text-blue-500 flex-shrink-0" />}
-              </button>
+              </div>
             ))}
           </div>
         </section>
 
         {/* 2. Paragraphes */}
         <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-sm">
-          <h3 className="text-[10px] font-black mb-6 uppercase tracking-widest text-slate-400">2. Description Neuromarketing</h3>
+          <h3 className="text-[10px] font-black mb-6 uppercase tracking-widest text-slate-400">2. Modifiez la Description Neuromarketing</h3>
           <div className="space-y-4">
-            {parsed.paragraphes.map((p, i) => (
+            {editableParagraphes.map((p, i) => (
               <div
-                key={i} onClick={() => toggleParagraph(i)}
-                className={`p-5 rounded-2xl border-2 cursor-pointer transition-all ${
+                key={i}
+                className={`p-5 rounded-2xl border-2 transition-all ${
                   selectedParagraphs.includes(i)
                     ? 'border-emerald-500 bg-emerald-50/30 dark:bg-emerald-900/10'
                     : 'border-slate-100 dark:border-slate-800 opacity-50 grayscale'
                 }`}
               >
                 <div className="flex items-center gap-4 mb-3">
-                  <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 ${
-                    selectedParagraphs.includes(i) ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300'
-                  }`}>
+                  <div 
+                    onClick={() => toggleParagraph(i)}
+                    className={`cursor-pointer w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 ${
+                      selectedParagraphs.includes(i) ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300'
+                    }`}
+                  >
                     {selectedParagraphs.includes(i) && <Check className="w-4 h-4" />}
                   </div>
                   <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <h4 className="text-sm font-black tracking-tight truncate">{p.titre}</h4>
+                    {editingPara === i ? (
+                       <input 
+                         value={p.titre}
+                         onChange={(e) => handleParaChange(i, 'titre', e.target.value)}
+                         className="flex-1 text-sm font-black tracking-tight bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded px-2 py-1 outline-none"
+                       />
+                    ) : (
+                       <h4 className="text-sm font-black tracking-tight truncate">{p.titre}</h4>
+                    )}
                     {/* Badge image assignée */}
                     {paraImages[i] && (
                       <span className="flex-shrink-0 flex items-center gap-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[9px] font-black px-2 py-0.5 rounded-full">
@@ -125,12 +177,30 @@ export function ShopifyPageDisplay({
                       </span>
                     )}
                   </div>
+                  <button 
+                    onClick={() => setEditingPara(editingPara === i ? null : i)}
+                    className="flex items-center gap-1 text-xs font-bold text-blue-500 hover:text-blue-600 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-lg transition-colors"
+                  >
+                    {editingPara === i ? <CheckCircle2 size={14} /> : <Edit2 size={14} />}
+                    {editingPara === i ? 'Terminer' : 'Éditer'}
+                  </button>
                 </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed pl-10">
-                  {p.texte.split(/(?<=\.)\s+/).filter(s => s.trim()).map((phrase, j) => (
-                    <p key={j} className="mb-1 italic">&ldquo;{phrase}&rdquo;</p>
-                  ))}
-                </div>
+                
+                {editingPara === i ? (
+                   <div className="pl-10">
+                     <textarea
+                       value={p.texte}
+                       onChange={(e) => handleParaChange(i, 'texte', e.target.value)}
+                       className="w-full text-xs text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg p-3 outline-none resize-y min-h-[100px]"
+                     />
+                   </div>
+                ) : (
+                   <div className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed pl-10 cursor-pointer" onClick={() => setEditingPara(i)}>
+                     {p.texte.split(/(?<=\.)\s+/).filter(s => s.trim()).map((phrase, j) => (
+                       <p key={j} className="mb-1 italic">&ldquo;{phrase}&rdquo;</p>
+                     ))}
+                   </div>
+                )}
               </div>
             ))}
           </div>
@@ -194,8 +264,8 @@ export function ShopifyPageDisplay({
               prix={parseInt(price) || 0}
               currency={currency}
               paragraphes={selectedParas}
-              bullets={parsed.bullets}
-              titre={parsed.titres[selectedTitle] || ''}
+              bullets={editableBullets}
+              titre={editableTitres[selectedTitle] || ''}
               tags={produit}
               quantite={parseInt(stock) || 10}
               onPublished={url => setPublishedUrl(url)}
@@ -277,7 +347,7 @@ export function ShopifyPageDisplay({
               <div className="border-b border-white/10 pb-4">
                 <span className="text-[9px] font-black text-white/30 uppercase block mb-1">Titre</span>
                 <h2 className="text-lg font-black text-blue-400 leading-tight">
-                  {parsed.titres[selectedTitle]}
+                  {editableTitres[selectedTitle]}
                 </h2>
               </div>
 
@@ -299,7 +369,7 @@ export function ShopifyPageDisplay({
                   {selectedParagraphs.length} section(s)
                 </span>
                 <div className="space-y-4">
-                  {parsed.paragraphes.filter((_, i) => selectedParagraphs.includes(i)).map((p, idx) => {
+                  {editableParagraphes.filter((_, i) => selectedParagraphs.includes(i)).map((p, idx) => {
                     // L'index dans selectedParas correspond à idx
                     const paraIdx = selectedParagraphs[idx]
                     const assignedImg = paraImages[paraIdx]
@@ -324,10 +394,10 @@ export function ShopifyPageDisplay({
                 </div>
 
                 {/* Bullets */}
-                {parsed.bullets.length > 0 && (
+                {editableBullets.length > 0 && (
                   <div className="pt-4 border-t border-white/10 mt-4">
                     <ul className="space-y-1.5">
-                      {parsed.bullets.map((b, i) => (
+                      {editableBullets.map((b, i) => (
                         <li key={i} className="flex items-start gap-2 text-[10px] text-white/50">
                           <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1 shrink-0" />
                           {b}
@@ -342,15 +412,15 @@ export function ShopifyPageDisplay({
 
           {/* Actions */}
           <div className="px-8 pb-8 space-y-3 relative z-10 border-t border-white/5 pt-4">
-            <button onClick={handleCopy}
+            <button onClick={handleDownloadHtml}
               className="w-full py-3.5 bg-white/5 text-white/70 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-white/10 transition-all flex items-center justify-center gap-2"
             >
-              <Copy className="w-4 h-4" /> Copier HTML
+              <Copy className="w-4 h-4" /> Télécharger HTML
             </button>
             {!showImagePicker && (
               <button
                 disabled={isCreating || !hasShopify}
-                onClick={() => onCreateProduct({ title: parsed.titres[selectedTitle], price, stock, description: getPreviewHtml() })}
+                onClick={() => onCreateProduct({ title: editableTitres[selectedTitle] || '', price, stock, description: getPreviewHtml() })}
                 className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
               >
                 {isCreating ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Send className="w-4 h-4" />}

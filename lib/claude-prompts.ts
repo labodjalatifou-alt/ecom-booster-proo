@@ -171,47 +171,49 @@ export async function genererScriptsVoixOff(
 ): Promise<string> {
 
   const prompt = `Tu es expert en scripts publicitaires vidéo pour Facebook Ads et TikTok, marché ${pays}.
-
-Crée 3 scripts voix off DISTINCTS pour "${produit}" à ${prix} ${currency}.
-
-RÈGLE ABSOLUE : Chaque script s'écrit comme un texte continu qu'on lit au micro d'un seul trait. PAS de sections "Accroche :", "Corps :", "CTA :" dans le texte. Juste le texte pur qu'on lit.
-
-RÈGLE DURÉE : 
-- Script 1 : exactement 20-25 secondes = 50 à 60 mots
-- Script 2 : exactement 30-35 secondes = 75 à 90 mots
-- Script 3 : exactement 40-45 secondes = 100 à 115 mots
-
-Compte les mots avant d'écrire chaque script.
-
-Réponds UNIQUEMENT avec ce format exact :
-
-═══ SCRIPT 1 — Technique : Choc Émotionnel ═══
-[Texte continu du script, 50-60 mots, commence par une question ou affirmation forte, finit par un appel à commander]
-⏱ mots | 22 secondes
-
-═══ SCRIPT 2 — Technique : Transformation Avant/Après ═══
-[Texte continu du script, 75-90 mots, décrit la situation avant puis après le produit, finit avec prix et comment commander]
-⏱ mots | 32 secondes
-
-═══ SCRIPT 3 — Technique : Preuve Sociale ═══
-[Texte continu du script, 100-115 mots, commence par un témoignage client type "Ma cliente Aminata m'a dit...", bénéfices, objection, urgence finale]
-⏱ mots | 43 secondes
-
-Infos produit : ${description || produit}
-Points forts : ${avantages}
-`
-
-  return await callClaude(prompt, {
-    system: `Tu es un expert en scripts publicitaires pour l'Afrique francophone. 
-RÈGLES STRICTES :
-1. Chaque script = texte continu lu au micro, SANS labels internes (pas de "Accroche:", "Corps:", "CTA:")
-2. Script 1 = 50-60 mots MAX
-3. Script 2 = 75-90 mots MAX  
-4. Script 3 = 100-115 mots MAX
-5. Compte les mots avant d'écrire
-6. Format avec ═══ SCRIPT N ═══ obligatoire`,
-    max_tokens: 1500,
-  })
+  
+  Crée 3 scripts voix off DISTINCTS pour "${produit}" à ${prix} ${currency}.
+  
+  RÈGLE ABSOLUE 1 : Chaque script s'écrit comme un texte continu qu'on lit au micro d'un seul trait. PAS de sections "Accroche :", "Corps :", "CTA :" dans le texte. Juste le texte pur qu'on lit.
+  RÈGLE ABSOLUE 2 : NE MENTIONNE JAMAIS de prénoms inventés (ex: Aminata, etc.). Reste général.
+  
+  RÈGLE DURÉE : 
+  - Script 1 : exactement 20-25 secondes = 50 à 60 mots
+  - Script 2 : exactement 30-35 secondes = 75 à 90 mots
+  - Script 3 : exactement 40-45 secondes = 100 à 115 mots
+  
+  Compte les mots avant d'écrire chaque script.
+  
+  Réponds UNIQUEMENT avec ce format exact :
+  
+  ═══ SCRIPT 1 — Technique : Problème, Solution, Fonctionnement ═══
+  [Texte continu du script, 50-60 mots, commence par exposer le problème, donne le produit comme solution, explique rapidement comment il fonctionne, finit par un appel à commander]
+  ⏱ mots | 22 secondes
+  
+  ═══ SCRIPT 2 — Technique : Problème, Solution, Fonctionnement (Détaillé) ═══
+  [Texte continu du script, 75-90 mots, expose un problème douloureux de manière plus détaillée, présente la solution, explique précisément son fonctionnement, finit par un appel à l'action avec urgence]
+  ⏱ mots | 32 secondes
+  
+  ═══ SCRIPT 3 — Technique : Transformation et Preuve Sociale ═══
+  [Texte continu du script, 100-115 mots, parle de la transformation qu'apporte le produit (avant/après) et mentionne que beaucoup de clients ont déjà été satisfaits (sans donner de prénoms), finit par une offre spéciale pour commander]
+  ⏱ mots | 43 secondes
+  
+  Infos produit : ${description || produit}
+  Points forts : ${avantages}
+  `
+  
+    return await callClaude(prompt, {
+      system: `Tu es un expert en scripts publicitaires pour l'Afrique francophone. 
+  RÈGLES STRICTES :
+  1. Chaque script = texte continu lu au micro, SANS labels internes (pas de "Accroche:", "Corps:", "CTA:")
+  2. PAS DE PRÉNOMS INVENTÉS.
+  3. Script 1 = 50-60 mots MAX
+  4. Script 2 = 75-90 mots MAX  
+  5. Script 3 = 100-115 mots MAX
+  6. Compte les mots avant d'écrire
+  7. Format avec ═══ SCRIPT N ═══ obligatoire`,
+      max_tokens: 1500,
+    })
 }
 
 // ── Parseur scripts voix off ──────────────────────────────────
