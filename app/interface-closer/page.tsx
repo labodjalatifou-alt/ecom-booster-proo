@@ -21,6 +21,9 @@ export default function InterfaceCloserPage() {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [noteText, setNoteText] = useState('');
   const [showNote, setShowNote] = useState(false);
+  const [showProgram, setShowProgram] = useState(false);
+  const [programDate, setProgramDate] = useState('');
+  const [programTime, setProgramTime] = useState('');
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<DateRange>(DEFAULT_RANGE);
   const [myEarnings, setMyEarnings] = useState(0);
@@ -371,7 +374,8 @@ export default function InterfaceCloserPage() {
                             <div className="absolute right-8 top-full mt-2 w-48 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden py-2 animate-in zoom-in-95 duration-200">
                               <button onClick={() => { handleCall(item.phone); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors"><PhoneForwarded className="w-4 h-4 text-emerald-500" /> Appeler</button>
                               <button onClick={() => { handleWhatsApp(item.phone); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors"><MessageSquare className="w-4 h-4 text-green-500" /> WhatsApp</button>
-                              <button onClick={() => { setSelectedOrder(item); setShowNote(true); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors"><Edit3 className="w-4 h-4 text-amber-500" /> Note</button>
+                              <button onClick={() => { setSelectedOrder(item); setNoteText(''); setShowProgram(true); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors"><Calendar className="w-4 h-4 text-purple-500" /> Programmer</button>
+                              <button onClick={() => { setSelectedOrder(item); setNoteText(''); setShowNote(true); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors"><Edit3 className="w-4 h-4 text-amber-500" /> Note</button>
                               <div className="h-px bg-slate-100 dark:bg-slate-800 my-2" />
                               {tab === 'pending' ? (
                                 <>
@@ -401,7 +405,7 @@ export default function InterfaceCloserPage() {
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setShowNote(false)} />
           <div className="relative bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] shadow-2xl p-10 animate-in zoom-in-95">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-black flex items-center gap-3"><Edit3 className="w-7 h-7 text-amber-500" /> Note Closer</h3>
+              <h3 className="text-xl font-black flex items-center gap-3"><Edit3 className="w-7 h-7 text-amber-500" /> Note</h3>
               <button onClick={() => setShowNote(false)} className="p-2 hover:bg-slate-100 rounded-full"><X className="w-5 h-5" /></button>
             </div>
             <p className="text-xs font-bold text-slate-400 uppercase mb-4">{selectedOrder.customer} — {selectedOrder.product}</p>
@@ -419,13 +423,13 @@ export default function InterfaceCloserPage() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                       orderId: selectedOrder.id,
-                      status: 'Programmé',
+                      status: selectedOrder.status, // KEEP CURRENT STATUS
                       note: noteText,
                       userId: userId
                     })
                   });
                   if (!res.ok) throw new Error("Erreur lors de l'enregistrement");
-                  toast.success("Note enregistrée et commande programmée ! 📅");
+                  toast.success("Note enregistrée !");
                   setShowNote(false); 
                   setNoteText(''); 
                   fetchData();
@@ -435,7 +439,82 @@ export default function InterfaceCloserPage() {
               }} 
               className="w-full py-4 bg-amber-500 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-amber-600 transition-all"
             >
-              Enregistrer & Programmer
+              Enregistrer la note
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* PROGRAMMER MODAL */}
+      {showProgram && selectedOrder && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setShowProgram(false)} />
+          <div className="relative bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] shadow-2xl p-10 animate-in zoom-in-95">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-black flex items-center gap-3"><Calendar className="w-7 h-7 text-purple-500" /> Programmer</h3>
+              <button onClick={() => setShowProgram(false)} className="p-2 hover:bg-slate-100 rounded-full"><X className="w-5 h-5" /></button>
+            </div>
+            <p className="text-xs font-bold text-slate-400 uppercase mb-6">{selectedOrder.customer} — {selectedOrder.product}</p>
+            
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 block">Date prévue</label>
+                <input 
+                  type="date"
+                  value={programDate}
+                  onChange={e => setProgramDate(e.target.value)}
+                  className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border-none font-bold outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 block">Heure prévue (optionnel)</label>
+                <input 
+                  type="time"
+                  value={programTime}
+                  onChange={e => setProgramTime(e.target.value)}
+                  className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border-none font-bold outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 block">Note / Instruction</label>
+                <textarea
+                  placeholder="Appeler à l'arrivée..."
+                  value={noteText}
+                  onChange={e => setNoteText(e.target.value)}
+                  className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border-none font-bold h-24 outline-none resize-none"
+                />
+              </div>
+            </div>
+
+            <button 
+              onClick={async () => { 
+                if (!programDate) return toast.error("Veuillez sélectionner une date");
+                try {
+                  const scheduleStr = `PROGRAMMÉ LE: ${programDate} ${programTime}\nNOTE: ${noteText}`;
+                  const res = await fetch('/api/update-order-status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      orderId: selectedOrder.id,
+                      status: 'Programmé',
+                      note: scheduleStr,
+                      userId: userId
+                    })
+                  });
+                  if (!res.ok) throw new Error("Erreur lors de l'enregistrement");
+                  toast.success("Commande programmée ! 📅");
+                  setShowProgram(false); 
+                  setProgramDate('');
+                  setProgramTime('');
+                  setNoteText(''); 
+                  fetchData();
+                } catch (err: any) {
+                  toast.error(sanitizeError(err));
+                }
+              }} 
+              className="w-full py-4 bg-purple-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-purple-700 transition-all"
+            >
+              Programmer
             </button>
           </div>
         </div>

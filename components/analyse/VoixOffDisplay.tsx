@@ -24,7 +24,7 @@ export function VoixOffDisplay({ scripts }: { scripts: VoixOffScript[] }) {
       {/* 3 scripts */}
       <div className="grid grid-cols-1 gap-6">
         {scripts.map((script) => (
-          <div key={script.numero} className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 p-8 shadow-sm hover:shadow-md transition-all group">
+          <div key={script.numero} className="bg-white dark:bg-slate-900 rounded-3xl md:rounded-[2.5rem] border border-slate-200 dark:border-slate-800 p-5 md:p-8 shadow-sm hover:shadow-md transition-all group">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-4">
@@ -59,7 +59,7 @@ export function VoixOffDisplay({ scripts }: { scripts: VoixOffScript[] }) {
             </div>
             
             {/* Texte du script — grand et lisible pour lecture au micro */}
-            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-3xl p-7 text-slate-800 dark:text-slate-200 text-lg leading-relaxed font-medium mb-6 relative">
+            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl md:rounded-3xl p-5 md:p-7 text-slate-800 dark:text-slate-200 text-sm md:text-lg leading-relaxed font-medium mb-6 relative">
               <div className="absolute top-4 right-4 opacity-10 group-hover:opacity-20 transition-opacity">
                 <Play className="w-12 h-12" />
               </div>
@@ -83,7 +83,7 @@ export function VoixOffDisplay({ scripts }: { scripts: VoixOffScript[] }) {
       </div>
 
       {/* Outils TTS */}
-      <div className="bg-slate-900 rounded-[3rem] p-10 text-white relative overflow-hidden">
+      <div className="bg-slate-900 rounded-3xl md:rounded-[3rem] p-6 md:p-10 text-white relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full -mr-32 -mt-32 blur-3xl" />
         
         <h3 className="text-sm font-bold text-slate-400 uppercase tracking-[0.2em] mb-6 relative z-10">

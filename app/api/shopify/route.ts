@@ -72,6 +72,12 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json(updated);
 
+      case 'delete_product':
+        await shopifyFetch(domain, token, `products/${productId}.json`, {
+          method: 'DELETE',
+        });
+        return NextResponse.json({ success: true });
+
       default:
         return NextResponse.json({ error: `Action inconnue: ${action}` }, { status: 400 });
     }

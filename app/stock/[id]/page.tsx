@@ -223,8 +223,8 @@ export default function ProductDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
         {/* Left Column: Visuals */}
         <div className="lg:col-span-5 space-y-6">
-          <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[3rem] overflow-hidden shadow-sm relative group">
-            <div className="aspect-square bg-slate-50 dark:bg-slate-800/50 flex items-center justify-center p-10">
+          <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-3xl md:rounded-[3rem] overflow-hidden shadow-sm relative group">
+            <div className="aspect-square bg-slate-50 dark:bg-slate-800/50 flex items-center justify-center p-4 md:p-10">
               {imageUrls.length > 0 ? (
                 <img 
                   src={imageUrls[activeImageIndex]} 
@@ -281,7 +281,7 @@ export default function ProductDetailPage() {
 
           {/* Mini images / URL editor if editing */}
           {isEditing && (
-            <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-8 space-y-6">
+            <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-3xl md:rounded-[2.5rem] p-5 md:p-8 space-y-6">
               <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Gestion des Images (URLs)</h4>
               <div className="flex gap-4 overflow-x-auto pb-2">
                 {imageUrls.map((url, i) => (
@@ -317,7 +317,7 @@ export default function ProductDetailPage() {
 
         {/* Right Column: Info & Form */}
         <div className="lg:col-span-7 space-y-8">
-          <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[3rem] p-10 shadow-sm relative overflow-hidden">
+          <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-3xl md:rounded-[3rem] p-5 md:p-10 shadow-sm relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/5 rounded-full -mr-32 -mt-32 blur-3xl" />
             
             <div className="relative z-10 space-y-8">
@@ -380,8 +380,8 @@ export default function ProductDetailPage() {
                     <h2 className="text-3xl sm:text-5xl font-black tracking-tighter leading-[1.1] mb-2 bg-gradient-to-br from-slate-900 to-slate-600 dark:from-white dark:to-slate-400 bg-clip-text text-transparent">{product.title}</h2>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-3xl border border-slate-100 dark:border-slate-800/50">
+                  <div className="grid grid-cols-2 gap-4 md:gap-6">
+                    <div className="bg-slate-50 dark:bg-slate-800/50 p-4 md:p-6 rounded-2xl md:rounded-3xl border border-slate-100 dark:border-slate-800/50">
                       <div className="flex items-center gap-2 mb-2 text-slate-400">
                         <Tag className="w-3 h-3" />
                         <span className="text-[9px] font-black uppercase tracking-widest">Prix de vente</span>

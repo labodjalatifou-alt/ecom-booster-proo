@@ -22,9 +22,10 @@ export default function StockPage() {
   const [newStockValue, setNewStockValue] = useState<number>(0);
   const [statusFilter, setStatusFilter] = useState('all');
 
-  const [confirmDelete, setConfirmDelete] = useState<{ isOpen: boolean; id: string | null }>({
+  const [confirmDelete, setConfirmDelete] = useState<{ isOpen: boolean; id: string | null; shopifyId: string | null }>({
     isOpen: false,
-    id: null
+    id: null,
+    shopifyId: null
   });
 
   useEffect(() => {
@@ -124,12 +125,30 @@ export default function StockPage() {
     }
   }
 
-  async function deleteProduct(id: string) {
+  async function deleteProduct(id: string, shopifyId?: string | null) {
+    if (shopifyId) {
+      const { data: store } = await supabase.from('Store').select('id').single();
+      if (store?.id) {
+        toast.promise(
+          fetch('/api/shopify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'delete_product', productId: shopifyId, storeId: store.id })
+          }).then(r => r.json()),
+          {
+            loading: 'Suppression sur Shopify...',
+            success: 'Produit supprimé de Shopify',
+            error: 'Erreur lors de la suppression sur Shopify'
+          }
+        ).catch(() => {});
+      }
+    }
+    
     const { error } = await supabase.from('products').delete().eq('id', id);
     if (error) {
       toast.error(sanitizeError(error));
     } else {
-      toast.success("Produit supprimé");
+      toast.success("Produit supprimé de l'inventaire local");
       setStockItems(prev => prev.filter(p => p.id !== id));
     }
   }
@@ -249,7 +268,7 @@ export default function StockPage() {
                             <button onClick={() => { handleEditClick(item); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-5 py-3 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors">
                               <Edit3 className="w-4 h-4 text-blue-500" /> Modifier Stock
                             </button>
-                            <button onClick={() => { setConfirmDelete({ isOpen: true, id: item.id }); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-5 py-3 text-[10px] font-black uppercase text-red-500 hover:bg-red-50 transition-colors">
+                            <button onClick={() => { setConfirmDelete({ isOpen: true, id: item.id, shopifyId: item.shopify_id }); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-5 py-3 text-[10px] font-black uppercase text-red-500 hover:bg-red-50 transition-colors">
                               <Trash2 className="w-4 h-4" /> Supprimer
                             </button>
                           </div>
@@ -325,7 +344,7 @@ export default function StockPage() {
                               <button onClick={() => { handleEditClick(item); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-5 py-3 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors">
                                 <Edit3 className="w-4 h-4 text-blue-500" /> Modifier Stock
                               </button>
-                              <button onClick={() => { setConfirmDelete({ isOpen: true, id: item.id }); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-5 py-3 text-[10px] font-black uppercase text-red-500 hover:bg-red-50 transition-colors">
+                              <button onClick={() => { setConfirmDelete({ isOpen: true, id: item.id, shopifyId: item.shopify_id }); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-5 py-3 text-[10px] font-black uppercase text-red-500 hover:bg-red-50 transition-colors">
                                 <Trash2 className="w-4 h-4" /> Supprimer
                               </button>
                             </div>
@@ -368,10 +387,10 @@ export default function StockPage() {
 
       <ConfirmationModal
         isOpen={confirmDelete.isOpen}
-        onClose={() => setConfirmDelete({ isOpen: false, id: null })}
-        onConfirm={() => confirmDelete.id && deleteProduct(confirmDelete.id)}
+        onClose={() => setConfirmDelete({ isOpen: false, id: null, shopifyId: null })}
+        onConfirm={() => confirmDelete.id && deleteProduct(confirmDelete.id, confirmDelete.shopifyId)}
         title="Supprimer du stock ?"
-        message="Êtes-vous sûr de vouloir retirer ce produit de votre inventaire ? Cette action est irréversible."
+        message="Êtes-vous sûr de vouloir retirer ce produit de votre inventaire ET de votre boutique Shopify ? Cette action est irréversible."
         confirmLabel="Supprimer"
         variant="danger"
       />

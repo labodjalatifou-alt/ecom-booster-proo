@@ -202,51 +202,91 @@ export default function HistoriqueCommandesPage() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b-2 border-slate-100 dark:border-slate-800">
-                  <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest">Client & Date</th>
-                  <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest">Produit & Ville</th>
-                  <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest text-center">Statut</th>
-                  <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest text-right">Montant</th>
-                  <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest text-right">Réf.</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y-2 divide-slate-100 dark:divide-slate-800">
-                {filtered.map((order) => (
-                  <tr key={order.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all">
-                    <td className="px-8 py-5">
-                      <div className="font-black text-sm">{order.customer}</div>
-                      <div className="text-[9px] font-bold text-slate-400 mt-0.5 uppercase">
-                        {order.created_at
-                          ? format(new Date(order.created_at), 'dd MMM yyyy', { locale: fr })
-                          : '-'}
+          <>
+            {/* VUE MOBILE */}
+            <div className="md:hidden flex flex-col gap-4 p-4">
+              {filtered.map((order) => (
+                <div key={order.id} className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col gap-4 relative">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="font-black text-sm text-slate-800 dark:text-slate-100">{order.customer}</div>
+                      <div className="text-[10px] font-bold text-slate-400 mt-1 uppercase">
+                        {order.created_at ? format(new Date(order.created_at), 'dd MMM yyyy', { locale: fr }) : '-'}
                       </div>
-                    </td>
-                    <td className="px-8 py-5">
-                      <div className="text-sm font-black text-slate-700 dark:text-slate-200 truncate max-w-[200px]">{order.product}</div>
-                      <div className="flex items-center gap-1 text-[9px] font-bold text-slate-400 mt-0.5 uppercase">
-                        <MapPin className="w-2.5 h-2.5" /> {cleanCity(order.city)}
-                      </div>
-                    </td>
-                    <td className="px-8 py-5 text-center">
-                      <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${statusColor(order.status)}`}>
-                        {order.status}
-                      </span>
-                    </td>
-                    <td className="px-8 py-5 text-right">
-                      <div className="font-black text-sm">{new Intl.NumberFormat('fr-FR').format(parsePrice(order.price))}</div>
-                      <div className="text-[9px] font-black text-slate-400 uppercase">{order.currency || storeCurrency}</div>
-                    </td>
-                    <td className="px-8 py-5 text-right font-mono text-[9px] text-slate-400">
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${statusColor(order.status)}`}>
+                      {order.status}
+                    </span>
+                  </div>
+                  
+                  <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <div className="text-sm font-black text-slate-700 dark:text-slate-200 line-clamp-2 leading-tight mb-2">
+                      {order.product}
+                    </div>
+                    <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase">
+                      <MapPin className="w-3 h-3" /> {cleanCity(order.city)}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-end pt-2 border-t border-slate-200 dark:border-slate-700">
+                    <div className="font-mono text-[9px] text-slate-400">
                       #{String(order.shopify_id || order.id || '').slice(-6)}
-                    </td>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-black text-sm text-emerald-600">{new Intl.NumberFormat('fr-FR').format(parsePrice(order.price))} {order.currency || storeCurrency}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* VUE DESKTOP */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b-2 border-slate-100 dark:border-slate-800">
+                    <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest">Client & Date</th>
+                    <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest">Produit & Ville</th>
+                    <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest text-center">Statut</th>
+                    <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest text-right">Montant</th>
+                    <th className="px-8 py-5 text-[9px] font-black uppercase text-slate-400 tracking-widest text-right">Réf.</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y-2 divide-slate-100 dark:divide-slate-800">
+                  {filtered.map((order) => (
+                    <tr key={order.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all">
+                      <td className="px-8 py-5">
+                        <div className="font-black text-sm">{order.customer}</div>
+                        <div className="text-[9px] font-bold text-slate-400 mt-0.5 uppercase">
+                          {order.created_at
+                            ? format(new Date(order.created_at), 'dd MMM yyyy', { locale: fr })
+                            : '-'}
+                        </div>
+                      </td>
+                      <td className="px-8 py-5">
+                        <div className="text-sm font-black text-slate-700 dark:text-slate-200 truncate max-w-[200px]">{order.product}</div>
+                        <div className="flex items-center gap-1 text-[9px] font-bold text-slate-400 mt-0.5 uppercase">
+                          <MapPin className="w-2.5 h-2.5" /> {cleanCity(order.city)}
+                        </div>
+                      </td>
+                      <td className="px-8 py-5 text-center">
+                        <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${statusColor(order.status)}`}>
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="px-8 py-5 text-right">
+                        <div className="font-black text-sm">{new Intl.NumberFormat('fr-FR').format(parsePrice(order.price))}</div>
+                        <div className="text-[9px] font-black text-slate-400 uppercase">{order.currency || storeCurrency}</div>
+                      </td>
+                      <td className="px-8 py-5 text-right font-mono text-[9px] text-slate-400">
+                        #{String(order.shopify_id || order.id || '').slice(-6)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 

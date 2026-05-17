@@ -64,6 +64,9 @@ export default function RealtimeNotifications() {
                 toast.success(`Commande de ${newOrder.customer} LIVRÉE !`, { icon: '📦' });
               } else if (newOrder.status === 'Annulé') {
                 toast.error(`Commande de ${newOrder.customer} ANNULÉE`, { icon: '❌' });
+              } else if (newOrder.status === 'Programmé') {
+                playSound('confirm'); // You can change this to a specific alarm sound later
+                toast.success(`Commande de ${newOrder.customer} PROGRAMMÉE !`, { icon: '📅' });
               }
             }
 
@@ -87,6 +90,24 @@ export default function RealtimeNotifications() {
       supabase.removeChannel(channel);
     };
   }, [playSound, selectedStore]);
+
+  // Polling check for Programmed Orders
+  useEffect(() => {
+    const checkProgrammed = async () => {
+      try {
+        await fetch('/api/cron/check-programmed');
+      } catch (err) {
+        console.error("Cron check failed", err);
+      }
+    };
+    
+    // Check every minute
+    const interval = setInterval(checkProgrammed, 60000);
+    // Initial check
+    checkProgrammed();
+    
+    return () => clearInterval(interval);
+  }, []);
 
   return null;
 }
