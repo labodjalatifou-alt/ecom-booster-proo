@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { Truck, PhoneForwarded, MessageSquare, CheckCircle2, MapPin, DollarSign, Loader2, Package, XCircle, Clock, X, Calendar } from 'lucide-react';
+import { Truck, PhoneForwarded, MessageSquare, CheckCircle2, MapPin, DollarSign, Loader2, Package, XCircle, Clock, X, Calendar, ChevronDown } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { useStore } from '@/components/StoreProvider';
@@ -14,6 +14,7 @@ type Tab = 'pending' | 'delivered' | 'cancelled' | 'programmed';
 export default function InterfaceLivreurPage() {
   const { currency, selectedStore, stores } = useStore();
   const [tab, setTab] = useState<Tab>('pending');
+  const [isTabDropdownOpen, setIsTabDropdownOpen] = useState(false);
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalCashPending, setTotalCashPending] = useState(0);
@@ -221,25 +222,83 @@ export default function InterfaceLivreurPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-1 shadow-sm mb-8 w-fit overflow-x-auto">
-        {tabs.map(t => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`whitespace-nowrap px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-              tab === t.id
-                ? 'bg-slate-900 text-white shadow-lg'
-                : 'text-slate-400 hover:text-slate-600'
-            }`}
+      <div className="mb-8">
+        {/* Mobile Dropdown */}
+        <div className="md:hidden relative">
+          <button 
+            onClick={() => setIsTabDropdownOpen(!isTabDropdownOpen)}
+            className="w-full flex items-center justify-between p-4 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm"
           >
-            {t.label}
-            {orders.filter(o => o.status === (t.id === 'pending' ? 'Confirmé' : t.id === 'programmed' ? 'Programmé' : t.id === 'delivered' ? 'Livré' : 'Annulé')).length > 0 && (
-              <span className={`ml-2 px-1.5 py-0.5 rounded-full text-[8px] ${tab === t.id ? 'bg-white text-slate-900' : 'bg-slate-100 text-slate-400'}`}>
-                {orders.filter(o => o.status === (t.id === 'pending' ? 'Confirmé' : t.id === 'programmed' ? 'Programmé' : t.id === 'delivered' ? 'Livré' : 'Annulé')).length}
-              </span>
-            )}
+            <div className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-slate-800 dark:text-slate-100">
+              {(() => {
+                const active = tabs.find(t => t.id === tab);
+                return (
+                  <>
+                    <span className={active?.color}>{active?.label}</span>
+                    {active && <span className="ml-2 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 text-[10px]">{
+                      active.id === 'pending' ? orders.filter(o => o.status === 'Confirmé').length :
+                      active.id === 'programmed' ? orders.filter(o => o.status === 'Programmé').length :
+                      active.id === 'delivered' ? orders.filter(o => o.status === 'Livré').length :
+                      orders.filter(o => o.status === 'Annulé').length
+                    }</span>}
+                  </>
+                );
+              })()}
+            </div>
+            <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${isTabDropdownOpen ? 'rotate-180' : ''}`} />
           </button>
-        ))}
+          
+          {isTabDropdownOpen && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setIsTabDropdownOpen(false)} />
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                {tabs.map(t => {
+                  const count = t.id === 'pending' ? orders.filter(o => o.status === 'Confirmé').length :
+                               t.id === 'programmed' ? orders.filter(o => o.status === 'Programmé').length :
+                               t.id === 'delivered' ? orders.filter(o => o.status === 'Livré').length :
+                               orders.filter(o => o.status === 'Annulé').length;
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => { setTab(t.id); setIsTabDropdownOpen(false); }}
+                      className={`w-full flex items-center justify-between p-4 text-xs font-black uppercase tracking-widest transition-colors ${
+                        tab === t.id ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className={t.color}>{t.label}</span>
+                      </div>
+                      {count > 0 && <span className={`px-2 py-0.5 rounded-full text-[10px] ${tab === t.id ? 'bg-primary-100 text-primary-700' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>{count}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Desktop Tabs */}
+        <div className="hidden md:flex gap-1 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-1 shadow-sm w-fit overflow-x-auto">
+          {tabs.map(t => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`whitespace-nowrap px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                tab === t.id
+                  ? 'bg-slate-900 text-white shadow-lg'
+                  : 'text-slate-400 hover:text-slate-600'
+              }`}
+            >
+              <span className={tab === t.id ? 'text-white' : t.color}>{t.label}</span>
+              <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[8px] ${tab === t.id ? 'bg-white text-slate-900' : 'bg-slate-100 text-slate-400'}`}>
+                {t.id === 'pending' ? orders.filter(o => o.status === 'Confirmé').length :
+                t.id === 'programmed' ? orders.filter(o => o.status === 'Programmé').length :
+                t.id === 'delivered' ? orders.filter(o => o.status === 'Livré').length :
+                orders.filter(o => o.status === 'Annulé').length}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Table */}

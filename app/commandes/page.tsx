@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { ShoppingCart, Search, Eye, MapPin, Phone, Package, X, Globe, User, Loader2, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ShoppingCart, Search, Eye, MapPin, Phone, Package, X, Globe, User, Loader2, RefreshCw, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useStore } from '@/components/StoreProvider';
 import { cleanCity, cleanCountry } from '@/lib/utils';
@@ -21,6 +21,7 @@ export default function CommandesPage() {
   const [page, setPage] = useState(1);
   const [dateRange, setDateRange] = useState<DateRange>(DEFAULT_RANGE);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
+  const [isTabDropdownOpen, setIsTabDropdownOpen] = useState(false);
 
   async function fetchOrders(p = page, silent = false) {
     if (!silent) setLoading(true);
@@ -147,12 +148,45 @@ export default function CommandesPage() {
         <DateRangePicker value={dateRange} onChange={setDateRange} align="left" />
 
         {/* Status Filter */}
-        <div className="flex bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-1 shadow-sm">
+        {/* Mobile Dropdown */}
+        <div className="md:hidden relative w-full sm:w-auto mt-2 sm:mt-0">
+          <button 
+            onClick={() => setIsTabDropdownOpen(!isTabDropdownOpen)}
+            className="w-full flex items-center justify-between p-3.5 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm"
+          >
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-800 dark:text-slate-100">
+              {statuses.find(s => s.id === statusFilter)?.label || 'Tous'}
+            </span>
+            <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isTabDropdownOpen ? 'rotate-180' : ''}`} />
+          </button>
+          
+          {isTabDropdownOpen && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setIsTabDropdownOpen(false)} />
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                {statuses.map(s => (
+                  <button
+                    key={s.id}
+                    onClick={() => { setStatusFilter(s.id); setIsTabDropdownOpen(false); }}
+                    className={`w-full flex items-center p-4 text-[10px] font-black uppercase tracking-widest transition-colors ${
+                      statusFilter === s.id ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Desktop Tabs */}
+        <div className="hidden md:flex bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-1 shadow-sm overflow-x-auto">
           {statuses.map(s => (
             <button
               key={s.id}
               onClick={() => setStatusFilter(s.id)}
-              className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
+              className={`whitespace-nowrap px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
                 statusFilter === s.id
                   ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg'
                   : 'text-slate-400 hover:text-slate-600'
