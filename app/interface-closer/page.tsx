@@ -7,9 +7,9 @@ import toast from 'react-hot-toast';
 import { useStore } from '@/components/StoreProvider';
 import { cleanCity, cleanCountry, sanitizeError } from '@/lib/utils';
 import ConfirmationModal from '@/components/ConfirmationModal';
+import DateRangePicker, { DateRange, DEFAULT_RANGE } from '@/components/DateRangePicker';
 
 type Tab = 'pending' | 'confirmed' | 'cancelled' | 'programmed';
-type Period = 'TODAY' | 'YESTERDAY' | '7D' | '30D' | 'ALL';
 
 export default function InterfaceCloserPage() {
   const { currency, selectedStore, stores } = useStore();
@@ -21,34 +21,9 @@ export default function InterfaceCloserPage() {
   const [noteText, setNoteText] = useState('');
   const [showNote, setShowNote] = useState(false);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
-  const [period, setPeriod] = useState<Period>('ALL');
+  const [dateRange, setDateRange] = useState<DateRange>(DEFAULT_RANGE);
   const [myEarnings, setMyEarnings] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
-
-  function getDateRange(p: Period): { from: string | null; to: string | null } {
-    const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
-    switch (p) {
-      case 'TODAY':
-        return { from: startOfToday.toISOString(), to: null };
-      case 'YESTERDAY': {
-        const yesterday = new Date(startOfToday);
-        yesterday.setDate(yesterday.getDate() - 1);
-        return { from: yesterday.toISOString(), to: startOfToday.toISOString() };
-      }
-      case '7D': {
-        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        return { from: sevenDaysAgo.toISOString(), to: null };
-      }
-      case '30D': {
-        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        return { from: thirtyDaysAgo.toISOString(), to: null };
-      }
-      default:
-        return { from: null, to: null };
-    }
-  }
 
   async function fetchData() {
     setLoading(true);
@@ -66,9 +41,8 @@ export default function InterfaceCloserPage() {
     }
 
     // Filtrage par période
-    const { from, to } = getDateRange(period);
-    if (from) query = query.gte('created_at', from);
-    if (to) query = query.lt('created_at', to);
+    if (dateRange.from) query = query.gte('created_at', dateRange.from);
+    if (dateRange.to) query = query.lte('created_at', dateRange.to);
 
     const { data, error } = await query;
 
@@ -83,10 +57,7 @@ export default function InterfaceCloserPage() {
       ).length;
       setConfirmedToday(todayConfirmed);
 
-      // 1. Calcul des gains filtrés (pour info ou logs)
-      // const filteredCommissions = data.reduce((acc: number, o: any) => acc + (o.closer_paid || 0), 0);
-      
-      // 2. Calcul des gains TOTAUX (Indépendant du filtre de date)
+      // Calcul des gains TOTAUX (Indépendant du filtre de date)
       let totalQuery = supabase.from('orders').select('closer_paid');
       if (selectedStore) totalQuery = totalQuery.eq('store_id', selectedStore);
       const { data: allData } = await totalQuery;
@@ -99,7 +70,6 @@ export default function InterfaceCloserPage() {
 
   useEffect(() => {
     fetchData();
-    // Plus besoin de fetchUserEarnings ici pour les comptes fictifs
 
     const channel = supabase
       .channel('closer-realtime')
@@ -109,7 +79,7 @@ export default function InterfaceCloserPage() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [period, selectedStore]);
+  }, [dateRange, selectedStore]);
 
   async function updateStatus(orderId: any, newStatus: string) {
     console.log("Updating Order ID:", orderId, "to Status:", newStatus);
@@ -151,14 +121,6 @@ export default function InterfaceCloserPage() {
   const handleCall = (phone: string) => { window.location.href = `tel:${phone}`; };
   const handleWhatsApp = (phone: any) => { window.open(`https://wa.me/${String(phone || '').replace(/\D/g, '')}`, '_blank'); };
 
-  const periods: { id: Period; label: string }[] = [
-    { id: 'TODAY', label: "Aujourd'hui" },
-    { id: 'YESTERDAY', label: 'Hier' },
-    { id: '7D', label: '7 Jours' },
-    { id: '30D', label: '30 Jours' },
-    { id: 'ALL', label: 'Tout' },
-  ];
-
   return (
     <div className="max-w-7xl mx-auto pb-10 px-4 text-slate-800 dark:text-slate-100 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
@@ -198,24 +160,9 @@ export default function InterfaceCloserPage() {
       {/* Date Selector */}
       <div className="flex flex-wrap items-center gap-3 mb-6">
         <div className="flex items-center gap-2 text-slate-400 mr-2">
-          <Calendar className="w-4 h-4" />
           <span className="text-[9px] font-black uppercase tracking-widest">Période</span>
         </div>
-        <div className="flex flex-wrap bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-1 shadow-sm">
-          {periods.map(p => (
-            <button
-              key={p.id}
-              onClick={() => setPeriod(p.id)}
-              className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                period === p.id
-                  ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/20'
-                  : 'text-slate-400 hover:text-slate-600'
-              }`}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
+        <DateRangePicker value={dateRange} onChange={setDateRange} align="left" />
       </div>
 
       {/* Tabs */}

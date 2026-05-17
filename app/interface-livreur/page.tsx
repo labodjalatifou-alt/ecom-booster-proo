@@ -7,9 +7,9 @@ import toast from 'react-hot-toast';
 import { useStore } from '@/components/StoreProvider';
 import { cleanCity, cleanCountry, sanitizeError } from '@/lib/utils';
 import ConfirmationModal from '@/components/ConfirmationModal';
+import DateRangePicker, { DateRange, DEFAULT_RANGE } from '@/components/DateRangePicker';
 
 type Tab = 'pending' | 'delivered' | 'cancelled' | 'programmed';
-type Period = 'TODAY' | 'YESTERDAY' | '7D' | '30D' | 'ALL';
 
 export default function InterfaceLivreurPage() {
   const { currency, selectedStore, stores } = useStore();
@@ -18,7 +18,7 @@ export default function InterfaceLivreurPage() {
   const [loading, setLoading] = useState(true);
   const [totalCashPending, setTotalCashPending] = useState(0);
   const [totalCashCollected, setTotalCashCollected] = useState(0);
-  const [period, setPeriod] = useState<Period>('ALL');
+  const [dateRange, setDateRange] = useState<DateRange>(DEFAULT_RANGE);
   const [userId, setUserId] = useState<string | null>(null);
   const [myEarnings, setMyEarnings] = useState(0);
   
@@ -27,35 +27,6 @@ export default function InterfaceLivreurPage() {
   const [collectionAmount, setCollectionAmount] = useState('');
   const [deliveryFee, setDeliveryFee] = useState('0');
   const [isDeliveryFeeIncluded, setIsDeliveryFeeIncluded] = useState(false);
-
-  useEffect(() => {
-    // Plus besoin de fetchUserEarnings pour les comptes fictifs
-  }, []);
-
-  function getDateRange(p: Period): { from: string | null; to: string | null } {
-    const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
-    switch (p) {
-      case 'TODAY':
-        return { from: startOfToday.toISOString(), to: null };
-      case 'YESTERDAY': {
-        const yesterday = new Date(startOfToday);
-        yesterday.setDate(yesterday.getDate() - 1);
-        return { from: yesterday.toISOString(), to: startOfToday.toISOString() };
-      }
-      case '7D': {
-        const d = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        return { from: d.toISOString(), to: null };
-      }
-      case '30D': {
-        const d = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        return { from: d.toISOString(), to: null };
-      }
-      default:
-        return { from: null, to: null };
-    }
-  }
 
   async function fetchOrders() {
     setLoading(true);
@@ -73,9 +44,8 @@ export default function InterfaceLivreurPage() {
       query = query.in('store_id', stores.map(s => s.id));
     }
 
-    const { from, to } = getDateRange(period);
-    if (from) query = query.gte('created_at', from);
-    if (to) query = query.lt('created_at', to);
+    if (dateRange.from) query = query.gte('created_at', dateRange.from);
+    if (dateRange.to) query = query.lte('created_at', dateRange.to);
 
     const { data, error } = await query;
 
@@ -107,7 +77,7 @@ export default function InterfaceLivreurPage() {
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [period, selectedStore]);
+  }, [dateRange, selectedStore]);
 
   const filteredOrders = orders.filter(o => {
     if (tab === 'pending') return o.status === 'Confirmé';
@@ -198,14 +168,6 @@ export default function InterfaceLivreurPage() {
     { id: 'cancelled', label: 'Annulées', color: 'text-red-500' },
   ];
 
-  const periods: { id: Period; label: string }[] = [
-    { id: 'TODAY', label: "Aujourd'hui" },
-    { id: 'YESTERDAY', label: 'Hier' },
-    { id: '7D', label: '7 Jours' },
-    { id: '30D', label: '30 Jours' },
-    { id: 'ALL', label: 'Tout' },
-  ];
-
   return (
     <div className="max-w-7xl mx-auto pb-10 px-4 text-slate-800 dark:text-slate-100 animate-in fade-in duration-500">
       {/* Header */}
@@ -253,24 +215,9 @@ export default function InterfaceLivreurPage() {
       {/* Date Selector */}
       <div className="flex flex-wrap items-center gap-3 mb-6">
         <div className="flex items-center gap-2 text-slate-400 mr-2">
-          <Calendar className="w-4 h-4" />
           <span className="text-[9px] font-black uppercase tracking-widest">Période</span>
         </div>
-        <div className="flex flex-wrap bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-1 shadow-sm">
-          {periods.map(p => (
-            <button
-              key={p.id}
-              onClick={() => setPeriod(p.id)}
-              className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                period === p.id
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-                  : 'text-slate-400 hover:text-slate-600'
-              }`}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
+        <DateRangePicker value={dateRange} onChange={setDateRange} align="left" />
       </div>
 
       {/* Tabs */}

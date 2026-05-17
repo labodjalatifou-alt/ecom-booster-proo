@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { useAppSounds } from '@/lib/hooks/useAppSounds';
 import { sanitizeError } from '@/lib/utils';
 import ConfirmationModal from '@/components/ConfirmationModal';
+import DateRangePicker, { DateRange, DEFAULT_RANGE } from '@/components/DateRangePicker';
 
 export default function StatCards() {
   const { currency, selectedStore } = useStore();
@@ -19,7 +20,7 @@ export default function StatCards() {
     deliveryRate: 0,
     pendingOrders: 0
   });
-  const [period, setPeriod] = useState('ALL'); // TODAY, YESTERDAY, 30D, 90D, ALL
+  const [dateRange, setDateRange] = useState<DateRange>(DEFAULT_RANGE);
   const [showMarkReceivedConfirm, setShowMarkReceivedConfirm] = useState(false);
 
   useEffect(() => {
@@ -28,24 +29,9 @@ export default function StatCards() {
       try {
         let query = supabase.from('orders').select('*');
         
-        // Filtrage par période
-        const now = new Date();
-        if (period === 'TODAY') {
-          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-          query = query.gte('created_at', today);
-        } else if (period === 'YESTERDAY') {
-          const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).toISOString();
-          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-          query = query.gte('created_at', yesterday).lt('created_at', today);
-        } else if (period === '30D') {
-          const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
-          query = query.gte('created_at', thirtyDaysAgo);
-        } else if (period === '90D') {
-          const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString();
-          query = query.gte('created_at', ninetyDaysAgo);
-        }
+        if (dateRange.from) query = query.gte('created_at', dateRange.from);
+        if (dateRange.to) query = query.lte('created_at', dateRange.to);
 
-        // Filtrage par boutique (utilise l'ID réel de la boutique depuis la DB)
         if (selectedStore) {
           query = query.eq('store_id', selectedStore);
         }
@@ -71,7 +57,6 @@ export default function StatCards() {
           const deliveredCount = data.filter(o => o.status === 'Livré').length;
           const confirmedCount = data.filter(o => ['Confirmé', 'Livré', 'Annulé'].includes(o.status)).length;
           const deliveryRate = confirmedCount > 0 ? Math.round((deliveredCount / confirmedCount) * 100) : 0;
-
           const pendingOrders = data.filter(o => o.status === 'A Confirmer').length;
 
           setMetrics({ caLivre, cashInTransit, deliveryRate, pendingOrders });
@@ -85,7 +70,6 @@ export default function StatCards() {
 
     fetchMetrics();
     
-    // Abonnement en temps réel
     const channel = supabase
       .channel('stat-cards-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
@@ -93,10 +77,8 @@ export default function StatCards() {
       })
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [selectedStore, period]);
+    return () => { supabase.removeChannel(channel); };
+  }, [selectedStore, dateRange]);
 
   const stats = [
     {
@@ -163,31 +145,11 @@ export default function StatCards() {
 
   return (
     <>
-    <div className="flex flex-col md:flex-row justify-end items-stretch md:items-center gap-4 mb-4">
-      <div className="flex flex-wrap md:flex-nowrap justify-center bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-1 shadow-sm">
-        {[
-          { id: 'TODAY', label: 'Aujourd\'hui' },
-          { id: 'YESTERDAY', label: 'Hier' },
-          { id: '30D', label: '30 Jours' },
-          { id: '90D', label: '90 Jours' },
-          { id: 'ALL', label: 'Tout' }
-        ].map((p) => (
-          <button
-            key={p.id}
-            onClick={() => setPeriod(p.id)}
-            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-              period === p.id 
-                ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/20' 
-                : 'text-slate-400 hover:text-slate-600'
-            }`}
-          >
-            {p.label}
-          </button>
-        ))}
-      </div>
+    <div className="flex flex-col sm:flex-row justify-end items-stretch sm:items-center gap-3 mb-4">
+      <DateRangePicker value={dateRange} onChange={setDateRange} />
       <button 
         onClick={() => syncShopify()}
-        className="flex justify-center items-center gap-2 px-6 py-3 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-primary-600 hover:border-primary-100 transition-all shadow-sm"
+        className="flex justify-center items-center gap-2 px-6 py-2.5 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-primary-600 hover:border-primary-100 transition-all shadow-sm"
       >
         <RefreshCw className="w-4 h-4" />
         Sync Shopify

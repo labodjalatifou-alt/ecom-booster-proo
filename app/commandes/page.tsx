@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { ShoppingCart, Search, Eye, MapPin, Phone, Package, X, Globe, User, Loader2, RefreshCw, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { ShoppingCart, Search, Eye, MapPin, Phone, Package, X, Globe, User, Loader2, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useStore } from '@/components/StoreProvider';
 import { cleanCity, cleanCountry } from '@/lib/utils';
+import DateRangePicker, { DateRange, DEFAULT_RANGE } from '@/components/DateRangePicker';
 
-type Period = 'TODAY' | 'YESTERDAY' | '7D' | '30D' | 'ALL';
 type StatusFilter = 'ALL' | 'A Confirmer' | 'Confirmé' | 'Livré' | 'Annulé';
 
 const PAGE_SIZE = 50;
@@ -19,23 +19,8 @@ export default function CommandesPage() {
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(1);
-  const [period, setPeriod] = useState<Period>('ALL');
+  const [dateRange, setDateRange] = useState<DateRange>(DEFAULT_RANGE);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
-
-  function getDateRange(p: Period): { from: string | null; to: string | null } {
-    const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    switch (p) {
-      case 'TODAY': return { from: startOfToday.toISOString(), to: null };
-      case 'YESTERDAY': {
-        const y = new Date(startOfToday); y.setDate(y.getDate() - 1);
-        return { from: y.toISOString(), to: startOfToday.toISOString() };
-      }
-      case '7D': return { from: new Date(now.getTime() - 7*24*60*60*1000).toISOString(), to: null };
-      case '30D': return { from: new Date(now.getTime() - 30*24*60*60*1000).toISOString(), to: null };
-      default: return { from: null, to: null };
-    }
-  }
 
   async function fetchOrders(p = page, silent = false) {
     if (!silent) setLoading(true);
@@ -50,9 +35,8 @@ export default function CommandesPage() {
       countQuery = countQuery.in('store_id', stores.map(s => s.id));
     }
 
-    const { from, to } = getDateRange(period);
-    if (from) countQuery = countQuery.gte('created_at', from);
-    if (to) countQuery = countQuery.lt('created_at', to);
+    if (dateRange.from) countQuery = countQuery.gte('created_at', dateRange.from);
+    if (dateRange.to) countQuery = countQuery.lte('created_at', dateRange.to);
     if (statusFilter !== 'ALL') countQuery = countQuery.eq('status', statusFilter);
     
     const { count } = await countQuery;
@@ -74,8 +58,8 @@ export default function CommandesPage() {
       query = query.in('store_id', stores.map(s => s.id));
     }
 
-    if (from) query = query.gte('created_at', from);
-    if (to) query = query.lt('created_at', to);
+    if (dateRange.from) query = query.gte('created_at', dateRange.from);
+    if (dateRange.to) query = query.lte('created_at', dateRange.to);
     if (statusFilter !== 'ALL') query = query.eq('status', statusFilter);
 
     const { data, error } = await query;
@@ -87,7 +71,7 @@ export default function CommandesPage() {
     if (loadingStores) return; // Attendre que les stores soient chargés
     setPage(1);
     fetchOrders(1);
-  }, [period, statusFilter, selectedStore, loadingStores]);
+  }, [dateRange, statusFilter, selectedStore, loadingStores]);
 
   useEffect(() => {
     fetchOrders(page);
@@ -112,14 +96,6 @@ export default function CommandesPage() {
     if (s === 'Confirmé') return 'bg-blue-100 text-blue-700 border-blue-200';
     return 'bg-amber-100 text-amber-700 border-amber-200';
   };
-
-  const periods: { id: Period; label: string }[] = [
-    { id: 'TODAY', label: "Aujourd'hui" },
-    { id: 'YESTERDAY', label: 'Hier' },
-    { id: '7D', label: '7 Jours' },
-    { id: '30D', label: '30 Jours' },
-    { id: 'ALL', label: 'Tout' },
-  ];
 
   const statuses: { id: StatusFilter; label: string }[] = [
     { id: 'ALL', label: 'Tous' },
@@ -168,24 +144,7 @@ export default function CommandesPage() {
       {/* Filters Row */}
       <div className="flex flex-wrap items-center gap-4 mb-6">
         {/* Date Selector */}
-        <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-slate-400" />
-          <div className="flex bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-1 shadow-sm">
-            {periods.map(p => (
-              <button
-                key={p.id}
-                onClick={() => setPeriod(p.id)}
-                className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
-                  period === p.id
-                    ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/20'
-                    : 'text-slate-400 hover:text-slate-600'
-                }`}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        <DateRangePicker value={dateRange} onChange={setDateRange} align="left" />
 
         {/* Status Filter */}
         <div className="flex bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-1 shadow-sm">
