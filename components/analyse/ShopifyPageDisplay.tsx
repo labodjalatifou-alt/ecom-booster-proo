@@ -141,10 +141,10 @@ export function ShopifyPageDisplay({
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
       {/* ── Colonne gauche (7/12) ──────────────────────────── */}
-      <div className="lg:col-span-7 space-y-8">
+      <div className="lg:col-span-7 space-y-8 order-2 lg:order-1">
 
         {/* 1. Titres */}
-        <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-sm">
+        <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-5 md:p-8 shadow-sm">
           <h3 className="text-[10px] font-black mb-6 uppercase tracking-widest text-slate-400">1. Sélectionnez & Modifiez votre Titre</h3>
           <div className="space-y-3">
             {editableTitres.map((titre, i) => (
@@ -177,7 +177,7 @@ export function ShopifyPageDisplay({
         </section>
 
         {/* 2. Paragraphes */}
-        <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-sm">
+        <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-5 md:p-8 shadow-sm">
           <h3 className="text-[10px] font-black mb-6 uppercase tracking-widest text-slate-400">2. Modifiez la Description Neuromarketing</h3>
           <div className="space-y-4">
             {editableParagraphes.map((p, i) => (
@@ -245,7 +245,7 @@ export function ShopifyPageDisplay({
         </section>
 
         {/* 3. Configuration boutique */}
-        <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-sm">
+        <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-5 md:p-8 shadow-sm">
           <h3 className="text-[10px] font-black mb-6 uppercase tracking-widest text-slate-400">3. Configuration Boutique</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-3">
@@ -281,7 +281,7 @@ export function ShopifyPageDisplay({
         </section>
 
         {/* 4. Images + Publication */}
-        <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-sm">
+        <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-5 md:p-8 shadow-sm">
           <button
             onClick={() => setShowImagePicker(prev => !prev)}
             className="w-full flex items-center justify-between group"
@@ -338,7 +338,7 @@ export function ShopifyPageDisplay({
       </div>
 
       {/* ── Colonne droite — Live Preview (5/12) ──────────── */}
-      <div className="lg:col-span-5">
+      <div className="lg:col-span-5 order-1 lg:order-2">
         <div className="sticky top-24 bg-slate-900 rounded-[3rem] text-white shadow-2xl overflow-hidden border border-white/5">
           <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full -mr-16 -mt-16 blur-3xl pointer-events-none" />
 

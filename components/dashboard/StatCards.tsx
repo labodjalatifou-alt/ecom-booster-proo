@@ -163,8 +163,8 @@ export default function StatCards() {
 
   return (
     <>
-    <div className="flex justify-end items-center gap-4 mb-4">
-      <div className="flex bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-1 shadow-sm">
+    <div className="flex flex-col md:flex-row justify-end items-stretch md:items-center gap-4 mb-4">
+      <div className="flex flex-wrap md:flex-nowrap justify-center bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-1 shadow-sm">
         {[
           { id: 'TODAY', label: 'Aujourd\'hui' },
           { id: 'YESTERDAY', label: 'Hier' },
@@ -187,7 +187,7 @@ export default function StatCards() {
       </div>
       <button 
         onClick={() => syncShopify()}
-        className="flex items-center gap-2 px-6 py-3 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-primary-600 hover:border-primary-100 transition-all shadow-sm"
+        className="flex justify-center items-center gap-2 px-6 py-3 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-primary-600 hover:border-primary-100 transition-all shadow-sm"
       >
         <RefreshCw className="w-4 h-4" />
         Sync Shopify

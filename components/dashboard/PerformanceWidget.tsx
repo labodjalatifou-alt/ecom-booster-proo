@@ -119,7 +119,7 @@ export default function PerformanceWidget() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-6 animate-in fade-in duration-500">
       {/* Closer Leaderboard */}
-      <div className="bg-white dark:bg-slate-900 rounded-[3rem] p-10 border-2 border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+      <div className="bg-white dark:bg-slate-900 rounded-[3rem] p-6 md:p-10 border-2 border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
         <div className="absolute top-0 right-0 w-48 h-48 bg-primary-500/5 rounded-full -mr-24 -mt-24 transition-transform group-hover:scale-110"></div>
         <div className="flex items-center justify-between mb-8 relative z-10">
           <div className="flex items-center gap-4">
@@ -156,7 +156,7 @@ export default function PerformanceWidget() {
       </div>
 
       {/* Livreur Leaderboard */}
-      <div className="bg-white dark:bg-slate-900 rounded-[3rem] p-10 border-2 border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+      <div className="bg-white dark:bg-slate-900 rounded-[3rem] p-6 md:p-10 border-2 border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
         <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/5 rounded-full -mr-24 -mt-24 transition-transform group-hover:scale-110"></div>
         <div className="flex items-center justify-between mb-8 relative z-10">
           <div className="flex items-center gap-4">
@@ -193,7 +193,7 @@ export default function PerformanceWidget() {
       </div>
 
       {/* Tunnel Widget (Full Width) */}
-      <div className="bg-slate-900 text-white rounded-[3rem] p-10 col-span-1 lg:col-span-2 shadow-2xl overflow-hidden relative group">
+      <div className="bg-slate-900 text-white rounded-[3rem] p-6 md:p-10 col-span-1 lg:col-span-2 shadow-2xl overflow-hidden relative group">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary-600/10 blur-[100px] -mr-32 -mt-32"></div>
         
         <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
@@ -202,7 +202,7 @@ export default function PerformanceWidget() {
             <p className="text-xs font-black text-white/40 uppercase tracking-[0.3em]">Santé globale du business</p>
           </div>
           
-          <div className="flex gap-8">
+          <div className="flex flex-wrap gap-6">
             <div className="text-center">
               <div className="text-3xl font-black text-emerald-400">{data.tunnel.delivered}%</div>
               <div className="text-[9px] font-black text-white/30 uppercase tracking-widest mt-1">Livraison (DSR)</div>
