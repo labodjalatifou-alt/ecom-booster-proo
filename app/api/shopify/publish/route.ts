@@ -90,11 +90,20 @@ export async function POST(req: NextRequest) {
           requires_shipping: true,
         }],
         tags: tags || '',
-        // Shopify accepte les URLs externes directement comme src d'image
-        images: (mediaImages || []).slice(0, 10).map((url: string, i: number) => ({
-          src: url,
-          position: i + 1,
-        })),
+        // Shopify accepte les URLs externes directement comme src d'image, ou base64 comme attachment
+        images: (mediaImages || []).slice(0, 10).map((urlOrBase64: string, i: number) => {
+          if (urlOrBase64.startsWith('data:')) {
+            const base64Data = urlOrBase64.split(',')[1];
+            return {
+              attachment: base64Data,
+              position: i + 1,
+            };
+          }
+          return {
+            src: urlOrBase64,
+            position: i + 1,
+          };
+        }),
       }
     }
 

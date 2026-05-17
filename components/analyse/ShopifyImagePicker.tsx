@@ -1,29 +1,18 @@
 'use client'
 // components/analyse/ShopifyImagePicker.tsx
-// Galerie images Serper + sélection double usage + Live Preview intégré
 
-import { useState, useCallback } from 'react'
-import { Loader2, ImageIcon, Check, Upload, AlertCircle, ExternalLink, X, Search, RefreshCw, Layers, Zap } from 'lucide-react'
+import { useState, useRef } from 'react'
+import { Loader2, ImageIcon, Check, Upload, AlertCircle, ExternalLink, X, Search, Plus, Layers } from 'lucide-react'
 import toast from 'react-hot-toast'
 
-export interface SearchedImage {
-  url: string
-  title: string
-  source: string
-  type: 'pinterest' | 'amazon' | 'ecom' | 'lifestyle' | 'white_bg' | 'in_action' | 'closeup'
-  thumbnail?: string
-  width?: number
-  height?: number
+export interface ImagePickerState {
+  mediaSelected: string[]
+  paraImages: Record<number, string>
 }
 
 interface Paragraphe {
   titre: string
   texte: string
-}
-
-export interface ImagePickerState {
-  mediaSelected: string[]
-  paraImages: Record<number, string>
 }
 
 interface ShopifyImagePickerProps {
@@ -40,66 +29,66 @@ interface ShopifyImagePickerProps {
   onImagesChange?: (state: ImagePickerState) => void
 }
 
-const TYPE_LABELS: Record<string, { label: string; icon: string; desc: string }> = {
-  pinterest: { label: 'Pinterest',       icon: '📌', desc: 'inspirations & lifestyle de qualité' },
-  amazon:    { label: 'Amazon',          icon: '🛒', desc: 'photos produit professionnelles' },
-  ecom:      { label: 'E-commerce',      icon: '🛍️', desc: 'AliExpress · Shein · Etsy · Walmart' },
-  lifestyle: { label: 'Lifestyle',       icon: '🌅', desc: 'produit en situation réelle' },
-  white_bg:  { label: 'Fond blanc',      icon: '⬜', desc: '' },
-  in_action: { label: 'En action',       icon: '🎬', desc: '' },
-  closeup:   { label: 'Gros plan',       icon: '🔍', desc: '' },
-}
-
 export default function ShopifyImagePicker({
-  produit, pays = 'Sénégal', prix = 0, currency = 'FCFA',
+  produit, prix = 0, currency = 'FCFA',
   paragraphes, bullets = [], titre, tags, quantite = 10,
   onPublished, onImagesChange,
 }: ShopifyImagePickerProps) {
 
-  const [images, setImages] = useState<SearchedImage[]>([])
-  const [loading, setLoading] = useState(false)
+  const [uploadedImages, setUploadedImages] = useState<string[]>([])
   const [publishing, setPublishing] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null)
+  
   const [mediaSelected, setMediaSelected] = useState<string[]>([])
   const [paraImages, setParaImages] = useState<Record<number, string>>({})
   const [assigningToPara, setAssigningToPara] = useState<number | null>(null)
+  
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const notifyParent = (media: string[], para: Record<number, string>) => {
     onImagesChange?.({ mediaSelected: media, paraImages: para })
   }
 
-  // ── Recherche images ──────────────────────────────────────────
-  const searchImages = useCallback(async () => {
-    setLoading(true)
-    setImages([])
-    setAssigningToPara(null)
-    try {
-      const res = await fetch('/api/images/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ produit, pays }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Erreur serveur')
+  // ── Liens de recherche ──────────────────────────────────────────
+  const searchLinks = [
+    { name: 'Pinterest', url: `https://www.pinterest.com/search/pins/?q=${encodeURIComponent(produit)}`, icon: '📌' },
+    { name: 'Google Images', url: `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(produit)}`, icon: '🖼️' },
+    { name: 'Google Shopping', url: `https://www.google.com/search?tbm=shop&q=${encodeURIComponent(produit)}`, icon: '🛍️' },
+    { name: 'Amazon', url: `https://www.amazon.com/s?k=${encodeURIComponent(produit)}`, icon: '🛒' },
+    { name: 'AliExpress', url: `https://www.aliexpress.com/wholesale?SearchText=${encodeURIComponent(produit)}`, icon: '📦' },
+    { name: 'Etsy', url: `https://www.etsy.com/search?q=${encodeURIComponent(produit)}`, icon: '🎨' },
+    { name: 'Google (Nom + Shopify)', url: `https://www.google.com/search?q=${encodeURIComponent(produit + ' Shopify')}`, icon: '🔍' },
+    { name: 'Giphy', url: `https://giphy.com/search/${encodeURIComponent(produit)}`, icon: '✨' },
+    { name: 'Tenor', url: `https://tenor.com/search/${encodeURIComponent(produit)}`, icon: '🎭' },
+    { name: 'YouTube', url: `https://www.youtube.com/results?search_query=${encodeURIComponent(produit)}`, icon: '▶️' },
+  ]
 
-      setImages(data.images || [])
-      setSearchTerm(data.searchTerm || '')
+  // ── Upload manuel ──────────────────────────────────────────────
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files) return
 
-      if ((data.images?.length || 0) > 0) {
-        toast.success(`${data.images.length} images trouvées — "${data.searchTerm}"`)
-        if (data.warning) toast(`⚠️ ${data.warning}`, { duration: 5000 })
-      } else {
-        toast.error(`⚠️ ${data.warning || data.error || 'Aucune image trouvée.'}`, { duration: 8000 })
+    const newImages: string[] = []
+    let loadedCount = 0
+
+    Array.from(files).forEach(file => {
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          newImages.push(event.target.result as string)
+        }
+        loadedCount++
+        if (loadedCount === files.length) {
+          setUploadedImages(prev => [...prev, ...newImages])
+          toast.success(`${files.length} image(s) importée(s)`)
+          if (fileInputRef.current) fileInputRef.current.value = ''
+        }
       }
-    } catch (err: any) {
-      toast.error('❌ ' + err.message, { duration: 10000 })
-    } finally {
-      setLoading(false)
-    }
-  }, [produit, pays])
+      reader.readAsDataURL(file)
+    })
+  }
 
-  // ── Sélection médias galerie ──────────────────────────────────
+  // ── Sélection médias ────────────────────────────────────────────
   const toggleMedia = (url: string) => {
     if (assigningToPara !== null) {
       const next = { ...paraImages, [assigningToPara]: url }
@@ -121,6 +110,18 @@ export default function ShopifyImagePicker({
     delete next[i]
     setParaImages(next)
     notifyParent(mediaSelected, next)
+  }
+
+  const deleteUploadedImage = (url: string) => {
+    setUploadedImages(prev => prev.filter(u => u !== url))
+    const nextMedia = mediaSelected.filter(u => u !== url)
+    const nextPara = { ...paraImages }
+    Object.keys(nextPara).forEach(k => {
+      if (nextPara[Number(k)] === url) delete nextPara[Number(k)]
+    })
+    setMediaSelected(nextMedia)
+    setParaImages(nextPara)
+    notifyParent(nextMedia, nextPara)
   }
 
   // ── Publication Shopify ───────────────────────────────────────
@@ -151,165 +152,156 @@ export default function ShopifyImagePicker({
     }
   }
 
-  // ── Grouper les images par type ───────────────────────────────
-  const byType = (type: string) => images.filter(i => i.type === type)
   const totalAssigned = Object.keys(paraImages).length
-  const imageGroups = [
-    { type: 'pinterest', items: byType('pinterest') },
-    { type: 'amazon', items: byType('amazon') },
-    { type: 'ecom', items: byType('ecom') },
-    { type: 'lifestyle', items: byType('lifestyle') },
-  ].filter(g => g.items.length > 0)
 
   return (
-    <div className="space-y-6 mt-6">
+    <div className="space-y-8 mt-6">
 
-      {/* ── Header + bouton recherche ─────────────────────── */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
-            <span>🖼️</span> Images produit
-          </h3>
-          {searchTerm && (
-            <p className="text-[11px] text-slate-500 mt-0.5">
-              Recherche : <span className="font-bold text-blue-600 dark:text-blue-400">"{searchTerm}"</span>
-              <span className="ml-2 text-slate-400">(fond blanc · lifestyle · action · gros plan)</span>
-            </p>
-          )}
+      {/* ── 1. Liens de recherche ────────────────────────────── */}
+      <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
+        <h3 className="text-sm font-black text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+          <Search className="w-4 h-4 text-blue-500" /> Liens de Recherche Pré-remplis
+        </h3>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-6 font-medium">
+          Cliquez sur ces liens pour trouver des images, vidéos ou GIFs pour "<strong>{produit}</strong>". Téléchargez-les sur votre appareil puis importez-les ci-dessous.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          {searchLinks.map(link => (
+            <a
+              key={link.name}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-blue-400 hover:shadow-md rounded-xl text-[11px] font-bold text-slate-700 dark:text-slate-300 transition-all hover:-translate-y-0.5"
+            >
+              <span>{link.icon}</span> {link.name}
+            </a>
+          ))}
         </div>
-        <button
-          onClick={searchImages}
-          disabled={loading}
-          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-blue-500/20"
-        >
-          {loading ? <><Loader2 size={14} className="animate-spin" /> Recherche...</>
-            : images.length > 0 ? <><RefreshCw size={14} /> Nouvelles images</>
-            : <><Search size={14} /> Chercher images</>}
-        </button>
       </div>
 
-      {/* ── Zone vide ──────────────────────────────────────── */}
-      {images.length === 0 && !loading && (
-        <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-8 text-center">
-          <ImageIcon size={36} className="text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-          <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
-            Cliquez sur <strong>"Chercher images"</strong> pour trouver des visuels de qualité.
-          </p>
-          <div className="flex items-center justify-center gap-4 mt-3 text-xs text-slate-400 flex-wrap">
-            <span>📌 Pinterest</span>
-            <span>🛒 Amazon</span>
-            <span>🛍️ AliExpress · Shein · Etsy</span>
-            <span>🌅 Lifestyle</span>
-          </div>
+      {/* ── 2. Import et Galerie ─────────────────────────────── */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <Upload className="w-4 h-4 text-emerald-500" /> Vos Images Importées
+          </h3>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-2 px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg"
+          >
+            <Plus size={14} /> Importer des fichiers
+          </button>
+          <input
+            type="file"
+            multiple
+            accept="image/*"
+            className="hidden"
+            ref={fileInputRef}
+            onChange={handleFileUpload}
+          />
         </div>
-      )}
 
-      {/* ── Galerie par catégorie ───────────────────────────── */}
-      {images.length > 0 && (
-        <>
-          {/* Bandeau instructions */}
-          <div className={`rounded-xl p-3 flex gap-2 border text-xs font-medium transition-all ${
-            assigningToPara !== null
-              ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300'
-              : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
-          }`}>
-            <AlertCircle size={14} className="flex-shrink-0 mt-0.5" />
-            {assigningToPara !== null ? (
-              <span>
-                🎯 <strong>Mode assignation §{assigningToPara + 1}</strong> — Cliquez une image pour l'injecter dans la description.
-                <button onClick={() => setAssigningToPara(null)} className="underline text-red-500 ml-2">Annuler</button>
-              </span>
-            ) : (
-              <span>
-                <strong>Cliquez</strong> une image pour la sélectionner en galerie Shopify (✅).
-                Puis <strong>"📎 Assigner"</strong> sous un paragraphe pour l'injecter dans le texte.
-              </span>
-            )}
-          </div>
-
-          {/* Groupes d'images */}
-          {imageGroups.map(({ type, items }) => {
-            const meta = TYPE_LABELS[type] || { label: type, icon: '📷', desc: '' }
-            return (
-              <div key={type}>
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-                  {meta.icon} {meta.label}
-                  <span className="bg-slate-100 dark:bg-slate-700 text-slate-500 rounded-full px-2 py-0.5 text-[9px] font-black">
-                    {items.length}
-                  </span>
-                  {meta.desc && (
-                    <span className="text-[9px] text-slate-400 font-normal normal-case tracking-normal">— {meta.desc}</span>
-                  )}
-                </h4>
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
-                  {items.map((img, i) => (
-                    <ImageCard
-                      key={`${type}-${i}`}
-                      img={img}
-                      isMediaSelected={mediaSelected.includes(img.url)}
-                      isAssigning={assigningToPara !== null}
-                      onClick={() => toggleMedia(img.url)}
-                    />
-                  ))}
-                </div>
-              </div>
-            )
-          })}
-
-          {/* Compteur */}
-          <div className="flex items-center justify-between text-xs bg-slate-50 dark:bg-slate-800/50 rounded-xl px-3 py-2 text-slate-500 dark:text-slate-400">
-            <span>
-              <strong className="text-slate-800 dark:text-white">{mediaSelected.length}</strong> galerie principale
-              {' · '}
-              <strong className="text-slate-800 dark:text-white">{totalAssigned}</strong> images inline
-            </span>
-            {mediaSelected.length > 0 && (
-              <button
-                onClick={() => { setMediaSelected([]); notifyParent([], paraImages) }}
-                className="text-red-400 hover:text-red-600 font-bold transition-colors"
-              >
-                Tout désélectionner
-              </button>
-            )}
-          </div>
-
-          {/* Aperçu sélection galerie */}
-          {mediaSelected.length > 0 && (
-            <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
-                Aperçu galerie Shopify ({mediaSelected.length} image{mediaSelected.length > 1 ? 's' : ''})
-              </p>
-              <div className="flex gap-2 overflow-x-auto pb-2">
-                {mediaSelected.map((url, i) => (
-                  <div key={i} className="relative flex-shrink-0 group">
-                    <img
-                      src={url}
-                      alt=""
-                      className="w-20 h-20 object-contain bg-white dark:bg-slate-800 rounded-xl border-2 border-blue-300"
-                      onError={e => (e.target as HTMLImageElement).style.display = 'none'}
-                    />
-                    <span className="absolute top-0.5 left-0.5 w-4 h-4 bg-blue-600 text-white text-[9px] font-black rounded-full flex items-center justify-center">
-                      {i + 1}
-                    </span>
-                    <button
-                      onClick={() => { const next = mediaSelected.filter(u => u !== url); setMediaSelected(next); notifyParent(next, paraImages) }}
-                      className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white rounded-full text-[10px] hidden group-hover:flex items-center justify-center"
-                    >
-                      <X size={8} />
-                    </button>
-                  </div>
-                ))}
-              </div>
+        {uploadedImages.length === 0 ? (
+          <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-12 text-center bg-slate-50 dark:bg-slate-800/30">
+            <div className="w-16 h-16 bg-white dark:bg-slate-900 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-slate-100 dark:border-slate-800">
+              <ImageIcon size={24} className="text-slate-300 dark:text-slate-600" />
             </div>
-          )}
-        </>
-      )}
+            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+              Aucune image importée pour le moment.
+            </p>
+            <p className="text-[11px] text-slate-400 mt-2">
+              Utilisez les liens de recherche ci-dessus pour télécharger des visuels, puis importez-les ici.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className={`rounded-xl p-3 flex gap-2 border text-xs font-medium transition-all ${
+              assigningToPara !== null
+                ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300'
+                : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400'
+            }`}>
+              <AlertCircle size={14} className="flex-shrink-0 mt-0.5" />
+              {assigningToPara !== null ? (
+                <span>
+                  🎯 <strong>Mode assignation §{assigningToPara + 1}</strong> — Cliquez une image pour l'injecter dans la description.
+                  <button onClick={() => setAssigningToPara(null)} className="underline text-red-500 ml-2">Annuler</button>
+                </span>
+              ) : (
+                <span>
+                  <strong>Cliquez</strong> sur une image pour l'ajouter à la galerie principale (✅).
+                  Utilisez <strong>"📎 Assigner"</strong> plus bas pour injecter une image dans un paragraphe.
+                </span>
+              )}
+            </div>
 
-      {/* ── Paragraphes + assignation image ────────────────── */}
-      {paragraphes.length > 0 && (
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+              {uploadedImages.map((url, i) => (
+                <div
+                  key={i}
+                  onClick={() => toggleMedia(url)}
+                  className={`relative group cursor-pointer rounded-xl overflow-hidden border-2 transition-all duration-150 ${
+                    mediaSelected.includes(url)
+                      ? 'border-blue-500 shadow-lg shadow-blue-500/25 scale-[1.03]'
+                      : assigningToPara !== null
+                        ? 'border-blue-300 hover:border-blue-500 hover:scale-[1.02]'
+                        : 'border-slate-200 dark:border-slate-700 hover:border-slate-400 hover:scale-[1.02]'
+                  }`}
+                >
+                  <img
+                    src={url}
+                    alt=""
+                    className="w-full aspect-square object-cover bg-white dark:bg-slate-900"
+                  />
+                  {mediaSelected.includes(url) && (
+                    <div className="absolute inset-0 bg-blue-500/20 flex items-start justify-end p-2">
+                      <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center shadow-md">
+                        <Check size={12} className="text-white" />
+                      </div>
+                    </div>
+                  )}
+                  {assigningToPara !== null && !mediaSelected.includes(url) && (
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                      <span className="text-white text-[10px] font-black bg-black/70 px-2 py-1 rounded-lg">Assigner</span>
+                    </div>
+                  )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      deleteUploadedImage(url)
+                    }}
+                    className="absolute bottom-2 right-2 w-6 h-6 bg-red-500/90 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-md backdrop-blur-sm"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+            </div>
+            
+            <div className="flex items-center justify-between text-xs bg-slate-50 dark:bg-slate-800/50 rounded-xl px-3 py-2 text-slate-500 dark:text-slate-400">
+              <span>
+                <strong className="text-slate-800 dark:text-white">{mediaSelected.length}</strong> dans la galerie
+                {' · '}
+                <strong className="text-slate-800 dark:text-white">{totalAssigned}</strong> images inline
+              </span>
+              {mediaSelected.length > 0 && (
+                <button
+                  onClick={() => { setMediaSelected([]); notifyParent([], paraImages) }}
+                  className="text-red-400 hover:text-red-600 font-bold transition-colors"
+                >
+                  Tout désélectionner
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── 3. Paragraphes + assignation ───────────────────────── */}
+      {paragraphes.length > 0 && uploadedImages.length > 0 && (
         <div>
           <h3 className="text-sm font-black text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2">
-            <Layers size={16} /> Description — Titre · Texte · Image (alternance)
+            <Layers size={16} /> Placement des images dans le texte
           </h3>
           <div className="space-y-2">
             {paragraphes.map((p, i) => (
@@ -335,8 +327,7 @@ export default function ShopifyImagePicker({
                         <img
                           src={paraImages[i]}
                           alt={p.titre}
-                          className="w-14 h-14 object-contain bg-white dark:bg-slate-800 rounded-xl border-2 border-blue-300"
-                          onError={e => (e.target as HTMLImageElement).style.display = 'none'}
+                          className="w-14 h-14 object-cover bg-white dark:bg-slate-800 rounded-xl border-2 border-blue-300"
                         />
                         <button
                           onClick={() => removeParaImage(i)}
@@ -348,22 +339,20 @@ export default function ShopifyImagePicker({
                     )}
                   </div>
 
-                  {images.length > 0 && (
-                    <button
-                      onClick={() => setAssigningToPara(assigningToPara === i ? null : i)}
-                      className={`mt-2 ml-9 text-[11px] px-3 py-1.5 rounded-lg font-bold transition-all ${
-                        assigningToPara === i
-                          ? 'bg-blue-500 text-white shadow-md shadow-blue-500/30'
-                          : paraImages[i]
-                            ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 border border-amber-200 dark:border-amber-800'
-                            : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-blue-100 hover:text-blue-700'
-                      }`}
-                    >
-                      {assigningToPara === i ? '✏️ Cliquez une image...'
-                        : paraImages[i] ? '🔄 Changer image'
-                        : '📎 Assigner image'}
-                    </button>
-                  )}
+                  <button
+                    onClick={() => setAssigningToPara(assigningToPara === i ? null : i)}
+                    className={`mt-2 ml-9 text-[11px] px-3 py-1.5 rounded-lg font-bold transition-all ${
+                      assigningToPara === i
+                        ? 'bg-blue-500 text-white shadow-md shadow-blue-500/30'
+                        : paraImages[i]
+                          ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 border border-amber-200 dark:border-amber-800'
+                          : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-blue-100 hover:text-blue-700'
+                    }`}
+                  >
+                    {assigningToPara === i ? '✏️ Cliquez une image ci-dessus...'
+                      : paraImages[i] ? '🔄 Changer image'
+                      : '📎 Assigner image'}
+                  </button>
                 </div>
               </div>
             ))}
@@ -371,7 +360,7 @@ export default function ShopifyImagePicker({
         </div>
       )}
 
-      {/* ── Bouton publication ──────────────────────────────── */}
+      {/* ── 4. Publication Shopify ────────────────────────────── */}
       <div className="border-t border-slate-100 dark:border-slate-700 pt-5">
         {publishedUrl ? (
           <a href={publishedUrl} target="_blank" rel="noopener noreferrer"
@@ -400,58 +389,6 @@ export default function ShopifyImagePicker({
         <p className="text-[10px] text-slate-400 text-center mt-2 font-medium">
           Produit créé en <strong>brouillon</strong> — activez dans Shopify après vérification.
         </p>
-      </div>
-    </div>
-  )
-}
-
-// ── ImageCard ─────────────────────────────────────────────────
-interface ImageCardProps {
-  img: SearchedImage
-  isMediaSelected: boolean
-  isAssigning: boolean
-  onClick: () => void
-}
-
-function ImageCard({ img, isMediaSelected, isAssigning, onClick }: ImageCardProps) {
-  const [error, setError] = useState(false)
-  const [loaded, setLoaded] = useState(false)
-  if (error) return null
-
-  return (
-    <div
-      onClick={onClick}
-      title={img.title}
-      className={`relative group cursor-pointer rounded-xl overflow-hidden border-2 transition-all duration-150 ${
-        isMediaSelected
-          ? 'border-blue-500 shadow-lg shadow-blue-500/25 scale-[1.03]'
-          : isAssigning
-            ? 'border-blue-300 dark:border-blue-600 hover:border-blue-500 hover:scale-[1.02]'
-            : 'border-transparent hover:border-slate-300 dark:hover:border-slate-600 hover:scale-[1.02]'
-      }`}
-    >
-      {!loaded && <div className="w-full aspect-square bg-slate-100 dark:bg-slate-700 animate-pulse" />}
-      <img
-        src={img.thumbnail || img.url}
-        alt={img.title}
-        className={`w-full aspect-square object-contain bg-white dark:bg-slate-800 transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0 absolute inset-0'}`}
-        onLoad={() => setLoaded(true)}
-        onError={() => setError(true)}
-      />
-      {isMediaSelected && (
-        <div className="absolute inset-0 bg-blue-500/20 flex items-start justify-end p-1.5">
-          <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center shadow-md">
-            <Check size={11} className="text-white" />
-          </div>
-        </div>
-      )}
-      {isAssigning && !isMediaSelected && (
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
-          <span className="text-white text-[10px] font-black bg-black/70 px-2 py-1 rounded-lg">Assigner ici</span>
-        </div>
-      )}
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-1.5 translate-y-full group-hover:translate-y-0 transition-transform duration-150">
-        <p className="text-[8px] text-white/90 truncate font-medium">{img.source}</p>
       </div>
     </div>
   )
