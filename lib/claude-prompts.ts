@@ -183,26 +183,27 @@ export async function genererScriptsVoixOff(
   3. Preuve / Fonctionnement : Dire comment le produit fonctionne, ses bénéfices ou donner une preuve sociale.
   4. Appel à l'action EXACT : termine par une variante très proche de "n'hésitez pas à cliquer sur le bouton en bas de la vidéo, remplir le formulaire pour commander".
   
-  RÈGLE DURÉE : 
-  - Script 1 : exactement 20-25 secondes = 50 à 60 mots
-  - Script 2 : exactement 30-35 secondes = 75 à 90 mots
-  - Script 3 : exactement 40-45 secondes = 100 à 115 mots
+  RÈGLE DURÉE ET LONGUEUR (TRES IMPORTANT) : 
+  - Script 1 : 80 à 95 mots (environ 35 secondes)
+  - Script 2 : 95 à 110 mots (environ 45 secondes)
+  - Script 3 : 100 à 120 mots (environ 50 secondes)
+  Chaque script doit faire MINIMUM 80 mots et MAXIMUM 120 mots.
   
   Compte les mots avant d'écrire chaque script.
   
   Réponds UNIQUEMENT avec ce format exact :
   
-  ═══ SCRIPT 1 — Technique : Problème, Solution, Fonctionnement ═══
-  [Texte continu du script, respectant la structure, 50-60 mots]
-  ⏱ mots | 22 secondes
+  ═══ SCRIPT 1 — Technique : Choc Émotionnel ═══
+  [Texte continu du script, respectant la structure, 80-95 mots]
+  ⏱ mots | 35 secondes
   
-  ═══ SCRIPT 2 — Technique : Problème, Solution, Fonctionnement (Détaillé) ═══
-  [Texte continu du script, respectant la structure en étant plus détaillé sur le problème et le fonctionnement, 75-90 mots]
-  ⏱ mots | 32 secondes
+  ═══ SCRIPT 2 — Technique : Choc Émotionnel (Détaillé) ═══
+  [Texte continu du script, respectant la structure en insistant encore plus sur la douleur initiale, 95-110 mots]
+  ⏱ mots | 45 secondes
   
   ═══ SCRIPT 3 — Technique : Preuve Sociale et Transformation ═══
-  [Texte continu du script, respectant la structure en insistant sur la preuve sociale et la transformation avant/après, 100-115 mots]
-  ⏱ mots | 43 secondes
+  [Texte continu du script, respectant la structure en insistant sur la preuve sociale et la transformation avant/après, 100-120 mots]
+  ⏱ mots | 50 secondes
   
   Infos produit : ${description || produit}
   Points forts : ${avantages}
@@ -213,10 +214,10 @@ export async function genererScriptsVoixOff(
   RÈGLES STRICTES :
   1. Chaque script = texte continu lu au micro, SANS labels internes (pas de "Accroche:", "Corps:", "CTA:")
   2. PAS DE PRÉNOMS INVENTÉS.
-  3. STRUCTURE OBLIGATOIRE : Problème (2-3 phrases) > Solution > Fonctionnement/Preuve > Appel à l'action ("cliquez sur le bouton en bas, remplir le formulaire...").
-  4. Script 1 = 50-60 mots MAX
-  5. Script 2 = 75-90 mots MAX  
-  6. Script 3 = 100-115 mots MAX
+  3. STRUCTURE OBLIGATOIRE : Problème (2-3 phrases) > Solution > Fonctionnement/Preuve > Appel à l'action.
+  4. Script 1 = 80-95 mots
+  5. Script 2 = 95-110 mots  
+  6. Script 3 = 100-120 mots
   7. Compte les mots avant d'écrire
   8. Format avec ═══ SCRIPT N ═══ obligatoire`,
       max_tokens: 1500,
