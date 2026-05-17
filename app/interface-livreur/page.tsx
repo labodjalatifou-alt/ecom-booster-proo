@@ -175,7 +175,7 @@ export default function InterfaceLivreurPage() {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto pb-10 px-4 text-slate-800 dark:text-slate-100 animate-in fade-in duration-500">
+    <div className="max-w-7xl mx-auto pb-10 px-2 md:px-4 text-slate-800 dark:text-slate-100 animate-in fade-in duration-500">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-8">
         <div>
@@ -307,7 +307,7 @@ export default function InterfaceLivreurPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] shadow-sm overflow-visible min-h-[300px]">
+      <div className="bg-transparent md:bg-white md:dark:bg-slate-900 md:border-2 border-slate-100 dark:border-slate-800 rounded-2xl md:rounded-[2.5rem] shadow-none md:shadow-sm overflow-visible min-h-[300px]">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-40 gap-4 text-slate-400">
             <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
@@ -330,7 +330,7 @@ export default function InterfaceLivreurPage() {
         ) : (
           <>
             {/* VUE MOBILE */}
-            <div className="md:hidden flex flex-col gap-4 p-4">
+            <div className="md:hidden flex flex-col gap-3 py-2">
               {filteredOrders.map((item: any) => (
                 <div key={item.id} className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col gap-3">
                   <div className="flex justify-between items-start">

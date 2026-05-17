@@ -134,7 +134,7 @@ export default function InterfaceCloserPage() {
   const handleWhatsApp = (phone: any) => { window.open(`https://wa.me/${String(phone || '').replace(/\D/g, '')}`, '_blank'); };
 
   return (
-    <div className="max-w-7xl mx-auto pb-10 px-4 text-slate-800 dark:text-slate-100 animate-in fade-in duration-500">
+    <div className="max-w-7xl mx-auto pb-10 px-2 md:px-4 text-slate-800 dark:text-slate-100 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
         <div>
           <div className="flex items-center gap-2 mb-2">
@@ -267,7 +267,7 @@ export default function InterfaceCloserPage() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] shadow-sm overflow-visible min-h-[400px]">
+      <div className="bg-transparent md:bg-white md:dark:bg-slate-900 md:border-2 border-slate-100 dark:border-slate-800 rounded-2xl md:rounded-[2.5rem] shadow-none md:shadow-sm overflow-visible min-h-[400px]">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-40 gap-4 text-slate-400">
             <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
@@ -281,7 +281,7 @@ export default function InterfaceCloserPage() {
         ) : (
           <>
             {/* VUE MOBILE */}
-            <div className="md:hidden flex flex-col gap-4 p-4">
+            <div className="md:hidden flex flex-col gap-3 py-2">
               {filteredOrders.map((item: any) => (
                 <div key={item.id} className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col gap-3 relative">
                   <div className="flex justify-between items-start">
@@ -301,7 +301,8 @@ export default function InterfaceCloserPage() {
                         <div className="absolute right-4 top-10 w-48 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden py-2 animate-in zoom-in-95 duration-200">
                           <button onClick={() => { handleCall(item.phone); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors"><PhoneForwarded className="w-4 h-4 text-emerald-500" /> Appeler</button>
                           <button onClick={() => { handleWhatsApp(item.phone); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors"><MessageSquare className="w-4 h-4 text-green-500" /> WhatsApp</button>
-                          <button onClick={() => { setSelectedOrder(item); setShowNote(true); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors"><Edit3 className="w-4 h-4 text-amber-500" /> Note</button>
+                          <button onClick={() => { setSelectedOrder(item); setNoteText(''); setShowProgram(true); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors"><Calendar className="w-4 h-4 text-purple-500" /> Programmer</button>
+                          <button onClick={() => { setSelectedOrder(item); setNoteText(''); setShowNote(true); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-6 py-4 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors"><Edit3 className="w-4 h-4 text-amber-500" /> Note</button>
                           <div className="h-px bg-slate-100 dark:bg-slate-800 my-2" />
                           {tab === 'pending' ? (
                             <>
