@@ -281,7 +281,7 @@ export default function InterfaceCloserPage() {
         ) : (
           <>
             {/* VUE MOBILE */}
-            <div className="md:hidden flex flex-col gap-3 py-2">
+            <div className={`md:hidden flex flex-col gap-3 py-2 ${activeMenu ? 'pb-64' : ''}`}>
               {filteredOrders.map((item: any) => (
                 <div key={item.id} className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col gap-3 relative">
                   <div className="flex justify-between items-start">
@@ -340,7 +340,7 @@ export default function InterfaceCloserPage() {
             </div>
 
             {/* VUE DESKTOP */}
-            <div className="hidden md:block overflow-x-auto">
+            <div className={`hidden md:block ${activeMenu ? 'pb-64' : ''}`}>
               <table className="w-full text-left border-collapse min-w-[800px] table-fixed">
                 <thead>
                   <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b-2 border-slate-100 dark:border-slate-800">
