@@ -71,32 +71,72 @@ export default function PubliciteFacebookPage() {
   const [campaignName, setCampaignName] = useState('');
   const [budgetType, setBudgetType] = useState<'CBO' | 'ABO'>('CBO');
   const [campaignBudget, setCampaignBudget] = useState('20');
-  const [pixelId, setPixelId] = useState('');
-  const [pageId, setPageId] = useState('');
-  const [manualPixelId, setManualPixelId] = useState('');
-  const [manualPageId, setManualPageId] = useState('');
-  const [useManualAssets, setUseManualAssets] = useState(false);
-  const [targetingCountries, setTargetingCountries] = useState<string[]>(['TG']);
-  const [targetingType, setTargetingType] = useState<'country' | 'city'>('country');
-  const [radiusKm, setRadiusKm] = useState(40);
-  const [adSetName, setAdSetName] = useState('');
-  const [adSetsCount, setAdSetsCount] = useState(1);
   const [productUrl, setProductUrl] = useState('');
 
-  // Multiple Ad Copies / Variants
-  const [adsList, setAdsList] = useState<any[]>([
+  // Hierarchical Campaign Structure (Campaign -> AdSets -> Ads)
+  interface Ad {
+    id: string;
+    adName: string;
+    adHeadline: string;
+    adText: string;
+    adCta: string;
+    mediaType: 'image' | 'video';
+    imageUrl: string;
+    videoUrl: string;
+    imageFile: File | null;
+    videoFile: File | null;
+  }
+
+  interface AdSet {
+    id: string;
+    name: string;
+    pixelId: string;
+    manualPixelId: string;
+    pageId: string;
+    manualPageId: string;
+    useManualAssets: boolean;
+    minAge: number;
+    maxAge: number;
+    targetingCountries: string[];
+    targetingType: 'country' | 'city';
+    radiusKm: number;
+    ads: Ad[];
+  }
+
+  const [adsets, setAdsets] = useState<AdSet[]>([
     {
-      adName: 'Publicité 1',
-      adHeadline: '',
-      adText: '',
-      adCta: 'SHOP_NOW',
-      imageUrl: '',
-      videoUrl: '',
-      imageFile: null,
-      videoFile: null
+      id: 'adset_1',
+      name: 'AdSet - Purchases - 1',
+      pixelId: '',
+      manualPixelId: '',
+      pageId: '',
+      manualPageId: '',
+      useManualAssets: false,
+      minAge: 18,
+      maxAge: 65,
+      targetingCountries: ['TG'],
+      targetingType: 'country',
+      radiusKm: 40,
+      ads: [
+        {
+          id: 'ad_1',
+          adName: 'Publicité 1',
+          adHeadline: '',
+          adText: '',
+          adCta: 'SHOP_NOW',
+          mediaType: 'video',
+          imageUrl: '',
+          videoUrl: '',
+          imageFile: null,
+          videoFile: null
+        }
+      ]
     }
   ]);
-  const [activeAdPreviewIdx, setActiveAdPreviewIdx] = useState(0);
+
+  const [activeAdsetIdx, setActiveAdsetIdx] = useState(0);
+  const [activeAdIdx, setActiveAdIdx] = useState(0);
+  const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
 
   const [dateRange, setDateRange] = useState<DateRange>({
     from: startOfDay(subDays(new Date(), 6)).toISOString(),
@@ -132,8 +172,18 @@ export default function PubliciteFacebookPage() {
         setFbPages(data.pages || []);
         setFbPixels(data.pixels || []);
         
-        if (data.pages?.length > 0 && !pageId) setPageId(data.pages[0].id);
-        if (data.pixels?.length > 0 && !pixelId) setPixelId(data.pixels[0].id);
+        if (data.pages?.length > 0 || data.pixels?.length > 0) {
+          setAdsets(prev => {
+            const updated = [...prev];
+            if (data.pages?.length > 0 && !updated[0].pageId) {
+              updated[0].pageId = data.pages[0].id;
+            }
+            if (data.pixels?.length > 0 && !updated[0].pixelId) {
+              updated[0].pixelId = data.pixels[0].id;
+            }
+            return updated;
+          });
+        }
       } catch (err: any) {
         setAssetsError(err.message);
       } finally {
@@ -149,21 +199,28 @@ export default function PubliciteFacebookPage() {
     if (latestProduct) {
       const name = latestProduct.product_name || 'Produit';
       setCampaignName(`Campagne - Conversion - ${name}`);
-      setAdSetName(`AdSet - Purchases - ${name}`);
       
       const generatedAds = getAds();
       if (generatedAds.length > 0) {
         const mappedAds = generatedAds.map((ad: any, idx: number) => ({
+          id: `ad_${idx + 1}_${Math.random().toString(36).substr(2, 5)}`,
           adName: `Publicité ${idx + 1} - ${ad.angle || 'Angle'}`,
           adHeadline: ad.hook || ad.headline || '',
           adText: ad.explanation || ad.primary_text || '',
           adCta: 'SHOP_NOW',
+          mediaType: 'video' as 'video' | 'image', // default to video format
           imageUrl: latestProduct.shopify_image_url || '',
           videoUrl: '',
           imageFile: null,
           videoFile: null
         }));
-        setAdsList(mappedAds);
+        
+        setAdsets(prev => {
+          const updated = [...prev];
+          updated[0].name = `AdSet - Purchases - ${name}`;
+          updated[0].ads = mappedAds;
+          return updated;
+        });
       }
     }
   }, [latestProduct]);
@@ -253,16 +310,19 @@ export default function PubliciteFacebookPage() {
   const handleLaunch = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const activePixel = useManualAssets ? manualPixelId : pixelId;
-    const activePage = useManualAssets ? manualPageId : pageId;
-
-    if (!activePixel) {
-      toast.error("Veuillez spécifier un Pixel ID (Sélectionné ou saisi manuellement)");
-      return;
-    }
-    if (!activePage) {
-      toast.error("Veuillez spécifier un Page ID (Sélectionné ou saisi manuellement)");
-      return;
+    // Check all adsets for pages and pixels
+    for (let i = 0; i < adsets.length; i++) {
+      const adset = adsets[i];
+      const activePixel = adset.useManualAssets ? adset.manualPixelId : adset.pixelId;
+      const activePage = adset.useManualAssets ? adset.manualPageId : adset.pageId;
+      if (!activePixel) {
+        toast.error(`Veuillez spécifier un Pixel ID pour l'Ensemble : ${adset.name || i+1}`);
+        return;
+      }
+      if (!activePage) {
+        toast.error(`Veuillez spécifier un Page ID pour l'Ensemble : ${adset.name || i+1}`);
+        return;
+      }
     }
 
     setLaunchLoading(true);
@@ -272,34 +332,45 @@ export default function PubliciteFacebookPage() {
       fd.append('campaignName', campaignName);
       fd.append('budgetType', budgetType);
       fd.append('campaignBudget', campaignBudget);
-      fd.append('pixelId', activePixel);
-      fd.append('pageId', activePage);
-      fd.append('targetingType', targetingType);
-      fd.append('radiusKm', String(radiusKm));
-      fd.append('targetingCountries', JSON.stringify(targetingCountries));
-      fd.append('adSetName', adSetName);
-      fd.append('adSetsCount', String(adSetsCount));
       fd.append('productUrl', productUrl || `${window.location.origin}/stock`);
 
-      // Construct clean JSON for text-based items of each Ad
-      const cleanAdsList = adsList.map((ad, idx) => ({
-        adName: ad.adName || `Publicité ${idx + 1}`,
-        adHeadline: ad.adHeadline,
-        adText: ad.adText,
-        adCta: ad.adCta || 'SHOP_NOW',
-        imageUrl: ad.imageUrl || '',
-        videoUrl: ad.videoUrl || ''
+      // Clean adsets structure to JSON (omit file objects)
+      const cleanAdsets = adsets.map(adset => ({
+        id: adset.id,
+        name: adset.name,
+        pixelId: adset.pixelId,
+        manualPixelId: adset.manualPixelId,
+        pageId: adset.pageId,
+        manualPageId: adset.manualPageId,
+        useManualAssets: adset.useManualAssets,
+        minAge: adset.minAge,
+        maxAge: adset.maxAge,
+        targetingCountries: adset.targetingCountries,
+        targetingType: adset.targetingType,
+        radiusKm: adset.radiusKm,
+        ads: adset.ads.map(ad => ({
+          id: ad.id,
+          adName: ad.adName,
+          adHeadline: ad.adHeadline,
+          adText: ad.adText,
+          adCta: ad.adCta,
+          mediaType: ad.mediaType,
+          imageUrl: ad.imageUrl,
+          videoUrl: ad.videoUrl
+        }))
       }));
-      fd.append('adsList', JSON.stringify(cleanAdsList));
+      fd.append('adsets', JSON.stringify(cleanAdsets));
 
-      // Append files matching each Ad index
-      adsList.forEach((ad, idx) => {
-        if (ad.imageFile) {
-          fd.append(`imageFile_${idx}`, ad.imageFile);
-        }
-        if (ad.videoFile) {
-          fd.append(`videoFile_${idx}`, ad.videoFile);
-        }
+      // Append binary media files matching parent AdSet ID and Ad ID
+      adsets.forEach(adset => {
+        adset.ads.forEach(ad => {
+          if (ad.imageFile) {
+            fd.append(`imageFile_${adset.id}_${ad.id}`, ad.imageFile);
+          }
+          if (ad.videoFile) {
+            fd.append(`videoFile_${adset.id}_${ad.id}`, ad.videoFile);
+          }
+        });
       });
       
       const res = await fetch('/api/facebook/launch-flow', {
@@ -316,6 +387,51 @@ export default function PubliciteFacebookPage() {
     } finally {
       setLaunchLoading(false);
     }
+  };
+
+  const handleDuplicateAdset = (adsetIdx: number) => {
+    const adsetToDuplicate = adsets[adsetIdx];
+    if (!adsetToDuplicate) return;
+    
+    const clone: AdSet = {
+      ...adsetToDuplicate,
+      id: `adset_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+      name: `${adsetToDuplicate.name} (Copie)`,
+      ads: adsetToDuplicate.ads.map(ad => ({
+        ...ad,
+        id: `ad_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+        adName: `${ad.adName} (Copie)`
+      }))
+    };
+    
+    setAdsets(prev => [...prev, clone]);
+    setActiveAdsetIdx(adsets.length);
+    setActiveAdIdx(0);
+    toast.success("Ensemble de publicité et ses publicités dupliqués !");
+  };
+
+  const handleDuplicateAd = (adsetIdx: number, adIdx: number) => {
+    setAdsets(prev => prev.map((adset, i) => {
+      if (i !== adsetIdx) return adset;
+      const adToDuplicate = adset.ads[adIdx];
+      if (!adToDuplicate) return adset;
+      
+      const clone: Ad = {
+        ...adToDuplicate,
+        id: `ad_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+        adName: `${adToDuplicate.adName} (Copie)`
+      };
+      
+      return {
+        ...adset,
+        ads: [...adset.ads, clone]
+      };
+    }));
+    
+    setTimeout(() => {
+      setActiveAdIdx(adsets[adsetIdx].ads.length);
+    }, 50);
+    toast.success("Publicité dupliquée au sein de cet ensemble !");
   };
 
   const getAds = (): any[] => {
@@ -789,260 +905,463 @@ export default function PubliciteFacebookPage() {
                   </div>
                 </div>
 
-                {/* 2. ENSEMBLE DE PUB */}
-                <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-6 md:p-8 space-y-5">
+                {/* 2. ENSEMBLES DE PUBLICITÉS (ADSETS) */}
+                <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-6 md:p-8 space-y-6">
                   <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
                     <div className="flex items-center gap-3">
                       <span className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950 flex items-center justify-center text-xs font-black text-indigo-600">2</span>
-                      <h3 className="font-black text-sm uppercase tracking-wider text-slate-800 dark:text-slate-100">Ensemble de Publicités (Adset)</h3>
+                      <h3 className="font-black text-sm uppercase tracking-wider text-slate-800 dark:text-slate-100">Ensembles de Publicités ({adsets.length})</h3>
                     </div>
                     <button
                       type="button"
-                      onClick={() => setUseManualAssets(!useManualAssets)}
-                      className="px-3.5 py-1.5 border-2 border-slate-100 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-900 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-indigo-600 transition-all"
+                      onClick={() => {
+                        setAdsets(prev => [
+                          ...prev,
+                          {
+                            id: `adset_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+                            name: `AdSet - Purchases - ${prev.length + 1}`,
+                            pixelId: fbPixels[0]?.id || '',
+                            manualPixelId: '',
+                            pageId: fbPages[0]?.id || '',
+                            manualPageId: '',
+                            useManualAssets: false,
+                            minAge: 18,
+                            maxAge: 65,
+                            targetingCountries: ['TG'],
+                            targetingType: 'country',
+                            radiusKm: 40,
+                            ads: [
+                              {
+                                id: `ad_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+                                adName: 'Publicité 1',
+                                adHeadline: 'Accroche principale',
+                                adText: 'Texte principal de la publicité',
+                                adCta: 'SHOP_NOW',
+                                mediaType: 'video',
+                                imageUrl: '',
+                                videoUrl: '',
+                                imageFile: null,
+                                videoFile: null
+                              }
+                            ]
+                          }
+                        ]);
+                        setTimeout(() => {
+                          setActiveAdsetIdx(adsets.length);
+                          setActiveAdIdx(0);
+                        }, 50);
+                        toast.success("Nouvel ensemble de publicité ajouté !");
+                      }}
+                      className="px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all"
                     >
-                      {useManualAssets ? "Sélectionner depuis la liste" : "Saisir les IDs manuellement"}
+                      + Ajouter Ensemble
                     </button>
                   </div>
 
-                  <div className="space-y-4">
-                    {useManualAssets ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in duration-200">
-                        <div>
-                          <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">ID du Pixel de Suivi (Manuel)</label>
-                          <input
-                            type="text"
-                            value={manualPixelId}
-                            onChange={e => setManualPixelId(e.target.value)}
-                            required
-                            placeholder="Entrez l'ID de votre Pixel"
-                            className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-xs font-bold focus:border-indigo-500 focus:outline-none transition-all"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">ID de la Page Facebook (Manuel)</label>
-                          <input
-                            type="text"
-                            value={manualPageId}
-                            onChange={e => setManualPageId(e.target.value)}
-                            required
-                            placeholder="Entrez l'ID de votre Page"
-                            className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-xs font-bold focus:border-indigo-500 focus:outline-none transition-all"
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in duration-200">
-                        <div>
-                          <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Pixel de Suivi</label>
-                          <select
-                            value={pixelId}
-                            onChange={e => setPixelId(e.target.value)}
-                            required
-                            className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-xs font-bold focus:border-indigo-500 focus:outline-none transition-all"
-                          >
-                            <option value="">Sélectionner un Pixel</option>
-                            {fbPixels.map(p => (
-                              <option key={p.id} value={p.id}>{p.name} ({p.id})</option>
-                            ))}
-                          </select>
-                          {fbPixels.length === 0 && (
-                            <span className="text-[8px] font-bold text-amber-500 mt-1 block">Aucun pixel trouvé. Utilisez la saisie manuelle.</span>
-                          )}
-                        </div>
-
-                        <div>
-                          <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Page Facebook</label>
-                          <select
-                            value={pageId}
-                            onChange={e => setPageId(e.target.value)}
-                            required
-                            className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-xs font-bold focus:border-indigo-500 focus:outline-none transition-all"
-                          >
-                            <option value="">Sélectionner une Page</option>
-                            {fbPages.map(p => (
-                              <option key={p.id} value={p.id}>{p.name}</option>
-                            ))}
-                          </select>
-                          {fbPages.length === 0 && (
-                            <span className="text-[8px] font-bold text-amber-500 mt-1 block">Aucune page trouvée. Utilisez la saisie manuelle.</span>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Nom de l&apos;AdSet</label>
-                        <input
-                          type="text"
-                          value={adSetName}
-                          onChange={e => setAdSetName(e.target.value)}
-                          required
-                          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-xs font-bold focus:border-indigo-500 focus:outline-none transition-all"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Dupliquer l&apos;AdSet (Ciblage ABO)</label>
-                        <input
-                          type="number"
-                          value={adSetsCount}
-                          onChange={e => setAdSetsCount(Math.min(5, Math.max(1, parseInt(e.target.value) || 1)))}
-                          required
-                          min="1"
-                          max="5"
-                          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-xs font-bold focus:border-indigo-500 focus:outline-none transition-all"
-                        />
-                        <span className="text-[8px] font-bold text-slate-400 mt-1 block">Crée jusqu&apos;à 5 adsets identiques pour tester différentes audiences.</span>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 border-t border-slate-50 dark:border-slate-900">
-                      <div>
-                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Ciblage Pays (Codes Meta)</label>
-                        <div className="flex gap-2 flex-wrap">
-                          {['TG', 'CI', 'SN', 'BJ', 'ML', 'BF'].map(c => {
-                            const active = targetingCountries.includes(c);
-                            return (
+                  {/* AdSet Switcher tabs with Duplication button on top */}
+                  <div className="flex flex-wrap gap-2 pb-3 border-b border-slate-50 dark:border-slate-900 justify-between items-center">
+                    <div className="flex flex-wrap gap-2">
+                      {adsets.map((adset, idx) => {
+                        const active = idx === activeAdsetIdx;
+                        return (
+                          <div key={adset.id} className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setActiveAdsetIdx(idx);
+                                setActiveAdIdx(0);
+                              }}
+                              className={`px-3.5 py-1.5 border-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
+                                active ? 'bg-slate-900 dark:bg-slate-100 border-slate-900 dark:border-slate-100 text-white dark:text-slate-900 shadow-md' : 'bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800 text-slate-400 hover:text-slate-600'
+                              }`}
+                            >
+                              {adset.name || `Ensemble ${idx + 1}`}
+                            </button>
+                            {adsets.length > 1 && (
                               <button
-                                key={c}
                                 type="button"
                                 onClick={() => {
-                                  setTargetingCountries(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c]);
+                                  setAdsets(prev => prev.filter((_, i) => i !== idx));
+                                  setActiveAdsetIdx(0);
+                                  setActiveAdIdx(0);
+                                  toast.success("Ensemble supprimé");
                                 }}
-                                className={`px-3.5 py-2 border-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
-                                  active ? 'bg-indigo-50 border-indigo-500 text-indigo-600' : 'bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800 text-slate-400'
-                                }`}
+                                className="w-5 h-5 rounded-lg bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 transition-colors"
                               >
-                                <span className="mr-1"><Globe className="w-3.5 h-3.5 inline" /></span> {c}
+                                <X className="w-3 h-3" />
                               </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Rayon Géographique (Ciblage)</label>
-                        <div className="flex gap-2 bg-slate-50 dark:bg-slate-950 p-1 border-2 border-slate-100 dark:border-slate-800 rounded-xl mb-3">
-                          <button
-                            type="button"
-                            onClick={() => setTargetingType('country')}
-                            className={`flex-1 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${targetingType === 'country' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400'}`}
-                          >
-                            Pays Entier
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setTargetingType('city')}
-                            className={`flex-1 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${targetingType === 'city' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400'}`}
-                          >
-                            Capitale Uniquement
-                          </button>
-                        </div>
-
-                        {targetingType === 'city' && (
-                          <div className="space-y-2 animate-in slide-in-from-top-2 duration-200">
-                            <div className="flex justify-between items-center text-[10px] font-bold text-slate-500">
-                              <span>Rayon de ciblage :</span>
-                              <span className="text-indigo-600 font-black">{radiusKm} km</span>
-                            </div>
-                            <input
-                              type="range"
-                              min="10"
-                              max="80"
-                              value={radiusKm}
-                              onChange={e => setRadiusKm(parseInt(e.target.value))}
-                              className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-                            />
-                            <span className="text-[7.5px] font-bold text-slate-400 block">Ex: Cible Lomé (TG), Abidjan (CI) ou Dakar (SN) dans un rayon de {radiusKm} km.</span>
+                            )}
                           </div>
-                        )}
-                      </div>
+                        );
+                      })}
                     </div>
-                  </div>
-                </div>
 
-                {/* 3. CRÉATION PUBLICITÉ AVEC VARIANTES */}
-                <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-6 md:p-8 space-y-5">
-                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
-                    <div className="flex items-center gap-3">
-                      <span className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950 flex items-center justify-center text-xs font-black text-indigo-600">3</span>
-                      <h3 className="font-black text-sm uppercase tracking-wider text-slate-800 dark:text-slate-100">Contenu publicitaire (Variantes A/B)</h3>
-                    </div>
                     <div className="flex gap-2">
                       <button
                         type="button"
-                        onClick={() => {
-                          setAdsList(prev => [
-                            ...prev,
-                            {
-                              adName: `Publicité ${prev.length + 1} - Nouveau`,
-                              adHeadline: 'Nouvelle Accroche',
-                              adText: 'Nouveau Texte principal',
-                              adCta: 'SHOP_NOW',
-                              imageUrl: '',
-                              videoUrl: '',
-                              imageFile: null,
-                              videoFile: null
-                            }
-                          ]);
-                          setActiveAdPreviewIdx(adsList.length);
-                          toast.success("Variante publicitaire ajoutée !");
-                        }}
-                        className="px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all"
+                        onClick={() => handleDuplicateAdset(activeAdsetIdx)}
+                        className="px-3 py-1.5 border-2 border-dashed border-indigo-200 dark:border-indigo-900 hover:border-indigo-500 text-indigo-600 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all"
                       >
-                        + Ajouter variante
+                        ⚡ Dupliquer cet Ensemble
                       </button>
                     </div>
                   </div>
 
-                  {/* Ad Switcher tabs */}
-                  <div className="flex gap-2 overflow-x-auto pb-2 border-b border-slate-50 dark:border-slate-900">
-                    {adsList.map((ad, idx) => {
-                      const active = idx === activeAdPreviewIdx;
-                      return (
-                        <div key={idx} className="flex-shrink-0 flex items-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => setActiveAdPreviewIdx(idx)}
-                            className={`px-4 py-2 border-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
-                              active ? 'bg-slate-900 dark:bg-slate-100 border-slate-900 dark:border-slate-100 text-white dark:text-slate-900 shadow-md' : 'bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800 text-slate-400 hover:text-slate-600'
-                            }`}
-                          >
-                            {ad.adName || `Variant ${idx + 1}`}
-                          </button>
-                          {adsList.length > 1 && (
+                  {/* Active AdSet Fields */}
+                  {adsets[activeAdsetIdx] && (
+                    <div className="space-y-4 animate-in fade-in duration-200">
+                      <div className="flex justify-between items-center">
+                        <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Configuration de l&apos;Ensemble Actuel</h4>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = [...adsets];
+                            updated[activeAdsetIdx].useManualAssets = !updated[activeAdsetIdx].useManualAssets;
+                            setAdsets(updated);
+                          }}
+                          className="px-3.5 py-1.5 border-2 border-slate-100 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-900 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-indigo-600 transition-all"
+                        >
+                          {adsets[activeAdsetIdx].useManualAssets ? "Sélectionner depuis la liste" : "Saisir les IDs manuellement"}
+                        </button>
+                      </div>
+
+                      {adsets[activeAdsetIdx].useManualAssets ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in duration-200">
+                          <div>
+                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">ID du Pixel de Suivi (Manuel)</label>
+                            <input
+                              type="text"
+                              value={adsets[activeAdsetIdx].manualPixelId}
+                              onChange={e => {
+                                const updated = [...adsets];
+                                updated[activeAdsetIdx].manualPixelId = e.target.value;
+                                setAdsets(updated);
+                              }}
+                              required
+                              placeholder="Entrez l'ID de votre Pixel"
+                              className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-xs font-bold focus:border-indigo-500 focus:outline-none transition-all"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">ID de la Page Facebook (Manuel)</label>
+                            <input
+                              type="text"
+                              value={adsets[activeAdsetIdx].manualPageId}
+                              onChange={e => {
+                                const updated = [...adsets];
+                                updated[activeAdsetIdx].manualPageId = e.target.value;
+                                setAdsets(updated);
+                              }}
+                              required
+                              placeholder="Entrez l'ID de votre Page"
+                              className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-xs font-bold focus:border-indigo-500 focus:outline-none transition-all"
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in duration-200">
+                          <div>
+                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Pixel de Suivi</label>
+                            <select
+                              value={adsets[activeAdsetIdx].pixelId}
+                              onChange={e => {
+                                const updated = [...adsets];
+                                updated[activeAdsetIdx].pixelId = e.target.value;
+                                setAdsets(updated);
+                              }}
+                              required
+                              className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-xs font-bold focus:border-indigo-500 focus:outline-none transition-all"
+                            >
+                              <option value="">Sélectionner un Pixel</option>
+                              {fbPixels.map(p => (
+                                <option key={p.id} value={p.id}>{p.name} ({p.id})</option>
+                              ))}
+                            </select>
+                            {fbPixels.length === 0 && (
+                              <span className="text-[8px] font-bold text-amber-500 mt-1 block">Aucun pixel trouvé. Utilisez la saisie manuelle.</span>
+                            )}
+                          </div>
+
+                          <div>
+                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Page Facebook</label>
+                            <select
+                              value={adsets[activeAdsetIdx].pageId}
+                              onChange={e => {
+                                const updated = [...adsets];
+                                updated[activeAdsetIdx].pageId = e.target.value;
+                                setAdsets(updated);
+                              }}
+                              required
+                              className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-xs font-bold focus:border-indigo-500 focus:outline-none transition-all"
+                            >
+                              <option value="">Sélectionner une Page</option>
+                              {fbPages.map(p => (
+                                <option key={p.id} value={p.id}>{p.name}</option>
+                              ))}
+                            </select>
+                            {fbPages.length === 0 && (
+                              <span className="text-[8px] font-bold text-amber-500 mt-1 block">Aucune page trouvée. Utilisez la saisie manuelle.</span>
+                            )}
+                          </div>
+                        </div>
+                        <span className="text-[9.5px] font-black text-indigo-600 bg-indigo-50 dark:bg-indigo-950/40 px-4 py-2.5 rounded-2xl block text-center mt-3 border border-indigo-100 dark:border-indigo-950">
+                          💡 Conseil : Si vos pages ou pixels ne s'affichent pas automatiquement ou s'ils restent bloqués, cliquez sur le bouton <strong className="uppercase font-extrabold text-indigo-700 dark:text-indigo-400">"Saisir les IDs manuellement"</strong> ci-dessus pour copier-coller vos identifiants Facebook en direct.
+                        </span>
+                      )}
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Nom de l&apos;AdSet</label>
+                          <input
+                            type="text"
+                            value={adsets[activeAdsetIdx].name}
+                            onChange={e => {
+                              const updated = [...adsets];
+                              updated[activeAdsetIdx].name = e.target.value;
+                              setAdsets(updated);
+                            }}
+                            required
+                            className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-xs font-bold focus:border-indigo-500 focus:outline-none transition-all"
+                          />
+                        </div>
+
+                        {/* Modifying AGE TARGETING directly in Adset */}
+                        <div>
+                          <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Ciblage d&apos;Âge (Min - Max)</label>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 px-3 py-1.5 rounded-xl">
+                              <span className="text-[8px] font-bold text-slate-400 uppercase">Min:</span>
+                              <input
+                                type="number"
+                                min="13"
+                                max="65"
+                                value={adsets[activeAdsetIdx].minAge}
+                                onChange={e => {
+                                  const val = Math.min(65, Math.max(13, parseInt(e.target.value) || 18));
+                                  const updated = [...adsets];
+                                  updated[activeAdsetIdx].minAge = val;
+                                  setAdsets(updated);
+                                }}
+                                className="w-full bg-transparent border-0 text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none"
+                              />
+                            </div>
+                            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 px-3 py-1.5 rounded-xl">
+                              <span className="text-[8px] font-bold text-slate-400 uppercase">Max:</span>
+                              <input
+                                type="number"
+                                min="18"
+                                max="65"
+                                value={adsets[activeAdsetIdx].maxAge}
+                                onChange={e => {
+                                  const val = Math.min(65, Math.max(18, parseInt(e.target.value) || 65));
+                                  const updated = [...adsets];
+                                  updated[activeAdsetIdx].maxAge = val;
+                                  setAdsets(updated);
+                                }}
+                                className="w-full bg-transparent border-0 text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 border-t border-slate-50 dark:border-slate-900">
+                        <div>
+                          <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Ciblage Pays (Codes Meta)</label>
+                          <div className="flex gap-2 flex-wrap">
+                            {['TG', 'CI', 'SN', 'BJ', 'ML', 'BF', 'NE', 'GH', 'CM', 'GA', 'CG', 'CD', 'FR'].map(c => {
+                              const active = adsets[activeAdsetIdx].targetingCountries.includes(c);
+                              const labels: Record<string, string> = {
+                                TG: '🇹🇬 TG',
+                                CI: '🇨🇮 CI',
+                                SN: '🇸🇳 SN',
+                                BJ: '🇧🇯 BJ',
+                                ML: '🇲🇱 ML',
+                                BF: '🇧🇫 BF',
+                                NE: '🇳🇪 NE',
+                                GH: '🇬🇭 GH',
+                                CM: '🇨🇲 CM',
+                                GA: '🇬🇦 GA',
+                                CG: '🇨🇬 CG',
+                                CD: '🇨🇩 CD',
+                                FR: '🇫🇷 FR'
+                              };
+                              return (
+                                <button
+                                  key={c}
+                                  type="button"
+                                  onClick={() => {
+                                    const updated = [...adsets];
+                                    const countries = updated[activeAdsetIdx].targetingCountries;
+                                    updated[activeAdsetIdx].targetingCountries = countries.includes(c)
+                                      ? countries.filter(x => x !== c)
+                                      : [...countries, c];
+                                    setAdsets(updated);
+                                  }}
+                                  className={`px-3 py-2 border-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
+                                    active ? 'bg-indigo-50 border-indigo-500 text-indigo-600' : 'bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800 text-slate-400'
+                                  }`}
+                                >
+                                  {labels[c] || c}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Rayon Géographique (Ciblage)</label>
+                          <div className="flex gap-2 bg-slate-50 dark:bg-slate-950 p-1 border-2 border-slate-100 dark:border-slate-800 rounded-xl mb-3">
                             <button
                               type="button"
                               onClick={() => {
-                                setAdsList(prev => prev.filter((_, i) => i !== idx));
-                                setActiveAdPreviewIdx(0);
-                                toast.success("Variante publicitaire supprimée");
+                                const updated = [...adsets];
+                                updated[activeAdsetIdx].targetingType = 'country';
+                                setAdsets(updated);
                               }}
-                              className="w-6 h-6 rounded-lg bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 transition-colors"
+                              className={`flex-1 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${adsets[activeAdsetIdx].targetingType === 'country' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400'}`}
                             >
-                              <X className="w-3.5 h-3.5" />
+                              Pays Entier
                             </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = [...adsets];
+                                updated[activeAdsetIdx].targetingType = 'city';
+                                setAdsets(updated);
+                              }}
+                              className={`flex-1 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${adsets[activeAdsetIdx].targetingType === 'city' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400'}`}
+                            >
+                              Capitale Uniquement
+                            </button>
+                          </div>
+
+                          {adsets[activeAdsetIdx].targetingType === 'city' && (
+                            <div className="space-y-2 animate-in slide-in-from-top-2 duration-200">
+                              <div className="flex justify-between items-center text-[10px] font-bold text-slate-500">
+                                <span>Rayon de ciblage :</span>
+                                <span className="text-indigo-600 font-black">{adsets[activeAdsetIdx].radiusKm} km</span>
+                              </div>
+                              <input
+                                type="range"
+                                min="10"
+                                max="80"
+                                value={adsets[activeAdsetIdx].radiusKm}
+                                onChange={e => {
+                                  const updated = [...adsets];
+                                  updated[activeAdsetIdx].radiusKm = parseInt(e.target.value);
+                                  setAdsets(updated);
+                                }}
+                                className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                              />
+                              <span className="text-[7.5px] font-bold text-slate-400 block">Ex: Cible Lomé (TG), Abidjan (CI) ou Dakar (SN) dans un rayon de {adsets[activeAdsetIdx].radiusKm} km.</span>
+                            </div>
                           )}
                         </div>
-                      );
-                    })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. CRÉATIONS PUBLICITAIRES DANS L'ADSET */}
+                <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-6 md:p-8 space-y-6">
+                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+                    <div className="flex items-center gap-3">
+                      <span className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950 flex items-center justify-center text-xs font-black text-indigo-600">3</span>
+                      <h3 className="font-black text-sm uppercase tracking-wider text-slate-800 dark:text-slate-100">Publicités dans cet Ensemble ({adsets[activeAdsetIdx]?.ads?.length || 0})</h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updated = [...adsets];
+                        const activeList = updated[activeAdsetIdx].ads;
+                        updated[activeAdsetIdx].ads = [
+                          ...activeList,
+                          {
+                            id: `ad_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+                            adName: `Publicité ${activeList.length + 1}`,
+                            adHeadline: 'Nouvelle Accroche Hook',
+                            adText: 'Nouveau Texte principal de la publicité',
+                            adCta: 'SHOP_NOW',
+                            mediaType: 'video',
+                            imageUrl: '',
+                            videoUrl: '',
+                            imageFile: null,
+                            videoFile: null
+                          }
+                        ];
+                        setAdsets(updated);
+                        setTimeout(() => {
+                          setActiveAdIdx(activeList.length);
+                        }, 50);
+                        toast.success("Nouvelle publicité ajoutée !");
+                      }}
+                      className="px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all"
+                    >
+                      + Ajouter Publicité
+                    </button>
                   </div>
 
-                  {/* Active Variant Fields */}
-                  {adsList[activeAdPreviewIdx] && (
-                    <div className="space-y-4 pt-2 animate-in fade-in duration-200">
+                  {/* Active Adsets child Ads Switcher tabs */}
+                  <div className="flex flex-wrap gap-2 pb-3 border-b border-slate-50 dark:border-slate-900 justify-between items-center">
+                    <div className="flex flex-wrap gap-2">
+                      {adsets[activeAdsetIdx]?.ads.map((ad, idx) => {
+                        const active = idx === activeAdIdx;
+                        return (
+                          <div key={ad.id} className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => setActiveAdIdx(idx)}
+                              className={`px-3.5 py-1.5 border-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
+                                active ? 'bg-slate-900 dark:bg-slate-100 border-slate-900 dark:border-slate-100 text-white dark:text-slate-900 shadow-md' : 'bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800 text-slate-400 hover:text-slate-600'
+                              }`}
+                            >
+                              {ad.adName || `Variant ${idx + 1}`}
+                            </button>
+                            {adsets[activeAdsetIdx].ads.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updated = [...adsets];
+                                  updated[activeAdsetIdx].ads = updated[activeAdsetIdx].ads.filter((_, i) => i !== idx);
+                                  setAdsets(updated);
+                                  setActiveAdIdx(0);
+                                  toast.success("Publicité supprimée");
+                                }}
+                                className="w-5 h-5 rounded-lg bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 transition-colors"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleDuplicateAd(activeAdsetIdx, activeAdIdx)}
+                        className="px-3 py-1.5 border-2 border-dashed border-indigo-200 dark:border-indigo-900 hover:border-indigo-500 text-indigo-600 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all"
+                      >
+                        ⚡ Dupliquer cette Pub
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Active Ad Configuration Fields */}
+                  {adsets[activeAdsetIdx]?.ads[activeAdIdx] && (
+                    <div className="space-y-5 animate-in fade-in duration-200">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Nom de cette variante publicitaire</label>
+                          <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Nom de cette publicité</label>
                           <input
                             type="text"
-                            value={adsList[activeAdPreviewIdx].adName}
+                            value={adsets[activeAdsetIdx].ads[activeAdIdx].adName}
                             onChange={e => {
-                              const updated = [...adsList];
-                              updated[activeAdPreviewIdx].adName = e.target.value;
-                              setAdsList(updated);
+                              const updated = [...adsets];
+                              updated[activeAdsetIdx].ads[activeAdIdx].adName = e.target.value;
+                              setAdsets(updated);
                             }}
                             required
                             className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-xs font-bold focus:border-indigo-500 focus:outline-none transition-all"
@@ -1052,11 +1371,11 @@ export default function PubliciteFacebookPage() {
                         <div>
                           <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Bouton Call-To-Action (CTA)</label>
                           <select
-                            value={adsList[activeAdPreviewIdx].adCta}
+                            value={adsets[activeAdsetIdx].ads[activeAdIdx].adCta}
                             onChange={e => {
-                              const updated = [...adsList];
-                              updated[activeAdPreviewIdx].adCta = e.target.value;
-                              setAdsList(updated);
+                              const updated = [...adsets];
+                              updated[activeAdsetIdx].ads[activeAdIdx].adCta = e.target.value;
+                              setAdsets(updated);
                             }}
                             required
                             className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-xs font-bold focus:border-indigo-500 focus:outline-none transition-all"
@@ -1064,20 +1383,48 @@ export default function PubliciteFacebookPage() {
                             <option value="SHOP_NOW">Acheter maintenant</option>
                             <option value="ORDER_NOW">Commander maintenant</option>
                             <option value="LEARN_MORE">En savoir plus</option>
-                            <option value="BOOK_TRAVEL">Réserver</option>
                           </select>
                         </div>
                       </div>
 
+                      {/* FORMAT SWITCHER: Video vs Image format uploader */}
                       <div>
-                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Titre d&apos;Accroche (Headline Variant)</label>
+                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Format de la Créative</label>
+                        <div className="flex bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 p-1 rounded-xl max-w-sm">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = [...adsets];
+                              updated[activeAdsetIdx].ads[activeAdIdx].mediaType = 'video';
+                              setAdsets(updated);
+                            }}
+                            className={`flex-1 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${adsets[activeAdsetIdx].ads[activeAdIdx].mediaType === 'video' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400'}`}
+                          >
+                            🎥 Format Vidéo
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = [...adsets];
+                              updated[activeAdsetIdx].ads[activeAdIdx].mediaType = 'image';
+                              setAdsets(updated);
+                            }}
+                            className={`flex-1 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${adsets[activeAdsetIdx].ads[activeAdIdx].mediaType === 'image' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400'}`}
+                          >
+                            🖼️ Format Image
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Titre d&apos;Accroche (Headline)</label>
                         <input
                           type="text"
-                          value={adsList[activeAdPreviewIdx].adHeadline}
+                          value={adsets[activeAdsetIdx].ads[activeAdIdx].adHeadline}
                           onChange={e => {
-                            const updated = [...adsList];
-                            updated[activeAdPreviewIdx].adHeadline = e.target.value;
-                            setAdsList(updated);
+                            const updated = [...adsets];
+                            updated[activeAdsetIdx].ads[activeAdIdx].adHeadline = e.target.value;
+                            setAdsets(updated);
                           }}
                           required
                           placeholder="ex: 🔥 Offre de folie ! 50% de réduction immédiate"
@@ -1086,14 +1433,14 @@ export default function PubliciteFacebookPage() {
                       </div>
 
                       <div>
-                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Texte Principal (Ad Copy Variant)</label>
+                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Texte Principal (Ad Copy)</label>
                         <textarea
                           rows={4}
-                          value={adsList[activeAdPreviewIdx].adText}
+                          value={adsets[activeAdsetIdx].ads[activeAdIdx].adText}
                           onChange={e => {
-                            const updated = [...adsList];
-                            updated[activeAdPreviewIdx].adText = e.target.value;
-                            setAdsList(updated);
+                            const updated = [...adsets];
+                            updated[activeAdsetIdx].ads[activeAdIdx].adText = e.target.value;
+                            setAdsets(updated);
                           }}
                           required
                           placeholder="Décrivez l'offre, les points forts du produit, et l'appel à l'action..."
@@ -1101,70 +1448,87 @@ export default function PubliciteFacebookPage() {
                         />
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* Image creative uploader */}
-                        <div className="bg-slate-50/50 dark:bg-slate-950/20 border border-slate-100 dark:border-slate-800 p-4 rounded-2xl">
-                          <label className="text-[9px] font-black uppercase tracking-widest text-indigo-600 block mb-2">Source Image Créative</label>
-                          <div className="space-y-3">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={e => {
-                                const file = e.target.files?.[0] || null;
-                                const updated = [...adsList];
-                                updated[activeAdPreviewIdx].imageFile = file;
-                                setAdsList(updated);
-                              }}
-                              className="block w-full text-[10px] text-slate-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[9px] file:font-black file:uppercase file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100 file:cursor-pointer cursor-pointer"
-                            />
-                            {adsList[activeAdPreviewIdx].imageFile && (
-                              <span className="text-[8px] font-bold text-indigo-500 block">📁 Image locale sélectionnée : {adsList[activeAdPreviewIdx].imageFile.name}</span>
-                            )}
-                            <input
-                              type="url"
-                              value={adsList[activeAdPreviewIdx].imageUrl}
-                              onChange={e => {
-                                const updated = [...adsList];
-                                updated[activeAdPreviewIdx].imageUrl = e.target.value;
-                                setAdsList(updated);
-                              }}
-                              placeholder="Ou coller l'URL d'une image en ligne"
-                              className="w-full px-3 py-2 bg-white dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-[10px] font-bold focus:border-indigo-500 focus:outline-none transition-all"
-                            />
+                      {/* Uploader tailored by selected format */}
+                      <div className="bg-slate-50/50 dark:bg-slate-950/20 border border-slate-100 dark:border-slate-800 p-5 rounded-[2rem] space-y-4">
+                        {adsets[activeAdsetIdx].ads[activeAdIdx].mediaType === 'image' ? (
+                          <div className="animate-in fade-in duration-200">
+                            <label className="text-[9px] font-black uppercase tracking-widest text-indigo-600 block mb-2">Image Créative (Format Image Actif)</label>
+                            <div className="space-y-3">
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={e => {
+                                  const file = e.target.files?.[0] || null;
+                                  const updated = [...adsets];
+                                  updated[activeAdsetIdx].ads[activeAdIdx].imageFile = file;
+                                  setAdsets(updated);
+                                  
+                                  if (file) {
+                                    const url = URL.createObjectURL(file);
+                                    setPreviewUrls(prev => ({
+                                      ...prev,
+                                      [`${adsets[activeAdsetIdx].id}_${adsets[activeAdsetIdx].ads[activeAdIdx].id}`]: url
+                                    }));
+                                  }
+                                }}
+                                className="block w-full text-[10px] text-slate-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[9px] file:font-black file:uppercase file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100 file:cursor-pointer cursor-pointer"
+                              />
+                              {adsets[activeAdsetIdx].ads[activeAdIdx].imageFile && (
+                                <span className="text-[8px] font-bold text-indigo-500 block">📁 Image locale sélectionnée : {adsets[activeAdsetIdx].ads[activeAdIdx].imageFile.name}</span>
+                              )}
+                              <input
+                                type="url"
+                                value={adsets[activeAdsetIdx].ads[activeAdIdx].imageUrl}
+                                onChange={e => {
+                                  const updated = [...adsets];
+                                  updated[activeAdsetIdx].ads[activeAdIdx].imageUrl = e.target.value;
+                                  setAdsets(updated);
+                                }}
+                                placeholder="Ou coller l'URL d'une image en ligne"
+                                className="w-full px-3 py-2 bg-white dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-[10px] font-bold focus:border-indigo-500 focus:outline-none transition-all"
+                              />
+                            </div>
                           </div>
-                        </div>
-
-                        {/* Video creative uploader */}
-                        <div className="bg-slate-50/50 dark:bg-slate-950/20 border border-slate-100 dark:border-slate-800 p-4 rounded-2xl">
-                          <label className="text-[9px] font-black uppercase tracking-widest text-indigo-600 block mb-2">Source Vidéo Créative (Direct upload)</label>
-                          <div className="space-y-3">
-                            <input
-                              type="file"
-                              accept="video/*"
-                              onChange={e => {
-                                const file = e.target.files?.[0] || null;
-                                const updated = [...adsList];
-                                updated[activeAdPreviewIdx].videoFile = file;
-                                setAdsList(updated);
-                              }}
-                              className="block w-full text-[10px] text-slate-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[9px] file:font-black file:uppercase file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100 file:cursor-pointer cursor-pointer"
-                            />
-                            {adsList[activeAdPreviewIdx].videoFile && (
-                              <span className="text-[8px] font-bold text-indigo-500 block">📹 Vidéo locale sélectionnée : {adsList[activeAdPreviewIdx].videoFile.name}</span>
-                            )}
-                            <input
-                              type="text"
-                              value={adsList[activeAdPreviewIdx].videoUrl}
-                              onChange={e => {
-                                const updated = [...adsList];
-                                updated[activeAdPreviewIdx].videoUrl = e.target.value;
-                                setAdsList(updated);
-                              }}
-                              placeholder="Ou ID/URL de la vidéo sur Facebook"
-                              className="w-full px-3 py-2 bg-white dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-[10px] font-bold focus:border-indigo-500 focus:outline-none transition-all"
-                            />
+                        ) : (
+                          <div className="animate-in fade-in duration-200">
+                            <label className="text-[9px] font-black uppercase tracking-widest text-indigo-600 block mb-2">Vidéo Créative (Format Vidéo Actif)</label>
+                            <div className="space-y-3">
+                              <input
+                                type="file"
+                                accept="video/*"
+                                onChange={e => {
+                                  const file = e.target.files?.[0] || null;
+                                  const updated = [...adsets];
+                                  updated[activeAdsetIdx].ads[activeAdIdx].videoFile = file;
+                                  setAdsets(updated);
+                                  
+                                  if (file) {
+                                    const url = URL.createObjectURL(file);
+                                    setPreviewUrls(prev => ({
+                                      ...prev,
+                                      [`${adsets[activeAdsetIdx].id}_${adsets[activeAdsetIdx].ads[activeAdIdx].id}`]: url
+                                    }));
+                                  }
+                                }}
+                                className="block w-full text-[10px] text-slate-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[9px] file:font-black file:uppercase file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100 file:cursor-pointer cursor-pointer"
+                              />
+                              {adsets[activeAdsetIdx].ads[activeAdIdx].videoFile && (
+                                <span className="text-[8px] font-bold text-indigo-500 block">📹 Vidéo locale sélectionnée : {adsets[activeAdsetIdx].ads[activeAdIdx].videoFile.name}</span>
+                              )}
+                              <input
+                                type="text"
+                                value={adsets[activeAdsetIdx].ads[activeAdIdx].videoUrl}
+                                onChange={e => {
+                                  const updated = [...adsets];
+                                  updated[activeAdsetIdx].ads[activeAdIdx].videoUrl = e.target.value;
+                                  setAdsets(updated);
+                                }}
+                                placeholder="Ou ID/URL de la vidéo sur Facebook"
+                                className="w-full px-3 py-2 bg-white dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-[10px] font-bold focus:border-indigo-500 focus:outline-none transition-all"
+                              />
+                            </div>
                           </div>
-                        </div>
+                        )}
                       </div>
 
                       <div>
@@ -1182,12 +1546,14 @@ export default function PubliciteFacebookPage() {
                 </div>
               </div>
 
-              {/* Feed Preview Panel */}
+              {/* Feed Preview Panel (Updates Dynamically for Active AdSet & child Ad) */}
               <div className="lg:col-span-5 space-y-6 sticky top-6">
                 <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-6 space-y-5">
                   <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                     <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Aperçu du Flux Facebook</span>
-                    <span className="text-[8px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full uppercase tracking-wider">Simulé (Variante {activeAdPreviewIdx + 1})</span>
+                    <span className="text-[8px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                      Simulé ({adsets[activeAdsetIdx]?.ads[activeAdIdx]?.adName || 'Publicité'})
+                    </span>
                   </div>
 
                   {/* Simulated Facebook Post Card */}
@@ -1195,17 +1561,17 @@ export default function PubliciteFacebookPage() {
                     {/* Page Header */}
                     <div className="p-3 flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden">
-                        {(useManualAssets ? manualPageId : pageId) ? (
+                        {(adsets[activeAdsetIdx]?.useManualAssets ? adsets[activeAdsetIdx]?.manualPageId : adsets[activeAdsetIdx]?.pageId) ? (
                           <div className="text-xs font-black text-indigo-600">FB</div>
                         ) : (
                           <div className="w-full h-full bg-slate-200 flex items-center justify-center text-slate-400 text-lg font-bold">P</div>
                         )}
                       </div>
-                      <div>
-                        <div className="font-bold text-sm text-slate-900 leading-tight">
-                          {useManualAssets
-                            ? (manualPageId || "Votre Page Facebook")
-                            : (fbPages.find(p => p.id === pageId)?.name || 'Votre Page Facebook')}
+                      <div className="min-w-0 flex-1">
+                        <div className="font-bold text-sm text-slate-900 leading-tight truncate">
+                          {adsets[activeAdsetIdx]?.useManualAssets
+                            ? (adsets[activeAdsetIdx]?.manualPageId || "Votre Page Facebook")
+                            : (fbPages.find(p => String(p.id) === String(adsets[activeAdsetIdx]?.pageId))?.name || 'Votre Page Facebook')}
                         </div>
                         <div className="text-[10px] text-slate-500 flex items-center gap-1 font-semibold">
                           Sponsorisé · <span className="text-[8px]">🌍</span>
@@ -1215,30 +1581,51 @@ export default function PubliciteFacebookPage() {
 
                     {/* Post Text */}
                     <div className="px-3 pb-3 text-xs leading-relaxed text-slate-900 whitespace-pre-line font-medium min-h-[50px]">
-                      {adsList[activeAdPreviewIdx]?.adText || 'Votre texte publicitaire principal s\'affichera ici...'}
+                      {adsets[activeAdsetIdx]?.ads[activeAdIdx]?.adText || 'Votre texte publicitaire principal s\'affichera ici...'}
                     </div>
 
-                    {/* Post Image/Video Placeholder */}
-                    <div className="relative aspect-video bg-slate-100 border-y border-slate-200 flex items-center justify-center overflow-hidden">
-                      {adsList[activeAdPreviewIdx]?.imageFile ? (
-                        <div className="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center text-white p-4 text-center">
-                          <ImageIcon className="w-8 h-8 mb-2 animate-bounce text-indigo-400" />
-                          <p className="text-[9px] font-black uppercase tracking-widest">{adsList[activeAdPreviewIdx].imageFile.name}</p>
-                          <p className="text-[8px] font-bold text-slate-400 mt-1">L&apos;image locale sera uploadée directement sur Meta.</p>
-                        </div>
-                      ) : adsList[activeAdPreviewIdx]?.videoFile ? (
-                        <div className="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center text-white p-4 text-center">
-                          <Play className="w-8 h-8 mb-2 animate-pulse text-indigo-400" />
-                          <p className="text-[9px] font-black uppercase tracking-widest">{adsList[activeAdPreviewIdx].videoFile.name}</p>
-                          <p className="text-[8px] font-bold text-slate-400 mt-1">La vidéo locale sera uploadée directement sur Meta.</p>
-                        </div>
-                      ) : adsList[activeAdPreviewIdx]?.imageUrl ? (
-                        <img src={adsList[activeAdPreviewIdx].imageUrl} alt="creative-preview" className="w-full h-full object-cover" />
+                    {/* High-Fidelity Local Media Rendering Preview uploader */}
+                    <div className="relative aspect-video bg-slate-950 border-y border-slate-200 flex items-center justify-center overflow-hidden">
+                      {adsets[activeAdsetIdx]?.ads[activeAdIdx]?.mediaType === 'image' ? (
+                        previewUrls[`${adsets[activeAdsetIdx].id}_${adsets[activeAdsetIdx].ads[activeAdIdx].id}`] ? (
+                          <img
+                            src={previewUrls[`${adsets[activeAdsetIdx].id}_${adsets[activeAdsetIdx].ads[activeAdIdx].id}`]}
+                            alt="creative-preview-local"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : adsets[activeAdsetIdx]?.ads[activeAdIdx]?.imageUrl ? (
+                          <img
+                            src={adsets[activeAdsetIdx].ads[activeAdIdx].imageUrl}
+                            alt="creative-preview"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="text-center p-6 text-slate-400">
+                            <ImageIcon className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                            <p className="text-[10px] font-bold">Aucune image sélectionnée</p>
+                          </div>
+                        )
                       ) : (
-                        <div className="text-center p-6 text-slate-400">
-                          <ImageIcon className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                          <p className="text-[10px] font-bold">Aucune image/vidéo sélectionnée</p>
-                        </div>
+                        previewUrls[`${adsets[activeAdsetIdx].id}_${adsets[activeAdsetIdx].ads[activeAdIdx].id}`] ? (
+                          <video
+                            src={previewUrls[`${adsets[activeAdsetIdx].id}_${adsets[activeAdsetIdx].ads[activeAdIdx].id}`]}
+                            controls
+                            className="w-full h-full object-cover"
+                          />
+                        ) : adsets[activeAdsetIdx]?.ads[activeAdIdx]?.videoUrl ? (
+                          <div className="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center text-white p-4 text-center">
+                            <Play className="w-8 h-8 mb-2 animate-pulse text-indigo-400" />
+                            <p className="text-[9px] font-black uppercase tracking-widest truncate max-w-full">
+                              ID Vidéo Facebook : {adsets[activeAdsetIdx].ads[activeAdIdx].videoUrl}
+                            </p>
+                            <p className="text-[8px] font-bold text-slate-400 mt-1">L&apos;aperçu complet sera rendu directement sur Meta.</p>
+                          </div>
+                        ) : (
+                          <div className="text-center p-6 text-slate-400">
+                            <Play className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                            <p className="text-[10px] font-bold">Aucune vidéo sélectionnée</p>
+                          </div>
+                        )
                       )}
                     </div>
 
@@ -1249,16 +1636,16 @@ export default function PubliciteFacebookPage() {
                           {productUrl ? new URL(productUrl).hostname : 'votre-boutique.com'}
                         </div>
                         <div className="text-xs font-bold text-slate-900 truncate mt-0.5">
-                          {adsList[activeAdPreviewIdx]?.adHeadline || 'Accroche publicitaire principale'}
+                          {adsets[activeAdsetIdx]?.ads[activeAdIdx]?.adHeadline || 'Accroche publicitaire principale'}
                         </div>
                       </div>
                       <button type="button" className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg text-xs font-bold flex-shrink-0 transition-colors uppercase tracking-wider">
-                        {adsList[activeAdPreviewIdx]?.adCta === 'SHOP_NOW' ? 'Acheter' : adsList[activeAdPreviewIdx]?.adCta === 'ORDER_NOW' ? 'Commander' : 'En savoir plus'}
+                        {adsets[activeAdsetIdx]?.ads[activeAdIdx]?.adCta === 'SHOP_NOW' ? 'Acheter' : adsets[activeAdsetIdx]?.ads[activeAdIdx]?.adCta === 'ORDER_NOW' ? 'Commander' : 'En savoir plus'}
                       </button>
                     </div>
                   </div>
 
-                  {/* Actions */}
+                  {/* Submit Button */}
                   <button
                     type="submit"
                     disabled={launchLoading}

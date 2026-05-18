@@ -10,10 +10,14 @@ const CAPITALS: Record<string, string> = {
   BJ: 'Cotonou',
   ML: 'Bamako',
   BF: 'Ouagadougou',
+  NE: 'Niamey',
+  GH: 'Accra',
   FR: 'Paris',
   US: 'Washington',
-  NE: 'Niamey',
-  GH: 'Accra'
+  CM: 'Douala',
+  GA: 'Libreville',
+  CG: 'Brazzaville',
+  CD: 'Kinshasa'
 };
 
 async function fbFetch(endpoint: string, params: Record<string, any> = {}, method = 'GET') {
@@ -135,20 +139,10 @@ export async function POST(req: NextRequest) {
     const campaignName = formData.get('campaignName') as string;
     const budgetType = formData.get('budgetType') as string; // 'CBO' | 'ABO'
     const campaignBudget = formData.get('campaignBudget') as string;
-    const pixelId = formData.get('pixelId') as string;
-    const pageId = formData.get('pageId') as string;
-    const targetingType = formData.get('targetingType') as string; // 'country' | 'city'
-    const radiusKm = parseInt(formData.get('radiusKm') as string || '40');
-    
-    const targetingCountriesJson = formData.get('targetingCountries') as string;
-    const targetingCountries: string[] = JSON.parse(targetingCountriesJson || '["TG"]');
-    
-    const adSetName = formData.get('adSetName') as string;
-    const adSetsCount = parseInt(formData.get('adSetsCount') as string || '1');
     const productUrl = formData.get('productUrl') as string;
 
-    const adsListJson = formData.get('adsList') as string;
-    const adsList: any[] = JSON.parse(adsListJson || '[]');
+    const adsetsJson = formData.get('adsets') as string;
+    const adsetsList: any[] = JSON.parse(adsetsJson || '[]');
 
     // Get Ad Account Id
     const meData = await fbFetch('/me/adaccounts', { fields: 'id,account_status' });
@@ -170,130 +164,51 @@ export async function POST(req: NextRequest) {
     const campaign = await fbFetch(`/${adAccountId}/campaigns`, campaignParams, 'POST');
     const campaignId = campaign.id;
 
-    // --- STEP 2: PROCESS TARGETING ---
-    const geoLocations: Record<string, any> = {};
-
-    if (targetingType === 'city' && targetingCountries.length > 0) {
-      const countryCode = targetingCountries[0];
-      const cityName = CAPITALS[countryCode] || 'Lome';
-      const cityKey = await getCityTargetingKey(cityName);
-
-      if (cityKey) {
-        geoLocations.cities = [{
-          key: cityKey,
-          radius: radiusKm,
-          distance_unit: 'kilometer'
-        }];
-      } else {
-        geoLocations.countries = targetingCountries;
-      }
-    } else {
-      geoLocations.countries = targetingCountries.length > 0 ? targetingCountries : ['TG'];
-    }
-
-    // --- STEP 3: CREATE AD CREATIVES FOR EACH AD COPY ---
-    const createdCreativeIds: string[] = [];
-
-    for (let j = 0; j < adsList.length; j++) {
-      const adItem = adsList[j];
-      
-      // Look for files uploaded in formData
-      const imageFile = formData.get(`imageFile_${j}`) as File | null;
-      const videoFile = formData.get(`videoFile_${j}`) as File | null;
-
-      let imageHash = '';
-      let videoId = '';
-
-      // Direct local file uploads
-      if (imageFile && imageFile.size > 0) {
-        const uploadRes = await uploadToFacebook(adAccountId, 'images', imageFile);
-        const imagesMap = uploadRes.images || {};
-        const firstKey = Object.keys(imagesMap)[0];
-        if (firstKey) {
-          imageHash = imagesMap[firstKey].hash;
-        }
-      }
-
-      if (videoFile && videoFile.size > 0) {
-        const uploadRes = await uploadToFacebook(adAccountId, 'videos', videoFile);
-        videoId = uploadRes.id;
-      }
-
-      let creativeParams: Record<string, any> = {
-        name: `Creative - ${adItem.adName || 'Ad'}`,
-        object_type: 'SHARE'
-      };
-
-      if (videoId || adItem.videoUrl) {
-        // VIDEO CREATIVE
-        const videoData: Record<string, any> = {
-          message: adItem.adText,
-          title: adItem.adHeadline,
-          call_to_action: {
-            type: adItem.adCta || 'SHOP_NOW',
-            value: { link: productUrl }
-          }
-        };
-
-        if (videoId) {
-          videoData.video_id = videoId;
-        } else {
-          videoData.video_id = adItem.videoUrl; // In case of ID pasted directly
-        }
-
-        creativeParams.object_story_spec = {
-          page_id: pageId,
-          video_data: videoData
-        };
-      } else {
-        // IMAGE/LINK CREATIVE
-        const linkData: Record<string, any> = {
-          link: productUrl,
-          message: adItem.adText,
-          name: adItem.adHeadline,
-          call_to_action: {
-            type: adItem.adCta || 'SHOP_NOW',
-            value: { link: productUrl }
-          }
-        };
-
-        if (imageHash) {
-          linkData.image_hash = imageHash;
-        } else if (adItem.imageUrl) {
-          linkData.picture = adItem.imageUrl;
-        }
-
-        creativeParams.object_story_spec = {
-          page_id: pageId,
-          link_data: linkData
-        };
-      }
-
-      const creative = await fbFetch(`/${adAccountId}/adcreatives`, creativeParams, 'POST');
-      createdCreativeIds.push(creative.id);
-    }
-
-    // --- STEP 4: CREATE AD SET(S) & ASSOCIATED ADS ---
     const createdAdSets: any[] = [];
     const createdAds: any[] = [];
 
-    const iterations = Math.max(1, adSetsCount);
+    // --- STEP 2: LOOP OVER EACH DESIGNED ADSET ---
+    for (const adset of adsetsList) {
+      // Compile AdSet targeting geolocations
+      const geoLocations: Record<string, any> = {};
+      const targetingCountries = adset.targetingCountries || ['TG'];
 
-    for (let i = 0; i < iterations; i++) {
-      const currentAdSetName = iterations > 1 ? `${adSetName} (Copie ${i + 1})` : adSetName;
-      
+      if (adset.targetingType === 'city' && targetingCountries.length > 0) {
+        const countryCode = targetingCountries[0];
+        const cityName = CAPITALS[countryCode] || 'Lome';
+        const cityKey = await getCityTargetingKey(cityName);
+
+        if (cityKey) {
+          geoLocations.cities = [{
+            key: cityKey,
+            radius: adset.radiusKm || 40,
+            distance_unit: 'kilometer'
+          }];
+        } else {
+          geoLocations.countries = targetingCountries;
+        }
+      } else {
+        geoLocations.countries = targetingCountries;
+      }
+
+      const activePixel = adset.useManualAssets ? adset.manualPixelId : adset.pixelId;
+      const activePage = adset.useManualAssets ? adset.manualPageId : adset.pageId;
+
+      // Create AdSet Params
       const adSetParams: Record<string, any> = {
-        name: currentAdSetName,
+        name: adset.name || 'AdSet',
         campaign_id: campaignId,
         status: 'PAUSED',
         billing_event: 'IMPRESSIONS',
         optimization_goal: 'OFFSITE_CONVERSIONS',
         promoted_object: {
-          pixel_id: pixelId,
+          pixel_id: activePixel,
           custom_event_type: 'PURCHASE'
         },
         targeting: {
           geo_locations: geoLocations,
+          min_age: adset.minAge || 18,
+          max_age: adset.maxAge || 65,
           publisher_platforms: ['facebook', 'instagram']
         }
       };
@@ -302,18 +217,93 @@ export async function POST(req: NextRequest) {
         adSetParams.daily_budget = Math.round(parseFloat(campaignBudget) * 100);
       }
 
-      const adSet = await fbFetch(`/${adAccountId}/adsets`, adSetParams, 'POST');
-      createdAdSets.push(adSet.id);
+      // Create the AdSet inside this campaign
+      const createdAdSet = await fbFetch(`/${adAccountId}/adsets`, adSetParams, 'POST');
+      createdAdSets.push(createdAdSet.id);
 
-      // Create all ads copies inside this adset
-      for (let j = 0; j < adsList.length; j++) {
-        const adItem = adsList[j];
-        const creativeId = createdCreativeIds[j];
-        
+      // --- STEP 3: CREATE CREATIVES & ADS FOR THIS SPECIFIC ADSET ---
+      for (const adItem of adset.ads) {
+        // Look for file uploads matching this specific adset + ad id
+        const imageFile = formData.get(`imageFile_${adset.id}_${adItem.id}`) as File | null;
+        const videoFile = formData.get(`videoFile_${adset.id}_${adItem.id}`) as File | null;
+
+        let imageHash = '';
+        let videoId = '';
+
+        if (adItem.mediaType === 'image') {
+          if (imageFile && imageFile.size > 0) {
+            const uploadRes = await uploadToFacebook(adAccountId, 'images', imageFile);
+            const imagesMap = uploadRes.images || {};
+            const firstKey = Object.keys(imagesMap)[0];
+            if (firstKey) {
+              imageHash = imagesMap[firstKey].hash;
+            }
+          }
+        } else {
+          if (videoFile && videoFile.size > 0) {
+            const uploadRes = await uploadToFacebook(adAccountId, 'videos', videoFile);
+            videoId = uploadRes.id;
+          }
+        }
+
+        let creativeParams: Record<string, any> = {
+          name: `Creative - ${adItem.adName || 'Ad'}`,
+          object_type: 'SHARE'
+        };
+
+        if (adItem.mediaType === 'video') {
+          // VIDEO CREATIVE
+          const videoData: Record<string, any> = {
+            message: adItem.adText,
+            title: adItem.adHeadline,
+            call_to_action: {
+              type: adItem.adCta || 'SHOP_NOW',
+              value: { link: productUrl }
+            }
+          };
+
+          if (videoId) {
+            videoData.video_id = videoId;
+          } else {
+            videoData.video_id = adItem.videoUrl;
+          }
+
+          creativeParams.object_story_spec = {
+            page_id: activePage,
+            video_data: videoData
+          };
+        } else {
+          // IMAGE/LINK CREATIVE
+          const linkData: Record<string, any> = {
+            link: productUrl,
+            message: adItem.adText,
+            name: adItem.adHeadline,
+            call_to_action: {
+              type: adItem.adCta || 'SHOP_NOW',
+              value: { link: productUrl }
+            }
+          };
+
+          if (imageHash) {
+            linkData.image_hash = imageHash;
+          } else if (adItem.imageUrl) {
+            linkData.picture = adItem.imageUrl;
+          }
+
+          creativeParams.object_story_spec = {
+            page_id: activePage,
+            link_data: linkData
+          };
+        }
+
+        // Create Ad Creative
+        const creative = await fbFetch(`/${adAccountId}/adcreatives`, creativeParams, 'POST');
+
+        // Create Ad pointing to this creative and parent Adset
         const adParams: Record<string, any> = {
-          name: `${adItem.adName || 'Ad'} - V${j + 1}`,
-          adset_id: adSet.id,
-          creative: { creative_id: creativeId },
+          name: adItem.adName || 'Ad',
+          adset_id: createdAdSet.id,
+          creative: { creative_id: creative.id },
           status: 'PAUSED'
         };
 
@@ -325,7 +315,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       campaignId,
-      creativeIds: createdCreativeIds,
       adSetIds: createdAdSets,
       adIds: createdAds
     });
