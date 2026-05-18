@@ -65,3 +65,13 @@ body {
 
 /* Prevent full-width tables from stretching modal */
 table { min-width: max-content; }
+
+/* Facebook Ads Preview iframe container */
+.preview-container iframe {
+  width: 100% !important;
+  max-width: 500px !important;
+  min-height: 600px !important;
+  border: none !important;
+  border-radius: 12px;
+  background: white;
+}

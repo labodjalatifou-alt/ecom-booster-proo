@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
 
     // Batch insight request at ad level for this campaign
     const insightsData = await fbFetch(`/${campaignId}/insights`, {
-      fields: 'ad_id,ad_name,spend,impressions,clicks,ctr,cpc,cpm,reach,frequency,actions,cost_per_action_type,action_values,purchase_roas,inline_link_click_ctr',
+      fields: 'ad_id,ad_name,spend,impressions,clicks,ctr,cpc,cpm,reach,frequency,actions,cost_per_action_type,action_values,purchase_roas,inline_link_click_ctr,video_p25_watched_actions,video_p50_watched_actions,video_p75_watched_actions,video_p95_watched_actions,video_p100_watched_actions',
       time_range: JSON.stringify({ since, until }),
       level: 'ad',
       limit: '50',
@@ -63,6 +63,12 @@ export async function GET(req: NextRequest) {
       const landingPageViews = m.actions?.find((a: any) => a.action_type === 'landing_page_view');
       const addToCart = m.actions?.find((a: any) => a.action_type === 'add_to_cart' || a.action_type === 'omni_add_to_cart');
       const initiateCheckout = m.actions?.find((a: any) => a.action_type === 'initiate_checkout' || a.action_type === 'omni_initiated_checkout');
+
+      const videoP25 = m.video_p25_watched_actions?.find((a: any) => a.action_type === 'video_view') || m.video_p25_watched_actions?.[0];
+      const videoP50 = m.video_p50_watched_actions?.find((a: any) => a.action_type === 'video_view') || m.video_p50_watched_actions?.[0];
+      const videoP75 = m.video_p75_watched_actions?.find((a: any) => a.action_type === 'video_view') || m.video_p75_watched_actions?.[0];
+      const videoP95 = m.video_p95_watched_actions?.find((a: any) => a.action_type === 'video_view') || m.video_p95_watched_actions?.[0];
+      const videoP100 = m.video_p100_watched_actions?.find((a: any) => a.action_type === 'video_view') || m.video_p100_watched_actions?.[0];
 
       const spend = parseFloat(m.spend || '0');
       const revenue = purchaseValue ? parseFloat(purchaseValue.value || '0') : 0;
@@ -97,6 +103,12 @@ export async function GET(req: NextRequest) {
         cpa: purchaseCost ? parseFloat(purchaseCost.value).toFixed(2) : null,
         roas,
         inline_ctr: parseFloat(m.inline_link_click_ctr || '0').toFixed(2),
+        // Video Metrics
+        video_p25: videoP25 ? parseInt(videoP25.value) : 0,
+        video_p50: videoP50 ? parseInt(videoP50.value) : 0,
+        video_p75: videoP75 ? parseInt(videoP75.value) : 0,
+        video_p95: videoP95 ? parseInt(videoP95.value) : 0,
+        video_p100: videoP100 ? parseInt(videoP100.value) : 0,
       };
     });
 

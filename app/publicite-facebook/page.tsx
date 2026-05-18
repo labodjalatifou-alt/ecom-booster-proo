@@ -52,6 +52,12 @@ export default function PubliciteFacebookPage() {
   const [campaignAds, setCampaignAds] = useState<any[]>([]);
   const [loadingCampaignAds, setLoadingCampaignAds] = useState(false);
   const [campaignAdsError, setCampaignAdsError] = useState<string | null>(null);
+
+  // Ad Preview Modal
+  const [previewAdHtml, setPreviewAdHtml] = useState<string | null>(null);
+  const [previewAdName, setPreviewAdName] = useState<string | null>(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
+
   const [dateRange, setDateRange] = useState<DateRange>({
     from: startOfDay(subDays(new Date(), 6)).toISOString(),
     to: endOfDay(new Date()).toISOString(),
@@ -116,6 +122,22 @@ export default function PubliciteFacebookPage() {
       setLoadingCampaignAds(false);
     }
   }, [dateRange]);
+
+  const openPreview = async (adId: string, adName: string) => {
+    setLoadingPreview(true);
+    setPreviewAdName(adName);
+    try {
+      const res = await fetch(`/api/facebook/ad-preview?adId=${adId}`);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setPreviewAdHtml(data.html || '<p class="text-center p-10 text-slate-400">Aucun aperçu disponible pour ce format.</p>');
+    } catch (err: any) {
+      toast.error('Erreur lors du chargement de l\'aperçu');
+      setPreviewAdHtml(null);
+    } finally {
+      setLoadingPreview(false);
+    }
+  };
 
   const toggleCampaign = async (id: string, currentStatus: string) => {
     setTogglingCampaign(id);
@@ -414,14 +436,16 @@ export default function PubliciteFacebookPage() {
                       </div>
 
                       <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse min-w-[1000px]">
+                        <table className="w-full text-left border-collapse min-w-[1200px]">
                           <thead>
                             <tr className="border-b-2 border-slate-100 dark:border-slate-800 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                              <th className="py-3 px-4 w-[25%]">Publicité</th>
-                              <th className="py-3 px-4 w-[15%]">Aperçu</th>
+                              <th className="py-3 px-4 w-[20%]">Publicité</th>
+                              <th className="py-3 px-4 w-[10%]">Action</th>
                               <th className="py-3 px-4 text-right">Dépenses</th>
+                              <th className="py-3 px-4 text-right">Couverture / Rép.</th>
                               <th className="py-3 px-4 text-right">CPC / CPM</th>
                               <th className="py-3 px-4 text-right">Clics / CTR</th>
+                              <th className="py-3 px-4 text-right">Vidéo (25% / 100%)</th>
                               <th className="py-3 px-4 text-right">Achats / ROAS</th>
                             </tr>
                           </thead>
@@ -436,16 +460,16 @@ export default function PubliciteFacebookPage() {
                                   <div className="font-bold text-xs text-slate-800 dark:text-slate-200 line-clamp-2">{ad.name}</div>
                                 </td>
                                 <td className="py-4 px-4">
-                                  {ad.thumbnail ? (
-                                    <img src={ad.thumbnail} alt="ad" className="w-12 h-12 object-cover rounded-lg border border-slate-200 dark:border-slate-700" />
-                                  ) : (
-                                    <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center text-slate-400">
-                                      <ImageIcon className="w-4 h-4" />
-                                    </div>
-                                  )}
+                                  <button onClick={() => openPreview(ad.id, ad.name)} className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition-colors">
+                                    <Eye className="w-3 h-3" /> Aperçu
+                                  </button>
                                 </td>
                                 <td className="py-4 px-4 text-right">
                                   <div className="font-black text-sm">{fmt(ad.spend, fbData?.account.currency)}</div>
+                                </td>
+                                <td className="py-4 px-4 text-right">
+                                  <div className="text-xs font-bold">{fmt(ad.reach)}</div>
+                                  <div className="text-[9px] text-slate-400 mt-0.5">{ad.frequency}x</div>
                                 </td>
                                 <td className="py-4 px-4 text-right">
                                   <div className="text-xs font-bold">{ad.cpc} {fbData?.account.currency}</div>
@@ -454,6 +478,10 @@ export default function PubliciteFacebookPage() {
                                 <td className="py-4 px-4 text-right">
                                   <div className="text-xs font-bold">{ad.link_clicks} clics</div>
                                   <div className="text-[9px] text-slate-400 mt-0.5">{ad.inline_ctr}% CTR</div>
+                                </td>
+                                <td className="py-4 px-4 text-right">
+                                  <div className="text-xs font-bold">{ad.video_p25} vues</div>
+                                  <div className="text-[9px] text-slate-400 mt-0.5">{ad.video_p100} complètes</div>
                                 </td>
                                 <td className="py-4 px-4 text-right">
                                   <div className="text-sm font-black text-emerald-600">{ad.purchases}</div>
@@ -470,6 +498,43 @@ export default function PubliciteFacebookPage() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Loading Preview Overlay */}
+      {loadingPreview && (
+        <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-slate-900/60 backdrop-blur-sm">
+          <Loader2 className="w-10 h-10 animate-spin text-white mb-4" />
+          <p className="text-white font-black uppercase tracking-widest text-[10px]">Chargement de l'aperçu...</p>
+        </div>
+      )}
+
+      {/* Ad Preview Modal */}
+      {previewAdHtml && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-10">
+          <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={() => setPreviewAdHtml(null)} />
+          <div className="relative bg-white dark:bg-slate-900 w-full max-w-2xl rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b-2 border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center">
+                  <Layout className="w-4 h-4 text-indigo-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-800 dark:text-slate-100 truncate max-w-[300px]">{previewAdName}</h3>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Aperçu Facebook</p>
+                </div>
+              </div>
+              <button onClick={() => setPreviewAdHtml(null)} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors">
+                <X className="w-5 h-5 text-slate-500" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-950 flex items-center justify-center p-4">
+              <div
+                className="w-full flex justify-center preview-container"
+                dangerouslySetInnerHTML={{ __html: previewAdHtml }}
+              />
+            </div>
+          </div>
         </div>
       )}
 
