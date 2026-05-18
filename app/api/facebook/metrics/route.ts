@@ -39,21 +39,26 @@ export async function GET(req: NextRequest) {
 
     // 2. Récupérer les métriques globales du compte
     const insightsData = await fbFetch(`/${adAccountId}/insights`, {
-      fields: 'spend,impressions,clicks,ctr,cpc,cpm,actions,cost_per_action_type,reach,frequency,roas',
+      fields: 'spend,impressions,clicks,ctr,cpc,cpm,actions,cost_per_action_type,reach,frequency,action_values,purchase_roas',
       time_range: JSON.stringify({ since, until }),
       level: 'account',
     });
 
     const insights = insightsData.data?.[0] || {};
 
-    // Extraire le ROAS et les achats
+    // Extract purchases and revenue
     const purchases = insights.actions?.find((a: any) => a.action_type === 'purchase');
     const purchaseCost = insights.cost_per_action_type?.find((a: any) => a.action_type === 'purchase');
-    const purchaseValue = insights.actions?.find((a: any) => a.action_type === 'omni_purchase');
+    // Revenue from action_values (purchase conversion value)
+    const purchaseValue = insights.action_values?.find((a: any) => a.action_type === 'purchase');
+    // ROAS from purchase_roas field (array) or calculated manually
+    const purchaseRoasEntry = insights.purchase_roas?.find((a: any) => a.action_type === 'omni_purchase' || a.action_type === 'purchase');
 
     const spend = parseFloat(insights.spend || '0');
     const revenue = purchaseValue ? parseFloat(purchaseValue.value || '0') : 0;
-    const roas = spend > 0 && revenue > 0 ? (revenue / spend).toFixed(2) : null;
+    const roas = purchaseRoasEntry
+      ? parseFloat(purchaseRoasEntry.value).toFixed(2)
+      : (spend > 0 && revenue > 0 ? (revenue / spend).toFixed(2) : null);
 
     // 3. Récupérer les campagnes actives
     const campaignsData = await fbFetch(`/${adAccountId}/campaigns`, {
