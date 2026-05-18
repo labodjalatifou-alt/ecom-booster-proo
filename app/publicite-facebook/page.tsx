@@ -1059,54 +1059,56 @@ export default function PubliciteFacebookPage() {
                           </div>
                         </div>
                       ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in duration-200">
-                          <div>
-                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Pixel de Suivi</label>
-                            <select
-                              value={adsets[activeAdsetIdx].pixelId}
-                              onChange={e => {
-                                const updated = [...adsets];
-                                updated[activeAdsetIdx].pixelId = e.target.value;
-                                setAdsets(updated);
-                              }}
-                              required
-                              className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-xs font-bold focus:border-indigo-500 focus:outline-none transition-all"
-                            >
-                              <option value="">Sélectionner un Pixel</option>
-                              {fbPixels.map(p => (
-                                <option key={p.id} value={p.id}>{p.name} ({p.id})</option>
-                              ))}
-                            </select>
-                            {fbPixels.length === 0 && (
-                              <span className="text-[8px] font-bold text-amber-500 mt-1 block">Aucun pixel trouvé. Utilisez la saisie manuelle.</span>
-                            )}
-                          </div>
+                        <>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in duration-200">
+                            <div>
+                              <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Pixel de Suivi</label>
+                              <select
+                                value={adsets[activeAdsetIdx].pixelId}
+                                onChange={e => {
+                                  const updated = [...adsets];
+                                  updated[activeAdsetIdx].pixelId = e.target.value;
+                                  setAdsets(updated);
+                                }}
+                                required
+                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-xs font-bold focus:border-indigo-500 focus:outline-none transition-all"
+                              >
+                                <option value="">Sélectionner un Pixel</option>
+                                {fbPixels.map(p => (
+                                  <option key={p.id} value={p.id}>{p.name} ({p.id})</option>
+                                ))}
+                              </select>
+                              {fbPixels.length === 0 && (
+                                <span className="text-[8px] font-bold text-amber-500 mt-1 block">Aucun pixel trouvé. Utilisez la saisie manuelle.</span>
+                              )}
+                            </div>
 
-                          <div>
-                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Page Facebook</label>
-                            <select
-                              value={adsets[activeAdsetIdx].pageId}
-                              onChange={e => {
-                                const updated = [...adsets];
-                                updated[activeAdsetIdx].pageId = e.target.value;
-                                setAdsets(updated);
-                              }}
-                              required
-                              className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-xs font-bold focus:border-indigo-500 focus:outline-none transition-all"
-                            >
-                              <option value="">Sélectionner une Page</option>
-                              {fbPages.map(p => (
-                                <option key={p.id} value={p.id}>{p.name}</option>
-                              ))}
-                            </select>
-                            {fbPages.length === 0 && (
-                              <span className="text-[8px] font-bold text-amber-500 mt-1 block">Aucune page trouvée. Utilisez la saisie manuelle.</span>
-                            )}
+                            <div>
+                              <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Page Facebook</label>
+                              <select
+                                value={adsets[activeAdsetIdx].pageId}
+                                onChange={e => {
+                                  const updated = [...adsets];
+                                  updated[activeAdsetIdx].pageId = e.target.value;
+                                  setAdsets(updated);
+                                }}
+                                required
+                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-xs font-bold focus:border-indigo-500 focus:outline-none transition-all"
+                              >
+                                <option value="">Sélectionner une Page</option>
+                                {fbPages.map(p => (
+                                  <option key={p.id} value={p.id}>{p.name}</option>
+                                ))}
+                              </select>
+                              {fbPages.length === 0 && (
+                                <span className="text-[8px] font-bold text-amber-500 mt-1 block">Aucune page trouvée. Utilisez la saisie manuelle.</span>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                        <span className="text-[9.5px] font-black text-indigo-600 bg-indigo-50 dark:bg-indigo-950/40 px-4 py-2.5 rounded-2xl block text-center mt-3 border border-indigo-100 dark:border-indigo-950">
-                          💡 Conseil : Si vos pages ou pixels ne s'affichent pas automatiquement ou s'ils restent bloqués, cliquez sur le bouton <strong className="uppercase font-extrabold text-indigo-700 dark:text-indigo-400">"Saisir les IDs manuellement"</strong> ci-dessus pour copier-coller vos identifiants Facebook en direct.
-                        </span>
+                          <span className="text-[9.5px] font-black text-indigo-600 bg-indigo-50 dark:bg-indigo-950/40 px-4 py-2.5 rounded-2xl block text-center mt-3 border border-indigo-100 dark:border-indigo-950">
+                            💡 Conseil : Si vos pages ou pixels ne s'affichent pas automatiquement ou s'ils restent bloqués, cliquez sur le bouton <strong className="uppercase font-extrabold text-indigo-700 dark:text-indigo-400">"Saisir les IDs manuellement"</strong> ci-dessus pour copier-coller vos identifiants Facebook en direct.
+                          </span>
+                        </>
                       )}
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
