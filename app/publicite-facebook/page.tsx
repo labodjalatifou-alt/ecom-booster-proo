@@ -5,7 +5,7 @@ import {
   Megaphone, Layout, Send, Copy, Check, Loader2, Zap, Target, Heart,
   TrendingUp, TrendingDown, DollarSign, Eye, MousePointer, ShoppingCart,
   RefreshCw, Play, Pause, BarChart2, Users, Activity, AlertCircle,
-  ChevronDown, X, ArrowRight, Image as ImageIcon
+  ChevronDown, X, ArrowRight, Image as ImageIcon, Rocket, Globe
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
@@ -19,7 +19,7 @@ const AD_ANGLES = [
   { icon: Heart, label: "Angle Émotion", color: "text-purple-600", bg: "bg-purple-50 dark:bg-purple-900/10", border: "border-purple-100 dark:border-purple-800" },
 ];
 
-type Tab = 'ads' | 'stats';
+type Tab = 'ads' | 'stats' | 'launch';
 
 interface FbData {
   account: { id: string; name: string; currency: string };
@@ -58,6 +58,32 @@ export default function PubliciteFacebookPage() {
   const [previewAdName, setPreviewAdName] = useState<string | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
 
+  // Campaign Launcher States
+  const [fbPages, setFbPages] = useState<any[]>([]);
+  const [fbPixels, setFbPixels] = useState<any[]>([]);
+  const [loadingAssets, setLoadingAssets] = useState(false);
+  const [assetsError, setAssetsError] = useState<string | null>(null);
+
+  const [launchLoading, setLaunchLoading] = useState(false);
+  const [launchResult, setLaunchResult] = useState<any | null>(null);
+
+  // Form Fields
+  const [campaignName, setCampaignName] = useState('');
+  const [budgetType, setBudgetType] = useState<'CBO' | 'ABO'>('CBO');
+  const [campaignBudget, setCampaignBudget] = useState('20'); // Default $20/day or local equivalent
+  const [pixelId, setPixelId] = useState('');
+  const [pageId, setPageId] = useState('');
+  const [targetingCountries, setTargetingCountries] = useState<string[]>(['TG']); // Default Togo
+  const [adSetName, setAdSetName] = useState('');
+  const [adSetsCount, setAdSetsCount] = useState(1);
+  const [adName, setAdName] = useState('');
+  const [adHeadline, setAdHeadline] = useState('');
+  const [adText, setAdText] = useState('');
+  const [adCta, setAdCta] = useState('SHOP_NOW');
+  const [productUrl, setProductUrl] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [videoUrl, setVideoUrl] = useState('');
+
   const [dateRange, setDateRange] = useState<DateRange>({
     from: startOfDay(subDays(new Date(), 6)).toISOString(),
     to: endOfDay(new Date()).toISOString(),
@@ -76,6 +102,53 @@ export default function PubliciteFacebookPage() {
     }
     fetchAnalysis();
   }, []);
+
+  // Load pages and pixels when launch tab is active
+  useEffect(() => {
+    if (tab !== 'launch') return;
+    
+    async function loadAssets() {
+      setLoadingAssets(true);
+      setAssetsError(null);
+      try {
+        const res = await fetch('/api/facebook/launch-flow?action=assets');
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        
+        setFbPages(data.pages || []);
+        setFbPixels(data.pixels || []);
+        
+        if (data.pages?.length > 0 && !pageId) setPageId(data.pages[0].id);
+        if (data.pixels?.length > 0 && !pixelId) setPixelId(data.pixels[0].id);
+      } catch (err: any) {
+        setAssetsError(err.message);
+      } finally {
+        setLoadingAssets(false);
+      }
+    }
+    
+    loadAssets();
+  }, [tab]);
+
+  // Auto pre-fill based on latest product analysis
+  useEffect(() => {
+    if (latestProduct) {
+      const name = latestProduct.product_name || 'Produit';
+      setCampaignName(`Campagne - Conversion - ${name}`);
+      setAdSetName(`AdSet - Purchases - ${name}`);
+      setAdName(`Ad - Creative - ${name}`);
+      
+      const adsList = getAds();
+      if (adsList.length > 0) {
+        setAdHeadline(adsList[0].hook || '');
+        setAdText(adsList[0].explanation || '');
+      }
+      
+      if (latestProduct.shopify_image_url) {
+        setImageUrl(latestProduct.shopify_image_url);
+      }
+    }
+  }, [latestProduct]);
 
   const fetchFbMetrics = useCallback(async () => {
     setLoadingFb(true);
@@ -156,6 +229,46 @@ export default function PubliciteFacebookPage() {
       toast.error(err.message);
     } finally {
       setTogglingCampaign(null);
+    }
+  };
+
+  const handleLaunch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLaunchLoading(true);
+    setLaunchResult(null);
+    try {
+      const payload = {
+        campaignName,
+        budgetType,
+        campaignBudget,
+        pixelId,
+        pageId,
+        targetingCountries,
+        adSetName,
+        adSetsCount,
+        adName,
+        adHeadline,
+        adText,
+        adCta,
+        productUrl: productUrl || `${window.location.origin}/stock`,
+        imageUrl,
+        videoUrl
+      };
+      
+      const res = await fetch('/api/facebook/launch-flow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      
+      setLaunchResult(data);
+      toast.success('Campagne propagée avec succès sur Facebook ! 🚀');
+    } catch (err: any) {
+      toast.error(err.message || 'Erreur lors du lancement de la campagne');
+    } finally {
+      setLaunchLoading(false);
     }
   };
 
@@ -241,6 +354,12 @@ export default function PubliciteFacebookPage() {
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${tab === 'ads' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
           >
             <Layout className="w-3.5 h-3.5" /> Créatifs
+          </button>
+          <button
+            onClick={() => setTab('launch')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${tab === 'launch' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
+          >
+            <Rocket className="w-3.5 h-3.5" /> Lancer Pub
           </button>
         </div>
       </div>
@@ -538,101 +657,406 @@ export default function PubliciteFacebookPage() {
         </div>
       )}
 
-      {/* ──────────── ONGLET CRÉATIFS ──────────── */}
-      {tab === 'ads' && (
-        <div>
-          {loadingAds ? (
-            <div className="flex items-center justify-center py-40">
-              <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
+      {/* ──────────── ONGLET LANCER PUB ──────────── */}
+      {tab === 'launch' && (
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-300">
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center gap-2 px-5 py-2 bg-indigo-100 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-widest mb-4">
+              <Rocket className="w-4 h-4" /> Propagateur Publicitaire Automatique
             </div>
-          ) : !latestProduct ? (
-            <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
-              <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl mb-4 opacity-40">
-                <Megaphone className="w-8 h-8 text-slate-400" />
-              </div>
-              <p className="text-sm font-black text-slate-600 mb-1">Publicité Facebook</p>
-              <p className="text-[10px] font-bold text-slate-400 mb-6">Analysez un produit pour générer vos publicités.</p>
-              <Link href="/analyses" className="flex items-center gap-2 px-5 py-3 bg-primary-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary-700 transition-all">
-                Analyser un produit
-              </Link>
+            <h2 className="text-3xl font-black tracking-tighter mb-2">Lancer une Campagne en 1 Clic</h2>
+            <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Générez la structure complète (Campagne, Adsets, Publicités) directement sur Meta</p>
+          </div>
+
+          {loadingAssets ? (
+            <div className="flex flex-col items-center justify-center py-40 gap-4">
+              <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Chargement de vos ressources Meta...</p>
             </div>
-          ) : ads.length === 0 ? (
-            <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
-              <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl mb-4 opacity-40">
-                <Megaphone className="w-8 h-8 text-slate-400" />
-              </div>
-              <p className="text-sm font-black text-slate-600 mb-1">Données publicitaires incomplètes</p>
-              <p className="text-[10px] font-bold text-slate-400 mb-6">Relancez une analyse pour générer les 3 publicités.</p>
-              <Link href="/analyses" className="flex items-center gap-2 px-5 py-3 bg-primary-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary-700 transition-all">
-                Nouvelle Analyse
-              </Link>
+          ) : assetsError ? (
+            <div className="bg-red-50 border-2 border-red-200 rounded-[2rem] p-8 text-center max-w-2xl mx-auto">
+              <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+              <h3 className="text-lg font-black text-slate-800 mb-2">Erreur de Connexion Meta</h3>
+              <p className="text-sm font-bold text-red-700 mb-6">{assetsError}</p>
+              <button onClick={() => setTab('stats')} className="px-6 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all">
+                Retour aux statistiques
+              </button>
             </div>
           ) : (
-            <div>
-              <div className="text-center mb-10">
-                <div className="inline-flex items-center gap-2 px-5 py-2 bg-indigo-100 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-widest mb-5">
-                  <Megaphone className="w-4 h-4" /> {ads.length} Versions · 3 Angles Marketing
+            <form onSubmit={handleLaunch} className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              {/* Form Config */}
+              <div className="lg:col-span-7 space-y-6">
+                
+                {/* 1. CAMPAGNE */}
+                <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-6 md:p-8 space-y-5">
+                  <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
+                    <span className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950 flex items-center justify-center text-xs font-black text-indigo-600">1</span>
+                    <h3 className="font-black text-sm uppercase tracking-wider text-slate-800 dark:text-slate-100">Structure de la Campagne</h3>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Nom de la Campagne</label>
+                      <input
+                        type="text"
+                        value={campaignName}
+                        onChange={e => setCampaignName(e.target.value)}
+                        required
+                        placeholder="ex: Campagne Conversion - Produit X"
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-xs font-bold focus:border-indigo-500 focus:outline-none transition-all"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Optimisation du budget</label>
+                        <div className="flex bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 p-1 rounded-xl">
+                          <button
+                            type="button"
+                            onClick={() => setBudgetType('CBO')}
+                            className={`flex-1 py-2 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${budgetType === 'CBO' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400'}`}
+                          >
+                            CBO (Campagne)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setBudgetType('ABO')}
+                            className={`flex-1 py-2 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${budgetType === 'ABO' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400'}`}
+                          >
+                            ABO (AdSet)
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Budget Quotidien ($ / €)</label>
+                        <input
+                          type="number"
+                          value={campaignBudget}
+                          onChange={e => setCampaignBudget(e.target.value)}
+                          required
+                          min="1"
+                          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-xs font-bold focus:border-indigo-500 focus:outline-none transition-all"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <h2 className="text-3xl font-black tracking-tighter mb-2">{latestProduct.product_name}</h2>
-                <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Créatifs Prêts à l&apos;Emploi</p>
+
+                {/* 2. ENSEMBLE DE PUB */}
+                <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-6 md:p-8 space-y-5">
+                  <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
+                    <span className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950 flex items-center justify-center text-xs font-black text-indigo-600">2</span>
+                    <h3 className="font-black text-sm uppercase tracking-wider text-slate-800 dark:text-slate-100">Ensemble de Publicités (Adset)</h3>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Pixel de Suivi</label>
+                        <select
+                          value={pixelId}
+                          onChange={e => setPixelId(e.target.value)}
+                          required
+                          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-xs font-bold focus:border-indigo-500 focus:outline-none transition-all"
+                        >
+                          <option value="">Sélectionner un Pixel</option>
+                          {fbPixels.map(p => (
+                            <option key={p.id} value={p.id}>{p.name} ({p.id})</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Page Facebook</label>
+                        <select
+                          value={pageId}
+                          onChange={e => setPageId(e.target.value)}
+                          required
+                          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-xs font-bold focus:border-indigo-500 focus:outline-none transition-all"
+                        >
+                          <option value="">Sélectionner une Page</option>
+                          {fbPages.map(p => (
+                            <option key={p.id} value={p.id}>{p.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Nom de l&apos;AdSet</label>
+                        <input
+                          type="text"
+                          value={adSetName}
+                          onChange={e => setAdSetName(e.target.value)}
+                          required
+                          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-xs font-bold focus:border-indigo-500 focus:outline-none transition-all"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Dupliquer l&apos;AdSet (Ciblage ABO)</label>
+                        <input
+                          type="number"
+                          value={adSetsCount}
+                          onChange={e => setAdSetsCount(Math.min(5, Math.max(1, parseInt(e.target.value) || 1)))}
+                          required
+                          min="1"
+                          max="5"
+                          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-xs font-bold focus:border-indigo-500 focus:outline-none transition-all"
+                        />
+                        <span className="text-[8px] font-bold text-slate-400 mt-1 block">Crée jusqu&apos;à 5 adsets identiques pour tester différents angles ou audiences.</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Ciblage Pays (Codes Meta)</label>
+                      <div className="flex gap-2 flex-wrap">
+                        {['TG', 'CI', 'SN', 'BJ', 'ML', 'BF'].map(c => {
+                          const active = targetingCountries.includes(c);
+                          return (
+                            <button
+                              key={c}
+                              type="button"
+                              onClick={() => {
+                                setTargetingCountries(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c]);
+                              }}
+                              className={`px-4 py-2 border-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
+                                active ? 'bg-indigo-50 border-indigo-500 text-indigo-600' : 'bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800 text-slate-400'
+                              }`}
+                            >
+                              <span className="mr-1.5"><Globe className="w-3.5 h-3.5 inline" /></span> {c}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. CRÉATION PUBLICITÉ */}
+                <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-6 md:p-8 space-y-5">
+                  <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
+                    <span className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950 flex items-center justify-center text-xs font-black text-indigo-600">3</span>
+                    <h3 className="font-black text-sm uppercase tracking-wider text-slate-800 dark:text-slate-100">Contenu de la Publicité (Ad)</h3>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Nom de la Publicité</label>
+                        <input
+                          type="text"
+                          value={adName}
+                          onChange={e => setAdName(e.target.value)}
+                          required
+                          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-xs font-bold focus:border-indigo-500 focus:outline-none transition-all"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Bouton Call-To-Action (CTA)</label>
+                        <select
+                          value={adCta}
+                          onChange={e => setAdCta(e.target.value)}
+                          required
+                          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-xs font-bold focus:border-indigo-500 focus:outline-none transition-all"
+                        >
+                          <option value="SHOP_NOW">Acheter maintenant</option>
+                          <option value="ORDER_NOW">Commander maintenant</option>
+                          <option value="LEARN_MORE">En savoir plus</option>
+                          <option value="BOOK_TRAVEL">Réserver</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Titre d&apos;Accroche (Headline)</label>
+                      <input
+                        type="text"
+                        value={adHeadline}
+                        onChange={e => setAdHeadline(e.target.value)}
+                        required
+                        placeholder="ex: 🔥 Offre de folie ! 50% de réduction immédiate"
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-xs font-bold focus:border-indigo-500 focus:outline-none transition-all"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Texte Principal (Ad Copy)</label>
+                      <textarea
+                        rows={5}
+                        value={adText}
+                        onChange={e => setAdText(e.target.value)}
+                        required
+                        placeholder="Décrivez l'offre, les points forts du produit, et l'appel à l'action..."
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-xs font-bold focus:border-indigo-500 focus:outline-none transition-all resize-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Lien URL de destination (Boutique Shopify / Page de vente)</label>
+                      <input
+                        type="url"
+                        value={productUrl}
+                        onChange={e => setProductUrl(e.target.value)}
+                        placeholder="https://votre-boutique.com/products/mon-produit"
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-xs font-bold focus:border-indigo-500 focus:outline-none transition-all"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">URL Image Créative (Lien public)</label>
+                        <input
+                          type="url"
+                          value={imageUrl}
+                          onChange={e => setImageUrl(e.target.value)}
+                          placeholder="https://..."
+                          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-xs font-bold focus:border-indigo-500 focus:outline-none transition-all"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">URL Vidéo Créative (Optionnel)</label>
+                        <input
+                          type="url"
+                          value={videoUrl}
+                          onChange={e => setVideoUrl(e.target.value)}
+                          placeholder="https://..."
+                          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-xs font-bold focus:border-indigo-500 focus:outline-none transition-all"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-8">
-                {ads.map((ad: any, idx: number) => {
-                  const angle = AD_ANGLES[idx] || AD_ANGLES[0];
-                  const AngleIcon = angle.icon;
-                  return (
-                    <div key={idx} className={`${angle.bg} border-2 ${angle.border} rounded-[3rem] overflow-hidden shadow-sm hover:shadow-xl transition-all`}>
-                      <div className="p-6 border-b-2 border-inherit flex justify-between items-center">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-9 h-9 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center ${angle.color}`}>
-                            <AngleIcon className="w-4 h-4" />
-                          </div>
-                          <div>
-                            <p className="text-[10px] font-black uppercase tracking-widest">{ad.angle || angle.label}</p>
-                            <p className="text-[9px] font-bold text-slate-400">Version {idx + 1} / {ads.length}</p>
-                          </div>
-                        </div>
-                        <button onClick={() => handleCopy(idx)} className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all active:scale-95">
-                          {copiedIdx === idx ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
-                          {copiedIdx === idx ? 'Copié !' : 'Copier'}
-                        </button>
-                      </div>
-                      <div className="p-8 md:p-10 space-y-6 bg-white/60 dark:bg-slate-900/60">
-                        <div>
-                          <label className="text-[9px] font-black uppercase tracking-widest text-slate-300 block mb-2">🔥 Hook d&apos;Accroche</label>
-                          <p className="text-xl font-black tracking-tight">{ad.hook}</p>
-                        </div>
-                        <div>
-                          <label className="text-[9px] font-black uppercase tracking-widest text-slate-300 block mb-2">Phrase d&apos;explication</label>
-                          <p className="text-sm font-medium leading-relaxed italic text-slate-600 dark:text-slate-300">{ad.explanation}</p>
-                        </div>
-                        {ad.benefits && ad.benefits.length > 0 && (
-                          <div>
-                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-300 block mb-3">Bénéfices</label>
-                            <ul className="space-y-2">
-                              {ad.benefits.map((benefit: string, i: number) => (
-                                <li key={i} className="flex items-start gap-3 text-sm font-bold text-slate-700 dark:text-slate-200">
-                                  <span className={`mt-0.5 text-xs ${angle.color}`}>✔</span>
-                                  {benefit}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
+              {/* Feed Preview Panel */}
+              <div className="lg:col-span-5 space-y-6 sticky top-6">
+                <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-6 space-y-5">
+                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Aperçu du Flux Facebook</span>
+                    <span className="text-[8px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full uppercase tracking-wider">Simulé</span>
+                  </div>
+
+                  {/* Simulated Facebook Post Card */}
+                  <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden text-slate-800 font-sans max-w-[450px] mx-auto text-left">
+                    {/* Page Header */}
+                    <div className="p-3 flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden">
+                        {pageId ? (
+                          <div className="text-xs font-black text-indigo-600">FB</div>
+                        ) : (
+                          <div className="w-full h-full bg-slate-200 flex items-center justify-center text-slate-400 text-lg font-bold">P</div>
                         )}
-                        <div className="pt-4 border-t-2 border-dashed border-slate-100 dark:border-slate-800">
-                          <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-indigo-50 dark:bg-indigo-900/10 rounded-2xl">
-                            <div className="flex items-center gap-3">
-                              <Send className="w-5 h-5 text-indigo-600" />
-                              <span className="text-[10px] font-black uppercase tracking-widest text-indigo-700">Call to Action</span>
-                            </div>
-                            <span className="px-5 py-2 bg-indigo-600 text-white rounded-full text-[10px] font-black uppercase">{ad.cta}</span>
-                          </div>
+                      </div>
+                      <div>
+                        <div className="font-bold text-sm text-slate-900 leading-tight">
+                          {fbPages.find(p => p.id === pageId)?.name || 'Votre Page Facebook'}
+                        </div>
+                        <div className="text-[10px] text-slate-500 flex items-center gap-1 font-semibold">
+                          Sponsorisé · <span className="text-[8px]">🌍</span>
                         </div>
                       </div>
                     </div>
-                  );
-                })}
+
+                    {/* Post Text */}
+                    <div className="px-3 pb-3 text-xs leading-relaxed text-slate-900 whitespace-pre-line font-medium min-h-[50px]">
+                      {adText || 'Votre texte publicitaire principal s\'affichera ici...'}
+                    </div>
+
+                    {/* Post Image/Video Placeholder */}
+                    <div className="relative aspect-video bg-slate-100 border-y border-slate-200 flex items-center justify-center overflow-hidden">
+                      {imageUrl ? (
+                        <img src={imageUrl} alt="creative-preview" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="text-center p-6 text-slate-400">
+                          <ImageIcon className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                          <p className="text-[10px] font-bold">Aucune image/vidéo sélectionnée</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Post Action Footer */}
+                    <div className="p-3 bg-slate-50 flex items-center justify-between border-t border-slate-200">
+                      <div className="min-w-0 pr-4">
+                        <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider truncate">
+                          {productUrl ? new URL(productUrl).hostname : 'votre-boutique.com'}
+                        </div>
+                        <div className="text-xs font-bold text-slate-900 truncate mt-0.5">
+                          {adHeadline || 'Accroche publicitaire principale'}
+                        </div>
+                      </div>
+                      <button type="button" className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg text-xs font-bold flex-shrink-0 transition-colors uppercase tracking-wider">
+                        {adCta === 'SHOP_NOW' ? 'Acheter' : adCta === 'ORDER_NOW' ? 'Commander' : 'En savoir plus'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <button
+                    type="submit"
+                    disabled={launchLoading}
+                    className="w-full flex items-center justify-center gap-2 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
+                  >
+                    {launchLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Progagateur en action...
+                      </>
+                    ) : (
+                      <>
+                        <Rocket className="w-4 h-4" />
+                        PROPAGER LA CAMPAGNE 🚀
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </form>
+          )}
+
+          {/* Success Overlay Modal */}
+          {launchResult && (
+            <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
+              <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={() => setLaunchResult(null)} />
+              <div className="relative bg-white dark:bg-slate-900 w-full max-w-lg rounded-[2.5rem] shadow-2xl p-8 text-center animate-in zoom-in-95 duration-200">
+                <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-950/50 rounded-2xl flex items-center justify-center text-emerald-500 mx-auto mb-6">
+                  <Check className="w-8 h-8" />
+                </div>
+                <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 mb-2">Campagne Propagée avec Succès !</h3>
+                <p className="text-slate-400 font-bold text-xs mb-6 uppercase tracking-wider">La structure publicitaire complète a été injectée sur Meta.</p>
+
+                <div className="bg-slate-50 dark:bg-slate-950 rounded-2xl p-4 text-left space-y-2 mb-6 font-mono text-[10px] text-slate-600 dark:text-slate-400">
+                  <div className="flex justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5">
+                    <span className="font-bold">ID Campagne :</span>
+                    <span>{launchResult.campaignId}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5">
+                    <span className="font-bold">Ensembles créés :</span>
+                    <span>{launchResult.adSetIds?.length || 0} adset(s)</span>
+                  </div>
+                  <div className="flex justify-between pb-1">
+                    <span className="font-bold">Publicités créées :</span>
+                    <span>{launchResult.adIds?.length || 0} ad(s)</span>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <button onClick={() => setLaunchResult(null)} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
+                    Fermer
+                  </button>
+                  <a
+                    href="https://adsmanager.facebook.com/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest text-center transition-all"
+                  >
+                    Ouvrir Meta Ads ↗
+                  </a>
+                </div>
               </div>
             </div>
           )}

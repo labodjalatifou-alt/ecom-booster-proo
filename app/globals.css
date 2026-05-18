@@ -69,9 +69,11 @@ table { min-width: max-content; }
 /* Facebook Ads Preview iframe container */
 .preview-container iframe {
   width: 100% !important;
-  max-width: 500px !important;
-  min-height: 600px !important;
+  min-width: 500px !important;
+  max-width: 600px !important;
+  min-height: 650px !important;
   border: none !important;
-  border-radius: 12px;
+  border-radius: 16px;
   background: white;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
 }
