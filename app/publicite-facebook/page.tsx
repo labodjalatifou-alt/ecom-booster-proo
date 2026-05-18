@@ -5,7 +5,7 @@ import {
   Megaphone, Layout, Send, Copy, Check, Loader2, Zap, Target, Heart,
   TrendingUp, TrendingDown, DollarSign, Eye, MousePointer, ShoppingCart,
   RefreshCw, Play, Pause, BarChart2, Users, Activity, AlertCircle,
-  ChevronDown
+  ChevronDown, X, ArrowRight, Image as ImageIcon
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
@@ -47,6 +47,11 @@ export default function PubliciteFacebookPage() {
   const [loadingFb, setLoadingFb] = useState(false);
   const [fbError, setFbError] = useState<string | null>(null);
   const [togglingCampaign, setTogglingCampaign] = useState<string | null>(null);
+  // Campaign detail panel
+  const [selectedCampaign, setSelectedCampaign] = useState<any | null>(null);
+  const [campaignAds, setCampaignAds] = useState<any[]>([]);
+  const [loadingCampaignAds, setLoadingCampaignAds] = useState(false);
+  const [campaignAdsError, setCampaignAdsError] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<DateRange>({
     from: startOfDay(subDays(new Date(), 6)).toISOString(),
     to: endOfDay(new Date()).toISOString(),
@@ -89,6 +94,28 @@ export default function PubliciteFacebookPage() {
   useEffect(() => {
     if (tab === 'stats') fetchFbMetrics();
   }, [tab, fetchFbMetrics]);
+
+  const openCampaignDetail = useCallback(async (campaign: any) => {
+    setSelectedCampaign(campaign);
+    setLoadingCampaignAds(true);
+    setCampaignAdsError(null);
+    setCampaignAds([]);
+    try {
+      const since = dateRange.from ? dateRange.from.split('T')[0] : '';
+      const until = dateRange.to ? dateRange.to.split('T')[0] : '';
+      const params = new URLSearchParams({ campaignId: campaign.id });
+      if (since) params.set('since', since);
+      if (until) params.set('until', until);
+      const res = await fetch(`/api/facebook/campaign-ads?${params.toString()}`);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setCampaignAds(data.ads || []);
+    } catch (err: any) {
+      setCampaignAdsError(err.message);
+    } finally {
+      setLoadingCampaignAds(false);
+    }
+  }, [dateRange]);
 
   const toggleCampaign = async (id: string, currentStatus: string) => {
     setTogglingCampaign(id);
@@ -286,17 +313,18 @@ export default function PubliciteFacebookPage() {
                   <div className="space-y-3">
                     {fbData.campaigns.map(c => (
                       <div key={c.id} className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-4 md:p-5 flex flex-col md:flex-row md:items-center gap-4 hover:shadow-md transition-all">
-                        {/* Status + name */}
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${c.status === 'ACTIVE' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} />
-                          <div className="min-w-0">
-                            <div className="font-black text-sm text-slate-800 dark:text-slate-100 truncate">{c.name}</div>
-                            <div className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">{c.objective} · {c.status === 'ACTIVE' ? 'Active' : 'En pause'}</div>
+                        <div className="flex-1 min-w-0" onClick={() => openCampaignDetail(c)} style={{cursor: 'pointer'}}>
+                          <div className="flex items-center gap-3">
+                            <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${c.status === 'ACTIVE' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} />
+                            <div className="min-w-0">
+                              <div className="font-black text-sm text-slate-800 dark:text-slate-100 truncate hover:text-indigo-600 transition-colors">{c.name}</div>
+                              <div className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">{c.objective} · {c.status === 'ACTIVE' ? 'Active' : 'En pause'}</div>
+                            </div>
                           </div>
                         </div>
 
                         {/* Stats */}
-                        <div className="grid grid-cols-4 gap-3 text-center">
+                        <div className="grid grid-cols-4 gap-3 text-center" onClick={() => openCampaignDetail(c)} style={{cursor: 'pointer'}}>
                           <div>
                             <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Dépenses</div>
                             <div className="text-xs font-black text-slate-700 dark:text-slate-200">{fmt(c.spend, fbData.account.currency)}</div>
@@ -335,6 +363,110 @@ export default function PubliciteFacebookPage() {
                     ))}
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* Campaign Detail Modal */}
+          {selectedCampaign && (
+            <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
+              <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setSelectedCampaign(null)} />
+              <div className="relative bg-white dark:bg-slate-900 w-full max-w-6xl rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+                {/* Header */}
+                <div className="px-6 py-4 border-b-2 border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`w-2 h-2 rounded-full ${selectedCampaign.status === 'ACTIVE' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Détails de la Campagne</span>
+                    </div>
+                    <h3 className="text-lg font-black text-slate-800 dark:text-slate-100">{selectedCampaign.name}</h3>
+                  </div>
+                  <button onClick={() => setSelectedCampaign(null)} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors">
+                    <X className="w-5 h-5 text-slate-500" />
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto p-6">
+                  {loadingCampaignAds ? (
+                    <div className="flex flex-col items-center justify-center py-20 gap-4">
+                      <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Chargement des publicités...</p>
+                    </div>
+                  ) : campaignAdsError ? (
+                    <div className="text-center py-20 text-red-500">
+                      <AlertCircle className="w-8 h-8 mx-auto mb-2" />
+                      <p className="font-bold">{campaignAdsError}</p>
+                    </div>
+                  ) : campaignAds.length === 0 ? (
+                    <div className="text-center py-20 text-slate-400">
+                      <Layout className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                      <p className="font-bold">Aucune publicité trouvée</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                        <StatCard label="Dépenses (Ads)" value={fmt(campaignAds.reduce((acc, ad) => acc + ad.spend, 0), fbData?.account.currency)} icon={DollarSign} color="red" />
+                        <StatCard label="Impressions" value={fmt(campaignAds.reduce((acc, ad) => acc + ad.impressions, 0))} icon={Eye} color="blue" />
+                        <StatCard label="Clics sur lien" value={fmt(campaignAds.reduce((acc, ad) => acc + ad.link_clicks, 0))} icon={MousePointer} color="emerald" />
+                        <StatCard label="Ajouts Panier" value={fmt(campaignAds.reduce((acc, ad) => acc + ad.add_to_cart, 0))} icon={ShoppingCart} color="amber" />
+                        <StatCard label="Achats" value={fmt(campaignAds.reduce((acc, ad) => acc + ad.purchases, 0))} icon={Target} color="emerald" />
+                      </div>
+
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse min-w-[1000px]">
+                          <thead>
+                            <tr className="border-b-2 border-slate-100 dark:border-slate-800 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                              <th className="py-3 px-4 w-[25%]">Publicité</th>
+                              <th className="py-3 px-4 w-[15%]">Aperçu</th>
+                              <th className="py-3 px-4 text-right">Dépenses</th>
+                              <th className="py-3 px-4 text-right">CPC / CPM</th>
+                              <th className="py-3 px-4 text-right">Clics / CTR</th>
+                              <th className="py-3 px-4 text-right">Achats / ROAS</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y-2 divide-slate-50 dark:divide-slate-800/50">
+                            {campaignAds.map(ad => (
+                              <tr key={ad.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                                <td className="py-4 px-4">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className={`w-1.5 h-1.5 rounded-full ${ad.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                                    <span className="text-[9px] font-bold text-slate-400 truncate max-w-[150px]">{ad.adset_name}</span>
+                                  </div>
+                                  <div className="font-bold text-xs text-slate-800 dark:text-slate-200 line-clamp-2">{ad.name}</div>
+                                </td>
+                                <td className="py-4 px-4">
+                                  {ad.thumbnail ? (
+                                    <img src={ad.thumbnail} alt="ad" className="w-12 h-12 object-cover rounded-lg border border-slate-200 dark:border-slate-700" />
+                                  ) : (
+                                    <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center text-slate-400">
+                                      <ImageIcon className="w-4 h-4" />
+                                    </div>
+                                  )}
+                                </td>
+                                <td className="py-4 px-4 text-right">
+                                  <div className="font-black text-sm">{fmt(ad.spend, fbData?.account.currency)}</div>
+                                </td>
+                                <td className="py-4 px-4 text-right">
+                                  <div className="text-xs font-bold">{ad.cpc} {fbData?.account.currency}</div>
+                                  <div className="text-[9px] text-slate-400 mt-0.5">{ad.cpm} {fbData?.account.currency} CPM</div>
+                                </td>
+                                <td className="py-4 px-4 text-right">
+                                  <div className="text-xs font-bold">{ad.link_clicks} clics</div>
+                                  <div className="text-[9px] text-slate-400 mt-0.5">{ad.inline_ctr}% CTR</div>
+                                </td>
+                                <td className="py-4 px-4 text-right">
+                                  <div className="text-sm font-black text-emerald-600">{ad.purchases}</div>
+                                  <div className="text-[9px] text-slate-400 mt-0.5">{ad.roas ? `${ad.roas}x ROAS` : '—'}</div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
