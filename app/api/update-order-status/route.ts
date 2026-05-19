@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { sendPushNotification } from '@/lib/push-helper';
 
 export async function POST(req: Request) {
   try {
-    const { orderId, status, userId, cashCollected, deliveryFee, deliveryFeeIncluded, note } = await req.json();
+    const { orderId, status, userId, cashCollected, deliveryFee, deliveryFeeIncluded, note, livreurId } = await req.json();
+
 
     if (!orderId || !status) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -38,6 +40,8 @@ export async function POST(req: Request) {
     // Assigner le closer ou livreur
     if (status === 'Confirmé' && userId) updateData.closer_id = userId;
     if (status === 'Livré' && userId) updateData.livreur_id = userId;
+    if (livreurId !== undefined) updateData.livreur_id = livreurId;
+
 
     // 3. GAINS (Enregistrés directement dans la commande)
     //    - Closer : 500 à la confirmation. Total 1000 si livré.
@@ -105,7 +109,50 @@ export async function POST(req: Request) {
 
     if (updateError) throw updateError;
 
+    // Déclencher les notifications push en arrière-plan
+    (async () => {
+      try {
+        // 1. Si la commande passe à 'Confirmé', on notifie le livreur assigné
+        if (status === 'Confirmé') {
+          const targetLivreurId = updatedOrder.livreur_id || order.livreur_id;
+          if (targetLivreurId) {
+            await sendPushNotification({
+              userId: targetLivreurId,
+              title: "Commande confirmée à livrer 📦",
+              body: `La commande de ${updatedOrder.customer || 'Client'} (${updatedOrder.city || ''}) est confirmée et prête pour la livraison.`,
+              url: "/interface-livreur"
+            });
+          }
+        }
+
+        // 2. Si un livreur a été assigné ou modifié
+        const prevLivreurId = order.livreur_id;
+        const newLivreurId = updatedOrder.livreur_id;
+        if (newLivreurId && newLivreurId !== prevLivreurId) {
+          await sendPushNotification({
+            userId: newLivreurId,
+            title: "Nouvelle livraison assignée 🚚",
+            body: `La commande de ${updatedOrder.customer || 'Client'} (${updatedOrder.city || ''}) vous a été assignée.`,
+            url: "/interface-livreur"
+          });
+        }
+
+        // 3. Si la commande repasse à 'A Confirmer'
+        if (status === 'A Confirmer') {
+          await sendPushNotification({
+            role: 'CLOSER',
+            title: "Nouvelle commande en attente ☎️",
+            body: `Commande de ${updatedOrder.customer || 'Client'} (${updatedOrder.city || ''}) en attente de confirmation.`,
+            url: "/interface-closer"
+          });
+        }
+      } catch (err) {
+        console.error('Error triggering push notifications on status update:', err);
+      }
+    })();
+
     return NextResponse.json(updatedOrder);
+
   } catch (error: any) {
     console.error('Update Order Status Error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });

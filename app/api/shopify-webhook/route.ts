@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import crypto from 'crypto';
+import { sendPushNotification } from '@/lib/push-helper';
+
 
 /** Résout la ville dynamiquement à partir de l'adresse Shopify — AUCUN hardcode */
 function resolveCity(order: any): string {
@@ -97,8 +99,26 @@ export async function POST(req: Request) {
       order_id: orderToInsert.shopify_id,
     });
 
+    // Déclencher la notification push pour tous les Closers
+    sendPushNotification({
+      role: 'CLOSER',
+      title: "Nouvelle commande en attente ☎️",
+      body: `Commande de ${orderToInsert.customer} (${orderToInsert.city || ''}) en attente de confirmation.`,
+      url: "/interface-closer"
+    }).catch(err => console.error('Error sending push to closers:', err));
+
+    // Déclencher la notification push pour tous les Admins
+    sendPushNotification({
+      role: 'ADMIN',
+      title: "Nouvelle commande reçue 🛍️",
+      body: `Commande de ${orderToInsert.customer} — ${orderToInsert.product} (${rawPrice} ${currency})`,
+      url: "/commandes"
+    }).catch(err => console.error('Error sending push to admins:', err));
+
+
     console.log('[webhook] Order saved successfully:', order.id);
     return NextResponse.json({ success: true });
+
   } catch (error: any) {
     console.error('[webhook] Error:', error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });

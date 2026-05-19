@@ -21,6 +21,18 @@ export default function InterfaceLivreurPage() {
   const [totalCashCollected, setTotalCashCollected] = useState(0);
   const [dateRange, setDateRange] = useState<DateRange>(DEFAULT_RANGE);
   const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadUser() {
+      const { resolveUserProfile } = await import('@/lib/utils');
+      const profile = await resolveUserProfile(supabase);
+      if (profile && profile.id) {
+        setUserId(profile.id);
+      }
+    }
+    loadUser();
+  }, []);
+
   const [myEarnings, setMyEarnings] = useState(0);
   
   const [showCollectionModal, setShowCollectionModal] = useState(false);

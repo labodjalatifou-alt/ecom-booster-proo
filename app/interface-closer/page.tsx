@@ -29,6 +29,17 @@ export default function InterfaceCloserPage() {
   const [myEarnings, setMyEarnings] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
 
+  useEffect(() => {
+    async function loadUser() {
+      const { resolveUserProfile } = await import('@/lib/utils');
+      const profile = await resolveUserProfile(supabase);
+      if (profile && profile.id) {
+        setUserId(profile.id);
+      }
+    }
+    loadUser();
+  }, []);
+
   async function fetchData() {
     setLoading(true);
     

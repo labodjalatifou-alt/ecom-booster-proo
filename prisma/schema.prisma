@@ -765,3 +765,16 @@ enum one_time_token_type {
 
   @@schema("auth")
 }
+
+model PushSubscription {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id   String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("push_subscriptions")
+  @@schema("public")
+}
+

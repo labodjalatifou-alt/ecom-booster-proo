@@ -4,13 +4,35 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Store, Menu, Check, LogOut, User, Mail } from 'lucide-react';
 import { useSidebar } from './SidebarProvider';
 import { useStore } from './StoreProvider';
+import { supabase } from '@/lib/supabase';
+import { resolveUserProfile } from '@/lib/utils';
 import Link from 'next/link';
 
 export default function Header() {
   const { toggle } = useSidebar();
   const { selectedStore, setSelectedStore, stores, loadingStores, noStoreConnected, activeStore } = useStore();
   const [showProfile, setShowProfile] = useState(false);
+  const [profile, setProfile] = useState<any>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    async function loadProfile() {
+      const u = await resolveUserProfile(supabase);
+      setProfile(u);
+    }
+    
+    loadProfile();
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async () => {
+      const u = await resolveUserProfile(supabase);
+      setProfile(u);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -28,6 +50,17 @@ export default function Header() {
     return store?.name || id;
   };
 
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    setShowProfile(false);
+    window.location.reload();
+  };
+
+  // Get initials for profile badge
+  const initials = profile?.name 
+    ? profile.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0, 2) 
+    : 'AD';
+
   return (
     <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 md:px-8 sticky top-0 z-40">
       <div className="flex items-center gap-3">
@@ -35,7 +68,7 @@ export default function Header() {
           <Menu className="w-6 h-6" />
         </button>
         <h1 className="text-lg font-semibold text-slate-800 dark:text-slate-100 hidden sm:block">
-          Bonjour, <span className="text-primary-600">LABOSTAR</span>
+          Bonjour, <span className="text-primary-600">{profile?.name || 'Administrateur'}</span>
         </h1>
       </div>
       
@@ -89,7 +122,7 @@ export default function Header() {
         {/* Profile Dropdown */}
         <div className="relative" ref={profileRef}>
           <div onClick={() => setShowProfile(!showProfile)} className="flex items-center gap-3 pl-2 md:pl-4 border-l border-slate-200 dark:border-slate-800 cursor-pointer hover:opacity-80 active:scale-95 transition-all">
-            <div className="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-semibold border border-primary-200">L</div>
+            <div className="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-semibold border border-primary-200">{initials}</div>
             <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${showProfile ? 'rotate-180' : ''}`} />
           </div>
 
@@ -99,14 +132,14 @@ export default function Header() {
               <div className="absolute top-full right-0 mt-3 w-64 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in zoom-in-95 duration-200">
                 <div className="p-5 border-b border-slate-100 dark:border-slate-700">
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-black text-lg border-2 border-primary-200">L</div>
+                    <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-black text-lg border-2 border-primary-200">{initials}</div>
                     <div>
-                      <p className="text-sm font-black text-slate-800 dark:text-slate-100">LABOSTAR</p>
-                      <p className="text-[10px] font-bold text-slate-400">Administrateur</p>
+                      <p className="text-sm font-black text-slate-800 dark:text-slate-100">{profile?.name || 'Administrateur'}</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{profile?.role || 'ADMIN'}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold">
-                    <Mail className="w-3 h-3" /> labostar@ecombooster.pro
+                    <Mail className="w-3 h-3" /> {profile?.email || 'admin@ecombooster.pro'}
                   </div>
                 </div>
                 {activeStore && (
@@ -121,12 +154,19 @@ export default function Header() {
                     <Store className="w-4 h-4 text-primary-500" /> Mes Boutiques
                   </Link>
                   <Link href="/equipe" onClick={() => setShowProfile(false)} className="flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-xl transition-colors">
-                    <User className="w-4 h-4 text-blue-500" /> Mon Profil
+                    <User className="w-4 h-4 text-blue-500" /> Mon Profil / Équipe
                   </Link>
                   <div className="h-px bg-slate-100 dark:bg-slate-700 my-1 mx-2" />
-                  <button onClick={() => setShowProfile(false)} className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-colors">
-                    <LogOut className="w-4 h-4" /> Déconnexion
-                  </button>
+                  
+                  {profile?.id && profile.id !== 'default-admin' ? (
+                    <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-colors">
+                      <LogOut className="w-4 h-4" /> Déconnexion
+                    </button>
+                  ) : (
+                    <Link href="/connexion" onClick={() => setShowProfile(false)} className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-950/20 rounded-xl transition-colors">
+                      <User className="w-4 h-4 text-primary-500" /> Se Connecter
+                    </Link>
+                  )}
                 </div>
               </div>
             </>
