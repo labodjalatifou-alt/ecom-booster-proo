@@ -19,29 +19,55 @@ export function useAppSounds() {
     soundsRef.current.deliver = new Audio('/sounds/klaxon.mp3?v=2');
     soundsRef.current.cash = new Audio('/sounds/coins.mp3?v=1');
 
-    // Configuration par défaut
+    // Configuration par défaut et volume
     Object.values(soundsRef.current).forEach(audio => {
       if (audio) {
         audio.volume = 1.0;
         audio.load();
       }
     });
+
+    // Fonction d'interaction utilisateur unique pour "débloquer" les sons dans le navigateur
+    const unlockAudioContext = () => {
+      console.log("[Audio] Interaction détectée, déblocage des contextes audio...");
+      Object.values(soundsRef.current).forEach(audio => {
+        if (audio) {
+          // Joue brièvement et met en pause pour autoriser la lecture future en arrière-plan
+          audio.play()
+            .then(() => {
+              audio.pause();
+              audio.currentTime = 0;
+            })
+            .catch(() => {});
+        }
+      });
+      // Nettoyer les écouteurs d'événements après le premier clic
+      document.removeEventListener('click', unlockAudioContext);
+      document.removeEventListener('touchstart', unlockAudioContext);
+    };
+
+    document.addEventListener('click', unlockAudioContext);
+    document.addEventListener('touchstart', unlockAudioContext);
+
+    return () => {
+      document.removeEventListener('click', unlockAudioContext);
+      document.removeEventListener('touchstart', unlockAudioContext);
+    };
   }, []);
 
   const playSound = (type: SoundType) => {
     const audio = soundsRef.current[type];
     if (audio) {
-      console.log(`[Audio] Tentative de lecture : ${type}`);
+      console.log(`[Audio] Tentative de lecture du son : ${type}`);
       audio.currentTime = 0;
       audio.play().catch(e => {
-        console.warn(`[Audio] Lecture bloquée pour ${type}. Cliquez sur la page pour autoriser le son.`, e);
+        console.warn(`[Audio] Lecture bloquée pour ${type}. Veuillez cliquer sur l'application pour activer les sons.`, e);
       });
     }
   };
 
   return { 
     playSound,
-    // Pour compatibilité avec l'existant pendant la transition
     playKaching: () => playSound('order')
   };
 }

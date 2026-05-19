@@ -14,7 +14,9 @@ self.addEventListener('push', function(event) {
         body: data.body || '',
         icon: '/icon-192.png',
         badge: '/badge.png',
-        vibrate: [200, 100, 200],
+        vibrate: [200, 100, 200, 100, 200],
+        silent: false, // Laisse jouer le son système de notification
+        requireInteraction: true,
         data: {
           url: data.url || '/commandes'
         }
@@ -30,7 +32,9 @@ self.addEventListener('push', function(event) {
           body: text,
           icon: '/icon-192.png',
           badge: '/badge.png',
-          vibrate: [200, 100, 200],
+          vibrate: [200, 100, 200, 100, 200],
+          silent: false,
+          requireInteraction: true,
           data: { url: '/commandes' }
         })
       );
