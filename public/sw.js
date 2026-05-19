@@ -13,8 +13,9 @@ self.addEventListener('push', function(event) {
       const options = {
         body: data.body || '',
         icon: '/icon-192.png',
-        badge: '/badge.png',
-        vibrate: [200, 100, 200, 100, 200],
+        tag: 'shopify-order',
+        renotify: true,
+        vibrate: [300, 110, 300, 110, 300, 110, 300],
         silent: false, // Laisse jouer le son système de notification
         requireInteraction: true,
         data: {
@@ -31,8 +32,9 @@ self.addEventListener('push', function(event) {
         self.registration.showNotification('Ecom Booster Pro', {
           body: text,
           icon: '/icon-192.png',
-          badge: '/badge.png',
-          vibrate: [200, 100, 200, 100, 200],
+          tag: 'shopify-order',
+          renotify: true,
+          vibrate: [300, 110, 300, 110, 300, 110, 300],
           silent: false,
           requireInteraction: true,
           data: { url: '/commandes' }

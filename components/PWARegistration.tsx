@@ -95,8 +95,9 @@ export default function PWARegistration() {
     // Listen to login/logout events to update the user mapping dynamically
     const { data: { subscription: authListener } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log(`Auth state changed: ${event}`);
-      const userId = session?.user?.id || 'default-user-id';
-      await syncSubscriptionWithUser(userId);
+      if (session?.user?.id) {
+        await syncSubscriptionWithUser(session.user.id);
+      }
     });
 
     return () => {
