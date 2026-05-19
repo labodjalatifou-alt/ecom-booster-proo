@@ -86,9 +86,11 @@ export default function PWARegistration() {
     // Initialize registration on load
     getSubscription().then(async (sub) => {
       if (sub) {
-        // Sync with current user
+        // Sync with current user only if logged in to avoid overwriting subscription
         const { data: { user } } = await supabase.auth.getUser();
-        await syncSubscriptionWithUser(user?.id || 'default-user-id');
+        if (user) {
+          await syncSubscriptionWithUser(user.id);
+        }
       }
     });
 
