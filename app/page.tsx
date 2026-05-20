@@ -22,16 +22,6 @@ export default function DashboardPage() {
           <h2 className="text-3xl md:text-4xl font-black text-slate-800 dark:text-slate-100 tracking-tighter">Tableau de bord</h2>
           <p className="text-slate-400 text-sm mt-1 font-medium italic">Analysez la santé de vos boutiques en temps réel.</p>
         </div>
-        
-        <div className="flex gap-4">
-          <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 p-6 rounded-[2rem] shadow-sm text-center min-w-[140px]">
-            <span className="text-[10px] font-black text-slate-400 uppercase block mb-1">Status Shopify</span>
-            <div className="flex items-center justify-center gap-2">
-              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-              <span className="text-xs font-black text-emerald-600">Connecté</span>
-            </div>
-          </div>
-        </div>
       </div>
 
       <StatCards />

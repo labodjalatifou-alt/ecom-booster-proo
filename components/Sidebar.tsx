@@ -36,7 +36,7 @@ function cn(...inputs: ClassValue[]) {
 
 const menuGroups = [
   {
-    title: 'PRINCIPAL',
+    title: '',
     items: [
       { name: 'Tableau de bord', icon: LayoutDashboard, href: '/' },
     ]
@@ -62,7 +62,6 @@ const menuGroups = [
       { name: 'Interface Livreur', icon: Truck, href: '/interface-livreur' },
       { name: 'Stock / Inventaire', icon: Package, href: '/stock' },
       { name: 'Historique Ventes', icon: History, href: '/historique-commandes' },
-      { name: 'Comptabilité', icon: Calculator, href: '/comptabilite' },
     ]
   },
   {
@@ -117,9 +116,11 @@ export default function Sidebar() {
       <div className="flex-1 overflow-y-auto scrollbar-hide py-6">
         {menuGroups.map((group, idx) => (
           <div key={idx} className="mb-8 px-4">
-            <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-3 px-4">
-              {group.title}
-            </h3>
+            {group.title && (
+              <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-3 px-4">
+                {group.title}
+              </h3>
+            )}
             <ul className="space-y-1">
               {group.items.map((item, itemIdx) => {
                 const Icon = item.icon;

@@ -192,58 +192,6 @@ export default function PerformanceWidget() {
         </div>
       </div>
 
-      {/* Tunnel Widget (Full Width) */}
-      <div className="bg-slate-900 text-white rounded-[3rem] p-6 md:p-10 col-span-1 lg:col-span-2 shadow-2xl overflow-hidden relative group">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-600/10 blur-[100px] -mr-32 -mt-32"></div>
-        
-        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
-          <div>
-            <h3 className="text-3xl font-black tracking-tighter mb-2">Tunnel Opérationnel</h3>
-            <p className="text-xs font-black text-white/40 uppercase tracking-[0.3em]">Santé globale du business</p>
-          </div>
-          
-          <div className="flex flex-wrap gap-6">
-            <div className="text-center">
-              <div className="text-3xl font-black text-emerald-400">{data.tunnel.delivered}%</div>
-              <div className="text-[9px] font-black text-white/30 uppercase tracking-widest mt-1">Livraison (DSR)</div>
-            </div>
-            <div className="w-px h-12 bg-white/10 hidden md:block"></div>
-            <div className="text-center">
-              <div className="text-3xl font-black text-amber-400">{data.tunnel.rto}%</div>
-              <div className="text-[9px] font-black text-white/30 uppercase tracking-widest mt-1">Retours (RTO)</div>
-            </div>
-            <div className="w-px h-12 bg-white/10 hidden md:block"></div>
-            <div className="text-center">
-              <div className="text-3xl font-black text-red-500">{data.tunnel.cancelled}</div>
-              <div className="text-[9px] font-black text-white/30 uppercase tracking-widest mt-1">Annulations</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
-          <div className="p-6 bg-white/5 rounded-[2rem] border border-white/10 flex items-center gap-4 group/item hover:bg-white/10 transition-colors">
-             <div className="p-3 bg-emerald-500/20 rounded-xl group-hover/item:scale-110 transition-transform"><CheckCircle2 className="w-6 h-6 text-emerald-400" /></div>
-             <div>
-               <div className="text-[10px] font-black text-white/40 uppercase tracking-widest">Confirmées</div>
-               <div className="text-xl font-black">{data.tunnel.totalConfirmed}</div>
-             </div>
-          </div>
-          <div className="p-6 bg-white/5 rounded-[2rem] border border-white/10 flex items-center gap-4 group/item hover:bg-white/10 transition-colors">
-             <div className="p-3 bg-amber-500/20 rounded-xl group-hover/item:scale-110 transition-transform"><TrendingUp className="w-6 h-6 text-amber-400" /></div>
-             <div>
-               <div className="text-[10px] font-black text-white/40 uppercase tracking-widest">En cours</div>
-               <div className="text-xl font-black">{data.tunnel.pending}</div>
-             </div>
-          </div>
-          <div className="p-6 bg-white/5 rounded-[2rem] border border-white/10 flex items-center gap-4 group/item hover:bg-white/10 transition-colors">
-             <div className="p-3 bg-red-500/20 rounded-xl group-hover/item:scale-110 transition-transform"><AlertCircle className="w-6 h-6 text-red-400" /></div>
-             <div>
-               <div className="text-[10px] font-black text-white/40 uppercase tracking-widest">Annulées</div>
-               <div className="text-xl font-black">{data.tunnel.cancelled}</div>
-             </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

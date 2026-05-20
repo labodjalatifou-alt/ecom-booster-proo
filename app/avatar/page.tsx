@@ -62,108 +62,98 @@ export default function AvatarPage() {
     </div>
   );
 
-  // Helper pour afficher une liste ou un texte
-  const renderList = (items: any) => {
-    if (!items) return null;
-    if (typeof items === 'string') return [items];
-    if (Array.isArray(items)) return items;
-    return null;
-  };
-
-  const frustrations = renderList(avatar.frustrations || avatar.pains);
-  const peurs = renderList(avatar.peurs || avatar.fears);
-  const desirs = renderList(avatar.désirs || avatar.desirs || avatar.goals || avatar.desires);
-  const objections = renderList(avatar.objections);
+  const interets = renderList(avatar.interets || ['Shopping en ligne', 'Nouveautés', 'Produits pratiques']); // Fallback in case old analysis
+  const frustrations = renderList(avatar.frustrations || avatar.pains || []);
+  const peurs = renderList(avatar.peurs || avatar.fears || []);
+  const desirs = renderList(avatar.desirs || avatar.désirs || avatar.goals || avatar.desires || []);
 
   return (
     <div className="max-w-5xl mx-auto pb-20 px-4 animate-in fade-in duration-500">
-      <div className="text-center mb-12">
-        <div className="inline-flex items-center gap-2 px-5 py-2 bg-blue-100 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest mb-5">
-          <Target className="w-4 h-4" /> Ciblage Précis
+      <div className="text-center mb-16 relative">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-blue-500/10 blur-[80px] rounded-full -z-10 pointer-events-none" />
+        <div className="inline-flex items-center gap-2 px-5 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-full text-[10px] font-black uppercase tracking-widest mb-5 shadow-sm">
+          <User className="w-4 h-4 text-blue-500" /> Profil Acheteur
         </div>
-        <h2 className="text-4xl font-black tracking-tighter mb-2">{avatar.title || 'Client Idéal'}</h2>
-        <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Profil Psychographique Complet · {latestProduct.product_name}</p>
+        <h2 className="text-4xl md:text-5xl font-black tracking-tighter mb-4 text-slate-800 dark:text-white leading-tight">
+          {latestProduct.product_name}
+        </h2>
       </div>
 
-      {/* Stats rapides — 4 colonnes */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border-2 border-slate-100 dark:border-slate-800 shadow-sm text-center">
-          <User className="w-5 h-5 text-blue-500 mx-auto mb-2" />
-          <span className="text-[9px] font-black text-slate-400 uppercase block mb-1">Sexe</span>
-          <p className="text-base font-black">{avatar.sexe || avatar.gender || '-'}</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        {/* Démographie */}
+        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-8 rounded-[2.5rem] border border-slate-200/50 dark:border-slate-800/50 shadow-sm flex items-center gap-6 group hover:-translate-y-1 transition-transform">
+          <div className="p-5 bg-blue-50 dark:bg-blue-900/20 text-blue-500 rounded-[1.5rem] group-hover:scale-110 transition-transform">
+            <User className="w-8 h-8" />
+          </div>
+          <div>
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Sexe</span>
+            <p className="text-2xl font-black text-slate-800 dark:text-slate-100">{avatar.sexe || avatar.gender || '-'}</p>
+          </div>
         </div>
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border-2 border-slate-100 dark:border-slate-800 shadow-sm text-center">
-          <Target className="w-5 h-5 text-amber-500 mx-auto mb-2" />
-          <span className="text-[9px] font-black text-slate-400 uppercase block mb-1">Âge</span>
-          <p className="text-base font-black">{avatar.age || '-'}</p>
-        </div>
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border-2 border-slate-100 dark:border-slate-800 shadow-sm text-center">
-          <Wallet className="w-5 h-5 text-emerald-500 mx-auto mb-2" />
-          <span className="text-[9px] font-black text-slate-400 uppercase block mb-1">Revenus</span>
-          <p className="text-base font-black">{avatar.revenus || avatar.income || '-'}</p>
-        </div>
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border-2 border-slate-100 dark:border-slate-800 shadow-sm text-center">
-          <Brain className="w-5 h-5 text-purple-500 mx-auto mb-2" />
-          <span className="text-[9px] font-black text-slate-400 uppercase block mb-1">Profil</span>
-          <p className="text-base font-black">{avatar.profil || avatar.title || '-'}</p>
+
+        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-8 rounded-[2.5rem] border border-slate-200/50 dark:border-slate-800/50 shadow-sm flex items-center gap-6 group hover:-translate-y-1 transition-transform">
+          <div className="p-5 bg-amber-50 dark:bg-amber-900/20 text-amber-500 rounded-[1.5rem] group-hover:scale-110 transition-transform">
+            <Target className="w-8 h-8" />
+          </div>
+          <div>
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Tranche d'Âge</span>
+            <p className="text-2xl font-black text-slate-800 dark:text-slate-100">{avatar.age || '-'}</p>
+          </div>
         </div>
       </div>
 
-      {/* Frustrations & Peurs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div className="bg-rose-50 dark:bg-rose-900/10 border-2 border-rose-100 dark:border-rose-800 p-5 md:p-8 rounded-[2.5rem]">
-          <h3 className="text-lg font-black mb-5 flex items-center gap-3 text-rose-600">
+      {/* Centres d'intérêt */}
+      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-800/50 p-8 md:p-10 rounded-[3rem] mb-8 shadow-sm">
+        <h3 className="text-sm font-black uppercase tracking-widest mb-6 flex items-center gap-3 text-slate-400">
+          <Brain className="w-5 h-5 text-purple-500" /> Centres d'intérêt
+        </h3>
+        <div className="flex flex-wrap gap-3">
+          {(interets || []).map((item: string, i: number) => (
+            <span key={i} className="px-5 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm font-bold rounded-full border border-slate-200/50 dark:border-slate-700/50 shadow-sm">
+              {item}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Douleurs & Désirs */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 p-8 rounded-[3rem] shadow-sm hover:shadow-md transition-shadow">
+          <h3 className="text-[11px] font-black uppercase tracking-widest mb-6 flex items-center gap-3 text-rose-600 dark:text-rose-400">
             <ShieldAlert className="w-5 h-5" /> Frustrations
           </h3>
-          <ul className="space-y-3">
+          <ul className="space-y-4">
             {(frustrations || []).map((item: string, i: number) => (
-              <li key={i} className="flex items-start gap-3 text-sm font-bold text-slate-600 dark:text-slate-300">
-                <span className="w-1.5 h-1.5 bg-rose-400 rounded-full mt-2 shrink-0" />
+              <li key={i} className="flex items-start gap-3 text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed">
+                <span className="w-1.5 h-1.5 bg-rose-400 rounded-full mt-2 shrink-0 shadow-[0_0_8px_rgba(251,113,133,0.8)]" />
                 {item}
               </li>
             ))}
           </ul>
         </div>
 
-        <div className="bg-amber-50 dark:bg-amber-900/10 border-2 border-amber-100 dark:border-amber-800 p-5 md:p-8 rounded-[2.5rem]">
-          <h3 className="text-lg font-black mb-5 flex items-center gap-3 text-amber-600">
+        <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 p-8 rounded-[3rem] shadow-sm hover:shadow-md transition-shadow">
+          <h3 className="text-[11px] font-black uppercase tracking-widest mb-6 flex items-center gap-3 text-amber-600 dark:text-amber-400">
             <AlertTriangle className="w-5 h-5" /> Peurs
           </h3>
-          <ul className="space-y-3">
+          <ul className="space-y-4">
             {(peurs || []).map((item: string, i: number) => (
-              <li key={i} className="flex items-start gap-3 text-sm font-bold text-slate-600 dark:text-slate-300">
-                <span className="w-1.5 h-1.5 bg-amber-400 rounded-full mt-2 shrink-0" />
+              <li key={i} className="flex items-start gap-3 text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed">
+                <span className="w-1.5 h-1.5 bg-amber-400 rounded-full mt-2 shrink-0 shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
                 {item}
               </li>
             ))}
           </ul>
         </div>
-      </div>
 
-      {/* Désirs & Objections */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div className="bg-emerald-50 dark:bg-emerald-900/10 border-2 border-emerald-100 dark:border-emerald-800 p-5 md:p-8 rounded-[2.5rem]">
-          <h3 className="text-lg font-black mb-5 flex items-center gap-3 text-emerald-600">
+        <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 p-8 rounded-[3rem] shadow-sm hover:shadow-md transition-shadow">
+          <h3 className="text-[11px] font-black uppercase tracking-widest mb-6 flex items-center gap-3 text-emerald-600 dark:text-emerald-400">
             <Heart className="w-5 h-5" /> Désirs
           </h3>
-          <ul className="space-y-3">
+          <ul className="space-y-4">
             {(desirs || []).map((item: string, i: number) => (
-              <li key={i} className="flex items-start gap-3 text-sm font-bold text-slate-600 dark:text-slate-300">
-                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full mt-2 shrink-0" />
-                {item}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="bg-slate-50 dark:bg-slate-800/50 border-2 border-slate-200 dark:border-slate-700 p-5 md:p-8 rounded-[2.5rem]">
-          <h3 className="text-lg font-black mb-5 flex items-center gap-3 text-slate-600">
-            <MessageCircle className="w-5 h-5" /> Objections
-          </h3>
-          <ul className="space-y-3">
-            {(objections || []).map((item: string, i: number) => (
-              <li key={i} className="flex items-start gap-3 text-sm font-bold text-slate-600 dark:text-slate-300">
-                <span className="w-1.5 h-1.5 bg-slate-400 rounded-full mt-2 shrink-0" />
+              <li key={i} className="flex items-start gap-3 text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed">
+                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full mt-2 shrink-0 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
                 {item}
               </li>
             ))}
@@ -171,41 +161,24 @@ export default function AvatarPage() {
         </div>
       </div>
 
-      {/* Déclencheurs — section spéciale */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {/* Phrase déclenchante */}
-        <div className="bg-gradient-to-br from-indigo-600 to-purple-700 text-white p-7 rounded-[2.5rem] shadow-xl">
-          <div className="flex items-center gap-2 mb-4 opacity-80">
-            <Quote className="w-4 h-4" />
-            <span className="text-[9px] font-black uppercase tracking-widest">Phrase Déclenchante</span>
+      {/* Phrase déclenchante */}
+      <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-primary-600 text-white p-10 md:p-12 rounded-[3.5rem] shadow-2xl relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 blur-[100px] rounded-full -mr-32 -mt-32 pointer-events-none" />
+        <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
+          <div className="p-6 bg-white/10 backdrop-blur-md rounded-[2rem] shrink-0 group-hover:rotate-6 transition-transform duration-500">
+            <Quote className="w-10 h-10 text-white" />
           </div>
-          <p className="text-sm font-bold italic leading-relaxed">
-            &ldquo;{avatar.phrase_declenchante || avatar.trigger_phrase || 'Non définie'}&rdquo;
-          </p>
-        </div>
-
-        {/* Comment le convaincre */}
-        <div className="bg-gradient-to-br from-emerald-600 to-teal-700 text-white p-7 rounded-[2.5rem] shadow-xl">
-          <div className="flex items-center gap-2 mb-4 opacity-80">
-            <Lightbulb className="w-4 h-4" />
-            <span className="text-[9px] font-black uppercase tracking-widest">Comment le convaincre</span>
+          <div>
+            <div className="flex items-center gap-2 mb-3 opacity-80">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em]">Phrase Déclenchante</span>
+            </div>
+            <p className="text-xl md:text-3xl font-black italic leading-tight text-white drop-shadow-sm">
+              &ldquo;{avatar.phrase_declenchante || avatar.trigger_phrase || 'Découvrez notre produit dès aujourd\'hui.'}&rdquo;
+            </p>
           </div>
-          <p className="text-sm font-bold leading-relaxed">
-            {avatar.comment_le_convaincre || avatar.how_to_convince || 'Non défini'}
-          </p>
-        </div>
-
-        {/* Déclencheur émotionnel */}
-        <div className="bg-gradient-to-br from-rose-600 to-pink-700 text-white p-7 rounded-[2.5rem] shadow-xl">
-          <div className="flex items-center gap-2 mb-4 opacity-80">
-            <Flame className="w-4 h-4" />
-            <span className="text-[9px] font-black uppercase tracking-widest">Déclencheur Émotionnel</span>
-          </div>
-          <p className="text-sm font-bold leading-relaxed">
-            {avatar.declencheur_emotionnel || avatar.emotional_trigger || 'Non défini'}
-          </p>
         </div>
       </div>
+
     </div>
   );
 }

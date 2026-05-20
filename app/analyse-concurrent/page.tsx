@@ -80,7 +80,7 @@ export default function AnalyseConcurrentPage() {
   const [latestProduct, setLatestProduct] = useState<any>(null);
   const [platform, setPlatform] = useState<Platform>('facebook');
   const [searchTerm, setSearchTerm] = useState('');
-  const [translatedTerm, setTranslatedTerm] = useState('');
+  const [translations, setTranslations] = useState<{fr: string, en: string}>({ fr: '', en: '' });
   const [isTranslating, setIsTranslating] = useState(false);
 
   useEffect(() => {
@@ -105,7 +105,7 @@ export default function AnalyseConcurrentPage() {
   // Effect to handle translation when searchTerm changes
   useEffect(() => {
     if (!searchTerm) {
-      setTranslatedTerm('');
+      setTranslations({ fr: '', en: '' });
       return;
     }
 
@@ -116,12 +116,16 @@ export default function AnalyseConcurrentPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            prompt: `Translate this product name from French to English. Return ONLY the translated name, nothing else: "${searchTerm}"`
+            prompt: `Translate the following product name into both French and English. Return ONLY a valid JSON object in this exact format: {"fr": "french name", "en": "english name"}. Do not add any other text. Product name: "${searchTerm}"`
           })
         });
         const data = await res.json();
         if (data.text) {
-          setTranslatedTerm(data.text.trim().replace(/[".]/g, ''));
+          const parsed = JSON.parse(data.text.trim());
+          setTranslations({
+            fr: parsed.fr || searchTerm,
+            en: parsed.en || searchTerm
+          });
         }
       } catch (err) {
         console.error('Translation error:', err);
@@ -138,8 +142,13 @@ export default function AnalyseConcurrentPage() {
   const handleCountryClick = (country: any) => {
     if (!productName) return;
 
-    // Use translated term if country is English and translation is available
-    const finalSearchTerm = (country.lang === 'en' && translatedTerm) ? translatedTerm : productName;
+    // Use translated term if available and matches country language
+    let finalSearchTerm = productName;
+    if (country.lang === 'en' && translations.en) {
+      finalSearchTerm = translations.en;
+    } else if (country.lang === 'fr' && translations.fr) {
+      finalSearchTerm = translations.fr;
+    }
 
     if (platform === 'facebook') {
       const q = encodeURIComponent(finalSearchTerm);
@@ -242,10 +251,20 @@ export default function AnalyseConcurrentPage() {
                   <span>Recherche TikTok : <strong className="text-slate-600 dark:text-slate-200">&quot;Nom + Capitale&quot;</strong></span>
                 )}
               </div>
-              {translatedTerm && (
-                <div className="flex items-center gap-2 text-[10px] font-bold text-primary-500 bg-primary-50 dark:bg-primary-900/20 w-fit px-3 py-1 rounded-full">
-                  <span>🇺🇸 Traduction auto pour pays anglophones : </span>
-                  <span className="italic font-black">&quot;{translatedTerm}&quot;</span>
+              {(translations.en || translations.fr) && (
+                <div className="flex flex-wrap items-center gap-2 text-[10px] font-bold mt-2">
+                  {translations.fr && (
+                    <div className="flex items-center gap-2 text-primary-600 bg-primary-50 dark:text-primary-400 dark:bg-primary-900/20 px-3 py-1 rounded-full">
+                      <span>🇫🇷 Traduction FR : </span>
+                      <span className="italic font-black">&quot;{translations.fr}&quot;</span>
+                    </div>
+                  )}
+                  {translations.en && (
+                    <div className="flex items-center gap-2 text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/20 px-3 py-1 rounded-full">
+                      <span>🇺🇸 Traduction EN : </span>
+                      <span className="italic font-black">&quot;{translations.en}&quot;</span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
