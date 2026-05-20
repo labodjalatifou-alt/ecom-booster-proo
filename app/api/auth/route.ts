@@ -8,7 +8,8 @@ export async function GET(req: NextRequest) {
   if (!shop) return NextResponse.json({ error: 'shop manquant' }, { status: 400 });
 
   const state = crypto.randomBytes(16).toString('hex');
-  const redirectUri = `${HOST}/api/auth/callback`;
+  const sanitizedHost = HOST ? HOST.replace(/\/$/, '') : '';
+  const redirectUri = `${sanitizedHost}/api/auth/callback`;
 
   const installUrl = `https://${shop}/admin/oauth/authorize?` +
     `client_id=${SHOPIFY_API_KEY}` +

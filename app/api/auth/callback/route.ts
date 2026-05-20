@@ -53,5 +53,6 @@ export async function GET(req: NextRequest) {
   }, { onConflict: 'shop_domain' });
 
   // Rediriger vers ton dashboard
-  return NextResponse.redirect(`${HOST}/dashboard?shop=${shop}`);
+  const sanitizedHost = HOST ? HOST.replace(/\/$/, '') : '';
+  return NextResponse.redirect(`${sanitizedHost}/dashboard?shop=${shop}`);
 }
