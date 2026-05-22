@@ -1,13 +1,18 @@
 'use client'
 // components/analyse/ShopifyImagePicker.tsx
 
-import { useState, useRef } from 'react'
+import { useState, useRef, forwardRef, useImperativeHandle } from 'react'
 import { Loader2, ImageIcon, Check, Upload, AlertCircle, ExternalLink, X, Search, Plus, Layers } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export interface ImagePickerState {
   mediaSelected: string[]
   paraImages: Record<number, string>
+}
+
+export interface ShopifyImagePickerHandle {
+  publishToShopify: () => Promise<void>;
+  isPublishing: boolean;
 }
 
 interface Paragraphe {
@@ -28,13 +33,15 @@ interface ShopifyImagePickerProps {
   status?: 'draft' | 'active'
   onPublished?: (productUrl: string) => void
   onImagesChange?: (state: ImagePickerState) => void
+  assigningToPara?: number | null
+  onSetAssigningToPara?: (paraIdx: number | null) => void
 }
 
-export default function ShopifyImagePicker({
+const ShopifyImagePicker = forwardRef<ShopifyImagePickerHandle, ShopifyImagePickerProps>(({
   produit, prix = 0, currency = 'FCFA',
   paragraphes, bullets = [], titre, tags, quantite = 10, status = 'draft',
-  onPublished, onImagesChange,
-}: ShopifyImagePickerProps) {
+  onPublished, onImagesChange, assigningToPara = null, onSetAssigningToPara
+}, ref) => {
 
   const [uploadedImages, setUploadedImages] = useState<string[]>([])
   const [publishing, setPublishing] = useState(false)
@@ -42,7 +49,6 @@ export default function ShopifyImagePicker({
   
   const [mediaSelected, setMediaSelected] = useState<string[]>([])
   const [paraImages, setParaImages] = useState<Record<number, string>>({})
-  const [assigningToPara, setAssigningToPara] = useState<number | null>(null)
   
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -94,7 +100,7 @@ export default function ShopifyImagePicker({
     if (assigningToPara !== null) {
       const next = { ...paraImages, [assigningToPara]: url }
       setParaImages(next)
-      setAssigningToPara(null)
+      if (onSetAssigningToPara) onSetAssigningToPara(null)
       toast.success(`📎 Image assignée au §${assigningToPara + 1}`)
       notifyParent(mediaSelected, next)
       return
@@ -154,6 +160,11 @@ export default function ShopifyImagePicker({
   }
 
   const totalAssigned = Object.keys(paraImages).length
+
+  useImperativeHandle(ref, () => ({
+    publishToShopify,
+    isPublishing: publishing
+  }));
 
   return (
     <div className="space-y-8 mt-6">
@@ -225,8 +236,8 @@ export default function ShopifyImagePicker({
               <AlertCircle size={14} className="flex-shrink-0 mt-0.5" />
               {assigningToPara !== null ? (
                 <span>
-                  🎯 <strong>Mode assignation §{assigningToPara + 1}</strong> — Cliquez une image pour l'injecter dans la description.
-                  <button onClick={() => setAssigningToPara(null)} className="underline text-red-500 ml-2">Annuler</button>
+                  🎯 <strong>Mode assignation §{assigningToPara + 1}</strong> — Cliquez sur une image ci-dessous pour l'injecter dans la description.
+                  <button onClick={() => onSetAssigningToPara?.(null)} className="underline text-red-500 ml-2 font-bold hover:text-red-600 transition-colors">Annuler</button>
                 </span>
               ) : (
                 <span>
@@ -298,99 +309,10 @@ export default function ShopifyImagePicker({
         )}
       </div>
 
-      {/* ── 3. Paragraphes + assignation ───────────────────────── */}
-      {paragraphes.length > 0 && uploadedImages.length > 0 && (
-        <div>
-          <h3 className="text-sm font-black text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2">
-            <Layers size={16} /> Placement des images dans le texte
-          </h3>
-          <div className="space-y-2">
-            {paragraphes.map((p, i) => (
-              <div
-                key={i}
-                className={`rounded-2xl border-2 overflow-hidden transition-all duration-200 ${
-                  assigningToPara === i
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-md shadow-blue-500/10'
-                    : 'border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800/50'
-                }`}
-              >
-                <div className="p-3">
-                  <div className="flex items-start gap-3">
-                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 text-[10px] font-black flex items-center justify-center">
-                      {i + 1}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-black text-slate-900 dark:text-white text-sm truncate">{p.titre}</h4>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed line-clamp-2">{p.texte}</p>
-                    </div>
-                    {paraImages[i] && (
-                      <div className="relative flex-shrink-0">
-                        <img
-                          src={paraImages[i]}
-                          alt={p.titre}
-                          className="w-14 h-14 object-cover bg-white dark:bg-slate-800 rounded-xl border-2 border-blue-300"
-                        />
-                        <button
-                          onClick={() => removeParaImage(i)}
-                          className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600"
-                        >
-                          <X size={8} />
-                        </button>
-                      </div>
-                    )}
-                  </div>
 
-                  <button
-                    onClick={() => setAssigningToPara(assigningToPara === i ? null : i)}
-                    className={`mt-2 ml-9 text-[11px] px-3 py-1.5 rounded-lg font-bold transition-all ${
-                      assigningToPara === i
-                        ? 'bg-blue-500 text-white shadow-md shadow-blue-500/30'
-                        : paraImages[i]
-                          ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 border border-amber-200 dark:border-amber-800'
-                          : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-blue-100 hover:text-blue-700'
-                    }`}
-                  >
-                    {assigningToPara === i ? '✏️ Cliquez une image ci-dessus...'
-                      : paraImages[i] ? '🔄 Changer image'
-                      : '📎 Assigner image'}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
-      {/* ── 4. Publication Shopify ────────────────────────────── */}
-      <div className="border-t border-slate-100 dark:border-slate-700 pt-5">
-        {publishedUrl ? (
-          <a href={publishedUrl} target="_blank" rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl transition-all"
-          >
-            <ExternalLink size={16} /> Voir le produit sur Shopify ↗
-          </a>
-        ) : (
-          <button
-            onClick={publishToShopify}
-            disabled={publishing || paragraphes.length === 0}
-            className="w-full flex items-center justify-center gap-3 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-blue-500/20 transition-all active:scale-[0.98]"
-          >
-            {publishing
-              ? <><Loader2 size={16} className="animate-spin" /> Publication...</>
-              : <>
-                  <Upload size={16} />
-                  Créer sur Shopify
-                  <span className="bg-white/20 rounded-lg px-2 py-0.5 text-[10px]">
-                    {mediaSelected.length} média · {totalAssigned} inline
-                  </span>
-                </>
-            }
-          </button>
-        )}
-        <p className="text-[10px] text-slate-400 text-center mt-2 font-medium">
-          Produit créé en statut : <strong>{status === 'active' ? 'ACTIF' : 'BROUILLON'}</strong>.
-        </p>
-      </div>
     </div>
   )
-}
+})
+
+export default ShopifyImagePicker;

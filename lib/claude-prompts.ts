@@ -171,55 +171,49 @@ export async function genererScriptsVoixOff(
 ): Promise<string> {
 
   const prompt = `Tu es expert en scripts publicitaires vidéo pour Facebook Ads et TikTok, marché ${pays}.
-  
-  Crée 3 scripts voix off DISTINCTS pour "${produit}" à ${prix} ${currency}.
-  
-  RÈGLE ABSOLUE 1 : Chaque script s'écrit comme un texte continu qu'on lit au micro d'un seul trait. PAS de sections "Accroche :", "Corps :", "CTA :" dans le texte. Juste le texte pur qu'on lit.
-  RÈGLE ABSOLUE 2 : NE MENTIONNE JAMAIS de prénoms inventés (ex: Aminata, etc.). Reste général.
-  
-  STRUCTURE OBLIGATOIRE POUR TOUS LES SCRIPTS :
-  1. Poser le Problème (Hook) : Prends le temps de bien poser le problème ! Ne fais pas juste une petite phrase. Explique la situation, donne une stat, ou raconte l'inconfort (comme dans les exemples ci-dessous).
-  2. Solution : Présente le produit comme LA solution.
-  3. Preuve / Fonctionnement : Comment ça marche ? Quels sont les bénéfices directs ?
-  4. Appel à l'action EXACT : termine par une variante très proche de "Cliquez sur le bouton en bas de la vidéo, remplissez le formulaire et commandez le vôtre".
-  
-  EXEMPLES DE STRUCTURE ET DE TON ATTENDUS (Inspire-toi de ce niveau de détail et de conviction) :
-  
-  Exemple 1 :
-  "Arrêtez d’abîmer vos yeux avec les colles pour faux cils. Les yeux sont fragiles. Ils méritent d’être protégés. Optez plutôt pour nos cils magnétiques, sans colle et sans risque pour vos yeux. En moins de 5 minutes, vous obtenez un regard intense et séduisant. Ils se fixent rapidement, s’enlèvent facilement, tiennent toute la journée et sont réutilisables plusieurs fois. Vous gagnez du temps chaque matin et vous faites des économies sur le long terme. Alors, qu’attendez-vous pour laisser la colle de côté ? Commandez vos cils magnétiques dès maintenant."
 
-  Exemple 2 :
-  "Tu en as marre de cette poitrine molle qui te complexe quand tu enlèves ton t-shirt ? Voici Alpha Chest, l’huile au venin d’abeille conçue pour aider à raffermir et tonifier la poitrine masculine. Sa formule active stimule la zone ciblée, aide à réduire l’excès de graisse et améliore progressivement la fermeté. Les premiers résultats sont visibles dès les premiers flacons utilisés régulièrement. Clique maintenant sur le bouton en bas de la vidéo, remplis le formulaire et commande le tien avant rupture de stock !"
+Crée EXACTEMENT 3 scripts voix off pour "${produit}" à ${prix} ${currency}.
 
-  RÈGLE DURÉE ET LONGUEUR (TRES IMPORTANT) : 
-  - Script 1 : 80 à 95 mots (Prends le temps de poser le problème !)
-  - Script 2 : 95 à 110 mots (Insiste sur la douleur et le détail du fonctionnement)
-  - Script 3 : 100 à 120 mots (Preuve sociale, transformation)
-  Chaque script doit faire MINIMUM 80 mots et MAXIMUM 120 mots. Rédige des phrases riches pour atteindre ce quota sans paraître artificiel.
-  
-  Réponds UNIQUEMENT avec ce format exact :
-  
-  ═══ SCRIPT 1 — Technique : Choc Émotionnel ═══
-  [Texte continu du script, respectant la structure, 80-95 mots]
-  ⏱ mots | 35 secondes
-  
-  ═══ SCRIPT 2 — Technique : Choc Émotionnel (Détaillé) ═══
-  [Texte continu du script, respectant la structure en insistant encore plus sur la douleur initiale, 95-110 mots]
-  ⏱ mots | 45 secondes
-  
-  ═══ SCRIPT 3 — Technique : Preuve Sociale et Transformation ═══
-  [Texte continu du script, respectant la structure en insistant sur la preuve sociale et la transformation avant/après, 100-120 mots]
-  ⏱ mots | 50 secondes
-  
-  Infos produit : ${description}
-  Points forts : ${avantages}
-  `
-  
-    return await callClaude(prompt, {
-      system: "Tu es un expert en scripts publicitaires pour l'Afrique francophone. RÈGLES STRICTES : 1. Chaque script = texte continu lu au micro, SANS labels internes. 2. PAS DE PRÉNOMS INVENTÉS. 3. PRENDS LE TEMPS DE POSER LE PROBLÈME. Ne fais pas juste une phrase. 4. Script 1 = 80-95 mots. 5. Script 2 = 95-110 mots. 6. Script 3 = 100-120 mots. 7. Compte les mots avant d'écrire et ASSURE-TOI d'atteindre le minimum de 80 mots en détaillant le problème et la solution.",
-      max_tokens: 1500,
-    })
+RÈGLES ABSOLUES :
+1. Chaque script suit OBLIGATOIREMENT le format Problème → Solution (et uniquement ce format).
+2. Chaque script est un texte continu lu au micro d'un seul trait. AUCUN label interne (pas de "Problème :", "Solution :", "CTA :", etc.).
+3. NE MENTIONNE JAMAIS de prénoms inventés.
+4. Chaque script doit contenir STRICTEMENT entre 55 et 110 mots. Pas moins. Pas plus.
+5. Compte les mots AVANT de valider chaque script.
+
+STRUCTURE OBLIGATOIRE POUR CHAQUE SCRIPT :
+- Pose le problème clairement (douleur, inconfort, frustration du client cible)
+- Présente "${produit}" comme LA solution concrète
+- Donne 1-2 bénéfices directs
+- Termine par une variante de : "Cliquez sur le bouton en bas de la vidéo, remplissez le formulaire et commandez le vôtre"
+
+EXEMPLE DE TON ET STRUCTURE :
+"Arrêtez d'abîmer vos yeux avec les colles pour faux cils. Les yeux sont fragiles et méritent d'être protégés. Optez plutôt pour nos cils magnétiques, sans colle et sans risque. En moins de 5 minutes, vous obtenez un regard intense qui tient toute la journée. Ils sont réutilisables et vous font économiser sur le long terme. Cliquez sur le bouton en bas de la vidéo, remplissez le formulaire et commandez les vôtres maintenant."
+
+Réponds UNIQUEMENT avec ce format exact, sans rien ajouter avant ou après :
+
+═══ SCRIPT 1 — Problème-Solution ═══
+[Texte continu, 55-110 mots, angle : frustration principale]
+⏱ mots | durée estimée
+
+═══ SCRIPT 2 — Problème-Solution ═══
+[Texte continu, 55-110 mots, angle : inconfort quotidien]
+⏱ mots | durée estimée
+
+═══ SCRIPT 3 — Problème-Solution ═══
+[Texte continu, 55-110 mots, angle : aspiration / bénéfice clé]
+⏱ mots | durée estimée
+
+Infos produit : ${description}
+Points forts : ${avantages}
+`
+
+  return await callClaude(prompt, {
+    system: "Tu es un expert en scripts publicitaires pour l'Afrique francophone. RÈGLES STRICTES ET NON NÉGOCIABLES : 1. Génère EXACTEMENT 3 scripts. 2. Chaque script = format Problème-Solution UNIQUEMENT. 3. Chaque script = texte continu SANS labels internes. 4. PAS DE PRÉNOMS INVENTÉS. 5. Chaque script : STRICTEMENT entre 55 et 110 mots — compte les mots avant de valider. 6. Utilise le format de sortie exact avec ═══ SCRIPT N ═══.",
+    max_tokens: 1500,
+  })
 }
+
 
 // ── Parseur scripts voix off ──────────────────────────────────
 export interface VoixOffScript {

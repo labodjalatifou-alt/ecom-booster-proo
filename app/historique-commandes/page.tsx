@@ -204,7 +204,7 @@ export default function HistoriqueCommandesPage() {
         ) : (
           <>
             {/* VUE MOBILE */}
-            <div className="md:hidden flex flex-col gap-4 p-4">
+            <div className="lg:hidden flex flex-col gap-4 p-4">
               {filtered.map((order) => (
                 <div key={order.id} className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col gap-4 relative">
                   <div className="flex justify-between items-start">
@@ -241,7 +241,7 @@ export default function HistoriqueCommandesPage() {
             </div>
 
             {/* VUE DESKTOP */}
-            <div className="hidden md:block overflow-x-auto">
+            <div className="hidden lg:block overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b-2 border-slate-100 dark:border-slate-800">

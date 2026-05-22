@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { Truck, ShoppingBag, ArrowUpRight, ArrowDownRight, Clock, CheckCircle2, RefreshCw } from 'lucide-react';
+import { Truck, ShoppingBag, ArrowUpRight, ArrowDownRight, Clock, CheckCircle2 } from 'lucide-react';
 import { useStore } from '../StoreProvider';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
@@ -147,13 +147,6 @@ export default function StatCards() {
     <>
     <div className="flex flex-col sm:flex-row justify-end items-stretch sm:items-center gap-3 mb-4">
       <DateRangePicker value={dateRange} onChange={setDateRange} />
-      <button 
-        onClick={() => syncShopify()}
-        className="flex justify-center items-center gap-2 px-6 py-2.5 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-primary-600 hover:border-primary-100 transition-all shadow-sm"
-      >
-        <RefreshCw className="w-4 h-4" />
-        Sync Shopify
-      </button>
     </div>
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
       {stats.map((stat, idx) => {
@@ -178,8 +171,8 @@ export default function StatCards() {
             </div>
             
             <div className="mt-2">
-              <h3 className="text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1">{stat.title}</h3>
-              <p className="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tighter">{stat.value}</p>
+              <h3 className="text-slate-400 dark:text-slate-500 text-xs font-black uppercase tracking-[0.15em] mb-3">{stat.title}</h3>
+              <p className="text-4xl font-black text-slate-800 dark:text-slate-100 tracking-tighter leading-none">{stat.value}</p>
             </div>
 
             {stat.action && metrics.cashInTransit > 0 && (

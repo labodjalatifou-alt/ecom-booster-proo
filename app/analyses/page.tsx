@@ -108,6 +108,10 @@ Réponds UNIQUEMENT en JSON valide. Aucun texte avant ou après.`,
 Produit: "${productName}"
 Catégorie: ${categorie}
 
+RÈGLE IMPORTANTE POUR LES INTÉRÊTS:
+Ne donne PAS d'intérêts génériques comme "Nouveautés" ou "Shopping en ligne". 
+Définis des "interets" PROFONDS : ce que la personne aime vraiment passionnément, ce qu'elle ressent au fond d'elle, ses valeurs, ou les communautés sociales spécifiques auxquelles elle s'identifie.
+
 JSON exact à retourner:
 {
   "prenom": "Aminata",
@@ -117,6 +121,7 @@ JSON exact à retourner:
   "profession": "Commerçante / Fonctionnaire",
   "revenu_mensuel": "500 000 - 1 500 000 GNF",
   "situation_familiale": "Mariée, 2 enfants",
+  "interets": ["Amour de l'élégance affirmée", "Forte implication dans les tontines locales", "Besoin viscéral de sécurité familiale"],
   "plateformes": ["Facebook", "WhatsApp", "TikTok"],
   "heure_active": "19h - 22h",
   "probleme_principal": "Description du problème que ce produit résout pour elle",
@@ -157,23 +162,57 @@ Marché: ${pays}
 Avatar: ${prenomAvatar}, ${ageAvatar}, ${professionAvatar}
 Problème résolu: ${problemeAvatar}
 
-RÈGLES STRICTES:
-- PUB 1: Angle DOULEUR (commence par le problème, aggrave, puis solution)
-- PUB 2: Angle PREUVE SOCIALE (témoignage fictif réaliste, chiffres)
-- PUB 3: Angle URGENCE + RARETÉ (offre limitée, stock, prix temporaire)
-- Chaque pub: 4 à 6 lignes maximum
-- Ton: naturel, chaleureux, comme une amie qui recommande
-- Inclure emoji au bon endroit (pas partout)
-- Finir par CTA clair avec prix et "Paiement à la livraison"
-- PAS de "Objet:" ou "Accroche:" — juste le texte pur de la pub
+RÈGLES STRICTES DE STRUCTURE POUR CHAQUE PUBLICITÉ:
+1. HOOK / TITRE: Un titre accrocheur ou le nom du produit avec des EMOJIS très vivants et captivants (une seule phrase d'accroche choc, pas de texte d'explication ici).
+2. EXPLANATION: Une très courte phrase d'introduction ou de transition (1 ligne maximum).
+3. POINTS CLÉS (BENEFITS): Exactement 3 à 4 puces (bullet points) courtes, percutantes et concises (pas trop longues !), commençant chacune par un emoji pertinent (ex: 🚚, ✅, 💰, 🔥, etc.).
+4. CTA: Un appel à l'action complet et direct qui mentionne le prix (${prixRecommande} ${currency}), le "Paiement à la livraison" et la livraison rapide.
+
+LES 3 ANGLES:
+- Pub 1: Angle DOULEUR (commence par le problème principal, aggrave l'inconfort, puis montre le produit comme la solution miracle)
+- Pub 2: Angle PREUVE SOCIALE (commence par la recommandation chaleureuse d'un client satisfait, met en avant le nombre de clients heureux et les résultats visibles)
+- Pub 3: Angle URGENCE & RARETÉ (met en avant une offre temporaire, des stocks limités en Afrique, le prix promotionnel et la fin imminente de l'offre)
 
 FORMAT DE RÉPONSE:
----PUB1---
-[texte complet de la pub 1]
----PUB2---
-[texte complet de la pub 2]
----PUB3---
-[texte complet de la pub 3]`
+Tu dois répondre UNIQUEMENT avec un bloc de code JSON valide (sans aucun autre texte de blabla avant ou après) contenant un tableau de 3 objets JSON respectant exactement cette structure:
+[
+  {
+    "angle": "Angle Douleur",
+    "hook": "Le titre accrocheur avec emojis",
+    "explanation": "La phrase courte d'introduction",
+    "benefits": [
+      "Emoji + Premier bénéfice ultra-court et punchy",
+      "Emoji + Deuxième bénéfice ultra-court et punchy",
+      "Emoji + Troisième bénéfice ultra-court et punchy",
+      "Emoji + Quatrième bénéfice ultra-court (optionnel, max 4)"
+    ],
+    "cta": "Appel à l'action complet avec prix, livraison et paiement à la livraison"
+  },
+  {
+    "angle": "Angle Preuve Sociale",
+    "hook": "Le titre accrocheur avec emojis",
+    "explanation": "La phrase courte d'introduction",
+    "benefits": [
+      "Emoji + Premier bénéfice ultra-court et punchy",
+      "Emoji + Deuxième bénéfice ultra-court et punchy",
+      "Emoji + Troisième bénéfice ultra-court et punchy",
+      "Emoji + Quatrième bénéfice ultra-court (optionnel, max 4)"
+    ],
+    "cta": "Appel à l'action complet avec prix, livraison et paiement à la livraison"
+  },
+  {
+    "angle": "Angle Urgence & Rareté",
+    "hook": "Le titre accrocheur avec emojis",
+    "explanation": "La phrase courte d'introduction",
+    "benefits": [
+      "Emoji + Premier bénéfice ultra-court et punchy",
+      "Emoji + Deuxième bénéfice ultra-court et punchy",
+      "Emoji + Troisième bénéfice ultra-court et punchy",
+      "Emoji + Quatrième bénéfice ultra-court (optionnel, max 4)"
+    ],
+    "cta": "Appel à l'action complet avec prix, livraison et paiement à la livraison"
+  }
+]`
       };
 
       const PROMPT_SHOPIFY = {
@@ -220,13 +259,16 @@ BULLET_5: [caractéristique en 6 mots max]`
       const PROMPT_VOIXOFF = {
         system: `Tu es expert en scripts publicitaires vidéo pour TikTok, Facebook Reels, YouTube Shorts.
 Tu travailles pour le marché africain francophone.
-RÈGLE ABSOLUE: le script s'écrit comme on le LIT au micro — texte continu, pas de labels.
-Il ne faut JAMAIS utiliser de prénoms ou noms de personnages (ex: "Voici Marc" ou "Sophie avait un problème"). Ça doit faire naturel et s'adresser directement au spectateur ("Vous en avez marre de...").
+RÈGLES ABSOLUES: 
+1. Le script s'écrit comme on le LIT au micro — texte continu, pas de labels.
+2. Il ne faut JAMAIS utiliser de prénoms ou noms de personnages (PAS de "Voici Marc" ou "Sophie avait un problème"). Interdiction totale d'inventer des personnages.
+3. Tu dois adresser directement le spectateur ("Vous en avez marre de...", "Découvrez comment...").
+4. STRUCTURE EXCLUSIVE : Tous les scripts doivent suivre strictement la structure PROBLÈME -> AGGRAVATION -> SOLUTION. Aucun storytelling centré sur un personnage inventé.
 COMPTE LES MOTS avant de livrer. Respecte les durées demandées.`,
         user: `Crée 3 scripts voix off pour "${productName}" à ${prixRecommande} ${currency} — marché ${pays}.
 
 CONTRAINTES STRICTES:
-Tous les scripts doivent utiliser la structure PROBLÈME / SOLUTION.
+Tous les scripts doivent utiliser EXCLUSIVEMENT la structure PROBLÈME / SOLUTION.
 - Script 1: 45-55 mots (20-25 secondes) — Format court direct
 - Script 2: 70-85 mots (30-35 secondes) — Format moyen explicatif
 - Script 3: 100-115 mots (42-48 secondes) — Format long détaillé avec garantie
@@ -255,11 +297,44 @@ Mots: [nombre] | Durée: [X secondes]`
 
       // Parseurs
       const parsePubs = (text: string) => {
+        try {
+          const jsonMatch = text.match(/\[\s*\{[\s\S]*\}\s*\]/);
+          if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0]);
+            if (Array.isArray(parsed)) {
+              return parsed.map((pub: any) => ({
+                angle: pub.angle || 'Publicité',
+                hook: pub.hook || '',
+                explanation: pub.explanation || '',
+                benefits: Array.isArray(pub.benefits) ? pub.benefits.slice(0, 4) : [],
+                cta: pub.cta || ''
+              }));
+            }
+          }
+        } catch (e) {
+          console.error("Error parsing generated pubs JSON, using fallback parsing", e);
+        }
+
+        // Fallback: parse markdown/text representation if JSON fails
         const pubs: any[] = [];
         const parts = text.split(/---PUB\d+---/);
         parts.forEach(part => {
           const clean = part.trim();
-          if (clean.length > 20) pubs.push({ text: clean });
+          if (clean.length > 20) {
+            const lines = clean.split('\n').map(l => l.trim()).filter(Boolean);
+            const hook = lines[0] || '';
+            const benefits = lines.slice(1, -1)
+              .filter(l => l.startsWith('-') || l.startsWith('*') || l.startsWith('•') || l.startsWith('✔') || l.length > 5)
+              .map(l => l.replace(/^[-*•✔]\s*/, ''));
+            const cta = lines[lines.length - 1] || '';
+            pubs.push({
+              angle: 'Publicité',
+              hook,
+              explanation: '',
+              benefits: benefits.slice(0, 4),
+              cta
+            });
+          }
         });
         return pubs;
       };
@@ -463,9 +538,9 @@ Mots: [nombre] | Durée: [X secondes]`
       <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-800/50 rounded-[3rem] shadow-2xl relative overflow-hidden group">
         <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-white/0 dark:from-slate-800/40 dark:to-slate-800/0 pointer-events-none" />
         
-        <form onSubmit={handleAnalyze} className="relative z-10 p-8 md:p-12 space-y-12">
+        <form onSubmit={handleAnalyze} className="relative z-10 p-5 md:p-12 space-y-8 md:space-y-12">
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-12">
             {/* Nom Produit */}
             <div className="space-y-4 relative group/input">
               <div className="flex items-center justify-between">
@@ -480,7 +555,7 @@ Mots: [nombre] | Durée: [X secondes]`
                   value={productName}
                   onChange={e => setProductName(e.target.value)}
                   placeholder="Ex: Robot Mixeur Premium"
-                  className="w-full bg-slate-50/50 dark:bg-slate-950/50 border-2 border-slate-100 dark:border-slate-800 rounded-3xl px-6 py-5 text-base font-black outline-none focus:border-primary-500 focus:bg-white dark:focus:bg-slate-900 transition-all hover:border-slate-200 dark:hover:border-slate-700 placeholder:text-slate-300 dark:placeholder:text-slate-700"
+                  className="w-full bg-slate-50/50 dark:bg-slate-950/50 border-2 border-slate-100 dark:border-slate-800 rounded-2xl md:rounded-3xl px-4 py-4 md:px-6 md:py-5 text-sm md:text-base font-black outline-none focus:border-primary-500 focus:bg-white dark:focus:bg-slate-900 transition-all hover:border-slate-200 dark:hover:border-slate-700 placeholder:text-slate-300 dark:placeholder:text-slate-700"
                 />
               </div>
             </div>
@@ -490,11 +565,11 @@ Mots: [nombre] | Durée: [X secondes]`
               <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 group-focus-within/input:text-primary-500 transition-colors">
                 <DollarSign className="w-4 h-4" /> Prix d'Achat ({currency}) <span className="text-red-500">*</span>
               </label>
-              <div className="relative flex items-center bg-slate-50/50 dark:bg-slate-950/50 border-2 border-slate-100 dark:border-slate-800 rounded-3xl overflow-hidden focus-within:border-primary-500 focus-within:bg-white dark:focus-within:bg-slate-900 transition-all hover:border-slate-200 dark:hover:border-slate-700">
+              <div className="relative flex items-center bg-slate-50/50 dark:bg-slate-950/50 border-2 border-slate-100 dark:border-slate-800 rounded-2xl md:rounded-3xl overflow-hidden focus-within:border-primary-500 focus-within:bg-white dark:focus-within:bg-slate-900 transition-all hover:border-slate-200 dark:hover:border-slate-700">
                 <button 
                   type="button" 
                   onClick={() => setCostPrice(String(Math.max(0, (Number(costPrice) || 0) - 500)))} 
-                  className="px-6 py-5 text-slate-400 hover:text-primary-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  className="px-4 py-4 md:px-6 md:py-5 text-slate-400 hover:text-primary-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 >
                   <Minus className="w-5 h-5" />
                 </button>
@@ -505,12 +580,12 @@ Mots: [nombre] | Durée: [X secondes]`
                   value={costPrice}
                   onChange={e => setCostPrice(e.target.value)}
                   placeholder="Ex: 4500"
-                  className="flex-1 text-center bg-transparent border-none py-5 text-lg font-black outline-none text-primary-600 dark:text-primary-400 placeholder:text-slate-300 dark:placeholder:text-slate-700 appearance-none"
+                  className="flex-1 text-center bg-transparent border-none py-4 md:py-5 text-base md:text-lg font-black outline-none text-primary-600 dark:text-primary-400 placeholder:text-slate-300 dark:placeholder:text-slate-700 appearance-none"
                 />
                 <button 
                   type="button" 
                   onClick={() => setCostPrice(String((Number(costPrice) || 0) + 500))} 
-                  className="px-6 py-5 text-slate-400 hover:text-primary-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  className="px-4 py-4 md:px-6 md:py-5 text-slate-400 hover:text-primary-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 >
                   <Plus className="w-5 h-5" />
                 </button>
@@ -518,7 +593,7 @@ Mots: [nombre] | Durée: [X secondes]`
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-12">
             {/* Lien Source */}
             <div className="space-y-4 relative group/input">
               <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 group-focus-within/input:text-primary-500 transition-colors">
@@ -542,7 +617,7 @@ Mots: [nombre] | Durée: [X secondes]`
                 value={productDesc}
                 onChange={e => setProductDesc(e.target.value)}
                 placeholder="Décrivez les avantages spécifiques..."
-                className="w-full bg-slate-50/50 dark:bg-slate-950/50 border-2 border-slate-100 dark:border-slate-800 rounded-3xl px-6 py-4 text-sm font-bold outline-none focus:border-primary-500 focus:bg-white dark:focus:bg-slate-900 transition-all h-[72px] resize-none hover:border-slate-200 dark:hover:border-slate-700 placeholder:text-slate-300 dark:placeholder:text-slate-700 scrollbar-hide"
+                className="w-full bg-slate-50/50 dark:bg-slate-950/50 border-2 border-slate-100 dark:border-slate-800 rounded-2xl md:rounded-3xl px-4 py-4 md:px-6 md:py-5 text-sm font-bold outline-none focus:border-primary-500 focus:bg-white dark:focus:bg-slate-900 transition-all min-h-[100px] resize-y hover:border-slate-200 dark:hover:border-slate-700 placeholder:text-slate-300 dark:placeholder:text-slate-700 scrollbar-hide"
               />
             </div>
           </div>
@@ -589,7 +664,7 @@ Mots: [nombre] | Durée: [X secondes]`
             <button
               type="submit"
               disabled={loading}
-              className="relative group overflow-hidden px-12 py-6 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full font-black uppercase tracking-[0.2em] text-xs shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all active:scale-95 disabled:opacity-70 disabled:hover:translate-y-0"
+              className="relative w-full md:w-auto group overflow-hidden px-8 py-5 md:px-12 md:py-6 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full font-black uppercase tracking-widest md:tracking-[0.2em] text-[10px] md:text-xs shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all active:scale-95 disabled:opacity-70 disabled:hover:translate-y-0"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-primary-600 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               {loading ? (

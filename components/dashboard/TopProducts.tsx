@@ -35,7 +35,7 @@ export default function TopProducts() {
             }
             acc[curr.product].sold += 1;
             if (curr.status === 'Livré') {
-              acc[curr.product].profit += parseInt(curr.price.replace(/\s/g, '')) || 0;
+              acc[curr.product].profit += parseInt(String(curr.price || '0').replace(/\s/g, '')) || 0;
             }
             return acc;
           }, {});

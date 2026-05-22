@@ -2,9 +2,7 @@
 
 import React from 'react';
 import StatCards from '@/components/dashboard/StatCards';
-import SalesChart from '@/components/dashboard/SalesChart';
 import TopProducts from '@/components/dashboard/TopProducts';
-import PerformanceWidget from '@/components/dashboard/PerformanceWidget';
 import TeamEarnings from '@/components/dashboard/TeamEarnings';
 import { LayoutDashboard } from 'lucide-react';
 
@@ -31,12 +29,7 @@ export default function DashboardPage() {
         <TeamEarnings />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-        <SalesChart />
-        <TopProducts />
-      </div>
-
-      <PerformanceWidget />
+      <TopProducts />
     </div>
   );
 }

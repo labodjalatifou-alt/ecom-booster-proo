@@ -180,18 +180,20 @@ export default function ScorePage() {
               const meta = CRITERIA_LABELS[key] || { label: key, icon: '📊' };
               const note = value?.score || value?.note || 0;
               return (
-                <div key={key} className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200/50 dark:border-slate-800/50 rounded-[2.5rem] p-6 flex flex-col shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
-                  <div className="flex justify-between items-center mb-6">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xl opacity-80">{meta.icon}</span>
-                      <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 line-clamp-1">{meta.label}</h4>
+                <div key={key} className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200/50 dark:border-slate-800/50 rounded-[2.5rem] p-8 flex flex-col items-center text-center shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 group min-h-[320px]">
+                  <div className="flex flex-col items-center justify-center mb-6 w-full">
+                    <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                      <span className="text-3xl opacity-90">{meta.icon}</span>
                     </div>
-                    <span className={`text-xs font-black px-2.5 py-1 rounded-full ${note >= 80 ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' : note >= 60 ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'}`}>
+                    <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-200 line-clamp-2 mb-4 leading-relaxed">
+                      {meta.label}
+                    </h4>
+                    <span className={`text-sm font-black px-4 py-1.5 rounded-full ${note >= 80 ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' : note >= 60 ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'}`}>
                       {note}%
                     </span>
                   </div>
                   
-                  <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mb-5">
+                  <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mb-6">
                     <div className={`h-full rounded-full transition-all duration-1000 ${getBarColor(note)}`} style={{ width: `${note}%` }} />
                   </div>
 

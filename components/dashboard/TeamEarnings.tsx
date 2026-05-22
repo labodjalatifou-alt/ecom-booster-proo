@@ -4,9 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Users, Headset, Truck, DollarSign, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useStore } from '../StoreProvider';
-
-const COMMISSION_CLOSER = 500;  // par confirmation
-const COMMISSION_LIVREUR = 1000; // par livraison
+import { getCommissions } from '@/app/equipe/page';
 
 export default function TeamEarnings() {
   const { currency, selectedStore } = useStore();
@@ -17,8 +15,11 @@ export default function TeamEarnings() {
   const [deliveredCount, setDeliveredCount] = useState(0);
   const [livreurCashCollected, setLivreurCashCollected] = useState(0);
   const [netRevenue, setNetRevenue] = useState(0);
+  const [rates, setRates] = useState({ closerPerConfirm: 500, closerPerDelivered: 500, livreurPerDelivery: 1000 });
 
   useEffect(() => {
+    setRates(getCommissions());
+
     async function fetchData() {
       setLoading(true);
       try {
@@ -32,6 +33,9 @@ export default function TeamEarnings() {
         if (error) throw error;
         
         if (data) {
+          const commission = getCommissions();
+          setRates(commission);
+
           const confirmed = data.filter(o => o.status === 'Confirmé' || o.status === 'Livré');
           const delivered = data.filter(o => o.status === 'Livré');
           
@@ -41,9 +45,9 @@ export default function TeamEarnings() {
           setConfirmedCount(cCount);
           setDeliveredCount(dCount);
           
-          // Closer gets 500 for confirmation, and an additional 500 if delivered (total 1000)
-          const closerTotal = (cCount * 500) + (dCount * 500);
-          const livreurTotal = dCount * COMMISSION_LIVREUR;
+          // Closer gets closerPerConfirm for confirmation, and an additional closerPerDelivered if delivered
+          const closerTotal = (cCount * commission.closerPerConfirm) + (dCount * commission.closerPerDelivered);
+          const livreurTotal = dCount * commission.livreurPerDelivery;
           
           setCloserEarnings(closerTotal);
           setLivreurEarnings(livreurTotal);
@@ -95,7 +99,7 @@ export default function TeamEarnings() {
         </div>
         <div>
           <h3 className="text-lg font-black tracking-tight">Commissions Équipe</h3>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Closer: {COMMISSION_CLOSER} {currency}/confirm · Livreur: {COMMISSION_LIVREUR} {currency}/livraison</p>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Montants à verser à l'équipe</p>
         </div>
       </div>
 
@@ -109,7 +113,7 @@ export default function TeamEarnings() {
               <span className="text-[9px] font-black text-amber-600 uppercase tracking-widest">Closer</span>
             </div>
             <p className="text-xl font-black text-amber-700">{fmt(closerEarnings)} {currency}</p>
-            <p className="text-[9px] font-bold text-amber-500 mt-1">{confirmedCount} confirmations × {COMMISSION_CLOSER}</p>
+            <p className="text-[9px] font-bold text-amber-500 mt-1">{confirmedCount} commandes confirmées/livrées</p>
           </div>
         </div>
 
@@ -122,7 +126,7 @@ export default function TeamEarnings() {
               <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">Livreur</span>
             </div>
             <p className="text-xl font-black text-blue-700">{fmt(livreurEarnings)} {currency}</p>
-            <p className="text-[9px] font-bold text-blue-500 mt-1">{deliveredCount} livraisons × {COMMISSION_LIVREUR}</p>
+            <p className="text-[9px] font-bold text-blue-500 mt-1">{deliveredCount} livraisons effectuées</p>
           </div>
         </div>
 

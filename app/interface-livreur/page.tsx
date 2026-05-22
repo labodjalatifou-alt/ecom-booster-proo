@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { Truck, PhoneForwarded, MessageSquare, CheckCircle2, MapPin, DollarSign, Loader2, Package, XCircle, Clock, X, Calendar, ChevronDown } from 'lucide-react';
+import { Truck, PhoneForwarded, MessageSquare, CheckCircle2, MapPin, DollarSign, Loader2, Package, XCircle, Clock, X, Calendar, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { useStore } from '@/components/StoreProvider';
@@ -20,6 +20,8 @@ export default function InterfaceLivreurPage() {
   const [totalCashPending, setTotalCashPending] = useState(0);
   const [totalCashCollected, setTotalCashCollected] = useState(0);
   const [dateRange, setDateRange] = useState<DateRange>(DEFAULT_RANGE);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 30;
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -57,13 +59,9 @@ export default function InterfaceLivreurPage() {
       query = query.in('store_id', stores.map(s => s.id));
     }
 
-    if (dateRange.from && dateRange.to) {
-      query = query.or(`status.in.(Confirmé,Programmé),and(created_at.gte.${new Date(dateRange.from).toISOString()},created_at.lte.${new Date(dateRange.to).toISOString()})`);
-    } else if (dateRange.from) {
-      query = query.or(`status.in.(Confirmé,Programmé),created_at.gte.${new Date(dateRange.from).toISOString()}`);
-    } else if (dateRange.to) {
-      query = query.or(`status.in.(Confirmé,Programmé),created_at.lte.${new Date(dateRange.to).toISOString()}`);
-    }
+    // Filtrage par période (appliqué à toutes les commandes)
+    if (dateRange.from) query = query.gte('created_at', new Date(dateRange.from).toISOString());
+    if (dateRange.to) query = query.lte('created_at', new Date(dateRange.to).toISOString());
 
     const { data, error } = await query;
 
@@ -87,6 +85,7 @@ export default function InterfaceLivreurPage() {
   }
 
   useEffect(() => {
+    setCurrentPage(1);
     fetchOrders();
     const channel = supabase
       .channel('livreur-realtime')
@@ -230,45 +229,41 @@ export default function InterfaceLivreurPage() {
         </div>
       </div>
 
-      {/* Date Selector */}
-      <div className="flex flex-wrap items-center gap-3 mb-6">
-        <div className="flex items-center gap-2 text-slate-400 mr-2">
-          <span className="text-[9px] font-black uppercase tracking-widest">Période</span>
-        </div>
+      {/* Filters Row — Date + Statut sur la même ligne */}
+      <div className="flex flex-wrap items-center gap-4 mb-8">
         <DateRangePicker value={dateRange} onChange={setDateRange} align="left" />
-      </div>
 
-      {/* Tabs */}
-      <div className="mb-8">
-        {/* Mobile Dropdown */}
-        <div className="md:hidden relative">
+        {/* Status Dropdown */}
+        <div className="relative">
           <button 
             onClick={() => setIsTabDropdownOpen(!isTabDropdownOpen)}
-            className="w-full flex items-center justify-between p-4 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm"
+            className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm hover:border-slate-200 transition-all"
           >
-            <div className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-slate-800 dark:text-slate-100">
-              {(() => {
-                const active = tabs.find(t => t.id === tab);
-                return (
-                  <>
-                    <span className={active?.color}>{active?.label}</span>
-                    {active && <span className="ml-2 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 text-[10px]">{
-                      active.id === 'pending' ? orders.filter(o => o.status === 'Confirmé').length :
-                      active.id === 'programmed' ? orders.filter(o => o.status === 'Programmé').length :
-                      active.id === 'delivered' ? orders.filter(o => o.status === 'Livré' && (!dateRange.from || new Date(o.created_at) >= new Date(dateRange.from)) && (!dateRange.to || new Date(o.created_at) <= new Date(dateRange.to))).length :
-                      orders.filter(o => o.status === 'Annulé' && (!dateRange.from || new Date(o.created_at) >= new Date(dateRange.from)) && (!dateRange.to || new Date(o.created_at) <= new Date(dateRange.to))).length
-                    }</span>}
-                  </>
-                );
-              })()}
-            </div>
-            <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${isTabDropdownOpen ? 'rotate-180' : ''}`} />
+            {(() => {
+              const active = tabs.find(t => t.id === tab);
+              return (
+                <>
+                  <span className={`text-[10px] font-black uppercase tracking-widest whitespace-nowrap ${active?.color}`}>
+                    Statut : {active?.label}
+                  </span>
+                  {active && (
+                    <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 text-[10px] font-black">
+                      {active.id === 'pending' ? orders.filter(o => o.status === 'Confirmé').length :
+                       active.id === 'programmed' ? orders.filter(o => o.status === 'Programmé').length :
+                       active.id === 'delivered' ? orders.filter(o => o.status === 'Livré' && (!dateRange.from || new Date(o.created_at) >= new Date(dateRange.from)) && (!dateRange.to || new Date(o.created_at) <= new Date(dateRange.to))).length :
+                       orders.filter(o => o.status === 'Annulé' && (!dateRange.from || new Date(o.created_at) >= new Date(dateRange.from)) && (!dateRange.to || new Date(o.created_at) <= new Date(dateRange.to))).length}
+                    </span>
+                  )}
+                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform shrink-0 ${isTabDropdownOpen ? 'rotate-180' : ''}`} />
+                </>
+              );
+            })()}
           </button>
           
           {isTabDropdownOpen && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setIsTabDropdownOpen(false)} />
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+              <div className="absolute top-full left-0 mt-2 min-w-[200px] bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
                 {tabs.map(t => {
                   const count = t.id === 'pending' ? orders.filter(o => o.status === 'Confirmé').length :
                                t.id === 'programmed' ? orders.filter(o => o.status === 'Programmé').length :
@@ -278,13 +273,11 @@ export default function InterfaceLivreurPage() {
                     <button
                       key={t.id}
                       onClick={() => { setTab(t.id); setIsTabDropdownOpen(false); }}
-                      className={`w-full flex items-center justify-between p-4 text-xs font-black uppercase tracking-widest transition-colors ${
+                      className={`w-full flex items-center justify-between px-4 py-3 text-[10px] font-black uppercase tracking-widest transition-colors ${
                         tab === t.id ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'
                       }`}
                     >
-                      <div className="flex items-center gap-3">
-                        <span className={t.color}>{t.label}</span>
-                      </div>
+                      <span className={tab === t.id ? 'text-primary-600' : t.color}>{t.label}</span>
                       {count > 0 && <span className={`px-2 py-0.5 rounded-full text-[10px] ${tab === t.id ? 'bg-primary-100 text-primary-700' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>{count}</span>}
                     </button>
                   );
@@ -292,29 +285,6 @@ export default function InterfaceLivreurPage() {
               </div>
             </>
           )}
-        </div>
-
-        {/* Desktop Tabs */}
-        <div className="hidden md:flex gap-1 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-1 shadow-sm w-fit overflow-x-auto">
-          {tabs.map(t => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={`whitespace-nowrap px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                tab === t.id
-                  ? 'bg-slate-900 text-white shadow-lg'
-                  : 'text-slate-400 hover:text-slate-600'
-              }`}
-            >
-              <span className={tab === t.id ? 'text-white' : t.color}>{t.label}</span>
-              <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[8px] ${tab === t.id ? 'bg-white text-slate-900' : 'bg-slate-100 text-slate-400'}`}>
-                {t.id === 'pending' ? orders.filter(o => o.status === 'Confirmé').length :
-                t.id === 'programmed' ? orders.filter(o => o.status === 'Programmé').length :
-                t.id === 'delivered' ? orders.filter(o => o.status === 'Livré' && (!dateRange.from || new Date(o.created_at) >= new Date(dateRange.from)) && (!dateRange.to || new Date(o.created_at) <= new Date(dateRange.to))).length :
-                orders.filter(o => o.status === 'Annulé' && (!dateRange.from || new Date(o.created_at) >= new Date(dateRange.from)) && (!dateRange.to || new Date(o.created_at) <= new Date(dateRange.to))).length}
-              </span>
-            </button>
-          ))}
         </div>
       </div>
 
@@ -339,11 +309,14 @@ export default function InterfaceLivreurPage() {
               {tab === 'pending' ? 'Aucune livraison en attente' : tab === 'delivered' ? 'Aucune livraison effectuée' : tab === 'programmed' ? 'Aucune livraison programmée' : 'Aucune livraison annulée'}
             </p>
           </div>
-        ) : (
+        ) : (() => {
+          const totalPages = Math.ceil(filteredOrders.length / PAGE_SIZE);
+          const pagedOrders = filteredOrders.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+          return (
           <>
             {/* VUE MOBILE */}
-            <div className="md:hidden flex flex-col gap-3 py-2">
-              {filteredOrders.map((item: any) => (
+            <div className="lg:hidden flex flex-col gap-3 py-2">
+              {pagedOrders.map((item: any) => (
                 <div key={item.id} className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col gap-3">
                   <div className="flex justify-between items-start">
                     <div>
@@ -391,7 +364,7 @@ export default function InterfaceLivreurPage() {
             </div>
 
             {/* VUE DESKTOP */}
-            <div className="hidden md:block overflow-x-auto">
+            <div className="hidden lg:block overflow-x-auto">
               <table className="w-full text-left border-collapse min-w-[800px] table-fixed">
                 <thead>
                   <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b-2 border-slate-100 dark:border-slate-800">
@@ -402,7 +375,7 @@ export default function InterfaceLivreurPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y-2 divide-slate-100 dark:divide-slate-800">
-                  {filteredOrders.map((item: any) => (
+                  {pagedOrders.map((item: any) => (
                     <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all">
                       <td className="px-8 py-4">
                         <div className="font-black text-sm">{item.customer}</div>
@@ -451,8 +424,49 @@ export default function InterfaceLivreurPage() {
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between px-8 py-4 border-t-2 border-slate-100 dark:border-slate-800">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                  Page {currentPage} / {totalPages} · {filteredOrders.length} commandes
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 disabled:opacity-30 transition-all"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    const p = currentPage <= 3 ? i + 1 : currentPage + i - 2;
+                    if (p < 1 || p > totalPages) return null;
+                    return (
+                      <button
+                        key={p}
+                        onClick={() => setCurrentPage(p)}
+                        className={`w-8 h-8 rounded-xl text-[10px] font-black transition-all ${
+                          p === currentPage ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200'
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    );
+                  })}
+                  <button
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 disabled:opacity-30 transition-all"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
           </>
-        )}
+          );
+        })()}
       </div>
 
       {/* Collection Modal */}

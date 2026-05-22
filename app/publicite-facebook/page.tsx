@@ -19,7 +19,7 @@ const AD_ANGLES = [
   { icon: Heart, label: "Angle Émotion", color: "text-purple-600", bg: "bg-purple-50 dark:bg-purple-900/10", border: "border-purple-100 dark:border-purple-800" },
 ];
 
-type Tab = 'ads' | 'stats' | 'launch';
+type Tab = 'stats' | 'launch';
 
 interface FbData {
   account: { id: string; name: string; currency: string };
@@ -38,9 +38,6 @@ interface FbData {
 
 export default function PubliciteFacebookPage() {
   const [tab, setTab] = useState<Tab>('stats');
-  const [latestProduct, setLatestProduct] = useState<any>(null);
-  const [loadingAds, setLoadingAds] = useState(true);
-  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
 
   // Facebook stats
   const [fbData, setFbData] = useState<FbData | null>(null);
@@ -145,16 +142,18 @@ export default function PubliciteFacebookPage() {
   });
 
   useEffect(() => {
-    async function fetchAnalysis() {
+    async function loadLatestProduct() {
       const activeId = localStorage.getItem('activeAnalysisId');
       let query = supabase.from('analyses').select('*');
       if (activeId) query = query.eq('id', activeId);
       else query = query.order('created_at', { ascending: false }).limit(1);
       const { data } = await query;
-      if (data && data[0]) setLatestProduct(data[0]);
-      setLoadingAds(false);
+      if (data && data[0]) {
+        const name = data[0].product_name || 'Produit';
+        setCampaignName(`Campagne - Conversion - ${name}`);
+      }
     }
-    fetchAnalysis();
+    loadLatestProduct();
   }, []);
 
   // Load pages and pixels when launch tab is active
@@ -194,36 +193,6 @@ export default function PubliciteFacebookPage() {
     loadAssets();
   }, [tab]);
 
-  // Auto pre-fill based on latest product analysis
-  useEffect(() => {
-    if (latestProduct) {
-      const name = latestProduct.product_name || 'Produit';
-      setCampaignName(`Campagne - Conversion - ${name}`);
-      
-      const generatedAds = getAds();
-      if (generatedAds.length > 0) {
-        const mappedAds = generatedAds.map((ad: any, idx: number) => ({
-          id: `ad_${idx + 1}_${Math.random().toString(36).substr(2, 5)}`,
-          adName: `Publicité ${idx + 1} - ${ad.angle || 'Angle'}`,
-          adHeadline: ad.hook || ad.headline || '',
-          adText: ad.explanation || ad.primary_text || '',
-          adCta: 'SHOP_NOW',
-          mediaType: 'video' as 'video' | 'image', // default to video format
-          imageUrl: latestProduct.shopify_image_url || '',
-          videoUrl: '',
-          imageFile: null,
-          videoFile: null
-        }));
-        
-        setAdsets(prev => {
-          const updated = [...prev];
-          updated[0].name = `AdSet - Purchases - ${name}`;
-          updated[0].ads = mappedAds;
-          return updated;
-        });
-      }
-    }
-  }, [latestProduct]);
 
   const fetchFbMetrics = useCallback(async () => {
     setLoadingFb(true);
@@ -434,30 +403,7 @@ export default function PubliciteFacebookPage() {
     toast.success("Publicité dupliquée au sein de cet ensemble !");
   };
 
-  const getAds = (): any[] => {
-    if (!latestProduct?.facebook_ad_content) return [];
-    const content = latestProduct.facebook_ad_content;
-    if (Array.isArray(content)) return content;
-    return [{
-      angle: "Publicité Principale",
-      hook: content.headline || content.hook || '',
-      explanation: content.primary_text || content.explanation || '',
-      benefits: content.benefits || [],
-      cta: content.cta || 'Commandez maintenant'
-    }];
-  };
 
-  const ads = getAds();
-
-  const handleCopy = (idx: number) => {
-    const ad = ads[idx];
-    const benefitsText = (ad.benefits || []).map((b: string) => `✔ ${b}`).join('\n');
-    const text = `🔥 ${ad.hook}\n\n${ad.explanation}\n\n${benefitsText}\n\n${ad.cta}`;
-    navigator.clipboard.writeText(text);
-    setCopiedIdx(idx);
-    toast.success('Publicité copiée !');
-    setTimeout(() => setCopiedIdx(null), 2000);
-  };
 
   const fmt = (n: number | string, currency?: string) => {
     const num = typeof n === 'string' ? parseFloat(n) : n;
@@ -510,12 +456,6 @@ export default function PubliciteFacebookPage() {
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${tab === 'stats' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
           >
             <BarChart2 className="w-3.5 h-3.5" /> Statistiques
-          </button>
-          <button
-            onClick={() => setTab('ads')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${tab === 'ads' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
-          >
-            <Layout className="w-3.5 h-3.5" /> Créatifs
           </button>
           <button
             onClick={() => setTab('launch')}

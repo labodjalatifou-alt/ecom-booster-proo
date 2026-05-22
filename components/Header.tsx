@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Store, Menu, Check, LogOut, User, Mail } from 'lucide-react';
+import { ChevronDown, Store, Menu, Check, LogOut, User, Mail, Bell } from 'lucide-react';
 import { useSidebar } from './SidebarProvider';
 import { useStore } from './StoreProvider';
 import { supabase } from '@/lib/supabase';
@@ -13,6 +13,7 @@ export default function Header() {
   const { selectedStore, setSelectedStore, stores, loadingStores, noStoreConnected, activeStore } = useStore();
   const [showProfile, setShowProfile] = useState(false);
   const [profile, setProfile] = useState<any>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
   const profileRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -21,16 +22,34 @@ export default function Header() {
       setProfile(u);
     }
     
+    async function loadUnreadCount() {
+      const { count } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('read', false);
+      if (count !== null) setUnreadCount(count);
+    }
+
     loadProfile();
+    loadUnreadCount();
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async () => {
       const u = await resolveUserProfile(supabase);
       setProfile(u);
+      loadUnreadCount();
     });
+
+    const channel = supabase
+      .channel('header-notifications')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => {
+        loadUnreadCount();
+      })
+      .subscribe();
 
     return () => {
       subscription.unsubscribe();
+      supabase.removeChannel(channel);
     };
   }, []);
 
@@ -118,6 +137,16 @@ export default function Header() {
             </div>
           </div>
         </div>
+
+        {/* Notifications Bell */}
+        <Link href="/notifications" className="relative p-2 text-slate-400 hover:text-primary-600 transition-colors">
+          <Bell className="w-5 h-5" />
+          {unreadCount > 0 && (
+            <span className="absolute top-0 right-0 min-w-[16px] h-4 px-1 bg-red-500 rounded-full border border-white dark:border-slate-900 text-[9px] font-black text-white flex items-center justify-center">
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+          )}
+        </Link>
 
         {/* Profile Dropdown */}
         <div className="relative" ref={profileRef}>

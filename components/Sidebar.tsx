@@ -25,7 +25,8 @@ import {
   Moon,
   Sun,
   X,
-  ClipboardList
+  ClipboardList,
+  FileText
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -50,6 +51,7 @@ const menuGroups = [
       { name: 'Avatar Client', icon: User, href: '/avatar' },
       { name: 'Analyse Concurrent', icon: Trophy, href: '/analyse-concurrent' },
       { name: 'Page Shopify', icon: Store, href: '/page-shopify' },
+      { name: 'Textes Publicitaires', icon: FileText, href: '/textes-publicitaires' },
       { name: 'Publicité Facebook', icon: Megaphone, href: '/publicite-facebook' },
       { name: 'Script Voix Off', icon: Mic, href: '/script-voix-off' },
     ]

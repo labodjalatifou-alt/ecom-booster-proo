@@ -44,38 +44,62 @@ export async function POST(req: Request) {
 
 
     // 3. GAINS (Enregistrés directement dans la commande)
-    //    - Closer : 500 à la confirmation. Total 1000 si livré.
-    //    - Livreur : 1500 à la livraison.
+    // Fetch dynamic rates from User table
+    let closerCommissionConfirm = 500;
+    let closerCommissionDeliver = 500;
+    let livreurCommissionDelivery = 1500;
+
+    if (userId) {
+      const { data: userProfile } = await supabase.from('User').select('role, commissionPerConfirm, commissionPerDeliver').eq('id', userId).single();
+      if (userProfile) {
+        if (userProfile.role === 'CLOSER') {
+          closerCommissionConfirm = userProfile.commissionPerConfirm || 500;
+          closerCommissionDeliver = userProfile.commissionPerDeliver || 500;
+        } else if (userProfile.role === 'LIVREUR') {
+          livreurCommissionDelivery = userProfile.commissionPerDeliver || 1500;
+        }
+      }
+    }
+
+    if (order.closer_id && order.closer_id !== userId) {
+      // If closer is not the one doing the action, fetch closer's specific deliver bonus
+      const { data: closerProfile } = await supabase.from('User').select('commissionPerDeliver, commissionPerConfirm').eq('id', order.closer_id).single();
+      if (closerProfile) {
+        closerCommissionDeliver = closerProfile.commissionPerDeliver || 500;
+        // Also keep their confirm rate if we need to calculate total
+        closerCommissionConfirm = closerProfile.commissionPerConfirm || 500;
+      }
+    }
     
     if (status === 'Confirmé') {
-      updateData.closer_paid = 500;
+      updateData.closer_paid = closerCommissionConfirm;
 
       // Créditer le closer (background)
       if (userId) {
-        supabase.rpc('increment_user_earnings', { target_user_id: userId, amount: 500 }).then();
+        supabase.rpc('increment_user_earnings', { target_user_id: userId, amount: closerCommissionConfirm }).then();
       }
 
       // Notification
       await supabase.from('notifications').insert({
         type: 'ORDER_CONFIRMED',
         title: 'Commande Confirmée',
-        message: `Commande #${String(orderId).slice(-6)} confirmée. +500 ${order.currency || ''} crédités.`,
+        message: `Commande #${String(orderId).slice(-6)} confirmée. +${closerCommissionConfirm} ${order.currency || ''} crédités.`,
         target_role: 'ADMIN',
         order_id: orderId,
         store_id: order.store_id,
       });
 
     } else if (status === 'Livré') {
-      updateData.closer_paid = 1000;
-      updateData.livreur_paid = 1500;
+      updateData.closer_paid = currentCloserPaid + closerCommissionDeliver; // total closer pay
+      updateData.livreur_paid = livreurCommissionDelivery;
       updateData.delivered_at = new Date().toISOString();
 
       // Créditer le closer et le livreur (background)
       if (order.closer_id) {
-        supabase.rpc('increment_user_earnings', { target_user_id: order.closer_id, amount: 500 }).then();
+        supabase.rpc('increment_user_earnings', { target_user_id: order.closer_id, amount: closerCommissionDeliver }).then();
       }
       if (userId) {
-        supabase.rpc('increment_user_earnings', { target_user_id: userId, amount: 1500 }).then();
+        supabase.rpc('increment_user_earnings', { target_user_id: userId, amount: livreurCommissionDelivery }).then();
       }
 
       // Notifications

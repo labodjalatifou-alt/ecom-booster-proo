@@ -62,10 +62,17 @@ export default function AvatarPage() {
     </div>
   );
 
-  const interets = renderList(avatar.interets || ['Shopping en ligne', 'Nouveautés', 'Produits pratiques']); // Fallback in case old analysis
-  const frustrations = renderList(avatar.frustrations || avatar.pains || []);
-  const peurs = renderList(avatar.peurs || avatar.fears || []);
-  const desirs = renderList(avatar.desirs || avatar.désirs || avatar.goals || avatar.desires || []);
+  const ensureArray = (val: any): string[] => {
+    if (!val) return [];
+    if (Array.isArray(val)) return val.filter(Boolean);
+    if (typeof val === 'string') return [val];
+    return [];
+  };
+
+  const interets: string[] = ensureArray(avatar.interets || avatar.interests || ['Shopping en ligne', 'Nouveautés', 'Produits pratiques']);
+  const frustrations: string[] = ensureArray(avatar.frustrations || avatar.pains);
+  const peurs: string[] = ensureArray(avatar.peurs || avatar.fears);
+  const desirs: string[] = ensureArray(avatar.desirs || avatar.désirs || avatar.goals || avatar.desires);
 
   return (
     <div className="max-w-5xl mx-auto pb-20 px-4 animate-in fade-in duration-500">
@@ -108,7 +115,7 @@ export default function AvatarPage() {
           <Brain className="w-5 h-5 text-purple-500" /> Centres d'intérêt
         </h3>
         <div className="flex flex-wrap gap-3">
-          {(interets || []).map((item: string, i: number) => (
+          {(Array.isArray(interets) ? interets : typeof interets === 'string' ? [interets] : []).map((item: string, i: number) => (
             <span key={i} className="px-5 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm font-bold rounded-full border border-slate-200/50 dark:border-slate-700/50 shadow-sm">
               {item}
             </span>
@@ -123,7 +130,7 @@ export default function AvatarPage() {
             <ShieldAlert className="w-5 h-5" /> Frustrations
           </h3>
           <ul className="space-y-4">
-            {(frustrations || []).map((item: string, i: number) => (
+            {(Array.isArray(frustrations) ? frustrations : typeof frustrations === 'string' ? [frustrations] : []).map((item: string, i: number) => (
               <li key={i} className="flex items-start gap-3 text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed">
                 <span className="w-1.5 h-1.5 bg-rose-400 rounded-full mt-2 shrink-0 shadow-[0_0_8px_rgba(251,113,133,0.8)]" />
                 {item}
@@ -137,7 +144,7 @@ export default function AvatarPage() {
             <AlertTriangle className="w-5 h-5" /> Peurs
           </h3>
           <ul className="space-y-4">
-            {(peurs || []).map((item: string, i: number) => (
+            {(Array.isArray(peurs) ? peurs : typeof peurs === 'string' ? [peurs] : []).map((item: string, i: number) => (
               <li key={i} className="flex items-start gap-3 text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed">
                 <span className="w-1.5 h-1.5 bg-amber-400 rounded-full mt-2 shrink-0 shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
                 {item}
@@ -148,10 +155,10 @@ export default function AvatarPage() {
 
         <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 p-8 rounded-[3rem] shadow-sm hover:shadow-md transition-shadow">
           <h3 className="text-[11px] font-black uppercase tracking-widest mb-6 flex items-center gap-3 text-emerald-600 dark:text-emerald-400">
-            <Heart className="w-5 h-5" /> Désirs
+            <Target className="w-5 h-5" /> Désirs & Rêves
           </h3>
           <ul className="space-y-4">
-            {(desirs || []).map((item: string, i: number) => (
+            {(Array.isArray(desirs) ? desirs : typeof desirs === 'string' ? [desirs] : []).map((item: string, i: number) => (
               <li key={i} className="flex items-start gap-3 text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed">
                 <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full mt-2 shrink-0 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
                 {item}

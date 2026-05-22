@@ -169,8 +169,26 @@ export default function StockPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="flex bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-1 shadow-sm">
+        <div className="relative w-full sm:w-64 mt-4 md:mt-0">
+          <button 
+            onClick={() => {
+              const el = document.getElementById('stock-status-dropdown');
+              if (el) el.classList.toggle('hidden');
+            }}
+            className="w-full flex items-center justify-between px-4 py-3.5 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm hover:border-slate-200 transition-all"
+          >
+            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-800 dark:text-slate-100">
+              <span className="truncate">
+                Statut: {
+                  statusFilter === 'all' ? 'Tous' :
+                  statusFilter === 'active' ? 'Actifs' : 'Brouillons'
+                }
+              </span>
+            </div>
+            <div className="w-4 h-4 text-slate-400" />
+          </button>
+          
+          <div id="stock-status-dropdown" className="hidden absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
             {[
               { id: 'all', label: 'Tous' },
               { id: 'active', label: 'Actifs' },
@@ -178,30 +196,18 @@ export default function StockPage() {
             ].map((f) => (
               <button
                 key={f.id}
-                onClick={() => setStatusFilter(f.id)}
-                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                  statusFilter === f.id
-                    ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/20'
-                    : 'text-slate-400 hover:text-slate-600'
+                onClick={() => {
+                  setStatusFilter(f.id);
+                  document.getElementById('stock-status-dropdown')?.classList.add('hidden');
+                }}
+                className={`w-full text-left px-4 py-3.5 text-[10px] font-black uppercase tracking-widest transition-colors ${
+                  statusFilter === f.id ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'
                 }`}
               >
                 {f.label}
               </button>
             ))}
           </div>
-
-          <button
-            onClick={syncProducts}
-            className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-primary-600 transition-all shadow-sm"
-          >
-            <RefreshCw className="w-4 h-4" /> Sync Shopify
-          </button>
-          <Link
-            href="/ajouter-produit"
-            className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-primary-500/20 hover:bg-primary-700 transition-all active:scale-95"
-          >
-            <Plus className="w-4 h-4" /> Ajouter
-          </Link>
         </div>
       </div>
 
@@ -215,15 +221,12 @@ export default function StockPage() {
           <div className="flex flex-col items-center justify-center py-40 gap-4 text-slate-400">
             <Package className="w-12 h-12 opacity-20" />
             <p className="text-sm font-black text-slate-600">Aucun produit dans l'inventaire</p>
-            <p className="text-xs text-slate-400 text-center max-w-xs">Synchronisez vos produits Shopify ou ajoutez un produit manuellement.</p>
-            <button onClick={syncProducts} className="mt-4 flex items-center gap-2 px-5 py-3 bg-primary-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary-700 transition-all">
-              <RefreshCw className="w-4 h-4" /> Sync Shopify
-            </button>
+            <p className="text-xs text-slate-400 text-center max-w-xs">Il n'y a pas encore de produits disponibles.</p>
           </div>
         ) : (
           <>
             {/* VUE MOBILE */}
-            <div className="md:hidden flex flex-col gap-4 p-4">
+            <div className="lg:hidden flex flex-col gap-4 p-4">
               {stockItems.map((item) => (
                 <div 
                   key={item.id} 
@@ -281,7 +284,7 @@ export default function StockPage() {
             </div>
 
             {/* VUE DESKTOP */}
-            <div className="hidden md:block overflow-x-auto">
+            <div className="hidden lg:block overflow-x-auto">
               <table className="w-full text-left border-collapse table-fixed">
                 <thead>
                   <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b-2 border-slate-100 dark:border-slate-800">

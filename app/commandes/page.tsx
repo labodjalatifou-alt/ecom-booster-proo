@@ -9,7 +9,7 @@ import DateRangePicker, { DateRange, DEFAULT_RANGE } from '@/components/DateRang
 
 type StatusFilter = 'ALL' | 'A Confirmer' | 'Confirmé' | 'Livré' | 'Annulé';
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 30;
 
 export default function CommandesPage() {
   const { selectedStore, stores, loadingStores } = useStore();
@@ -147,15 +147,14 @@ export default function CommandesPage() {
         {/* Date Selector */}
         <DateRangePicker value={dateRange} onChange={setDateRange} align="left" />
 
-        {/* Status Filter */}
-        {/* Mobile Dropdown */}
-        <div className="md:hidden relative w-full sm:w-auto mt-2 sm:mt-0">
+        {/* Status Filter Dropdown */}
+        <div className="relative w-full sm:w-auto mt-2 sm:mt-0">
           <button 
             onClick={() => setIsTabDropdownOpen(!isTabDropdownOpen)}
-            className="w-full flex items-center justify-between p-3.5 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm"
+            className="w-full sm:w-56 flex items-center justify-between px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm hover:border-slate-200 transition-all"
           >
             <span className="text-[10px] font-black uppercase tracking-widest text-slate-800 dark:text-slate-100">
-              {statuses.find(s => s.id === statusFilter)?.label || 'Tous'}
+              Statut: {statuses.find(s => s.id === statusFilter)?.label || 'Tous'}
             </span>
             <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isTabDropdownOpen ? 'rotate-180' : ''}`} />
           </button>
@@ -168,7 +167,7 @@ export default function CommandesPage() {
                   <button
                     key={s.id}
                     onClick={() => { setStatusFilter(s.id); setIsTabDropdownOpen(false); }}
-                    className={`w-full flex items-center p-4 text-[10px] font-black uppercase tracking-widest transition-colors ${
+                    className={`w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest transition-colors ${
                       statusFilter === s.id ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'
                     }`}
                   >
@@ -178,23 +177,6 @@ export default function CommandesPage() {
               </div>
             </>
           )}
-        </div>
-
-        {/* Desktop Tabs */}
-        <div className="hidden md:flex bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-1 shadow-sm overflow-x-auto">
-          {statuses.map(s => (
-            <button
-              key={s.id}
-              onClick={() => setStatusFilter(s.id)}
-              className={`whitespace-nowrap px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
-                statusFilter === s.id
-                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg'
-                  : 'text-slate-400 hover:text-slate-600'
-              }`}
-            >
-              {s.label}
-            </button>
-          ))}
         </div>
       </div>
 
@@ -213,7 +195,7 @@ export default function CommandesPage() {
         ) : (
           <>
             {/* VUE MOBILE */}
-            <div className="md:hidden flex flex-col gap-4 p-4">
+            <div className="lg:hidden flex flex-col gap-4 p-4">
               {filtered.map((order) => (
                 <div 
                   key={order.id} 
@@ -250,7 +232,7 @@ export default function CommandesPage() {
             </div>
 
             {/* VUE DESKTOP */}
-            <div className="hidden md:block overflow-x-auto">
+            <div className="hidden lg:block overflow-x-auto">
               <table className="w-full text-left border-collapse min-w-[800px]">
                 <thead>
                   <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b-2 border-slate-100 dark:border-slate-800">

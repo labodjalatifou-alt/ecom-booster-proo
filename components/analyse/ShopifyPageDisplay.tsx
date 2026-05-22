@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ShopifyPageParsed } from '@/lib/claude-prompts';
-import { Check, Copy, Eye, Send, DollarSign, Database, CheckCircle2, ChevronDown, ChevronUp, Image as ImageIcon, Layers, Edit2 } from 'lucide-react';
-import ShopifyImagePicker, { ImagePickerState } from './ShopifyImagePicker';
+import { Check, Copy, Eye, Send, DollarSign, Database, CheckCircle2, ChevronDown, ChevronUp, Image as ImageIcon, Layers, Edit2, Upload } from 'lucide-react';
+import ShopifyImagePicker, { ImagePickerState, ShopifyImagePickerHandle } from './ShopifyImagePicker';
 
 interface Props {
   parsed: ShopifyPageParsed;
@@ -33,6 +33,8 @@ export function ShopifyPageDisplay({
   const [editableParagraphes, setEditableParagraphes] = useState<{ titre: string; texte: string }[]>([]);
   const [editableBullets, setEditableBullets] = useState<string[]>([]);
   const [editingPara, setEditingPara] = useState<number | null>(null);
+  const [assigningToPara, setAssigningToPara] = useState<number | null>(null);
+  const pickerRef = useRef<ShopifyImagePickerHandle>(null);
 
   // Synchronisation avec les données de l'IA
   useEffect(() => {
@@ -143,110 +145,9 @@ export function ShopifyPageDisplay({
       {/* ── Colonne gauche (7/12) ──────────────────────────── */}
       <div className="lg:col-span-7 space-y-8 order-2 lg:order-1">
 
-        {/* 1. Titres */}
+        {/* 1. Configuration boutique */}
         <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-5 md:p-8 shadow-sm">
-          <h3 className="text-[10px] font-black mb-6 uppercase tracking-widest text-slate-400">1. Sélectionnez & Modifiez votre Titre</h3>
-          <div className="space-y-3">
-            {editableTitres.map((titre, i) => (
-              <div
-                key={i} 
-                onClick={() => { if (selectedTitle !== i) onSelectTitle(i); }}
-                className={`w-full text-left p-5 rounded-2xl border-2 transition-all flex items-center justify-between group cursor-pointer ${
-                  selectedTitle === i
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                    : 'border-slate-100 dark:border-slate-800 hover:border-slate-200'
-                }`}
-              >
-                {selectedTitle === i ? (
-                  <input 
-                    type="text"
-                    value={titre}
-                    onChange={(e) => handleTitleChange(i, e.target.value)}
-                    className="text-sm font-black text-blue-700 dark:text-blue-400 bg-transparent border-none outline-none w-full mr-2"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                ) : (
-                  <span className="text-sm font-black text-slate-600 dark:text-slate-300">
-                    {titre}
-                  </span>
-                )}
-                {selectedTitle === i && <CheckCircle2 className="w-5 h-5 text-blue-500 flex-shrink-0" />}
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* 2. Paragraphes */}
-        <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-5 md:p-8 shadow-sm">
-          <h3 className="text-[10px] font-black mb-6 uppercase tracking-widest text-slate-400">2. Modifiez la Description Neuromarketing</h3>
-          <div className="space-y-4">
-            {editableParagraphes.map((p, i) => (
-              <div
-                key={i}
-                className={`p-5 rounded-2xl border-2 transition-all ${
-                  selectedParagraphs.includes(i)
-                    ? 'border-emerald-500 bg-emerald-50/30 dark:bg-emerald-900/10'
-                    : 'border-slate-100 dark:border-slate-800 opacity-50 grayscale'
-                }`}
-              >
-                <div className="flex items-center gap-4 mb-3">
-                  <div 
-                    onClick={() => toggleParagraph(i)}
-                    className={`cursor-pointer w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 ${
-                      selectedParagraphs.includes(i) ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300'
-                    }`}
-                  >
-                    {selectedParagraphs.includes(i) && <Check className="w-4 h-4" />}
-                  </div>
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    {editingPara === i ? (
-                       <input 
-                         value={p.titre}
-                         onChange={(e) => handleParaChange(i, 'titre', e.target.value)}
-                         className="flex-1 text-sm font-black tracking-tight bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded px-2 py-1 outline-none"
-                       />
-                    ) : (
-                       <h4 className="text-sm font-black tracking-tight truncate">{p.titre}</h4>
-                    )}
-                    {/* Badge image assignée */}
-                    {paraImages[i] && (
-                      <span className="flex-shrink-0 flex items-center gap-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[9px] font-black px-2 py-0.5 rounded-full">
-                        <ImageIcon className="w-2.5 h-2.5" /> IMG
-                      </span>
-                    )}
-                  </div>
-                  <button 
-                    onClick={() => setEditingPara(editingPara === i ? null : i)}
-                    className="flex items-center gap-1 text-xs font-bold text-blue-500 hover:text-blue-600 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-lg transition-colors"
-                  >
-                    {editingPara === i ? <CheckCircle2 size={14} /> : <Edit2 size={14} />}
-                    {editingPara === i ? 'Terminer' : 'Éditer'}
-                  </button>
-                </div>
-                
-                {editingPara === i ? (
-                   <div className="pl-10">
-                     <textarea
-                       value={p.texte}
-                       onChange={(e) => handleParaChange(i, 'texte', e.target.value)}
-                       className="w-full text-xs text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg p-3 outline-none resize-y min-h-[100px]"
-                     />
-                   </div>
-                ) : (
-                   <div className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed pl-10 cursor-pointer" onClick={() => setEditingPara(i)}>
-                     {p.texte.split(/(?<=\.)\s+/).filter(s => s.trim()).map((phrase, j) => (
-                       <p key={j} className="mb-1 italic">&ldquo;{phrase}&rdquo;</p>
-                     ))}
-                   </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* 3. Configuration boutique */}
-        <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-5 md:p-8 shadow-sm">
-          <h3 className="text-[10px] font-black mb-6 uppercase tracking-widest text-slate-400">3. Configuration Boutique</h3>
+          <h3 className="text-[10px] font-black mb-6 uppercase tracking-widest text-slate-400">1. Configuration Boutique</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-3">
               <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block ml-2">Prix ({currency})</label>
@@ -280,7 +181,40 @@ export function ShopifyPageDisplay({
           </div>
         </section>
 
-        {/* 4. Images + Publication */}
+        {/* 2. Titres */}
+        <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-5 md:p-8 shadow-sm">
+          <h3 className="text-[10px] font-black mb-6 uppercase tracking-widest text-slate-400">2. Sélectionnez & Modifiez votre Titre</h3>
+          <div className="space-y-3">
+            {editableTitres.map((titre, i) => (
+              <div
+                key={i} 
+                onClick={() => { if (selectedTitle !== i) onSelectTitle(i); }}
+                className={`w-full text-left p-5 rounded-2xl border-2 transition-all flex items-center justify-between group cursor-pointer ${
+                  selectedTitle === i
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                    : 'border-slate-100 dark:border-slate-800 hover:border-slate-200'
+                }`}
+              >
+                {selectedTitle === i ? (
+                  <input 
+                    type="text"
+                    value={titre}
+                    onChange={(e) => handleTitleChange(i, e.target.value)}
+                    className="text-sm font-black text-blue-700 dark:text-blue-400 bg-transparent border-none outline-none w-full mr-2"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                ) : (
+                  <span className="text-sm font-black text-slate-600 dark:text-slate-300">
+                    {titre}
+                  </span>
+                )}
+                {selectedTitle === i && <CheckCircle2 className="w-5 h-5 text-blue-500 flex-shrink-0" />}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* 3. Images + Publication */}
         <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-5 md:p-8 shadow-sm">
           <button
             onClick={() => setShowImagePicker(prev => !prev)}
@@ -291,7 +225,7 @@ export function ShopifyPageDisplay({
                 <ImageIcon className="w-5 h-5" />
               </div>
               <div className="text-left">
-                <h3 className="text-sm font-black text-slate-900 dark:text-white">4. Images Produit & Publication</h3>
+                <h3 className="text-sm font-black text-slate-900 dark:text-white">3. Images Produit & Publication</h3>
                 <p className="text-[10px] text-slate-400 mt-0.5">
                   {mediaSelected.length > 0
                     ? `${mediaSelected.length} image(s) galerie · ${Object.keys(paraImages).length} inline`
@@ -310,6 +244,7 @@ export function ShopifyPageDisplay({
 
           {showImagePicker && (
             <ShopifyImagePicker
+              ref={pickerRef}
               produit={produit}
               pays={pays}
               prix={parseInt(price) || 0}
@@ -322,6 +257,8 @@ export function ShopifyPageDisplay({
               status={publishStatus}
               onPublished={url => setPublishedUrl(url)}
               onImagesChange={state => setPickerState(state)}
+              assigningToPara={assigningToPara}
+              onSetAssigningToPara={setAssigningToPara}
             />
           )}
 
@@ -334,6 +271,94 @@ export function ShopifyPageDisplay({
               </a>
             </div>
           )}
+        </section>
+
+        {/* 4. Paragraphes */}
+        <section className={`bg-white dark:bg-slate-900 border ${assigningToPara !== null ? 'border-blue-500 shadow-lg shadow-blue-500/20 scale-[1.01]' : 'border-slate-200 dark:border-slate-800 shadow-sm'} rounded-[2.5rem] p-5 md:p-8 transition-all duration-300`}>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">4. Modifiez la Description Neuromarketing</h3>
+            {assigningToPara !== null && (
+              <span className="text-[10px] font-black bg-blue-100 text-blue-600 px-3 py-1 rounded-full animate-pulse">Mode Assignation Actif</span>
+            )}
+          </div>
+          <div className="space-y-4">
+            {editableParagraphes.map((p, i) => (
+              <div
+                key={i}
+                className={`p-5 rounded-2xl border-2 transition-all ${
+                  selectedParagraphs.includes(i)
+                    ? 'border-emerald-500 bg-emerald-50/30 dark:bg-emerald-900/10'
+                    : 'border-slate-100 dark:border-slate-800 opacity-50 grayscale'
+                }`}
+              >
+                <div className="flex items-center gap-4 mb-3 flex-wrap">
+                  <div 
+                    onClick={() => toggleParagraph(i)}
+                    className={`cursor-pointer w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 ${
+                      selectedParagraphs.includes(i) ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300'
+                    }`}
+                  >
+                    {selectedParagraphs.includes(i) && <Check className="w-4 h-4" />}
+                  </div>
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    {editingPara === i ? (
+                       <input 
+                         value={p.titre}
+                         onChange={(e) => handleParaChange(i, 'titre', e.target.value)}
+                         className="flex-1 text-sm font-black tracking-tight bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded px-2 py-1 outline-none"
+                       />
+                    ) : (
+                       <h4 className="text-sm font-black tracking-tight truncate">{p.titre}</h4>
+                    )}
+                    {/* Badge image assignée */}
+                    {paraImages[i] && (
+                      <span className="flex-shrink-0 flex items-center gap-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[9px] font-black px-2 py-0.5 rounded-full">
+                        <ImageIcon className="w-2.5 h-2.5" /> IMG
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    {selectedParagraphs.includes(i) && (
+                      <button 
+                        onClick={() => {
+                          if (assigningToPara === i) setAssigningToPara(null);
+                          else { setAssigningToPara(i); setShowImagePicker(true); }
+                        }}
+                        className={`flex items-center gap-1 text-[10px] font-black px-2.5 py-1.5 rounded-lg transition-all ${
+                          assigningToPara === i ? 'bg-blue-600 text-white shadow-md' : paraImages[i] ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                        }`}
+                      >
+                        {assigningToPara === i ? 'Sélectionnez une image ⬆️' : paraImages[i] ? 'Changer l\'image' : '📎 Assigner'}
+                      </button>
+                    )}
+                    <button 
+                      onClick={() => setEditingPara(editingPara === i ? null : i)}
+                      className="flex items-center gap-1 text-[10px] font-black text-blue-500 hover:text-blue-600 px-2.5 py-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-lg transition-colors"
+                    >
+                      {editingPara === i ? <CheckCircle2 size={14} /> : <Edit2 size={14} />}
+                      {editingPara === i ? 'Terminer' : 'Éditer'}
+                    </button>
+                  </div>
+                </div>
+                
+                {editingPara === i ? (
+                   <div className="pl-10">
+                     <textarea
+                       value={p.texte}
+                       onChange={(e) => handleParaChange(i, 'texte', e.target.value)}
+                       className="w-full text-xs text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg p-3 outline-none resize-y min-h-[100px]"
+                     />
+                   </div>
+                ) : (
+                   <div className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed pl-10 cursor-pointer" onClick={() => setEditingPara(i)}>
+                     {p.texte.split(/(?<=\.)\s+/).filter(s => s.trim()).map((phrase, j) => (
+                       <p key={j} className="mb-1 italic">&ldquo;{phrase}&rdquo;</p>
+                     ))}
+                   </div>
+                )}
+              </div>
+            ))}
+          </div>
         </section>
       </div>
 
@@ -469,16 +494,20 @@ export function ShopifyPageDisplay({
             >
               <Database className="w-4 h-4" /> Télécharger CSV Shopify
             </button>
-            {!showImagePicker && (
-              <button
-                disabled={isCreating || !hasShopify}
-                onClick={() => onCreateProduct({ title: editableTitres[selectedTitle] || '', price, stock, description: getPreviewHtml() })}
-                className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
-              >
-                {isCreating ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Send className="w-4 h-4" />}
-                {isCreating ? 'Publication...' : 'Publier sans images'}
-              </button>
-            )}
+            <button
+              disabled={isCreating || (showImagePicker && pickerRef.current?.isPublishing) || !hasShopify}
+              onClick={() => {
+                if (showImagePicker && pickerRef.current) {
+                  pickerRef.current.publishToShopify();
+                } else {
+                  onCreateProduct({ title: editableTitres[selectedTitle] || '', price, stock, description: getPreviewHtml() });
+                }
+              }}
+              className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all flex items-center justify-center gap-3 disabled:opacity-50 active:scale-[0.98]"
+            >
+              {(isCreating || (showImagePicker && pickerRef.current?.isPublishing)) ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+              {(isCreating || (showImagePicker && pickerRef.current?.isPublishing)) ? 'Publication en cours...' : 'Créer sur Shopify'}
+            </button>
             {!hasShopify && (
               <p className="text-[9px] text-center text-white/30 font-bold uppercase tracking-wider">Connectez une boutique pour publier</p>
             )}
