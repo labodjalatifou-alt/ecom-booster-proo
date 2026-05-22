@@ -214,7 +214,11 @@ export default function CommandesPage() {
                   <div>
                     <div className="text-xs font-bold text-slate-700 dark:text-slate-200 line-clamp-2">{order.product}</div>
                     <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 mt-1 uppercase">
-                      <MapPin className="w-3 h-3" /> {cleanCity(order.city)} {order.country ? `, ${cleanCountry(order.country)}` : ''}
+                      <MapPin className="w-3 h-3" /> 
+                      <span className="truncate">
+                        {order.address && order.address !== 'Adresse non précisée' ? `${order.address}, ` : ''}
+                        {cleanCity(order.city)} {order.country ? `, ${cleanCountry(order.country)}` : ''}
+                      </span>
                     </div>
                   </div>
                   <div className="flex justify-between items-end pt-3 border-t border-slate-200 dark:border-slate-700">
@@ -260,8 +264,11 @@ export default function CommandesPage() {
                       </td>
                       <td className="px-8 py-5">
                         <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-600 uppercase">
-                          <MapPin className="w-3 h-3 text-primary-500" />
-                          {cleanCity(order.city)} {order.country ? `, ${cleanCountry(order.country)}` : ', Non précisé'}
+                          <MapPin className="w-3 h-3 text-primary-500 shrink-0" />
+                          <span className="truncate max-w-[250px]">
+                            {order.address && order.address !== 'Adresse non précisée' ? `${order.address}, ` : ''}
+                            {cleanCity(order.city)} {order.country ? `, ${cleanCountry(order.country)}` : ', Non précisé'}
+                          </span>
                         </div>
                         <div className="text-[9px] font-bold text-slate-400 mt-0.5 flex items-center gap-1">
                           <Phone className="w-2.5 h-2.5" /> {order.phone}
@@ -358,7 +365,10 @@ export default function CommandesPage() {
               <div className="p-5 bg-slate-50 dark:bg-slate-800 rounded-2xl space-y-2">
                 <div className="flex justify-between">
                   <span className="text-[9px] font-black text-slate-400 uppercase flex items-center gap-1"><Globe className="w-3 h-3" /> Ville / Pays</span>
-                  <span className="text-xs font-black uppercase text-right">{cleanCity(selectedOrder.city)}, {cleanCountry(selectedOrder.country)}</span>
+                  <span className="text-xs font-black uppercase text-right">
+                    {selectedOrder.address && selectedOrder.address !== 'Adresse non précisée' ? `${selectedOrder.address}, ` : ''}
+                    {cleanCity(selectedOrder.city)}, {cleanCountry(selectedOrder.country)}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-[9px] font-black text-slate-400 uppercase flex items-center gap-1"><Package className="w-3 h-3" /> Statut</span>

@@ -307,7 +307,11 @@ export default function InterfaceCloserPage() {
                   <div>
                     <div className="text-xs font-black text-slate-700 dark:text-slate-200 line-clamp-2">{item.product}</div>
                     <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500 uppercase mt-1">
-                      <MapPin className="w-3 h-3" /> {cleanCity(item.city)}, {cleanCountry(item.country)}
+                      <MapPin className="w-3 h-3 shrink-0" />
+                      <span className="truncate">
+                        {item.address && item.address !== 'Adresse non précisée' ? `${item.address}, ` : ''}
+                        {cleanCity(item.city)} {item.country ? `, ${cleanCountry(item.country)}` : ''}
+                      </span>
                     </div>
                   </div>
 
@@ -345,7 +349,11 @@ export default function InterfaceCloserPage() {
                       <td className="px-8 py-4 text-xs font-black text-slate-600 dark:text-slate-300 truncate">{item.product}</td>
                       <td className="px-8 py-4">
                         <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500 uppercase">
-                          <MapPin className="w-3 h-3" /> {cleanCity(item.city)}, {cleanCountry(item.country)}
+                          <MapPin className="w-3 h-3 shrink-0" />
+                          <span className="truncate max-w-[200px]">
+                            {item.address && item.address !== 'Adresse non précisée' ? `${item.address}, ` : ''}
+                            {cleanCity(item.city)} {item.country ? `, ${cleanCountry(item.country)}` : ''}
+                          </span>
                         </div>
                       </td>
                       <td className="px-8 py-4 text-right">

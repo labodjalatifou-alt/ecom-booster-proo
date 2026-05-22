@@ -223,8 +223,12 @@ export default function HistoriqueCommandesPage() {
                     <div className="text-sm font-black text-slate-700 dark:text-slate-200 line-clamp-2 leading-tight mb-2">
                       {order.product}
                     </div>
-                    <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase">
-                      <MapPin className="w-3 h-3" /> {cleanCity(order.city)}
+                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 mt-2">
+                      <MapPin className="w-3 h-3 shrink-0" />
+                      <span className="truncate uppercase">
+                        {order.address && order.address !== 'Adresse non précisée' ? `${order.address}, ` : ''}
+                        {cleanCity(order.city)} {order.country ? `, ${order.country}` : ''}
+                      </span>
                     </div>
                   </div>
 
@@ -265,8 +269,12 @@ export default function HistoriqueCommandesPage() {
                       </td>
                       <td className="px-8 py-5">
                         <div className="text-sm font-black text-slate-700 dark:text-slate-200 truncate max-w-[200px]">{order.product}</div>
-                        <div className="flex items-center gap-1 text-[9px] font-bold text-slate-400 mt-0.5 uppercase">
-                          <MapPin className="w-2.5 h-2.5" /> {cleanCity(order.city)}
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 uppercase mt-1">
+                          <MapPin className="w-2.5 h-2.5 shrink-0" />
+                          <span className="truncate max-w-[200px]">
+                            {order.address && order.address !== 'Adresse non précisée' ? `${order.address}, ` : ''}
+                            {cleanCity(order.city)} {order.country ? `, ${order.country}` : ''}
+                          </span>
                         </div>
                       </td>
                       <td className="px-8 py-5 text-center">

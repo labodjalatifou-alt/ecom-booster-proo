@@ -103,6 +103,9 @@ export async function GET(req: Request) {
       }
 
       const ordersToInsert = allOrders.map((order: any) => {
+        const addr = order.shipping_address || order.billing_address || {};
+        const address = [addr.address1, addr.address2].filter(Boolean).join(', ').trim() || 'Adresse non précisée';
+        const country = addr.country || store.country || 'Non précisé';
         const city = resolveCity(order, store.country); 
         const phone = resolvePhone(order);
         const rawPrice = parseFloat(order.total_price || '0');
@@ -121,6 +124,8 @@ export async function GET(req: Request) {
           price: Math.round(rawPrice).toString(),
           currency: storeCurrency,
           city,
+          address,
+          country,
           status,
           created_at: order.created_at,
           updated_at: order.updated_at,

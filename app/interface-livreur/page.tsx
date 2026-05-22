@@ -329,7 +329,11 @@ export default function InterfaceLivreurPage() {
                   <div>
                     <div className="text-xs font-black text-slate-700 dark:text-slate-200 line-clamp-2">{item.product}</div>
                     <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 mt-1 uppercase">
-                      <MapPin className="w-3 h-3" /> {cleanCity(item.city)} {item.country ? `, ${cleanCountry(item.country)}` : ''}
+                      <MapPin className="w-3 h-3 shrink-0" />
+                      <span className="truncate">
+                        {item.address && item.address !== 'Adresse non précisée' ? `${item.address}, ` : ''}
+                        {cleanCity(item.city)} {item.country ? `, ${cleanCountry(item.country)}` : ''}
+                      </span>
                     </div>
                   </div>
                   <div className="pt-3 border-t border-slate-200 dark:border-slate-700 flex justify-between items-end">
@@ -384,7 +388,11 @@ export default function InterfaceLivreurPage() {
                       <td className="px-8 py-4">
                         <div className="text-xs font-black text-slate-700 dark:text-slate-200 truncate">{item.product}</div>
                         <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 mt-0.5">
-                          <MapPin className="w-3 h-3" /> {cleanCity(item.city)}, {cleanCountry(item.country)}
+                          <MapPin className="w-3 h-3 shrink-0" />
+                          <span className="truncate max-w-[200px] uppercase">
+                            {item.address && item.address !== 'Adresse non précisée' ? `${item.address}, ` : ''}
+                            {cleanCity(item.city)} {item.country ? `, ${cleanCountry(item.country)}` : ''}
+                          </span>
                         </div>
                       </td>
                       <td className="px-8 py-4 text-right">
