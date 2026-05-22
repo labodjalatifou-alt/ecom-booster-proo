@@ -230,11 +230,13 @@ export default function InterfaceLivreurPage() {
       </div>
 
       {/* Filters Row — Date + Statut sur la même ligne */}
-      <div className="flex items-center gap-3 sm:gap-4 mb-8 overflow-x-auto w-full pb-2">
-        <DateRangePicker value={dateRange} onChange={setDateRange} align="left" />
+      <div className="flex items-center gap-3 mb-8 w-full flex-nowrap">
+        <div className="shrink-0">
+          <DateRangePicker value={dateRange} onChange={setDateRange} align="left" />
+        </div>
 
         {/* Status Dropdown */}
-        <div className="relative">
+        <div className="relative shrink-0">
           <button 
             onClick={() => setIsTabDropdownOpen(!isTabDropdownOpen)}
             className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm hover:border-slate-200 transition-all"

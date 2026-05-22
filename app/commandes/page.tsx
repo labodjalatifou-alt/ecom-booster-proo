@@ -158,12 +158,14 @@ export default function CommandesPage() {
       </div>
 
       {/* Filters Row */}
-      <div className="flex items-center gap-3 sm:gap-4 mb-6 overflow-x-auto w-full pb-2">
+      <div className="flex items-center gap-3 mb-6 w-full flex-nowrap">
         {/* Date Selector */}
-        <DateRangePicker value={dateRange} onChange={setDateRange} align="left" />
+        <div className="shrink-0">
+          <DateRangePicker value={dateRange} onChange={setDateRange} align="left" />
+        </div>
 
         {/* Status Filter Dropdown */}
-        <div className="relative">
+        <div className="relative shrink-0">
           <button 
             onClick={() => setIsTabDropdownOpen(!isTabDropdownOpen)}
             className="flex items-center justify-between gap-3 px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm hover:border-slate-200 transition-all"
