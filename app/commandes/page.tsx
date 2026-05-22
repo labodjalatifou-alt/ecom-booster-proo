@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { useStore } from '@/components/StoreProvider';
 import { cleanCity, cleanCountry } from '@/lib/utils';
 import DateRangePicker, { DateRange, DEFAULT_RANGE } from '@/components/DateRangePicker';
+import toast from 'react-hot-toast';
 
 type StatusFilter = 'ALL' | 'A Confirmer' | 'Confirmé' | 'Livré' | 'Annulé';
 
