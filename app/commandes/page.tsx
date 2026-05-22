@@ -91,6 +91,20 @@ export default function CommandesPage() {
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
+  const handleSync = async () => {
+    toast.promise(
+      fetch('/api/sync-shopify').then(r => r.json()),
+      {
+        loading: 'Synchronisation Shopify en cours...',
+        success: (data) => {
+          fetchOrders(1);
+          return `${data.count || 0} commandes synchronisées !`;
+        },
+        error: 'Erreur lors de la synchronisation',
+      }
+    );
+  };
+
   const statusColor = (s: string) => {
     if (s === 'Livré') return 'bg-emerald-100 text-emerald-700 border-emerald-200';
     if (s === 'Annulé') return 'bg-red-100 text-red-700 border-red-200';
@@ -134,8 +148,9 @@ export default function CommandesPage() {
             />
           </div>
           <button
-            onClick={() => fetchOrders(page)}
+            onClick={handleSync}
             className="p-3 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl text-slate-400 hover:text-primary-600 transition-all"
+            title="Synchroniser avec Shopify"
           >
             <RefreshCw className="w-4 h-4" />
           </button>
@@ -143,20 +158,20 @@ export default function CommandesPage() {
       </div>
 
       {/* Filters Row */}
-      <div className="flex flex-wrap items-center gap-4 mb-6">
+      <div className="flex items-center gap-3 sm:gap-4 mb-6 overflow-x-auto w-full pb-2">
         {/* Date Selector */}
         <DateRangePicker value={dateRange} onChange={setDateRange} align="left" />
 
         {/* Status Filter Dropdown */}
-        <div className="relative w-full sm:w-auto mt-2 sm:mt-0">
+        <div className="relative">
           <button 
             onClick={() => setIsTabDropdownOpen(!isTabDropdownOpen)}
-            className="w-full sm:w-56 flex items-center justify-between px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm hover:border-slate-200 transition-all"
+            className="flex items-center justify-between gap-3 px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm hover:border-slate-200 transition-all"
           >
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-800 dark:text-slate-100">
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-800 dark:text-slate-100 whitespace-nowrap">
               Statut: {statuses.find(s => s.id === statusFilter)?.label || 'Tous'}
             </span>
-            <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isTabDropdownOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform shrink-0 ${isTabDropdownOpen ? 'rotate-180' : ''}`} />
           </button>
           
           {isTabDropdownOpen && (

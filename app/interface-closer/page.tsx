@@ -179,7 +179,7 @@ export default function InterfaceCloserPage() {
       </div>
 
       {/* Filters Row — Date + Statut sur la même ligne */}
-      <div className="flex flex-wrap items-center gap-4 mb-8">
+      <div className="flex items-center gap-3 sm:gap-4 mb-8 overflow-x-auto w-full pb-2">
         <DateRangePicker value={dateRange} onChange={setDateRange} align="left" />
 
         {/* Status Dropdown */}
