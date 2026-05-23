@@ -67,7 +67,8 @@ export default function ConnexionPage() {
           if (profileError) throw profileError;
 
           toast.success("Compte créé avec succès ! Bienvenue.");
-          router.push('/');
+          window.location.href = '/';
+          return;
         }
       } else {
         // Sign In
@@ -79,7 +80,8 @@ export default function ConnexionPage() {
         if (authError) throw authError;
 
         toast.success("Connexion réussie !");
-        router.push('/');
+        window.location.href = '/';
+        return;
       }
     } catch (err: any) {
       console.error("Auth error:", err);

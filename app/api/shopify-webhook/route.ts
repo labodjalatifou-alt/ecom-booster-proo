@@ -108,6 +108,7 @@ export async function POST(req: Request) {
       order_id: orderToInsert.shopify_id,
     });
 
+
     // Déclencher la notification push pour tous les Closers
     sendPushNotification({
       role: 'CLOSER',
