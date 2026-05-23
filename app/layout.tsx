@@ -9,6 +9,7 @@ import { StoreProvider } from "@/components/StoreProvider";
 import { Toaster } from 'react-hot-toast';
 import RealtimeNotifications from "@/components/RealtimeNotifications";
 import PWARegistration from "@/components/PWARegistration";
+import NativePushRegistration from "@/components/NativePushRegistration";
 
 import { Providers } from "@/app/providers";
 
@@ -43,6 +44,7 @@ export default function RootLayout({
                 <Toaster position="top-right" />
                 <RealtimeNotifications />
                 <PWARegistration />
+                <NativePushRegistration />
 
                 <div className="flex min-h-screen">
                   <Sidebar />

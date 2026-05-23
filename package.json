@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.1",
+    "@capacitor/core": "^8.3.4",
+    "@capacitor/push-notifications": "^8.1.1",
     "@prisma/client": "^6.4.0",
     "@shopify/app-bridge-react": "^4.2.10",
     "@shopify/polaris": "^13.9.5",
@@ -28,6 +30,8 @@
     "web-push": "^3.6.7"
   },
   "devDependencies": {
+    "@capacitor/android": "^8.3.4",
+    "@capacitor/cli": "^8.3.4",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

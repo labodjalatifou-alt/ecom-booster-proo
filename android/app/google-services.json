@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "677239581302",
+    "project_id": "ecom-booster-pro",
+    "storage_bucket": "ecom-booster-pro.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:677239581302:android:18dd4f95ebcc302c5c0d57",
+        "android_client_info": {
+          "package_name": "com.ecombooster.pro"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCmO7Gtrkgk0mS-o6oPVgtjeqwxXvfdmc0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

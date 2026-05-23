@@ -1,5 +1,30 @@
 import { supabase } from './supabase';
 import webpush from 'web-push';
+import * as admin from 'firebase-admin';
+
+// Initialize Firebase Admin if not already initialized
+if (!admin.apps.length) {
+  try {
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY
+      ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
+      : undefined;
+      
+    if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && privateKey) {
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId: process.env.FIREBASE_PROJECT_ID,
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          privateKey: privateKey,
+        }),
+      });
+      console.log('Firebase Admin SDK initialized successfully');
+    } else {
+      console.warn('Firebase Admin SDK credentials missing');
+    }
+  } catch (error) {
+    console.error('Firebase Admin initialization error', error);
+  }
+}
 
 const vapidEmail = process.env.VAPID_EMAIL || 'mailto:contact@votre-app.com';
 const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
@@ -79,6 +104,33 @@ export async function sendPushNotification({
     });
 
     const pushPromises = subscriptions.map((sub: any) => {
+      // Check if this is a Native Push (FCM)
+      if (sub.endpoint && sub.endpoint.startsWith('fcm://')) {
+        const fcmToken = sub.endpoint.replace('fcm://', '');
+        
+        const message = {
+          notification: {
+            title: title,
+            body: body,
+          },
+          data: {
+            url: url || '/commandes',
+          },
+          token: fcmToken,
+        };
+
+        return admin.messaging().send(message)
+          .catch(async (error: any) => {
+            if (error.code === 'messaging/registration-token-not-registered' || error.code === 'messaging/invalid-registration-token') {
+              console.log(`Pruning expired FCM subscription for user ${sub.user_id}`);
+              await supabase.from('push_subscriptions').delete().eq('id', sub.id);
+            } else {
+              console.error(`Error sending FCM to subscription ID ${sub.id}:`, error);
+            }
+          });
+      }
+
+      // Web Push
       const pushSub = {
         endpoint: sub.endpoint,
         keys: {
