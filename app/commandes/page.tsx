@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { ShoppingCart, Search, Eye, MapPin, Phone, Package, X, Globe, User, Loader2, RefreshCw, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useStore } from '@/components/StoreProvider';
-import { cleanCity, cleanCountry } from '@/lib/utils';
+import { formatFullAddress } from '@/lib/utils';
 import DateRangePicker, { DateRange, DEFAULT_RANGE } from '@/components/DateRangePicker';
 import toast from 'react-hot-toast';
 
@@ -231,11 +231,10 @@ export default function CommandesPage() {
                   </div>
                   <div>
                     <div className="text-xs font-bold text-slate-700 dark:text-slate-200 line-clamp-2">{order.product}</div>
-                    <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 mt-1 uppercase">
-                      <MapPin className="w-3 h-3" /> 
-                      <span className="truncate">
-                        {order.address && order.address !== 'Adresse non précisée' ? `${order.address}, ` : ''}
-                        {cleanCity(order.city)} {order.country ? `, ${cleanCountry(order.country)}` : ''}
+                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 mt-2">
+                      <MapPin className="w-3 h-3 shrink-0" />
+                      <span className="truncate uppercase">
+                        {formatFullAddress(order.address, order.city, order.country)}
                       </span>
                     </div>
                   </div>
@@ -281,11 +280,10 @@ export default function CommandesPage() {
                         {order.product}
                       </td>
                       <td className="px-8 py-5">
-                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-600 uppercase">
-                          <MapPin className="w-3 h-3 text-primary-500 shrink-0" />
-                          <span className="truncate max-w-[250px]">
-                            {order.address && order.address !== 'Adresse non précisée' ? `${order.address}, ` : ''}
-                            {cleanCity(order.city)} {order.country ? `, ${cleanCountry(order.country)}` : ', Non précisé'}
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 uppercase mt-1">
+                          <MapPin className="w-2.5 h-2.5 shrink-0" />
+                          <span className="truncate max-w-[200px]">
+                            {formatFullAddress(order.address, order.city, order.country)}
                           </span>
                         </div>
                         <div className="text-[9px] font-bold text-slate-400 mt-0.5 flex items-center gap-1">
@@ -381,12 +379,14 @@ export default function CommandesPage() {
                 </div>
               </div>
               <div className="p-5 bg-slate-50 dark:bg-slate-800 rounded-2xl space-y-2">
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span className="text-[9px] font-black text-slate-400 uppercase flex items-center gap-1"><Globe className="w-3 h-3" /> Ville / Pays</span>
-                  <span className="text-xs font-black uppercase text-right">
-                    {selectedOrder.address && selectedOrder.address !== 'Adresse non précisée' ? `${selectedOrder.address}, ` : ''}
-                    {cleanCity(selectedOrder.city)}, {cleanCountry(selectedOrder.country)}
-                  </span>
+                  <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 max-w-[200px]">
+                    <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
+                    <span className="text-xs font-black uppercase text-right text-balance truncate">
+                      {formatFullAddress(selectedOrder.address, selectedOrder.city, selectedOrder.country)}
+                    </span>
+                  </div>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-[9px] font-black text-slate-400 uppercase flex items-center gap-1"><Package className="w-3 h-3" /> Statut</span>

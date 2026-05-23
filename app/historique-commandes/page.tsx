@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useStore } from '@/components/StoreProvider';
-import { cleanCity } from '@/lib/utils';
+import { formatFullAddress } from '@/lib/utils';
 
 const PAGE_SIZE = 50;
 
@@ -226,8 +226,7 @@ export default function HistoriqueCommandesPage() {
                     <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 mt-2">
                       <MapPin className="w-3 h-3 shrink-0" />
                       <span className="truncate uppercase">
-                        {order.address && order.address !== 'Adresse non précisée' ? `${order.address}, ` : ''}
-                        {cleanCity(order.city)} {order.country ? `, ${order.country}` : ''}
+                        {formatFullAddress(order.address, order.city, order.country)}
                       </span>
                     </div>
                   </div>
@@ -272,8 +271,7 @@ export default function HistoriqueCommandesPage() {
                         <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 uppercase mt-1">
                           <MapPin className="w-2.5 h-2.5 shrink-0" />
                           <span className="truncate max-w-[200px]">
-                            {order.address && order.address !== 'Adresse non précisée' ? `${order.address}, ` : ''}
-                            {cleanCity(order.city)} {order.country ? `, ${order.country}` : ''}
+                            {formatFullAddress(order.address, order.city, order.country)}
                           </span>
                         </div>
                       </td>

@@ -85,6 +85,33 @@ export function cleanCountry(country: string | null | undefined): string {
 }
 
 /**
+ * Formate l'adresse complète proprement (Adresse + Ville + Pays)
+ * Retire les "Non précisé" inutiles et évite les virgules en double
+ */
+export function formatFullAddress(address?: string | null, city?: string | null, country?: string | null): string {
+  const parts = [];
+  
+  if (address && address.trim() !== '' && address !== 'Adresse non précisée') {
+    parts.push(address.trim());
+  }
+  
+  const cCity = cleanCity(city);
+  if (cCity !== 'Non précisé') {
+    parts.push(cCity);
+  }
+  
+  const cCountry = cleanCountry(country);
+  if (cCountry !== 'Non précisé') {
+    parts.push(cCountry);
+  }
+  
+  if (parts.length === 0) return 'Non précisé';
+  
+  const uniqueParts = parts.filter((v, i, a) => a.indexOf(v) === i);
+  return uniqueParts.join(', ');
+}
+
+/**
  * Nettoie les messages d'erreur pour l'utilisateur final.
  * Masque les détails techniques comme "localhost", "fetch", etc.
  */

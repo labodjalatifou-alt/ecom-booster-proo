@@ -5,7 +5,7 @@ import { Truck, PhoneForwarded, MessageSquare, CheckCircle2, MapPin, DollarSign,
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { useStore } from '@/components/StoreProvider';
-import { cleanCity, cleanCountry, sanitizeError } from '@/lib/utils';
+import { formatFullAddress, sanitizeError } from '@/lib/utils';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import DateRangePicker, { DateRange, DEFAULT_RANGE } from '@/components/DateRangePicker';
 
@@ -333,8 +333,7 @@ export default function InterfaceLivreurPage() {
                     <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 mt-1 uppercase">
                       <MapPin className="w-3 h-3 shrink-0" />
                       <span className="truncate">
-                        {item.address && item.address !== 'Adresse non précisée' ? `${item.address}, ` : ''}
-                        {cleanCity(item.city)} {item.country ? `, ${cleanCountry(item.country)}` : ''}
+                        {formatFullAddress(item.address, item.city, item.country)}
                       </span>
                     </div>
                   </div>
@@ -392,8 +391,7 @@ export default function InterfaceLivreurPage() {
                         <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 mt-0.5">
                           <MapPin className="w-3 h-3 shrink-0" />
                           <span className="truncate max-w-[200px] uppercase">
-                            {item.address && item.address !== 'Adresse non précisée' ? `${item.address}, ` : ''}
-                            {cleanCity(item.city)} {item.country ? `, ${cleanCountry(item.country)}` : ''}
+                            {formatFullAddress(item.address, item.city, item.country)}
                           </span>
                         </div>
                       </td>

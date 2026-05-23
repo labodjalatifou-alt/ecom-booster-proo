@@ -5,7 +5,7 @@ import { Headset, PhoneForwarded, MessageSquare, CheckCircle2, MapPin, Edit3, Lo
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { useStore } from '@/components/StoreProvider';
-import { cleanCity, cleanCountry, sanitizeError } from '@/lib/utils';
+import { formatFullAddress, sanitizeError } from '@/lib/utils';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import DateRangePicker, { DateRange, DEFAULT_RANGE } from '@/components/DateRangePicker';
 
@@ -311,8 +311,7 @@ export default function InterfaceCloserPage() {
                     <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500 uppercase mt-1">
                       <MapPin className="w-3 h-3 shrink-0" />
                       <span className="truncate">
-                        {item.address && item.address !== 'Adresse non précisée' ? `${item.address}, ` : ''}
-                        {cleanCity(item.city)} {item.country ? `, ${cleanCountry(item.country)}` : ''}
+                        {formatFullAddress(item.address, item.city, item.country)}
                       </span>
                     </div>
                   </div>
@@ -353,8 +352,7 @@ export default function InterfaceCloserPage() {
                         <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500 uppercase">
                           <MapPin className="w-3 h-3 shrink-0" />
                           <span className="truncate max-w-[200px]">
-                            {item.address && item.address !== 'Adresse non précisée' ? `${item.address}, ` : ''}
-                            {cleanCity(item.city)} {item.country ? `, ${cleanCountry(item.country)}` : ''}
+                            {formatFullAddress(item.address, item.city, item.country)}
                           </span>
                         </div>
                       </td>
