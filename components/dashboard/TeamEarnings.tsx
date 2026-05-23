@@ -112,7 +112,7 @@ export default function TeamEarnings() {
               <Headset className="w-4 h-4 text-amber-600" />
               <span className="text-[9px] font-black text-amber-600 uppercase tracking-widest">Closer</span>
             </div>
-            <p className="text-xl font-black text-amber-700">{fmt(closerEarnings)} {currency}</p>
+            <p className="font-poppins text-2xl sm:text-3xl lg:text-4xl font-black text-amber-700 tracking-tighter leading-none mb-1">{fmt(closerEarnings)} {currency}</p>
             <p className="text-[9px] font-bold text-amber-500 mt-1">{confirmedCount} commandes confirmées/livrées</p>
           </div>
         </div>
@@ -125,7 +125,7 @@ export default function TeamEarnings() {
               <Truck className="w-4 h-4 text-blue-600" />
               <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">Livreur</span>
             </div>
-            <p className="text-xl font-black text-blue-700">{fmt(livreurEarnings)} {currency}</p>
+            <p className="font-poppins text-2xl sm:text-3xl lg:text-4xl font-black text-blue-700 tracking-tighter leading-none mb-1">{fmt(livreurEarnings)} {currency}</p>
             <p className="text-[9px] font-bold text-blue-500 mt-1">{deliveredCount} livraisons effectuées</p>
           </div>
         </div>
@@ -138,7 +138,7 @@ export default function TeamEarnings() {
               <DollarSign className="w-4 h-4 text-rose-600" />
               <span className="text-[9px] font-black text-rose-600 uppercase tracking-widest">Total Commissions</span>
             </div>
-            <p className="text-xl font-black text-rose-700">{fmt(closerEarnings + livreurEarnings)} {currency}</p>
+            <p className="font-poppins text-2xl sm:text-3xl lg:text-4xl font-black text-rose-700 tracking-tighter leading-none mb-1">{fmt(closerEarnings + livreurEarnings)} {currency}</p>
             <p className="text-[9px] font-bold text-rose-500 mt-1">À déduire du CA</p>
           </div>
         </div>
@@ -151,7 +151,7 @@ export default function TeamEarnings() {
               <DollarSign className="w-4 h-4 text-emerald-600" />
               <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Revenu Net</span>
             </div>
-            <p className="text-xl font-black text-emerald-700">{fmt(netRevenue)} {currency}</p>
+            <p className="font-poppins text-2xl sm:text-3xl lg:text-4xl font-black text-emerald-700 tracking-tighter leading-none mb-1">{fmt(netRevenue)} {currency}</p>
             <p className="text-[9px] font-bold text-emerald-500 mt-1">CA - Commissions</p>
           </div>
         </div>
