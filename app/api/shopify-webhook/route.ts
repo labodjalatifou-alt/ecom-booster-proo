@@ -54,16 +54,23 @@ export async function POST(req: Request) {
     // Trouver le store correspondant via l'URL Shopify
     const shopDomain = req.headers.get('x-shopify-shop-domain') || '';
     let storeId: string | null = null;
+    let storeCountry = '';
     if (shopDomain) {
       const { data: store } = await supabase
         .from('Store')
-        .select('id, currency')
+        .select('id, currency, country')
         .eq('shopifyUrl', shopDomain)
         .single();
-      if (store) storeId = store.id;
+      if (store) {
+        storeId = store.id;
+        storeCountry = store.country || '';
+      }
     }
 
     const city = resolveCity(order);
+    const addr = order.shipping_address || order.billing_address || {};
+    const address = [addr.address1, addr.address2].filter(Boolean).join(', ').trim() || 'Adresse non précisée';
+    const country = addr.country || storeCountry || 'Non précisé';
     const currency = await resolveStoreCurrency(storeId);
     const rawPrice = parseFloat(order.total_price || '0');
 
@@ -77,6 +84,8 @@ export async function POST(req: Request) {
       currency,
       status: 'A Confirmer',
       city,
+      address,
+      country,
       created_at: order.created_at,
     };
 
