@@ -172,7 +172,7 @@ export default function StatCards() {
             
             <div className="mt-2">
               <h3 className="text-slate-400 dark:text-slate-500 text-xs font-black uppercase tracking-[0.15em] mb-3">{stat.title}</h3>
-              <p className="text-4xl font-black text-slate-800 dark:text-slate-100 tracking-tighter leading-none">{stat.value}</p>
+              <p className="font-poppins text-4xl sm:text-5xl xl:text-[3.5rem] font-black text-slate-800 dark:text-slate-100 tracking-tighter leading-none drop-shadow-sm">{stat.value}</p>
             </div>
 
             {stat.action && metrics.cashInTransit > 0 && (

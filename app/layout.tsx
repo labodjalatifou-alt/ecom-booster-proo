@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
@@ -13,6 +13,11 @@ import PWARegistration from "@/components/PWARegistration";
 import { Providers } from "@/app/providers";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+const poppins = Poppins({ 
+  weight: ['400', '600', '700', '800', '900'],
+  subsets: ["latin"], 
+  variable: "--font-poppins" 
+});
 
 export const metadata: Metadata = {
   title: "Ecom Booster - Pro Edition",
@@ -30,7 +35,7 @@ export default function RootLayout({
         <meta name="shopify-api-key" content={process.env.NEXT_PUBLIC_SHOPIFY_API_KEY} />
         <script src="https://cdn.shopify.com/shopifycloud/app-bridge.js" async></script>
       </head>
-      <body className={`${inter.variable} antialiased transition-colors duration-300`} suppressHydrationWarning>
+      <body className={`${inter.variable} ${poppins.variable} antialiased transition-colors duration-300`} suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <StoreProvider>
             <Providers>

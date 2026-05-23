@@ -12,6 +12,7 @@
   --color-border-subtle: #e2e8f0;
   
   --font-sans: 'Inter', system-ui, sans-serif;
+  --font-poppins: var(--font-poppins), system-ui, sans-serif;
 }
 
 :root {
