@@ -13,6 +13,7 @@ export default function Header() {
   const { selectedStore, setSelectedStore, stores, loadingStores, noStoreConnected, activeStore } = useStore();
   const [showProfile, setShowProfile] = useState(false);
   const [profile, setProfile] = useState<any>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
   const profileRef = useRef<HTMLDivElement>(null);
 
@@ -20,6 +21,7 @@ export default function Header() {
     async function loadProfile() {
       const u = await resolveUserProfile(supabase);
       setProfile(u);
+      setAuthLoading(false);
     }
     
     async function loadUnreadCount() {
@@ -35,8 +37,10 @@ export default function Header() {
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async () => {
+      setAuthLoading(true);
       const u = await resolveUserProfile(supabase);
       setProfile(u);
+      setAuthLoading(false);
       loadUnreadCount();
     });
 
@@ -87,7 +91,11 @@ export default function Header() {
           <Menu className="w-6 h-6" />
         </button>
         <h1 className="text-lg font-semibold text-slate-800 dark:text-slate-100 hidden sm:block">
-          Bonjour, <span className="text-primary-600">{profile?.name || 'Administrateur'}</span>
+          {authLoading ? (
+            <span className="opacity-50">Chargement...</span>
+          ) : (
+            <>Bonjour, <span className="text-primary-600">{profile?.name || 'Administrateur'}</span></>
+          )}
         </h1>
       </div>
       
@@ -163,8 +171,14 @@ export default function Header() {
                   <div className="flex items-center gap-3 mb-3">
                     <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-black text-lg border-2 border-primary-200">{initials}</div>
                     <div>
-                      <p className="text-sm font-black text-slate-800 dark:text-slate-100">{profile?.name || 'Administrateur'}</p>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{profile?.role || 'ADMIN'}</p>
+                      {authLoading ? (
+                        <p className="text-sm text-slate-400">Vérification...</p>
+                      ) : (
+                        <>
+                          <p className="text-sm font-black text-slate-800 dark:text-slate-100">{profile?.name || 'Administrateur'}</p>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{profile?.role || 'ADMIN'}</p>
+                        </>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold">
@@ -187,7 +201,9 @@ export default function Header() {
                   </Link>
                   <div className="h-px bg-slate-100 dark:bg-slate-700 my-1 mx-2" />
                   
-                  {profile?.id && profile.id !== 'default-admin' ? (
+                  {authLoading ? (
+                     <div className="w-full px-4 py-3 text-[10px] text-slate-400 text-center">Chargement...</div>
+                  ) : profile?.id && profile.id !== 'default-admin' ? (
                     <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-colors">
                       <LogOut className="w-4 h-4" /> Déconnexion
                     </button>
