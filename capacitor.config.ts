@@ -4,7 +4,6 @@ const config: CapacitorConfig = {
   appId: 'com.ecombooster.pro',
   appName: 'Ecom Booster Pro',
   webDir: 'public', // This doesn't matter much since we point to a server URL
-  bundledWebRuntime: false,
   server: {
     url: 'https://ecom-booster-proo.vercel.app',
     cleartext: true
