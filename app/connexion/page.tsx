@@ -27,12 +27,12 @@ export default function ConnexionPage() {
       if (authError) throw authError;
 
       toast.success("Connexion réussie !");
-      // On ne fait pas de window.location.href, on laisse le LayoutWrapper (onAuthStateChange)
-      // prendre le relais et faire le routage basé sur le rôle pour éviter les conflits et boucles infinies.
+      // Il est crucial de rediriger l'utilisateur vers '/' pour déclencher le LayoutWrapper
+      window.location.href = '/';
     } catch (err: any) {
       console.error("Auth error:", err);
       toast.error(err.message || "Email ou mot de passe incorrect.");
-      setLoading(false); // Only stop loading if there's an error. On success, LayoutWrapper's loading takes over.
+      setLoading(false);
     }
   };
 
