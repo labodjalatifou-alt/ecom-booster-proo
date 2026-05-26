@@ -14,28 +14,23 @@ export default function ConnexionPage() {
     password: ''
   });
 
-  // If already logged in, redirect immediately
-  useEffect(() => {
-    async function checkSession() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        window.location.href = '/';
-      } else {
-        setLoading(false);
-      }
-    }
-    checkSession();
-  }, []);
+  // The checkSession is handled further down with initialCheck
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // Sign Out any stale session first to avoid conflicts
-      await supabase.auth.signOut();
+      // 1. Force clear local storage to kill any corrupted PC sessions instantly
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.clear();
+          sessionStorage.clear();
+        } catch (e) {}
+      }
 
-      const { error: authError } = await supabase.auth.signInWithPassword({
+      // 2. Sign In directly (without awaiting signOut which can hang on corrupted states)
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password
       });
@@ -51,7 +46,28 @@ export default function ConnexionPage() {
     }
   };
 
-  if (loading) {
+  // We only show full-screen spinner on INITIAL load (checking session)
+  // To avoid trapping the user, we won't hide the form during login attempt.
+  const [initialCheck, setInitialCheck] = useState(true);
+  
+  useEffect(() => {
+    async function checkSession() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          window.location.href = '/';
+          return;
+        }
+      } catch (e) {
+        console.warn("Session check failed, proceeding to login form.");
+      }
+      setInitialCheck(false);
+      setLoading(false);
+    }
+    checkSession();
+  }, []);
+
+  if (initialCheck) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950">
         <Loader2 className="w-10 h-10 animate-spin text-primary-600" />
