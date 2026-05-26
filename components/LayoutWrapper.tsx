@@ -36,11 +36,13 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     }, 5000);
 
     async function checkAuth() {
+      let isRedirecting = false;
       try {
         const { data: { session } } = await supabase.auth.getSession();
 
         if (!session) {
           // Not logged in on a protected page → send to login
+          isRedirecting = true;
           router.replace('/connexion');
           return;
         }
@@ -67,9 +69,15 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
 
         // Strict Role-Based Routing
         if (role === 'CLOSER') {
-          if (pathname !== '/interface-closer') router.replace('/interface-closer');
+          if (pathname !== '/interface-closer') {
+            isRedirecting = true;
+            router.replace('/interface-closer');
+          }
         } else if (role === 'LIVREUR') {
-          if (pathname !== '/interface-livreur') router.replace('/interface-livreur');
+          if (pathname !== '/interface-livreur') {
+            isRedirecting = true;
+            router.replace('/interface-livreur');
+          }
         }
         // ADMIN can go anywhere
 
@@ -78,7 +86,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
         // On error, don't block. Let user through.
       } finally {
         clearTimeout(timeout);
-        if (mounted.current) {
+        if (mounted.current && !isRedirecting) {
           setLoading(false);
         }
       }

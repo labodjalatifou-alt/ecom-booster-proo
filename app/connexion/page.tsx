@@ -32,6 +32,11 @@ export default function ConnexionPage() {
     e.preventDefault();
     setLoading(true);
 
+    // Promesse de sécurité : annule la tentative après 8 secondes de silence
+    const loginTimeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("TIMEOUT")), 8000)
+    );
+
     try {
       // Wipe ONLY the Supabase auth key to avoid stale/corrupted session on PC browsers
       [
@@ -42,22 +47,29 @@ export default function ConnexionPage() {
         try { sessionStorage.removeItem(key); } catch (_) {}
       });
 
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
+      const loginPromise = supabase.auth.signInWithPassword({
         email: formData.email.trim(),
         password: formData.password,
       });
 
-      if (authError) throw authError;
-      if (!data.session) throw new Error("Aucune session retournée. Réessaie.");
+      const result = await Promise.race([loginPromise, loginTimeout]) as any;
+
+      if (result.error) throw result.error;
+      if (!result.data?.session) throw new Error("Aucune session retournée. Réessaie.");
 
       toast.success("Connexion réussie !");
       window.location.replace('/');
     } catch (err: any) {
       console.error("Auth error:", err);
-      const msg = err.message?.includes('Invalid login credentials')
-        ? "Email ou mot de passe incorrect."
-        : (err.message || "Erreur de connexion. Réessaie.");
-      toast.error(msg);
+      let msg = "";
+      if (err.message === "TIMEOUT") {
+        msg = "Le serveur d'authentification ne répond pas. Veuillez désactiver votre bloqueur de publicité (AdBlock, Brave Shields) et réessayer.";
+      } else if (err.message?.includes('Invalid login credentials')) {
+        msg = "Email ou mot de passe incorrect.";
+      } else {
+        msg = err.message || "Erreur de connexion. Réessaie.";
+      }
+      toast.error(msg, { duration: 8000 });
       setLoading(false);
     }
   };

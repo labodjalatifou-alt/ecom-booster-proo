@@ -124,7 +124,8 @@ export async function sendPushNotification({
           token: fcmToken,
           android: {
             priority: "high" as const,
-            ttl: 0, // Deliver immediately or drop (no queuing)
+            // Omettre 'ttl: 0' permet à Google de mettre en file d'attente les notifications (jusqu'à 4 semaines)
+            // au lieu de les jeter instantanément si l'appareil est en veille profonde ou hors ligne.
             notification: {
               icon: "ic_stat_name",
               color: "#1d4ed8",

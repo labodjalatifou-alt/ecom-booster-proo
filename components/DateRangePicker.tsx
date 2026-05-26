@@ -5,7 +5,7 @@ import { Calendar, ChevronDown, ChevronLeft, ChevronRight, X } from 'lucide-reac
 import {
   format, startOfMonth, endOfMonth, startOfWeek, endOfWeek,
   addMonths, subMonths, isSameMonth, isSameDay, isWithinInterval,
-  isAfter, isBefore, startOfDay, endOfDay, subDays, subMonths as subM, subYears,
+  isAfter, isBefore, startOfDay, endOfDay, subDays, subYears,
   parseISO
 } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -55,7 +55,7 @@ const PRESETS: Preset[] = [
   {
     id: '3M',
     label: '3 derniers mois',
-    getRange: () => ({ from: subM(new Date(), 3), to: new Date() }),
+    getRange: () => ({ from: subMonths(new Date(), 3), to: new Date() }),
   },
   {
     id: '12M',
