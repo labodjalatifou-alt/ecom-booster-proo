@@ -1,93 +1,38 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useRouter } from 'next/navigation';
-import { Mail, Key, User, ShieldCheck, ArrowRight, Loader2 } from 'lucide-react';
+import { Mail, Key, ShieldCheck, ArrowRight, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function ConnexionPage() {
-  const router = useRouter();
-  const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   
   const [formData, setFormData] = useState({
-    name: '',
     email: '',
-    password: '',
-    role: 'CLOSER' // ADMIN, CLOSER, LIVREUR
+    password: ''
   });
-
-  // If already logged in, redirect to dashboard
-  useEffect(() => {
-    async function checkUser() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        router.push('/');
-      }
-    }
-    checkUser();
-  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      if (isSignUp) {
-        // Sign Up
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-          email: formData.email,
-          password: formData.password,
-          options: {
-            data: {
-              name: formData.name
-            }
-          }
-        });
+      // Sign In
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password
+      });
 
-        if (authError) throw authError;
+      if (authError) throw authError;
 
-        if (authData?.user) {
-          // Create the user profile in the public User table
-          const { error: profileError } = await supabase
-            .from('User')
-            .insert([
-              {
-                id: authData.user.id,
-                email: formData.email,
-                name: formData.name,
-                role: formData.role,
-                commissionPerConfirm: formData.role === 'CLOSER' ? 500 : 0,
-                commissionPerDeliver: formData.role === 'LIVREUR' ? 1000 : 0,
-                earnings: 0
-              }
-            ]);
-
-          if (profileError) throw profileError;
-
-          toast.success("Compte créé avec succès ! Bienvenue.");
-          window.location.href = '/';
-          return;
-        }
-      } else {
-        // Sign In
-        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-          email: formData.email,
-          password: formData.password
-        });
-
-        if (authError) throw authError;
-
-        toast.success("Connexion réussie !");
-        window.location.href = '/';
-        return;
-      }
+      toast.success("Connexion réussie !");
+      // On ne fait pas de window.location.href, on laisse le LayoutWrapper (onAuthStateChange)
+      // prendre le relais et faire le routage basé sur le rôle pour éviter les conflits et boucles infinies.
     } catch (err: any) {
       console.error("Auth error:", err);
-      toast.error(err.message || "Une erreur est survenue lors de l'authentification.");
-    } finally {
-      setLoading(false);
+      toast.error(err.message || "Email ou mot de passe incorrect.");
+      setLoading(false); // Only stop loading if there's an error. On success, LayoutWrapper's loading takes over.
     }
   };
 
@@ -103,7 +48,7 @@ export default function ConnexionPage() {
             ECOM BOOSTER PRO
           </h2>
           <p className="text-sm text-slate-400 dark:text-slate-500 mt-2 font-medium italic">
-            {isSignUp ? "Créez vos accès collaborateurs en quelques clics." : "Accédez à votre tableau de bord sécurisé."}
+            Accédez à votre tableau de bord sécurisé.
           </p>
         </div>
 
@@ -111,23 +56,6 @@ export default function ConnexionPage() {
         <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-8 md:p-10 shadow-xl shadow-slate-100/50 dark:shadow-none animate-in fade-in zoom-in-95 duration-300">
           <form onSubmit={handleSubmit} className="space-y-6">
             
-            {isSignUp && (
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest pl-2">Nom Complet</label>
-                <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input 
-                    type="text" 
-                    required 
-                    value={formData.name}
-                    onChange={e => setFormData({...formData, name: e.target.value})}
-                    placeholder="Ex: Moussa Diop" 
-                    className="w-full pl-12 pr-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-primary-500/10 text-slate-800 dark:text-slate-100" 
-                  />
-                </div>
-              </div>
-            )}
-
             <div className="space-y-2">
               <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest pl-2">Adresse Email</label>
               <div className="relative">
@@ -139,12 +67,15 @@ export default function ConnexionPage() {
                   onChange={e => setFormData({...formData, email: e.target.value})}
                   placeholder="nom@exemple.com" 
                   className="w-full pl-12 pr-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-primary-500/10 text-slate-800 dark:text-slate-100" 
+                  disabled={loading}
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest pl-2">Mot de Passe</label>
+              <div className="flex justify-between items-center pl-2 pr-2">
+                <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Mot de Passe</label>
+              </div>
               <div className="relative">
                 <Key className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input 
@@ -154,57 +85,32 @@ export default function ConnexionPage() {
                   onChange={e => setFormData({...formData, password: e.target.value})}
                   placeholder="••••••••" 
                   className="w-full pl-12 pr-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-primary-500/10 text-slate-800 dark:text-slate-100" 
+                  disabled={loading}
                 />
               </div>
             </div>
 
-            {isSignUp && (
-              <div className="space-y-3">
-                <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest pl-2">Rôle Attribué</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { id: 'ADMIN', label: 'Admin' },
-                    { id: 'CLOSER', label: 'Closer' },
-                    { id: 'LIVREUR', label: 'Livreur' }
-                  ].map((r) => (
-                    <button 
-                      key={r.id} 
-                      type="button" 
-                      onClick={() => setFormData({...formData, role: r.id})} 
-                      className={`px-4 py-3 rounded-2xl border-2 font-black text-[10px] uppercase tracking-wider transition-all ${formData.role === r.id ? 'border-primary-500 bg-primary-50 dark:bg-primary-950/20 text-primary-600 dark:text-primary-400' : 'border-slate-100 dark:border-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}
-                    >
-                      {r.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
             <button 
               type="submit" 
               disabled={loading}
-              className="w-full py-5 bg-primary-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary-500/10 hover:bg-primary-700 transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50 mt-8"
+              className="group relative w-full flex items-center justify-center gap-3 bg-slate-900 hover:bg-primary-600 dark:bg-primary-600 dark:hover:bg-primary-500 text-white py-4 px-8 rounded-2xl font-bold transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed overflow-hidden shadow-lg shadow-slate-900/20 dark:shadow-primary-900/20"
             >
-              {loading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <>
-                  {isSignUp ? "S'inscrire" : "Se Connecter"}
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
+              <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>
+              <span className="relative flex items-center gap-2">
+                {loading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Connexion en cours...
+                  </>
+                ) : (
+                  <>
+                    Se connecter à mon espace
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </>
+                )}
+              </span>
             </button>
           </form>
-
-          {/* Toggle link */}
-          <div className="text-center mt-6">
-            <button 
-              onClick={() => setIsSignUp(!isSignUp)}
-              className="text-xs font-bold text-primary-600 hover:underline"
-            >
-              {isSignUp ? "Déjà un compte ? Connectez-vous" : "Pas encore de compte ? Créez un accès"}
-            </button>
-          </div>
         </div>
       </div>
     </div>

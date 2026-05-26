@@ -117,6 +117,15 @@ export async function sendPushNotification({
             url: url || '/commandes',
           },
           token: fcmToken,
+          android: {
+            priority: "high" as const,
+            notification: {
+              icon: "ic_stat_name",
+              color: "#1d4ed8",
+              defaultSound: true,
+              defaultVibrateTimings: true,
+            }
+          }
         };
 
         return admin.messaging().send(message)

@@ -113,27 +113,37 @@ export default function EquipePage() {
     e.preventDefault();
     setSubmitting(true);
 
-    const { data, error } = await supabase
-      .from('User')
-      .insert([{
-        id: crypto.randomUUID(),
-        name: formData.name,
-        email: formData.email,
-        role: formData.role,
-        commissionPerConfirm: formData.role === 'CLOSER' ? closerPerConfirm : 0,
-        commissionPerDeliver: formData.role === 'CLOSER' ? closerPerDelivered : (formData.role === 'LIVREUR' ? livreurPerDelivery : 0),
-        earnings: 0
-      }])
-      .select();
+    try {
+      const response = await fetch('/api/admin/create-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          role: formData.role,
+          commissionPerConfirm: formData.role === 'CLOSER' ? closerPerConfirm : 0,
+          commissionPerDeliver: formData.role === 'CLOSER' ? closerPerDelivered : (formData.role === 'LIVREUR' ? livreurPerDelivery : 0),
+        })
+      });
 
-    if (error) {
-      toast.error(sanitizeError(error));
-    } else {
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Erreur inconnue");
+      }
+
       toast.success(`Compte ${formData.role} créé avec succès !`);
-      setMembers([data[0], ...members]);
+      
+      // Fetch members again to get the fresh list with IDs
+      fetchMembers();
+      
       setFormData({ name: '', email: '', password: '', role: 'CLOSER' });
+    } catch (error: any) {
+      toast.error(error.message || "Erreur lors de la création");
+    } finally {
+      setSubmitting(false);
     }
-    setSubmitting(false);
   };
 
   const deleteMember = async (id: string) => {
