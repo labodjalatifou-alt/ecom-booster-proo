@@ -407,4 +407,4 @@ const today = new Date();
 today.setHours(0, 0, 0, 0);
 const todayEnd = new Date();
 todayEnd.setHours(23, 59, 59, 999);
-export const DEFAULT_RANGE: DateRange = { from: today, to: todayEnd, label: "Aujourd'hui" };
+export const DEFAULT_RANGE: DateRange = { from: today.toISOString(), to: todayEnd.toISOString(), label: "Aujourd'hui" };
