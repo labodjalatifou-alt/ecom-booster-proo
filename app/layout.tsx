@@ -10,6 +10,7 @@ import { Toaster } from 'react-hot-toast';
 import RealtimeNotifications from "@/components/RealtimeNotifications";
 import PWARegistration from "@/components/PWARegistration";
 import NativePushRegistration from "@/components/NativePushRegistration";
+import LayoutWrapper from "@/components/LayoutWrapper";
 
 import { Providers } from "@/app/providers";
 
@@ -46,16 +47,10 @@ export default function RootLayout({
                 <PWARegistration />
                 <NativePushRegistration />
 
-                <div className="flex min-h-screen">
-                  <Sidebar />
-                  {/* Overlay for mobile when sidebar is open */}
-                  <div className="flex-1 md:ml-64 flex flex-col min-w-0 transition-all duration-300">
-                    <Header />
-                    <main className="flex-1 p-4 md:p-8 overflow-auto">
-                      {children}
-                    </main>
-                  </div>
-                </div>
+                <LayoutWrapper>
+                  {children}
+                </LayoutWrapper>
+
               </SidebarProvider>
             </Providers>
           </StoreProvider>
