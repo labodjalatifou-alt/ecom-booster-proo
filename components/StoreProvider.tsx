@@ -33,6 +33,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     async function fetchStores() {
+      // Security: Only fetch stores if user is authenticated
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setLoadingStores(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('Store')
         .select('id, name, currency, country, shopifyUrl')
