@@ -74,8 +74,37 @@ export default function Header() {
   };
 
   const handleSignOut = async () => {
+    try {
+      // 1. Désinscription des notifications natives (FCM)
+      const fcmToken = typeof window !== 'undefined' ? localStorage.getItem('fcm_token') : null;
+      if (fcmToken) {
+        await supabase.from('push_subscriptions').delete().eq('endpoint', `fcm://${fcmToken}`);
+      }
+
+      // 2. Désinscription des notifications Web (Navigateur PC)
+      if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.getSubscription();
+        if (subscription) {
+          await supabase.from('push_subscriptions').delete().eq('endpoint', subscription.endpoint);
+          await subscription.unsubscribe();
+        }
+      }
+    } catch (err) {
+      console.error("Erreur lors de la désinscription push:", err);
+    }
+
     await supabase.auth.signOut();
     setShowProfile(false);
+    
+    // Wipe local storage keys
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem('ecomdash-auth');
+        localStorage.removeItem('ecomdash-auth-code-verifier');
+      } catch (e) {}
+    }
+    
     window.location.reload();
   };
 

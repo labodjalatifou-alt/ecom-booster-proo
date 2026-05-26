@@ -43,6 +43,9 @@ export default function NativePushRegistration() {
         PushNotifications.addListener('registration', async (token) => {
           console.log('Native Push Token received:', token.value);
           latestFcmToken = token.value;
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('fcm_token', token.value);
+          }
           // Try to sync immediately with whoever is logged in
           const { data: { user } } = await supabase.auth.getUser();
           if (user) {
