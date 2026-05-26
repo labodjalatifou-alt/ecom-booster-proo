@@ -1,70 +1,84 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter, usePathname } from 'next/navigation';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { Loader2 } from 'lucide-react';
 
+const PUBLIC_PATHS = ['/connexion', '/inscription'];
+
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
-  const [loading, setLoading] = useState(true);
+  const pathname = usePathname();
+  const isPublicPage = PUBLIC_PATHS.includes(pathname);
+
+  // Don't block public pages at all
+  const [loading, setLoading] = useState(!isPublicPage);
   const [userRole, setUserRole] = useState<string | null>(null);
   const router = useRouter();
-  const pathname = usePathname();
+  const mounted = useRef(true);
 
   useEffect(() => {
-    let mounted = true;
+    mounted.current = true;
+
+    // Public pages: no check needed, render immediately
+    if (isPublicPage) {
+      setLoading(false);
+      return;
+    }
+
+    // Safety timeout: never block the user for more than 5 seconds
+    const timeout = setTimeout(() => {
+      if (mounted.current) {
+        setLoading(false);
+      }
+    }, 5000);
 
     async function checkAuth() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        
-        const isPublicPage = pathname === '/connexion' || pathname === '/inscription';
-        
-        if (!session && !isPublicPage) {
+
+        if (!session) {
+          // Not logged in on a protected page → send to login
           router.replace('/connexion');
           return;
         }
 
-        if (session) {
-          const { data: profile } = await supabase
-            .from('User')
-            .select('role')
-            .eq('id', session.user.id)
-            .single();
-            
-          const role = profile?.role || 'CLOSER'; // Default to CLOSER for safety if undefined
-          
-          if (mounted) {
-            setUserRole(role);
-          }
+        // Try to fetch role. If it fails, default to ADMIN (owner case).
+        const { data: profile, error: profileError } = await supabase
+          .from('User')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
 
-          // Strict Role-Based Routing - Security Shield
-          const isEmployee = role === 'CLOSER' || role === 'LIVREUR';
-          
-          if (isEmployee) {
-            // Un employé (Closer/Livreur) n'a le droit d'accéder qu'à son interface
-            const allowedPath = role === 'CLOSER' ? '/interface-closer' : '/interface-livreur';
-            
-            if (pathname !== allowedPath) {
-              router.replace(allowedPath);
-              return;
-            }
-          } else if (role === 'ADMIN') {
-            // Un admin sur la page de connexion doit être redirigé vers l'accueil
-            if (pathname === '/connexion' || pathname === '/inscription') {
-              router.replace('/');
-              return;
-            }
-          }
-        } else if (isPublicPage) {
-           // L'utilisateur n'est pas connecté et est sur une page publique, on le laisse tranquille.
+        if (profileError) {
+          // Profile not found in DB (e.g. initial admin setup). Treat as ADMIN.
+          console.warn('User profile not in DB, treating as ADMIN.');
+          if (mounted.current) setUserRole('ADMIN');
+          return;
         }
+
+        const role = profile?.role || 'ADMIN';
+
+        if (mounted.current) {
+          setUserRole(role);
+        }
+
+        // Strict Role-Based Routing
+        if (role === 'CLOSER') {
+          if (pathname !== '/interface-closer') router.replace('/interface-closer');
+        } else if (role === 'LIVREUR') {
+          if (pathname !== '/interface-livreur') router.replace('/interface-livreur');
+        }
+        // ADMIN can go anywhere
+
       } catch (error) {
-        console.error("Erreur lors de la vérification des permissions :", error);
+        console.error("Erreur vérification permissions:", error);
+        // On error, don't block. Let user through.
       } finally {
-        if (mounted) {
+        clearTimeout(timeout);
+        if (mounted.current) {
           setLoading(false);
         }
       }
@@ -72,18 +86,24 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
 
     checkAuth();
 
-    // Re-check auth when tab regains focus or supabase auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-        if (!session && pathname !== '/connexion') {
-            router.replace('/connexion');
-        }
+    // Watch for sign-out
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') {
+        router.replace('/connexion');
+      }
     });
 
     return () => {
-      mounted = false;
+      mounted.current = false;
+      clearTimeout(timeout);
       subscription.unsubscribe();
     };
-  }, [pathname, router]);
+  }, [pathname]);
+
+  // Public pages: render immediately without sidebar/header
+  if (isPublicPage) {
+    return <>{children}</>;
+  }
 
   if (loading) {
     return (
@@ -94,25 +114,13 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     );
   }
 
-  // Public pages (login) have no sidebar or header
-  if (pathname === '/connexion' || pathname === '/inscription') {
-    return <>{children}</>;
-  }
-
-  // Determine if the user is a restricted employee
   const isEmployee = userRole === 'CLOSER' || userRole === 'LIVREUR';
 
   return (
     <div className="flex min-h-screen">
-      {/* Hide Sidebar for Closers and Livreurs */}
       {!isEmployee && <Sidebar />}
-      
-      {/* Adjust margin if sidebar is hidden */}
       <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${!isEmployee ? 'md:ml-64' : ''}`}>
-        
-        {/* We can hide or customize the header for employees as well */}
         {!isEmployee && <Header />}
-        
         <main className={`flex-1 overflow-auto ${isEmployee ? 'p-0' : 'p-4 md:p-8'}`}>
           {children}
         </main>
