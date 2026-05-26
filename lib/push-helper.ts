@@ -131,8 +131,8 @@ export async function sendPushNotification({
               sound: "default",
               defaultSound: true,
               defaultVibrateTimings: true,
-              notificationPriority: "PRIORITY_MAX" as const,
-              visibility: "PUBLIC" as const,
+              notificationPriority: "priority_max" as const,
+              visibility: "public" as const,
               channelId: "ecom_orders", // Must match the channel created in Android app
             }
           },
