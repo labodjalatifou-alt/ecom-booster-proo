@@ -109,21 +109,43 @@ export async function sendPushNotification({
         const fcmToken = sub.endpoint.replace('fcm://', '');
         
         const message = {
+          // The notification field causes Android to display it even when app is killed
           notification: {
             title: title,
             body: body,
           },
+          // The data field passes extra info to the app when it wakes up
           data: {
             url: url || '/commandes',
+            title: title,
+            body: body,
+            click_action: 'FLUTTER_NOTIFICATION_CLICK',
           },
           token: fcmToken,
           android: {
             priority: "high" as const,
+            ttl: 0, // Deliver immediately or drop (no queuing)
             notification: {
               icon: "ic_stat_name",
               color: "#1d4ed8",
+              sound: "default",
               defaultSound: true,
               defaultVibrateTimings: true,
+              notificationPriority: "PRIORITY_MAX" as const,
+              visibility: "PUBLIC" as const,
+              channelId: "ecom_orders", // Must match the channel created in Android app
+            }
+          },
+          apns: {
+            headers: {
+              "apns-priority": "10",
+            },
+            payload: {
+              aps: {
+                alert: { title, body },
+                sound: "default",
+                badge: 1,
+              }
             }
           }
         };

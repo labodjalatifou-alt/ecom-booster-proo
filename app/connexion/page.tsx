@@ -1,24 +1,40 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Mail, Key, ShieldCheck, ArrowRight, Loader2 } from 'lucide-react';
+import { Mail, Key, ShieldCheck, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function ConnexionPage() {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Start true to check session
+  const [showPassword, setShowPassword] = useState(false);
   
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
 
+  // If already logged in, redirect immediately
+  useEffect(() => {
+    async function checkSession() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        window.location.href = '/';
+      } else {
+        setLoading(false);
+      }
+    }
+    checkSession();
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // Sign In
+      // Sign Out any stale session first to avoid conflicts
+      await supabase.auth.signOut();
+
       const { error: authError } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password
@@ -27,7 +43,6 @@ export default function ConnexionPage() {
       if (authError) throw authError;
 
       toast.success("Connexion réussie !");
-      // Il est crucial de rediriger l'utilisateur vers '/' pour déclencher le LayoutWrapper
       window.location.href = '/';
     } catch (err: any) {
       console.error("Auth error:", err);
@@ -35,6 +50,14 @@ export default function ConnexionPage() {
       setLoading(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950">
+        <Loader2 className="w-10 h-10 animate-spin text-primary-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 px-4 py-12">
@@ -53,7 +76,7 @@ export default function ConnexionPage() {
         </div>
 
         {/* Auth card */}
-        <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-8 md:p-10 shadow-xl shadow-slate-100/50 dark:shadow-none animate-in fade-in zoom-in-95 duration-300">
+        <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-8 md:p-10 shadow-xl shadow-slate-100/50 dark:shadow-none">
           <form onSubmit={handleSubmit} className="space-y-6">
             
             <div className="space-y-2">
@@ -66,27 +89,34 @@ export default function ConnexionPage() {
                   value={formData.email}
                   onChange={e => setFormData({...formData, email: e.target.value})}
                   placeholder="nom@exemple.com" 
-                  className="w-full pl-12 pr-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-primary-500/10 text-slate-800 dark:text-slate-100" 
+                  className="w-full pl-12 pr-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-primary-500/10 text-slate-800 dark:text-slate-100"
                   disabled={loading}
+                  autoComplete="email"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <div className="flex justify-between items-center pl-2 pr-2">
-                <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Mot de Passe</label>
-              </div>
+              <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest pl-2">Mot de Passe</label>
               <div className="relative">
                 <Key className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input 
-                  type="password" 
+                  type={showPassword ? "text" : "password"}
                   required 
                   value={formData.password}
                   onChange={e => setFormData({...formData, password: e.target.value})}
                   placeholder="••••••••" 
-                  className="w-full pl-12 pr-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-primary-500/10 text-slate-800 dark:text-slate-100" 
+                  className="w-full pl-12 pr-12 py-4 bg-slate-50 dark:bg-slate-800/50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-primary-500/10 text-slate-800 dark:text-slate-100"
                   disabled={loading}
+                  autoComplete="current-password"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
             </div>
 
@@ -112,6 +142,7 @@ export default function ConnexionPage() {
             </button>
           </form>
         </div>
+
       </div>
     </div>
   );
