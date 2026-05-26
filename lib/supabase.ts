@@ -11,3 +11,12 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     storageKey: 'ecomdash-auth',
   },
 });
+
+export const createAdminSupabase = () => {
+  return createClient(supabaseUrl, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+};

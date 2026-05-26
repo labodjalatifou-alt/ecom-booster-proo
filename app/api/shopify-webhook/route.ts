@@ -109,7 +109,7 @@ export async function POST(req: Request) {
     });
 
 
-    // Déclencher la notification push pour tous les Closers
+    // Déclencher la notification push pour tous les Closers (ancienne méthode + nouvelle)
     sendPushNotification({
       role: 'CLOSER',
       title: "Nouvelle commande en attente ☎️",
@@ -117,13 +117,26 @@ export async function POST(req: Request) {
       url: "/interface-closer"
     }).catch(err => console.error('Error sending push to closers:', err));
 
-    // Déclencher la notification push pour tous les Admins
+    // Déclencher la notification push pour tous les Admins (ancienne méthode + nouvelle)
     sendPushNotification({
       role: 'ADMIN',
       title: "Nouvelle commande reçue 🛍️",
       body: `Commande de ${orderToInsert.customer} — ${orderToInsert.product} (${rawPrice} ${currency})`,
       url: "/commandes"
     }).catch(err => console.error('Error sending push to admins:', err));
+
+    // --- NOUVELLE METHODE ANDROID NATIVE ---
+    const appHost = process.env.HOST || 'https://ecom-booster-proo.vercel.app';
+    
+    fetch(`${appHost}/api/push/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: '🛒 Nouvelle commande !',
+        body: `${orderToInsert.customer} — ${rawPrice} ${currency}`,
+        url: '/commandes',
+      }),
+    }).catch(err => console.error('Error with native push API:', err));
 
 
     console.log('[webhook] Order saved successfully:', order.id);
