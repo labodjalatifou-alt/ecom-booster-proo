@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
             notification: {
               channelId: 'ecom_booster_orders',
               sound: 'default',
-              notificationPriority: 'priority_max',
+              priority: 'max',
               defaultVibrateTimings: true,
             },
           },
