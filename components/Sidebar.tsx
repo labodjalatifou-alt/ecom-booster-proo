@@ -26,7 +26,8 @@ import {
   Sun,
   X,
   ClipboardList,
-  FileText
+  FileText,
+  Flame
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -50,6 +51,7 @@ const menuGroups = [
       { name: 'Score et Prix', icon: Tags, href: '/score-et-prix' },
       { name: 'Avatar Client', icon: User, href: '/avatar' },
       { name: 'Analyse Concurrent', icon: Trophy, href: '/analyse-concurrent' },
+      { name: 'Produits Gagnants', icon: Flame, href: '/produits-gagnants' },
       { name: 'Page Shopify', icon: Store, href: '/page-shopify' },
       { name: 'Textes Publicitaires', icon: FileText, href: '/textes-publicitaires' },
       { name: 'Script Voix Off', icon: Mic, href: '/script-voix-off' },
