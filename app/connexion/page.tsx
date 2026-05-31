@@ -44,9 +44,9 @@ export default function ConnexionPage() {
       if (!data?.session) throw new Error("Aucune session retournée. Réessaie.");
 
       toast.success("Connexion réussie !");
-      // Utiliser router.push (SPA) pour que la session Supabase soit
-      // déjà disponible en mémoire lors du chargement du dashboard.
-      router.push('/');
+      // Utiliser window.location.href pour forcer un rechargement complet
+      // Cela évite les bugs de SPA où le dashboard ne s'affiche pas.
+      window.location.href = '/';
     } catch (err: any) {
       console.error("Auth error:", err);
       let msg = "";
