@@ -1,21 +1,62 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { VoixOffScript } from '@/lib/claude-prompts';
-import { Mic, Copy, ExternalLink, Play } from 'lucide-react';
+import { Mic, Copy, Play, Loader2, Download, Volume2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
-const TTS_TOOLS = [
-  { name: 'ElevenLabs', url: 'https://elevenlabs.io', color: 'bg-purple-100 text-purple-700', border: 'border-purple-200', desc: 'IA ultra-réaliste' },
-  { name: 'TTS Maker', url: 'https://ttsmaker.com', color: 'bg-emerald-100 text-emerald-700', border: 'border-emerald-200', desc: 'Gratuit, multi-langues' },
-  { name: 'Google AI Studio', url: 'https://aistudio.google.com', color: 'bg-blue-100 text-blue-700', border: 'border-blue-200', desc: 'Gemini TTS avancé' },
-  { name: 'Minimax', url: 'https://www.minimaxi.com', color: 'bg-orange-100 text-orange-700', border: 'border-orange-200', desc: 'Voix africaines' },
+const GOOGLE_VOICES = [
+  { id: 'fr-FR-Neural2-B', label: 'Homme - Premium (Grave, sérieux)', lang: 'fr-FR' },
+  { id: 'fr-FR-Neural2-C', label: 'Femme - Premium (Douce, claire)', lang: 'fr-FR' },
+  { id: 'fr-FR-Neural2-D', label: 'Homme - Premium (Dynamique)', lang: 'fr-FR' },
+  { id: 'fr-FR-Neural2-A', label: 'Femme - Premium (Naturelle)', lang: 'fr-FR' },
+  { id: 'fr-CA-Neural2-B', label: 'Homme - Accent Québécois', lang: 'fr-CA' },
+  { id: 'fr-CA-Neural2-C', label: 'Femme - Accent Québécois', lang: 'fr-CA' },
 ];
 
 export function VoixOffDisplay({ scripts }: { scripts: VoixOffScript[] }) {
-  const [copiedIdx, setCopiedIdx] = React.useState<number | null>(null);
+  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+  const [selectedVoice, setSelectedVoice] = useState(GOOGLE_VOICES[0].id);
+  const [generatingIdx, setGeneratingIdx] = useState<number | null>(null);
+  const [audioUrls, setAudioUrls] = useState<Record<number, string>>({});
 
   const handleCopy = (text: string, idx: number) => {
     navigator.clipboard.writeText(text);
     setCopiedIdx(idx);
     setTimeout(() => setCopiedIdx(null), 2000);
+  };
+
+  const generateAudio = async (text: string, idx: number) => {
+    try {
+      setGeneratingIdx(idx);
+      const voice = GOOGLE_VOICES.find(v => v.id === selectedVoice);
+      
+      const response = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text,
+          name: voice?.id,
+          languageCode: voice?.lang,
+        }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Erreur API');
+      }
+
+      const data = await response.json();
+      
+      // Convertir base64 en URL jouable
+      const audioUrl = `data:audio/mp3;base64,${data.audioContent}`;
+      setAudioUrls(prev => ({ ...prev, [idx]: audioUrl }));
+      toast.success('Voix générée avec succès !');
+
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message || 'Erreur lors de la génération. Clé API valide ?');
+    } finally {
+      setGeneratingIdx(null);
+    }
   };
 
   return (
@@ -66,56 +107,81 @@ export function VoixOffDisplay({ scripts }: { scripts: VoixOffScript[] }) {
               <p className="relative z-10 italic">&ldquo;{script.texte}&rdquo;</p>
             </div>
             
-            <div className="flex items-center justify-between">
-              <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                Prêt pour l'enregistrement
-              </div>
-              <button
-                onClick={() => handleCopy(script.texte, script.numero)}
-                className="text-xs font-bold text-blue-600 hover:underline"
-              >
-                {copiedIdx === script.numero ? 'Copié !' : 'Copier le script'}
-              </button>
+            {/* Contrôles vocaux intégrés */}
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-blue-50/50 dark:bg-blue-900/10 p-4 rounded-2xl border border-blue-100 dark:border-blue-900/30">
+              
+              {!audioUrls[script.numero] ? (
+                <>
+                  <div className="flex-1 flex flex-col md:flex-row items-start md:items-center gap-3">
+                    <Volume2 className="w-5 h-5 text-blue-500 hidden md:block" />
+                    <select 
+                      value={selectedVoice}
+                      onChange={(e) => setSelectedVoice(e.target.value)}
+                      disabled={generatingIdx !== null}
+                      className="w-full md:w-auto flex-1 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-sm font-medium rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500"
+                    >
+                      {GOOGLE_VOICES.map(voice => (
+                        <option key={voice.id} value={voice.id}>{voice.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <button
+                    onClick={() => generateAudio(script.texte, script.numero)}
+                    disabled={generatingIdx === script.numero}
+                    className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50"
+                  >
+                    {generatingIdx === script.numero ? (
+                      <><Loader2 className="w-4 h-4 animate-spin" /> Création...</>
+                    ) : (
+                      <><Mic className="w-4 h-4" /> Générer la voix</>
+                    )}
+                  </button>
+                </>
+              ) : (
+                <div className="w-full flex flex-col md:flex-row items-center gap-4">
+                  <audio 
+                    controls 
+                    src={audioUrls[script.numero]} 
+                    className="w-full flex-1 h-10"
+                    autoPlay
+                  />
+                  <a
+                    href={audioUrls[script.numero]}
+                    download={`VoixOff_Script_${script.numero}.mp3`}
+                    className="flex items-center justify-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:scale-105 px-6 py-2.5 rounded-xl text-sm font-bold transition-transform w-full md:w-auto"
+                  >
+                    <Download className="w-4 h-4" /> MP3
+                  </a>
+                  <button
+                    onClick={() => {
+                      const newUrls = { ...audioUrls };
+                      delete newUrls[script.numero];
+                      setAudioUrls(newUrls);
+                    }}
+                    className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-medium underline"
+                  >
+                    Régénérer
+                  </button>
+                </div>
+              )}
+
             </div>
-          </div>
-        ))}
       </div>
 
-      {/* Outils TTS */}
       <div className="bg-slate-900 rounded-3xl md:rounded-[3rem] p-6 md:p-10 text-white relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full -mr-32 -mt-32 blur-3xl" />
         
-        <h3 className="text-sm font-bold text-slate-400 uppercase tracking-[0.2em] mb-6 relative z-10">
-          🎙️ Studio Vocal : Générez la voix
+        <h3 className="text-sm font-bold text-slate-400 uppercase tracking-[0.2em] mb-4 relative z-10">
+          🎙️ Studio Vocal Haute Qualité
         </h3>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 relative z-10">
-          {TTS_TOOLS.map((tool) => (
-            <a
-              key={tool.name}
-              href={tool.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex flex-col gap-3 p-5 rounded-3xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all group"
-            >
-              <div className="flex items-center justify-between">
-                <span className={`text-[10px] font-black px-3 py-1 rounded-full ${tool.color}`}>
-                  {tool.name}
-                </span>
-                <ExternalLink className="w-3 h-3 text-white/30 group-hover:text-white" />
-              </div>
-              <p className="text-xs text-white/60 font-medium">
-                {tool.desc}
-              </p>
-            </a>
-          ))}
-        </div>
-        
-        <div className="mt-8 pt-8 border-t border-white/10 flex items-center gap-3 text-white/40">
-          <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-          <p className="text-xs font-bold uppercase tracking-wider">
-            Conseil : Copiez le script → Collez dans l'outil → Téléchargez l'audio
+        <div className="relative z-10 text-sm text-slate-300 max-w-2xl leading-relaxed">
+          <p className="mb-4">
+            Ce module utilise l'API <strong>Google Cloud Text-to-Speech (Neural2)</strong> qui produit des voix ultra-réalistes de qualité professionnelle, équivalentes à ElevenLabs.
+          </p>
+          <p>
+            Pour configurer ce module, ajoutez votre clé API Google Cloud dans le fichier d'environnement (<code className="text-blue-300">GOOGLE_CLOUD_TTS_API_KEY</code>). Le niveau gratuit de Google offre jusqu'à <strong>1 million de caractères gratuits par mois</strong> pour ces voix Premium.
           </p>
         </div>
       </div>
