@@ -3,18 +3,16 @@ import { VoixOffScript } from '@/lib/claude-prompts';
 import { Mic, Copy, Play, Loader2, Download, Volume2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const GOOGLE_VOICES = [
-  { id: 'fr-FR-Neural2-B', label: 'Homme - Premium (Grave, sérieux)', lang: 'fr-FR' },
-  { id: 'fr-FR-Neural2-C', label: 'Femme - Premium (Douce, claire)', lang: 'fr-FR' },
-  { id: 'fr-FR-Neural2-D', label: 'Homme - Premium (Dynamique)', lang: 'fr-FR' },
-  { id: 'fr-FR-Neural2-A', label: 'Femme - Premium (Naturelle)', lang: 'fr-FR' },
-  { id: 'fr-CA-Neural2-B', label: 'Homme - Accent Québécois', lang: 'fr-CA' },
-  { id: 'fr-CA-Neural2-C', label: 'Femme - Accent Québécois', lang: 'fr-CA' },
+const TIKTOK_VOICES = [
+  { id: 'fr_001', label: 'Voix TikTok - Homme (Classique)', lang: 'fr-FR' },
+  { id: 'fr_002', label: 'Voix TikTok - Femme (Classique)', lang: 'fr-FR' },
+  { id: 'en_us_001', label: 'Voix TikTok - Anglais (Femme 1)', lang: 'en-US' },
+  { id: 'en_us_006', label: 'Voix TikTok - Anglais (Homme 1)', lang: 'en-US' },
 ];
 
 export function VoixOffDisplay({ scripts }: { scripts: VoixOffScript[] }) {
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
-  const [selectedVoice, setSelectedVoice] = useState(GOOGLE_VOICES[0].id);
+  const [selectedVoice, setSelectedVoice] = useState(TIKTOK_VOICES[0].id);
   const [generatingIdx, setGeneratingIdx] = useState<number | null>(null);
   const [audioUrls, setAudioUrls] = useState<Record<number, string>>({});
 
@@ -27,15 +25,14 @@ export function VoixOffDisplay({ scripts }: { scripts: VoixOffScript[] }) {
   const generateAudio = async (text: string, idx: number) => {
     try {
       setGeneratingIdx(idx);
-      const voice = GOOGLE_VOICES.find(v => v.id === selectedVoice);
+      const voice = TIKTOK_VOICES.find(v => v.id === selectedVoice);
       
       const response = await fetch('/api/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text,
-          name: voice?.id,
-          languageCode: voice?.lang,
+          voice: voice?.id,
         }),
       });
 
@@ -120,7 +117,7 @@ export function VoixOffDisplay({ scripts }: { scripts: VoixOffScript[] }) {
                       disabled={generatingIdx !== null}
                       className="w-full md:w-auto flex-1 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-sm font-medium rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500"
                     >
-                      {GOOGLE_VOICES.map(voice => (
+                      {TIKTOK_VOICES.map(voice => (
                         <option key={voice.id} value={voice.id}>{voice.label}</option>
                       ))}
                     </select>
@@ -173,15 +170,15 @@ export function VoixOffDisplay({ scripts }: { scripts: VoixOffScript[] }) {
         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full -mr-32 -mt-32 blur-3xl" />
         
         <h3 className="text-sm font-bold text-slate-400 uppercase tracking-[0.2em] mb-4 relative z-10">
-          🎙️ Studio Vocal Haute Qualité
+          🎙️ Studio Vocal TikTok (Viral)
         </h3>
         
         <div className="relative z-10 text-sm text-slate-300 max-w-2xl leading-relaxed">
           <p className="mb-4">
-            Ce module utilise l'API <strong>Google Cloud Text-to-Speech (Neural2)</strong> qui produit des voix ultra-réalistes de qualité professionnelle, équivalentes à ElevenLabs.
+            Ce module utilise les voix officielles générées par l'IA de <strong>TikTok</strong> (les plus populaires sur les réseaux sociaux). 
           </p>
           <p>
-            Pour configurer ce module, ajoutez votre clé API Google Cloud dans le fichier d'environnement (<code className="text-blue-300">GOOGLE_CLOUD_TTS_API_KEY</code>). Le niveau gratuit de Google offre jusqu'à <strong>1 million de caractères gratuits par mois</strong> pour ces voix Premium.
+            C'est <strong>100% gratuit, illimité, et sans aucune clé API requise</strong>. Vous pouvez générer autant de voix off que vous le souhaitez pour vos publicités E-commerce.
           </p>
         </div>
       </div>
