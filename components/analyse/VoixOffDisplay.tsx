@@ -164,6 +164,8 @@ export function VoixOffDisplay({ scripts }: { scripts: VoixOffScript[] }) {
               )}
 
             </div>
+          </div>
+        ))}
       </div>
 
       <div className="bg-slate-900 rounded-3xl md:rounded-[3rem] p-6 md:p-10 text-white relative overflow-hidden">
