@@ -44,8 +44,8 @@ export default function ConnexionPage() {
       if (!data?.session) throw new Error("Aucune session retournée. Réessaie.");
 
       toast.success("Connexion réussie !");
-      // Utiliser window.location.href pour forcer un rechargement complet
-      // Cela évite les bugs de SPA où le dashboard ne s'affiche pas.
+      // Rechargement complet pour que le nouveau LayoutWrapper
+      // lise la session directement depuis localStorage.
       window.location.href = '/';
     } catch (err: any) {
       console.error("Auth error:", err);
