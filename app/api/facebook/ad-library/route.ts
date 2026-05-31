@@ -19,23 +19,26 @@ function getDateDaysAgo(days: number): string {
   return d.toISOString().split('T')[0];
 }
 
-// Liste exhaustive de pays (ISO 3166-1 alpha-2)
-const ALL_WORLD_COUNTRIES = [
-  'AF','AL','DZ','AD','AO','AG','AR','AM','AU','AT','AZ','BS','BH','BD','BB',
-  'BY','BE','BZ','BJ','BT','BO','BA','BW','BR','BN','BG','BF','BI','CV','KH',
-  'CM','CA','CF','TD','CL','CN','CO','KM','CG','CD','CR','HR','CU','CY','CZ',
-  'DK','DJ','DM','DO','EC','EG','SV','GQ','ER','EE','SZ','ET','FJ','FI','FR',
-  'GA','GM','GE','DE','GH','GR','GD','GT','GN','GW','GY','HT','HN','HU','IS',
-  'IN','ID','IR','IQ','IE','IL','IT','JM','JP','JO','KZ','KE','KI','KP','KR',
-  'KW','KG','LA','LV','LB','LS','LR','LY','LI','LT','LU','MG','MW','MY','MV',
-  'ML','MT','MH','MR','MU','MX','FM','MD','MC','MN','ME','MA','MZ','MM','NA',
-  'NR','NP','NL','NZ','NI','NE','NG','MK','NO','OM','PK','PW','PA','PG','PY',
-  'PE','PH','PL','PT','QA','RO','RU','RW','KN','LC','VC','WS','SM','ST','SA',
-  'SN','RS','SC','SL','SG','SK','SI','SB','SO','ZA','SS','ES','LK','SD','SR',
-  'SE','CH','SY','TW','TJ','TZ','TH','TL','TG','TO','TT','TN','TR','TM','TV',
-  'UG','UA','AE','GB','US','UY','UZ','VU','VE','VN','YE','ZM','ZW','CI','HK',
-  'MO','PS','XK','RE','GP','MQ','GF','PM','NC','PF','WF','YT','MF','BL','AW',
-  'CW','SX','TC','VG','VI','PR','GU','MP','AS','UM'
+// Liste EXACTE des pays acceptés par l'API Facebook Ad Library
+// Source : message d'erreur officiel de l'API Meta
+const FB_SUPPORTED_COUNTRIES = [
+  'BR','IN','GB','US','CA','AR','AU','AT','BE','CL','CN','CO','HR','DK','DO',
+  'EG','FI','FR','DE','GR','HK','ID','IE','IL','IT','JP','JO','KW','LB','MY',
+  'MX','NL','NZ','NG','NO','PK','PA','PE','PH','PL','RU','SA','RS','SG','ZA',
+  'KR','ES','SE','CH','TW','TH','TR','AE','VE','PT','LU','BG','CZ','SI','IS',
+  'SK','LT','TT','BD','LK','KE','HU','MA','CY','JM','EC','RO','BO','GT','CR',
+  'QA','SV','HN','NI','PY','UY','PR','BA','PS','TN','BH','VN','GH','MU','UA',
+  'MT','BS','MV','OM','MK','LV','EE','IQ','DZ','AL','NP','MO','ME','SN','GE',
+  'BN','UG','GP','BB','AZ','TZ','LY','MQ','CM','BW','ET','KZ','NA','MG','NC',
+  'MD','FJ','BY','JE','GU','YE','ZM','IM','HT','KH','AW','PF','AF','BM','GY',
+  'AM','MW','AG','RW','GG','GM','FO','LC','KY','BJ','AD','GD','VI','BZ','VC',
+  'MN','MZ','ML','AO','GF','UZ','DJ','BF','MC','TG','GL','GA','GI','CD','KG',
+  'PG','BT','KN','SZ','LS','LA','LI','MP','SR','SC','VG','TC','DM','MR','AX',
+  'SM','SL','NE','CG','AI','YT','CV','GN','TM','BI','TJ','VU','SB','ER','WS',
+  'AS','FK','GQ','TO','KM','PW','FM','CF','SO','MH','VA','TD','KI','ST','TV',
+  'NR','RE','LR','ZW','CI','MM','AN','AQ','BQ','BV','IO','CX','CC','CK','CW',
+  'TF','GW','HM','XK','MS','NU','NF','PN','BL','SH','MF','PM','SX','GS','SS',
+  'SJ','TL','TK','UM','WF','EH','SY',
 ];
 
 export async function GET(req: NextRequest) {
@@ -57,11 +60,15 @@ export async function GET(req: NextRequest) {
   const cutoffDate = getDateDaysAgo(14);
 
   // Résolution des pays
+  // "ALL" est une valeur officielle acceptée par l'API Facebook Ad Library
   let countriesArray: string[];
   if (countriesRaw === 'ALL' || !countriesRaw) {
-    countriesArray = ALL_WORLD_COUNTRIES;
+    countriesArray = ['ALL']; // valeur officielle Meta = tous les pays supportés
   } else {
-    countriesArray = countriesRaw.split(',').map((c) => c.trim().toUpperCase()).filter(Boolean);
+    const requested = countriesRaw.split(',').map((c) => c.trim().toUpperCase()).filter(Boolean);
+    // Filtrer uniquement les pays acceptés par Facebook
+    countriesArray = requested.filter((c) => FB_SUPPORTED_COUNTRIES.includes(c));
+    if (countriesArray.length === 0) countriesArray = ['ALL'];
   }
 
   const fields = [
