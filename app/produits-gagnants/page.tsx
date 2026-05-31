@@ -18,16 +18,17 @@ interface AdItem {
   linkTitle: string | null;
   linkDescription: string | null;
   linkCaption: string | null;
+  ctaText: string | null;
   mediaType: string;
   snapshotUrl: string | null;
   pageName: string;
-  pageId: string | null;
   pageUrl: string | null;
+  profileImage: string | null;
+  siteUrl: string | null;
   startDate: string | null;
   daysRunning: number | null;
   impressions: { lower_bound: string; upper_bound: string } | null;
-  spend: { lower_bound: string; upper_bound: string } | null;
-  currency: string | null;
+  originalUrl: string | null;
 }
 
 /* ─────────────────────────────────────────────
@@ -203,8 +204,13 @@ function AdCard({ ad, onClick }: { ad: AdItem; onClick: () => void }) {
     >
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-4 pb-3">
-        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-black flex-shrink-0 uppercase">
-          {ad.pageName.charAt(0)}
+        {/* Avatar : photo de profil ou initiale */}
+        <div className="w-9 h-9 rounded-full flex-shrink-0 overflow-hidden bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+          {ad.profileImage ? (
+            <img src={ad.profileImage} alt={ad.pageName} className="w-full h-full object-cover" />
+          ) : (
+            <span className="text-white text-xs font-black uppercase">{ad.pageName.charAt(0)}</span>
+          )}
         </div>
         <div className="flex-1 min-w-0">
           <div className="font-black text-xs text-slate-800 dark:text-slate-100 truncate">
@@ -306,14 +312,9 @@ function AdCard({ ad, onClick }: { ad: AdItem; onClick: () => void }) {
               {daysLabel(ad.daysRunning)}
             </div>
           )}
-          {impressionsLabel && (
-            <div className="flex items-center gap-1 text-[9px] font-bold text-blue-600 dark:text-blue-400">
-              <Eye className="w-3 h-3" />
-              {impressionsLabel}
-            </div>
-          )}
         </div>
         <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+          {/* Lien vers la page Facebook de l'annonceur */}
           {ad.pageUrl && (
             <a
               href={ad.pageUrl}
@@ -325,9 +326,22 @@ function AdCard({ ad, onClick }: { ad: AdItem; onClick: () => void }) {
               Page
             </a>
           )}
-          {ad.snapshotUrl && (
+          {/* Lien vers le site/produit de l'annonceur */}
+          {ad.siteUrl && (
             <a
-              href={ad.snapshotUrl}
+              href={ad.siteUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-500 hover:text-white text-blue-600 dark:text-blue-400 text-[9px] font-black uppercase tracking-widest transition-colors"
+            >
+              <ExternalLink className="w-2.5 h-2.5" />
+              Site
+            </a>
+          )}
+          {/* Lien vers la pub dans la bibliothèque Meta */}
+          {ad.originalUrl && (
+            <a
+              href={ad.originalUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-500 hover:text-white text-amber-600 dark:text-amber-400 text-[9px] font-black uppercase tracking-widest transition-colors"
@@ -359,8 +373,12 @@ function SnapshotModal({ ad, onClose }: { ad: AdItem; onClose: () => void }) {
         {/* Header */}
         <div className="px-6 py-4 border-b-2 border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 flex-shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-black uppercase">
-              {ad.pageName.charAt(0)}
+            <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+              {ad.profileImage ? (
+                <img src={ad.profileImage} alt={ad.pageName} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-white text-sm font-black uppercase">{ad.pageName.charAt(0)}</span>
+              )}
             </div>
             <div>
               <div className="font-black text-sm text-slate-800 dark:text-slate-100">{ad.pageName}</div>
@@ -370,15 +388,18 @@ function SnapshotModal({ ad, onClose }: { ad: AdItem; onClose: () => void }) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {ad.snapshotUrl && (
-              <a
-                href={ad.snapshotUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 px-3 py-2 bg-amber-500 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-amber-600 transition-colors"
-              >
+            {ad.siteUrl && (
+              <a href={ad.siteUrl} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-2 bg-blue-500 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-blue-600 transition-colors">
                 <ExternalLink className="w-3 h-3" />
-                Ouvrir dans Meta
+                Voir le site
+              </a>
+            )}
+            {ad.originalUrl && (
+              <a href={ad.originalUrl} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-2 bg-amber-500 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-amber-600 transition-colors">
+                <ExternalLink className="w-3 h-3" />
+                Voir dans Meta
               </a>
             )}
             <button onClick={onClose} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors">
