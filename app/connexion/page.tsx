@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useRouter } from 'next/navigation';
 import { Mail, Key, ShieldCheck, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -12,6 +13,7 @@ export default function ConnexionPage() {
   const [initialCheck, setInitialCheck] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '' });
+  const router = useRouter();
 
   // On mount: check if already logged in
   useEffect(() => {
@@ -19,7 +21,7 @@ export default function ConnexionPage() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
-          window.location.replace('/');
+          router.replace('/');
           return;
         }
       } catch (e) {}
@@ -32,40 +34,26 @@ export default function ConnexionPage() {
     e.preventDefault();
     setLoading(true);
 
-    // Promesse de sécurité : annule la tentative après 8 secondes de silence
-    const loginTimeout = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("TIMEOUT")), 8000)
-    );
-
     try {
-      // Wipe ONLY the Supabase auth key to avoid stale/corrupted session on PC browsers
-      [
-        SUPABASE_STORAGE_KEY,
-        `${SUPABASE_STORAGE_KEY}-code-verifier`,
-      ].forEach(key => {
-        try { localStorage.removeItem(key); } catch (_) {}
-        try { sessionStorage.removeItem(key); } catch (_) {}
-      });
-
-      const loginPromise = supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email.trim(),
         password: formData.password,
       });
 
-      const result = await Promise.race([loginPromise, loginTimeout]) as any;
-
-      if (result.error) throw result.error;
-      if (!result.data?.session) throw new Error("Aucune session retournée. Réessaie.");
+      if (error) throw error;
+      if (!data?.session) throw new Error("Aucune session retournée. Réessaie.");
 
       toast.success("Connexion réussie !");
-      window.location.replace('/');
+      // Utiliser router.push (SPA) pour que la session Supabase soit
+      // déjà disponible en mémoire lors du chargement du dashboard.
+      router.push('/');
     } catch (err: any) {
       console.error("Auth error:", err);
       let msg = "";
-      if (err.message === "TIMEOUT") {
-        msg = "Le serveur d'authentification ne répond pas. Veuillez désactiver votre bloqueur de publicité (AdBlock, Brave Shields) et réessayer.";
-      } else if (err.message?.includes('Invalid login credentials')) {
+      if (err.message?.includes('Invalid login credentials')) {
         msg = "Email ou mot de passe incorrect.";
+      } else if (err.message?.includes('Email not confirmed')) {
+        msg = "Email non confirmé. Contactez l'administrateur.";
       } else {
         msg = err.message || "Erreur de connexion. Réessaie.";
       }

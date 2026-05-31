@@ -94,10 +94,14 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
 
     checkAuth();
 
-    // Watch for sign-out
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    // Watch for auth state changes (sign-in and sign-out)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT') {
         router.replace('/connexion');
+      } else if (event === 'SIGNED_IN' && session && !isPublicPage) {
+        // Re-run auth check immediately when a new session is detected
+        // (e.g. right after SPA navigation from the login page)
+        checkAuth();
       }
     });
 
