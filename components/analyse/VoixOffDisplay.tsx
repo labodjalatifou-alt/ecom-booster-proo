@@ -4,22 +4,49 @@ import { Mic, Copy, Play, Loader2, Download, Volume2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const TIKTOK_VOICES = [
-  { id: 'fr_001', label: 'Voix TikTok - Homme (Classique)', lang: 'fr-FR' },
-  { id: 'fr_002', label: 'Voix TikTok - Femme (Classique)', lang: 'fr-FR' },
-  { id: 'en_us_001', label: 'Voix TikTok - Anglais (Femme 1)', lang: 'en-US' },
-  { id: 'en_us_006', label: 'Voix TikTok - Anglais (Homme 1)', lang: 'en-US' },
+  { id: 'fr_001', label: '👨 Homme (Français 1)', lang: 'fr-FR' },
+  { id: 'fr_002', label: '👨 Homme (Français 2)', lang: 'fr-FR' },
+  { id: 'en_us_001', label: '👩 Femme (Accent US Viral)', lang: 'en-US' },
+  { id: 'en_us_002', label: '👩 Femme (Jessie Viral)', lang: 'en-US' },
 ];
 
 export function VoixOffDisplay({ scripts }: { scripts: VoixOffScript[] }) {
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const [selectedVoice, setSelectedVoice] = useState(TIKTOK_VOICES[0].id);
   const [generatingIdx, setGeneratingIdx] = useState<number | null>(null);
+  const [previewingVoice, setPreviewingVoice] = useState<string | null>(null);
   const [audioUrls, setAudioUrls] = useState<Record<number, string>>({});
 
   const handleCopy = (text: string, idx: number) => {
     navigator.clipboard.writeText(text);
     setCopiedIdx(idx);
     setTimeout(() => setCopiedIdx(null), 2000);
+  };
+
+  const playPreview = async () => {
+    try {
+      setPreviewingVoice(selectedVoice);
+      const voice = TIKTOK_VOICES.find(v => v.id === selectedVoice);
+      
+      const response = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: "Bonjour ! Ceci est un aperçu de ma voix pour vos vidéos.",
+          voice: voice?.id,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Erreur');
+      
+      const data = await response.json();
+      const audio = new Audio(`data:audio/mp3;base64,${data.audioContent}`);
+      audio.onended = () => setPreviewingVoice(null);
+      await audio.play();
+    } catch (e) {
+      setPreviewingVoice(null);
+      toast.error("Impossible de lire l'aperçu");
+    }
   };
 
   const generateAudio = async (text: string, idx: number) => {
@@ -114,13 +141,21 @@ export function VoixOffDisplay({ scripts }: { scripts: VoixOffScript[] }) {
                     <select 
                       value={selectedVoice}
                       onChange={(e) => setSelectedVoice(e.target.value)}
-                      disabled={generatingIdx !== null}
+                      disabled={generatingIdx !== null || previewingVoice !== null}
                       className="w-full md:w-auto flex-1 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-sm font-medium rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500"
                     >
                       {TIKTOK_VOICES.map(voice => (
                         <option key={voice.id} value={voice.id}>{voice.label}</option>
                       ))}
                     </select>
+                    <button 
+                      onClick={playPreview}
+                      disabled={previewingVoice !== null || generatingIdx !== null}
+                      title="Écouter un aperçu"
+                      className="p-2.5 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded-xl hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors disabled:opacity-50"
+                    >
+                      {previewingVoice !== null ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5" />}
+                    </button>
                   </div>
 
                   <button
