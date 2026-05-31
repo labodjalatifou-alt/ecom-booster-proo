@@ -25,6 +25,7 @@ interface AdItem {
   pageUrl: string | null;
   profileImage: string | null;
   siteUrl: string | null;
+  targetedCountries: string[];
   startDate: string | null;
   daysRunning: number | null;
   impressions: { lower_bound: string; upper_bound: string } | null;
@@ -35,18 +36,18 @@ interface AdItem {
    SUGGESTIONS DE MOTS-CLÉS
 ───────────────────────────────────────────── */
 const KEYWORD_SUGGESTIONS = [
-  { label: "Livraison gratuite",       value: "livraison gratuite" },
-  { label: "Paiement à la livraison",  value: "paiement à la livraison" },
-  { label: "Paiement à la réception",  value: "paiement à la réception" },
-  { label: "50% OFF",                  value: "50% off" },
-  { label: "Offre limitée",            value: "offre limitée" },
-  { label: "Cadeau gratuit",           value: "cadeau gratuit" },
-  { label: "Soldes",                   value: "soldes" },
-  { label: "Beauté",                   value: "beauté" },
-  { label: "Fitness",                  value: "fitness" },
-  { label: "Maison",                   value: "maison" },
-  { label: "Mode",                     value: "mode" },
-  { label: "Cuisine",                  value: "cuisine" },
+  { label: "Livraison gratuite",        value: "livraison gratuite" },
+  { label: "Paiement à la livraison",   value: "paiement à la livraison" },
+  { label: "Paiement à la réception",   value: "paiement à la réception" },
+  { label: "Livraison rapide",           value: "livraison rapide" },
+  { label: "50% OFF",                   value: "50% off" },
+  { label: "Offre limitée",             value: "offre limitée" },
+  { label: "Promotions",                value: "promotions" },
+  { label: "Commandez maintenant",       value: "commandez maintenant" },
+  { label: "Produit tendance",           value: "produit tendance" },
+  { label: "Beauté",                    value: "beauté" },
+  { label: "Mode femme",                value: "mode femme" },
+  { label: "Maison & Déco",             value: "maison" },
 ];
 
 /* ─────────────────────────────────────────────
@@ -514,15 +515,16 @@ export default function ProduitsGagnantsPage() {
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const [ads, setAds]               = useState<AdItem[]>([]);
-  const [loading, setLoading]       = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError]           = useState<string | null>(null);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [hasMore, setHasMore]       = useState(false);
-  const [totalFound, setTotalFound] = useState(0);
-  const [selectedAd, setSelectedAd] = useState<AdItem | null>(null);
-  const [activeTerm, setActiveTerm] = useState(DEFAULT_KEYWORD);
+  const [ads, setAds]                   = useState<AdItem[]>([]);
+  const [loading, setLoading]           = useState(false);
+  const [loadingMore, setLoadingMore]   = useState(false);
+  const [error, setError]               = useState<string | null>(null);
+  const [nextCursor, setNextCursor]     = useState<string | null>(null);
+  const [hasMore, setHasMore]           = useState(false);
+  const [totalFound, setTotalFound]     = useState(0);
+  const [totalInCountry, setTotalInCountry] = useState<number | null>(null);
+  const [selectedAd, setSelectedAd]     = useState<AdItem | null>(null);
+  const [activeTerm, setActiveTerm]     = useState(DEFAULT_KEYWORD);
 
   // Fermer dropdown au clic dehors
   useEffect(() => {
@@ -558,6 +560,7 @@ export default function ProduitsGagnantsPage() {
         setNextCursor(null);
         setHasMore(false);
         setTotalFound(0);
+        setTotalInCountry(null);
         setActiveTerm(term);
       }
 
@@ -579,6 +582,7 @@ export default function ProduitsGagnantsPage() {
         if (reset) {
           setAds(newAds);
           setTotalFound(newAds.length);
+          setTotalInCountry(data.totalInCountry ?? null);
         } else {
           setAds((prev) => {
             const merged = [...prev, ...newAds];
@@ -885,15 +889,23 @@ export default function ProduitsGagnantsPage() {
       {!loading && !error && ads.length > 0 && (
         <div>
           {/* Header résultats */}
-          <div className="flex items-center justify-between mb-5">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-5">
             <div className="flex flex-wrap items-center gap-2">
               <div className="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-full flex items-center gap-1.5">
                 <Zap className="w-3 h-3 text-emerald-500" />
                 <span className="text-[10px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest">
-                  {totalFound} publicités
+                  {totalFound} chargées
                 </span>
               </div>
-              <span className="text-[10px] font-bold text-slate-400 hidden md:inline">
+              {totalInCountry !== null && (
+                <div className="px-3 py-1.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-full flex items-center gap-1.5">
+                  <Flame className="w-3 h-3 text-amber-500" />
+                  <span className="text-[10px] font-black text-amber-700 dark:text-amber-400 uppercase tracking-widest">
+                    {totalInCountry > 50000 ? "+50k au total" : `${totalInCountry} au total dans le pays`}
+                  </span>
+                </div>
+              )}
+              <span className="text-[10px] font-bold text-slate-400 hidden md:inline ml-2">
                 pour{" "}
                 <span className="text-slate-700 dark:text-slate-300 font-black">
                   "{activeTerm}"

@@ -32,10 +32,21 @@ export async function GET(req: NextRequest) {
   if (mediaType === 'IMAGE') fbMediaType = 'image';
   if (mediaType === 'VIDEO') fbMediaType = 'video';
 
-  // URL identique à la bibliothèque publicitaire Facebook officielle
-  const targetFbUrl = `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=${countryCode}&q=${encodeURIComponent(searchTerms)}&media_type=${fbMediaType}`;
+  // URL optimisée :
+  // - active_status=active → uniquement les pubs actives EN CE MOMENT
+  // - search_type=keyword_unordered → cherche le mot-clé dans le contenu de la pub (plus précis)
+  // - country=XX → filtre strict par pays
+  const targetFbUrl = [
+    'https://www.facebook.com/ads/library/',
+    `?active_status=active`,
+    `&ad_type=all`,
+    `&country=${countryCode}`,
+    `&q=${encodeURIComponent(searchTerms)}`,
+    `&search_type=keyword_unordered`,
+    `&media_type=${fbMediaType}`,
+  ].join('');
 
-  console.log(`[AD LIBRARY] country=${countryCode} | keyword="${searchTerms}" | media=${fbMediaType}`);
+  console.log(`[AD LIBRARY] country=${countryCode} | keyword="${searchTerms}" | url=${targetFbUrl}`);
 
   try {
     const res = await fetch(
@@ -43,7 +54,10 @@ export async function GET(req: NextRequest) {
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ urls: [{ url: targetFbUrl }], count: 40 }),
+        body: JSON.stringify({
+          urls: [{ url: targetFbUrl }],
+          count: 40,
+        }),
         cache: 'no-store',
       }
     );
@@ -55,6 +69,9 @@ export async function GET(req: NextRequest) {
     }
 
     const items: any[] = Array.isArray(data) ? data : (data.items || []);
+
+    // Le champ "total" dans le 1er item indique le nombre réel de pubs dans ce pays
+    const totalInCountry: number = items[0]?.total || items.length;
 
     const ads = items.map((ad: any) => {
       const adId = String(ad.ad_archive_id || ad.ad_id || Math.random());
@@ -70,7 +87,7 @@ export async function GET(req: NextRequest) {
         daysRunning = Math.floor((Date.now() - startDate.getTime()) / (1000 * 60 * 60 * 24));
       }
 
-      // Type de média + URL du média
+      // Type de média + URL
       let snapshotUrl: string | null = null;
       let detectedMediaType = 'IMAGE';
 
@@ -87,6 +104,9 @@ export async function GET(req: NextRequest) {
           || null;
       }
 
+      // Pays ciblés (si disponibles)
+      const targetedCountries: string[] = ad.targeted_or_reached_countries || [];
+
       return {
         id: adId,
         body: snap.body?.text || firstCard.body || null,
@@ -100,22 +120,27 @@ export async function GET(req: NextRequest) {
         pageUrl: snap.page_profile_uri || null,
         profileImage: snap.page_profile_picture_url || null,
         siteUrl: firstCard.link_url || snap.link_url || null,
+        targetedCountries,
         startDate: startDateStr,
         daysRunning,
+        impressions: null,
         originalUrl: ad.ad_library_url || null,
       };
     });
 
-    // Filtre 14 jours minimum
+    // Filtre 14 jours minimum (les pubs qui tournent depuis au moins 2 semaines)
     const adsFiltered = ads.filter((ad) => ad.daysRunning === null || ad.daysRunning >= 14);
 
     const response = NextResponse.json({
       ads: adsFiltered.length > 0 ? adsFiltered : ads,
       hasMore: false,
+      totalInCountry,   // Nombre total de pubs dans ce pays pour ce mot-clé
       cutoffDate: getDateDaysAgo(14),
+      country: countryCode,
+      keyword: searchTerms,
     });
 
-    // Désactiver tous les caches (Vercel Edge, CDN, navigateur)
+    // Désactiver TOUS les caches
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     response.headers.set('Pragma', 'no-cache');
     response.headers.set('Surrogate-Control', 'no-store');
@@ -123,6 +148,7 @@ export async function GET(req: NextRequest) {
     return response;
 
   } catch (err: any) {
+    console.error('[APIFY FETCH ERROR]', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
