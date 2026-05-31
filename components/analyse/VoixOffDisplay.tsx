@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { VoixOffScript } from '@/lib/claude-prompts';
-import { Mic, Copy, Play, Loader2, Download, Volume2 } from 'lucide-react';
+import { Mic, Copy, Play, Loader2, Download, Volume2, ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const TIKTOK_VOICES = [
@@ -8,6 +8,13 @@ const TIKTOK_VOICES = [
   { id: 'fr_002', label: '👨 Homme (Français 2)', lang: 'fr-FR' },
   { id: 'en_us_001', label: '👩 Femme (Accent US Viral)', lang: 'en-US' },
   { id: 'en_us_002', label: '👩 Femme (Jessie Viral)', lang: 'en-US' },
+];
+
+const TTS_TOOLS = [
+  { name: 'ElevenLabs', url: 'https://elevenlabs.io', color: 'bg-purple-100 text-purple-700', border: 'border-purple-200', desc: 'IA ultra-réaliste' },
+  { name: 'TTS Maker', url: 'https://ttsmaker.com', color: 'bg-emerald-100 text-emerald-700', border: 'border-emerald-200', desc: 'Gratuit, multi-langues' },
+  { name: 'Google AI Studio', url: 'https://aistudio.google.com', color: 'bg-blue-100 text-blue-700', border: 'border-blue-200', desc: 'Gemini TTS avancé' },
+  { name: 'Minimax', url: 'https://www.minimaxi.com', color: 'bg-orange-100 text-orange-700', border: 'border-orange-200', desc: 'Voix africaines' },
 ];
 
 export function VoixOffDisplay({ scripts }: { scripts: VoixOffScript[] }) {
@@ -217,6 +224,35 @@ export function VoixOffDisplay({ scripts }: { scripts: VoixOffScript[] }) {
           <p>
             C'est <strong>100% gratuit, illimité, et sans aucune clé API requise</strong>. Vous pouvez générer autant de voix off que vous le souhaitez pour vos publicités E-commerce.
           </p>
+        </div>
+      </div>
+
+      {/* Outils TTS Externes */}
+      <div className="bg-slate-50 dark:bg-slate-900/50 rounded-3xl md:rounded-[3rem] p-6 md:p-10 border border-slate-200 dark:border-slate-800">
+        <h3 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] mb-6">
+          🔗 Autres Outils Vocaux Externes
+        </h3>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {TTS_TOOLS.map((tool) => (
+            <a
+              key={tool.name}
+              href={tool.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col gap-3 p-5 rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:shadow-md transition-all group"
+            >
+              <div className="flex items-center justify-between">
+                <span className={`text-[10px] font-black px-3 py-1 rounded-full ${tool.color}`}>
+                  {tool.name}
+                </span>
+                <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-blue-500" />
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                {tool.desc}
+              </p>
+            </a>
+          ))}
         </div>
       </div>
     </div>
