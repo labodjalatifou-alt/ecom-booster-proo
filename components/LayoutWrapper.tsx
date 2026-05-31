@@ -13,7 +13,6 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const pathname = usePathname();
   const isPublicPage = PUBLIC_PATHS.includes(pathname);
 
-  // Don't block public pages at all
   const [loading, setLoading] = useState(!isPublicPage);
   const [userRole, setUserRole] = useState<string | null>(null);
   const router = useRouter();
@@ -22,88 +21,86 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   useEffect(() => {
     mounted.current = true;
 
-    // Public pages: no check needed, render immediately
+    // ── Pages publiques : pas de vérification d'auth ──────────────────
     if (isPublicPage) {
       setLoading(false);
       return;
     }
 
-    // Safety timeout: never block the user for more than 5 seconds
-    const timeout = setTimeout(() => {
-      if (mounted.current) {
-        setLoading(false);
+    // ── Déjà authentifié (navigation SPA interne) ─────────────────────
+    // On a déjà le rôle : pas besoin de refaire toute la vérif.
+    if (userRole !== null) {
+      if (userRole === 'CLOSER' && pathname !== '/interface-closer') {
+        router.replace('/interface-closer');
+      } else if (userRole === 'LIVREUR' && pathname !== '/interface-livreur') {
+        router.replace('/interface-livreur');
       }
-    }, 5000);
+      setLoading(false);
+      return;
+    }
 
-    async function checkAuth() {
-      let isRedirecting = false;
+    // ── Premier chargement ou retour sur une page protégée ────────────
+    setLoading(true);
+
+    // Filet de sécurité : jamais plus de 8 secondes de spinner
+    const timeout = setTimeout(() => {
+      if (mounted.current) setLoading(false);
+    }, 8000);
+
+    async function handleSession(session: any) {
+      if (!mounted.current) return;
+
+      if (!session) {
+        clearTimeout(timeout);
+        router.replace('/connexion');
+        return;
+      }
+
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-
-        if (!session) {
-          // Not logged in on a protected page → send to login
-          isRedirecting = true;
-          router.replace('/connexion');
-          return;
-        }
-
-        // Try to fetch role. If it fails, default to ADMIN (owner case).
-        const { data: profile, error: profileError } = await supabase
+        const { data: profile } = await supabase
           .from('User')
           .select('role')
           .eq('id', session.user.id)
           .single();
 
-        if (profileError) {
-          // Profile not found in DB (e.g. initial admin setup). Treat as ADMIN.
-          console.warn('User profile not in DB, treating as ADMIN.');
-          if (mounted.current) setUserRole('ADMIN');
-          return;
-        }
+        const role = profile?.role ?? 'ADMIN';
 
-        const role = profile?.role || 'ADMIN';
+        if (!mounted.current) return;
+        setUserRole(role);
 
-        if (mounted.current) {
-          setUserRole(role);
+        if (role === 'CLOSER' && pathname !== '/interface-closer') {
+          router.replace('/interface-closer');
+        } else if (role === 'LIVREUR' && pathname !== '/interface-livreur') {
+          router.replace('/interface-livreur');
         }
-
-        // Strict Role-Based Routing
-        if (role === 'CLOSER') {
-          if (pathname !== '/interface-closer') {
-            isRedirecting = true;
-            router.replace('/interface-closer');
-          }
-        } else if (role === 'LIVREUR') {
-          if (pathname !== '/interface-livreur') {
-            isRedirecting = true;
-            router.replace('/interface-livreur');
-          }
-        }
-        // ADMIN can go anywhere
-
-      } catch (error) {
-        console.error("Erreur vérification permissions:", error);
-        // On error, don't block. Let user through.
-      } finally {
-        clearTimeout(timeout);
-        if (mounted.current && !isRedirecting) {
-          setLoading(false);
-        }
+      } catch {
+        // Profil absent → traiter comme ADMIN (première configuration)
+        if (mounted.current) setUserRole('ADMIN');
       }
+
+      clearTimeout(timeout);
+      if (mounted.current) setLoading(false);
     }
 
-    checkAuth();
-
-    // Watch for auth state changes (sign-in and sign-out)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT') {
-        router.replace('/connexion');
-      } else if (event === 'SIGNED_IN' && session && !isPublicPage) {
-        // Re-run auth check immediately when a new session is detected
-        // (e.g. right after SPA navigation from the login page)
-        checkAuth();
+    // ─────────────────────────────────────────────────────────────────
+    // CORRECTION PRINCIPALE :
+    // On utilise onAuthStateChange + événement INITIAL_SESSION au lieu
+    // de getSession() appelé directement.
+    //
+    // Dans Supabase v2, getSession() appelé immédiatement peut retourner
+    // null parce que le client n'a pas encore fini de lire localStorage.
+    // L'événement INITIAL_SESSION se déclenche APRÈS cette initialisation,
+    // garantissant que la session est disponible.
+    // ─────────────────────────────────────────────────────────────────
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+          handleSession(session);
+        } else if (event === 'SIGNED_OUT') {
+          if (mounted.current) router.replace('/connexion');
+        }
       }
-    });
+    );
 
     return () => {
       mounted.current = false;
@@ -112,11 +109,12 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     };
   }, [pathname]);
 
-  // Public pages: render immediately without sidebar/header
+  // ── Pages publiques : rendu immédiat sans sidebar/header ──────────
   if (isPublicPage) {
     return <>{children}</>;
   }
 
+  // ── Chargement ────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-[#0B1120]">
@@ -126,6 +124,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     );
   }
 
+  // ── Dashboard ─────────────────────────────────────────────────────
   const isEmployee = userRole === 'CLOSER' || userRole === 'LIVREUR';
 
   return (
