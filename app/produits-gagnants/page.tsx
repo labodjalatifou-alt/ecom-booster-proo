@@ -232,27 +232,40 @@ function AdCard({ ad, onClick }: { ad: AdItem; onClick: () => void }) {
       )}
 
       {/* Snapshot */}
-      <div className="relative bg-slate-100 dark:bg-slate-800 overflow-hidden" style={{ minHeight: 200 }}>
+      <div className="relative bg-slate-100 dark:bg-slate-800 overflow-hidden flex items-center justify-center" style={{ minHeight: 200, height: 320 }}>
         {ad.snapshotUrl ? (
-          <>
-            <iframe
+          isVideo ? (
+            <video
               src={ad.snapshotUrl}
-              className="w-full pointer-events-none"
-              style={{ height: 320, border: "none" }}
-              loading="lazy"
-              title={`Pub ${ad.pageName}`}
+              className="w-full h-full object-cover"
+              controls={false}
+              autoPlay
+              muted
+              loop
+              playsInline
             />
-            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900/25 backdrop-blur-[1px]">
-              <div className="flex items-center gap-2 px-4 py-2 bg-white/90 dark:bg-slate-900/90 rounded-full shadow-lg text-[10px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-widest">
-                {isVideo ? <Play className="w-3.5 h-3.5 text-amber-500" /> : <Eye className="w-3.5 h-3.5 text-amber-500" />}
-                Voir la publicité
-              </div>
-            </div>
-          </>
+          ) : (
+            <img
+              src={ad.snapshotUrl}
+              alt={`Pub ${ad.pageName}`}
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+          )
         ) : (
           <div className="flex flex-col items-center justify-center h-48 gap-3 text-slate-300 dark:text-slate-600">
             {isVideo ? <Play className="w-10 h-10" /> : <Eye className="w-10 h-10" />}
             <span className="text-[10px] font-bold uppercase tracking-widest">{mediaLabel(ad.mediaType)}</span>
+          </div>
+        )}
+
+        {/* Hover overlay */}
+        {ad.snapshotUrl && (
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900/25 backdrop-blur-[1px]">
+            <div className="flex items-center gap-2 px-4 py-2 bg-white/90 dark:bg-slate-900/90 rounded-full shadow-lg text-[10px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-widest">
+              {isVideo ? <Play className="w-3.5 h-3.5 text-amber-500" /> : <Eye className="w-3.5 h-3.5 text-amber-500" />}
+              Voir la publicité
+            </div>
           </div>
         )}
 
@@ -375,14 +388,24 @@ function SnapshotModal({ ad, onClose }: { ad: AdItem; onClose: () => void }) {
         </div>
 
         {/* Snapshot */}
-        <div className="flex-1 overflow-auto bg-slate-100 dark:bg-slate-950 flex items-start justify-center p-4">
+        <div className="flex-1 overflow-auto bg-slate-100 dark:bg-slate-950 flex items-center justify-center p-4 min-h-[580px]">
           {ad.snapshotUrl ? (
-            <iframe
-              src={ad.snapshotUrl}
-              className="w-full rounded-xl bg-white"
-              style={{ height: 580, border: "none" }}
-              title={`Pub ${ad.pageName}`}
-            />
+            ad.mediaType === "VIDEO" ? (
+              <video
+                src={ad.snapshotUrl}
+                className="max-h-[580px] max-w-full rounded-xl bg-black object-contain shadow-md"
+                controls
+                autoPlay
+                playsInline
+              />
+            ) : (
+              <img
+                src={ad.snapshotUrl}
+                alt={`Pub ${ad.pageName}`}
+                className="max-h-[580px] max-w-full rounded-xl object-contain shadow-md"
+                loading="lazy"
+              />
+            )
           ) : (
             <div className="flex flex-col items-center justify-center h-64 text-slate-400 gap-3">
               <Eye className="w-10 h-10 opacity-30" />
