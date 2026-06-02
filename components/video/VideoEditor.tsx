@@ -19,20 +19,7 @@ export default function VideoEditor() {
             role: 'Creator',
             theme: 'dark',
             license: '',
-            baseURL: 'https://cdn.img.ly/packages/imgly/cesdk-js/1.75.1/assets',
-            ui: {
-              elements: {
-                view: 'default',
-                navigation: {
-                  action: {
-                    export: {
-                      show: true,
-                      format: ['video/mp4']
-                    }
-                  }
-                }
-              }
-            }
+            baseURL: 'https://cdn.img.ly/packages/imgly/cesdk-js/1.75.1/assets'
           };
           
           cesdk = await CreativeEditorSDK.create(containerRef.current, config);
