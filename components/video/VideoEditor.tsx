@@ -1,15 +1,15 @@
 "use client";
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { AlertCircle, RefreshCw } from 'lucide-react';
 
 export default function VideoEditor() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cesdk: any;
     
-    // Le chargement dynamique côté client est important pour éviter 
-    // les erreurs "window is not defined" pendant le SSR de Next.js
     const initEditor = async () => {
       try {
         const CreativeEditorSDK = (await import('@cesdk/cesdk-js')).default;
@@ -18,7 +18,6 @@ export default function VideoEditor() {
           const config: any = {
             role: 'Creator',
             theme: 'dark',
-            // Licence optionnelle. Vide = Community/Developer Edition
             license: '', 
             ui: {
               elements: {
@@ -37,13 +36,13 @@ export default function VideoEditor() {
           
           cesdk = await CreativeEditorSDK.create(containerRef.current, config);
           
-          // Optionnel: charger un modèle vidéo de base pour ne pas démarrer à blanc
           await cesdk.engine.scene.loadFromURL(
             'https://cdn.img.ly/packages/imgly/cesdk-js/latest/assets/templates/cesdk_blank_video.scene'
           );
         }
-      } catch (error) {
-        console.error("Erreur lors de l'initialisation de CE.SDK:", error);
+      } catch (err: any) {
+        console.error("Erreur lors de l'initialisation de CE.SDK:", err);
+        setError(err.message || "Impossible de charger l'éditeur vidéo. Vérifiez votre connexion ou désactivez votre bloqueur de publicités.");
       }
     };
 
@@ -56,8 +55,29 @@ export default function VideoEditor() {
     };
   }, []);
 
+  if (error) {
+    return (
+      <div className="w-full h-[calc(100vh-220px)] rounded-[2.5rem] bg-slate-50 dark:bg-slate-900 border-2 border-red-200 dark:border-red-900/50 flex flex-col items-center justify-center p-8 text-center space-y-4">
+        <div className="p-4 bg-red-100 dark:bg-red-900/30 rounded-2xl text-red-600 dark:text-red-400">
+          <AlertCircle className="w-8 h-8" />
+        </div>
+        <h3 className="text-xl font-bold text-slate-900 dark:text-white">Le chargement a échoué</h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md">
+          {error}
+        </p>
+        <button 
+          onClick={() => window.location.reload()}
+          className="mt-4 flex items-center gap-2 px-6 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold text-sm hover:scale-105 transition-transform"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Réessayer
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full h-[calc(100vh-220px)] rounded-[2.5rem] overflow-hidden shadow-xl border-2 border-slate-100 dark:border-slate-800 bg-slate-900">
+    <div className="w-full h-[calc(100vh-220px)] rounded-[2.5rem] overflow-hidden shadow-xl border-2 border-slate-100 dark:border-slate-800 bg-slate-900 relative">
       <div ref={containerRef} className="w-full h-full" />
     </div>
   );
