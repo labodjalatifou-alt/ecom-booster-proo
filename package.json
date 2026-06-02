@@ -12,7 +12,7 @@
     "@anthropic-ai/sdk": "^0.95.1",
     "@capacitor/core": "^8.3.4",
     "@capacitor/push-notifications": "^8.1.1",
-    "@cesdk/cesdk-js": "^1.75.1",
+    "@cesdk/cesdk-js": "^1.70.0",
     "@ffmpeg/ffmpeg": "^0.12.15",
     "@ffmpeg/util": "^0.12.2",
     "@prisma/client": "^6.4.0",
