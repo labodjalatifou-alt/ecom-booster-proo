@@ -27,7 +27,8 @@ import {
   X,
   ClipboardList,
   FileText,
-  Flame
+  Flame,
+  Film
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -55,6 +56,7 @@ const menuGroups = [
       { name: 'Page Shopify', icon: Store, href: '/page-shopify' },
       { name: 'Textes Publicitaires', icon: FileText, href: '/textes-publicitaires' },
       { name: 'Script Voix Off', icon: Mic, href: '/script-voix-off' },
+      { name: 'Montage Vidéo', icon: Film, href: '/montage-video' },
     ]
   },
   {
