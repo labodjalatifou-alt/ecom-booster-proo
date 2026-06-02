@@ -36,9 +36,10 @@ export default function VideoEditor() {
           
           cesdk = await CreativeEditorSDK.create(containerRef.current, config);
           
-          await cesdk.engine.scene.loadFromURL(
-            'https://cdn.img.ly/packages/imgly/cesdk-js/latest/assets/templates/cesdk_blank_video.scene'
-          );
+          // Créer une scène vidéo vierge au lieu de la télécharger
+          const scene = cesdk.engine.scene.createVideo();
+          // Définir une durée par défaut pour la timeline (ex: 15 secondes)
+          cesdk.engine.block.setDuration(scene, 15);
         }
       } catch (err: any) {
         console.error("Erreur lors de l'initialisation de CE.SDK:", err);
