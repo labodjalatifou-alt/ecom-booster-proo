@@ -36,8 +36,14 @@ export default function VideoEditor() {
           
           cesdk = await CreativeEditorSDK.create(containerRef.current, config);
           
-          // Créer une scène vidéo vierge
-          cesdk.engine.scene.createVideo();
+          // Créer une scène vidéo via l'API de l'éditeur (pour initialiser l'UI correctement)
+          if (cesdk.actions && cesdk.actions.run) {
+            await cesdk.actions.run('scene.create', { mode: 'Video' });
+          } else if (typeof cesdk.createVideoScene === 'function') {
+            await cesdk.createVideoScene();
+          } else {
+            cesdk.engine.scene.createVideo();
+          }
         }
       } catch (err: any) {
         console.error("Erreur lors de l'initialisation de CE.SDK:", err);

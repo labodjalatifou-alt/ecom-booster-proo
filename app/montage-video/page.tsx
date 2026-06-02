@@ -66,11 +66,12 @@ export default function MontageVideoPage() {
 
       {/* Contenu principal */}
       <div className="w-full">
-        {activeTab === 'video' ? (
+        <div className={activeTab === 'video' ? 'block' : 'hidden'}>
           <VideoEditor />
-        ) : (
+        </div>
+        <div className={activeTab === 'gif' ? 'block' : 'hidden'}>
           <GifCreator />
-        )}
+        </div>
       </div>
       
     </div>
