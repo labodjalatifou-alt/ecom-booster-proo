@@ -1,238 +1,377 @@
 "use client";
 
 import React, { useState, useRef, useCallback } from 'react';
-import { Image as ImageIcon, Upload, Download, Loader2, RefreshCw } from 'lucide-react';
-import ReactCrop, { type Crop, type PixelCrop } from 'react-image-crop';
+import { Image as ImageIcon, Upload, Download, Loader2, Play, Square, RotateCcw, Crop, RefreshCw } from 'lucide-react';
+import ReactCrop, { type Crop as CropType, type PixelCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import toast from 'react-hot-toast';
 
+// ── Phases ────────────────────────────────────────────────────────────────────
+type Phase = 'upload' | 'trim' | 'generating' | 'result';
+
+function formatTime(s: number) {
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return `${m}:${sec.toString().padStart(2, '0')}`;
+}
+
 export default function GifCreator() {
+  // Phases
+  const [phase, setPhase] = useState<Phase>('upload');
+
+  // Vidéo source
   const [file, setFile] = useState<File | null>(null);
-  const [localVideoUrl, setLocalVideoUrl] = useState('');
-  const [startOffset, setStartOffset] = useState(0);
-  const [endOffset, setEndOffset] = useState(5);
-  const [crop, setCrop] = useState<Crop>();
-  const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
-  const [gifUrl, setGifUrl] = useState('');
-  const [processing, setProcessing] = useState(false);
+  const [videoUrl, setVideoUrl] = useState('');
+  const [videoDuration, setVideoDuration] = useState(0);
+
+  // Sélection temporelle
+  const [startTime, setStartTime] = useState(0);
+  const [endTime, setEndTime]     = useState(5);
+
+  // Génération
   const [progress, setProgress] = useState('');
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  // Résultat
+  const [gifUrl, setGifUrl]   = useState('');
+  const [gifBlob, setGifBlob] = useState<Blob | null>(null);
 
+  // Crop sur le GIF généré
+  const [crop, setCrop]               = useState<CropType>();
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
+  const [cropping, setCropping]       = useState(false);
+  const [croppedGifUrl, setCroppedGifUrl] = useState('');
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoRef     = useRef<HTMLVideoElement>(null);
+  const gifImgRef    = useRef<HTMLImageElement>(null);
+
+  // ── Upload ────────────────────────────────────────────────────────────────
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0];
-    if (!selected) return;
-    if (!selected.type.startsWith('video/')) {
-      toast.error('Veuillez sélectionner un fichier vidéo.');
-      return;
-    }
-    setFile(selected);
-    setLocalVideoUrl(URL.createObjectURL(selected));
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (!f.type.startsWith('video/')) { toast.error('Fichier vidéo requis.'); return; }
+    const url = URL.createObjectURL(f);
+    setFile(f);
+    setVideoUrl(url);
+    setStartTime(0);
+    setEndTime(5);
     setGifUrl('');
+    setCroppedGifUrl('');
     setCrop(undefined);
     setCompletedCrop(undefined);
-    setStartOffset(0);
-    setEndOffset(5);
+    setPhase('trim');
+    e.target.value = '';
   };
 
-  const handleSetStart = () => {
-    const t = Math.floor(videoRef.current?.currentTime ?? 0);
-    setStartOffset(t);
-    if (t >= endOffset) setEndOffset(t + 3);
-    toast.success(`Début : ${t}s`);
+  // ── Trim controls ─────────────────────────────────────────────────────────
+  const setStart = () => {
+    const t = videoRef.current?.currentTime ?? 0;
+    setStartTime(t);
+    if (t >= endTime) setEndTime(Math.min(t + 3, videoDuration));
+    toast.success(`Début : ${formatTime(t)}`);
   };
 
-  const handleSetEnd = () => {
-    const t = Math.floor(videoRef.current?.currentTime ?? 0);
-    if (t <= startOffset) { toast.error('La fin doit être après le début !'); return; }
-    setEndOffset(t);
-    toast.success(`Fin : ${t}s`);
+  const setEnd = () => {
+    const t = videoRef.current?.currentTime ?? 0;
+    if (t <= startTime) { toast.error('La fin doit être après le début !'); return; }
+    setEndTime(t);
+    toast.success(`Fin : ${formatTime(t)}`);
   };
 
-  const generateGif = useCallback(async () => {
+  // ── Génération GIF ────────────────────────────────────────────────────────
+  const generateGif = useCallback(async (cropParams?: { w: number; h: number; x: number; y: number }) => {
     if (!file) return;
-    setProcessing(true);
-    setGifUrl('');
+
+    if (cropParams) {
+      setCropping(true);
+    } else {
+      setPhase('generating');
+      setProgress('Chargement de FFmpeg…');
+    }
 
     try {
-      setProgress('Chargement de FFmpeg…');
-      const { FFmpeg } = await import('@ffmpeg/ffmpeg');
+      const { FFmpeg }               = await import('@ffmpeg/ffmpeg');
       const { fetchFile, toBlobURL } = await import('@ffmpeg/util');
-
       const ffmpeg = new FFmpeg();
 
-      // Charger FFmpeg en mode single-thread (pas besoin de SharedArrayBuffer)
       const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
       await ffmpeg.load({
-        coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+        coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`,   'text/javascript'),
         wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
       });
 
-      setProgress('Lecture de la vidéo…');
-      const inputData = await fetchFile(file);
-      await ffmpeg.writeFile('input.mp4', inputData);
+      if (!cropParams) setProgress('Lecture de la vidéo…');
 
-      const duration = endOffset - startOffset;
+      const ext  = file.name.split('.').pop() || 'mp4';
+      const data = await fetchFile(file);
+      await ffmpeg.writeFile(`input.${ext}`, data);
 
-      // Construire le filtre vidéo
-      let vf = `fps=10`;
+      const duration = endTime - startTime;
 
-      // Appliquer le crop si défini
-      if (completedCrop && completedCrop.width > 0 && completedCrop.height > 0 && videoRef.current) {
-        const video = videoRef.current;
-        const scaleX = video.videoWidth / video.clientWidth;
-        const scaleY = video.videoHeight / video.clientHeight;
-        const cropW = Math.round(completedCrop.width * scaleX);
-        const cropH = Math.round(completedCrop.height * scaleY);
-        const cropX = Math.round(completedCrop.x * scaleX);
-        const cropY = Math.round(completedCrop.y * scaleY);
-        vf = `crop=${cropW}:${cropH}:${cropX}:${cropY},fps=10,scale=500:-1:flags=lanczos`;
-      } else {
-        vf = `fps=10,scale=500:-1:flags=lanczos`;
+      // Filtre vidéo
+      let vf = 'fps=10,scale=500:-1:flags=lanczos';
+      if (cropParams) {
+        const { w, h, x, y } = cropParams;
+        vf = `crop=${w}:${h}:${x}:${y},fps=10,scale=500:-1:flags=lanczos`;
       }
 
-      setProgress('Génération du GIF…');
+      if (!cropParams) setProgress('Génération du GIF…');
+
       await ffmpeg.exec([
-        '-ss', String(startOffset),
-        '-t', String(duration),
-        '-i', 'input.mp4',
+        '-ss', String(startTime),
+        '-t',  String(duration),
+        '-i',  `input.${ext}`,
         '-vf', `${vf},split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse`,
         '-loop', '0',
-        'output.gif'
+        'output.gif',
       ]);
 
-      setProgress('Finalisation…');
-      const data = await ffmpeg.readFile('output.gif');
-      const blob = new Blob([data as any], { type: 'image/gif' });
-      const url = URL.createObjectURL(blob);
-      setGifUrl(url);
-      toast.success('GIF généré avec succès !');
+      if (!cropParams) setProgress('Finalisation…');
+
+      const out  = await ffmpeg.readFile('output.gif');
+      const blob = new Blob([out as any], { type: 'image/gif' });
+      const url  = URL.createObjectURL(blob);
+
+      if (cropParams) {
+        setCroppedGifUrl(url);
+        toast.success('Recadrage appliqué !');
+      } else {
+        setGifBlob(blob);
+        setGifUrl(url);
+        setCroppedGifUrl('');
+        setCrop(undefined);
+        setCompletedCrop(undefined);
+        setPhase('result');
+        toast.success('GIF généré avec succès !');
+      }
     } catch (err: any) {
       console.error(err);
       toast.error('Erreur : ' + (err.message || 'Problème lors de la génération.'));
+      if (!cropParams) setPhase('trim');
     } finally {
-      setProcessing(false);
+      if (cropParams) setCropping(false);
       setProgress('');
     }
-  }, [file, startOffset, endOffset, completedCrop]);
+  }, [file, startTime, endTime]);
 
+  // ── Appliquer le crop sur le GIF ─────────────────────────────────────────
+  const applyCrop = useCallback(() => {
+    if (!completedCrop || !gifImgRef.current) return;
+
+    const img    = gifImgRef.current;
+    const scaleX = img.naturalWidth  / img.clientWidth;
+    const scaleY = img.naturalHeight / img.clientHeight;
+
+    const w = Math.round(completedCrop.width  * scaleX);
+    const h = Math.round(completedCrop.height * scaleY);
+    const x = Math.round(completedCrop.x      * scaleX);
+    const y = Math.round(completedCrop.y      * scaleY);
+
+    generateGif({ w, h, x, y });
+  }, [completedCrop, generateGif]);
+
+  // ── URL finale à afficher ─────────────────────────────────────────────────
+  const displayUrl = croppedGifUrl || gifUrl;
+
+  // ── Segment progress bar ──────────────────────────────────────────────────
+  const segmentLeft  = videoDuration > 0 ? (startTime / videoDuration) * 100 : 0;
+  const segmentWidth = videoDuration > 0 ? ((endTime - startTime) / videoDuration) * 100 : 0;
+
+  // ═════════════════════════════════════════════════════════════════════════
   return (
     <div className="p-6 md:p-10 bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-xl border-2 border-slate-100 dark:border-slate-800">
+
+      {/* En-tête */}
       <h2 className="text-2xl font-black mb-8 flex items-center gap-3 text-slate-900 dark:text-white tracking-tight">
         <div className="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-2xl text-primary-600 dark:text-primary-400">
           <ImageIcon className="w-6 h-6" />
         </div>
-        Créateur de GIF — 100% Local (Aucune API)
+        Créateur de GIF — 100% Local
       </h2>
 
-      {!localVideoUrl ? (
+      {/* ── PHASE : UPLOAD ────────────────────────────────────────────────── */}
+      {phase === 'upload' && (
         <div
           className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-[2rem] p-16 text-center hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
           onClick={() => fileInputRef.current?.click()}
+          onDragOver={e => e.preventDefault()}
+          onDrop={e => {
+            e.preventDefault();
+            const f = e.dataTransfer.files?.[0];
+            if (!f) return;
+            const dt = new DataTransfer();
+            dt.items.add(f);
+            if (fileInputRef.current) {
+              fileInputRef.current.files = dt.files;
+              fileInputRef.current.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+          }}
         >
           <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="video/*" className="hidden" />
           <Upload className="w-14 h-14 text-slate-300 dark:text-slate-600 mx-auto mb-5" />
-          <h3 className="text-xl font-bold text-slate-700 dark:text-slate-300">Sélectionnez une vidéo depuis votre PC</h3>
+          <h3 className="text-xl font-bold text-slate-700 dark:text-slate-300">Glissez ou sélectionnez une vidéo</h3>
           <p className="text-sm text-slate-400 mt-2">MP4, WebM, MOV… La conversion se fait entièrement dans votre navigateur.</p>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+      )}
 
-          {/* Panneau gauche : config */}
-          <div className="space-y-5">
-            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-3xl p-4 border border-slate-100 dark:border-slate-700 overflow-hidden">
-              <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">
-                1. Aperçu — Dessinez pour recadrer (optionnel)
-              </p>
+      {/* ── PHASE : TRIM ──────────────────────────────────────────────────── */}
+      {phase === 'trim' && (
+        <div className="space-y-6">
+
+          {/* Lecteur vidéo */}
+          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-3xl p-4 border border-slate-100 dark:border-slate-700">
+            <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">
+              Étape 1 — Jouez la vidéo et choisissez votre séquence
+            </p>
+            <video
+              ref={videoRef}
+              src={videoUrl}
+              className="w-full max-h-[340px] object-contain rounded-xl bg-black"
+              controls
+              onLoadedMetadata={() => {
+                const dur = videoRef.current?.duration ?? 0;
+                setVideoDuration(dur);
+                setEndTime(Math.min(5, dur));
+              }}
+            />
+          </div>
+
+          {/* Barre visuelle de sélection */}
+          <div className="space-y-2">
+            <div className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
+              <span>0:00</span>
+              <span>{formatTime(videoDuration)}</span>
+            </div>
+            <div className="relative h-4 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+              <div
+                className="absolute h-full bg-primary-500 rounded-full transition-all"
+                style={{ left: `${segmentLeft}%`, width: `${segmentWidth}%` }}
+              />
+            </div>
+            <div className="flex justify-between text-xs font-semibold text-primary-600">
+              <span>Début : {formatTime(startTime)}</span>
+              <span>Durée : {formatTime(endTime - startTime)}</span>
+              <span>Fin : {formatTime(endTime)}</span>
+            </div>
+          </div>
+
+          {/* Boutons fixer + générer */}
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={setStart}
+              className="flex items-center justify-center gap-2 py-4 bg-slate-100 dark:bg-slate-800 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-700 rounded-2xl text-sm font-bold transition-colors border-2 border-slate-200 dark:border-slate-700"
+            >
+              <Play className="w-4 h-4" /> Fixer le début ici
+            </button>
+            <button
+              onClick={setEnd}
+              className="flex items-center justify-center gap-2 py-4 bg-slate-100 dark:bg-slate-800 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-700 rounded-2xl text-sm font-bold transition-colors border-2 border-slate-200 dark:border-slate-700"
+            >
+              <Square className="w-4 h-4" /> Fixer la fin ici
+            </button>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={() => { setPhase('upload'); setFile(null); setVideoUrl(''); }}
+              className="flex items-center gap-2 px-5 py-3.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+            >
+              <RotateCcw className="w-4 h-4" /> Changer
+            </button>
+            <button
+              onClick={() => generateGif()}
+              disabled={endTime <= startTime}
+              className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-primary-600 hover:bg-primary-500 disabled:opacity-50 text-white text-sm font-bold rounded-xl shadow-lg shadow-primary-500/20 transition-all"
+            >
+              <ImageIcon className="w-4 h-4" />
+              Étape 2 — Générer le GIF
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── PHASE : GENERATING ────────────────────────────────────────────── */}
+      {phase === 'generating' && (
+        <div className="flex flex-col items-center justify-center py-24 gap-6">
+          <div className="relative">
+            <div className="w-20 h-20 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+              <Loader2 className="w-10 h-10 text-primary-600 animate-spin" />
+            </div>
+          </div>
+          <div className="text-center">
+            <p className="text-lg font-bold text-slate-800 dark:text-white">{progress || 'Traitement en cours…'}</p>
+            <p className="text-sm text-slate-400 mt-1">FFmpeg travaille dans votre navigateur</p>
+          </div>
+        </div>
+      )}
+
+      {/* ── PHASE : RÉSULTAT ──────────────────────────────────────────────── */}
+      {phase === 'result' && (
+        <div className="space-y-8">
+
+          {/* GIF avec outil de crop */}
+          <div className="bg-slate-50 dark:bg-slate-800/30 rounded-3xl p-5 border-2 border-dashed border-slate-200 dark:border-slate-700">
+            <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">
+              Étape 3 — Dessinez pour recadrer votre GIF (optionnel)
+            </p>
+
+            <div className="flex justify-center">
               <ReactCrop
                 crop={crop}
                 onChange={(_, pct) => setCrop(pct)}
-                onComplete={(px) => setCompletedCrop(px)}
+                onComplete={px => setCompletedCrop(px)}
+                ruleOfThirds
               >
-                <video
-                  ref={videoRef}
-                  src={localVideoUrl}
-                  className="max-h-[280px] w-full object-contain rounded-xl"
-                  controls
-                  controlsList="nodownload nofullscreen"
+                {/* On affiche le GIF final (ou rognÃ©) */}
+                <img
+                  ref={gifImgRef}
+                  src={displayUrl}
+                  alt="GIF généré"
+                  className="max-w-full max-h-[400px] object-contain rounded-xl"
                 />
               </ReactCrop>
-              <p className="text-[10px] text-center text-slate-400 mt-2">
-                Dessinez un rectangle sur la vidéo pour recadrer (optionnel)
-              </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700">
-                <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">
-                  Début : <span className="text-primary-600">{startOffset}s</span>
-                </p>
-                <button
-                  onClick={handleSetStart}
-                  className="w-full py-2.5 bg-slate-200 dark:bg-slate-700 hover:bg-primary-100 dark:hover:bg-primary-900/30 hover:text-primary-700 rounded-xl text-xs font-bold transition-colors"
-                >
-                  ▶ Fixer ici
-                </button>
-              </div>
-              <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700">
-                <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">
-                  Fin : <span className="text-primary-600">{endOffset}s</span>
-                </p>
-                <button
-                  onClick={handleSetEnd}
-                  className="w-full py-2.5 bg-slate-200 dark:bg-slate-700 hover:bg-primary-100 dark:hover:bg-primary-900/30 hover:text-primary-700 rounded-xl text-xs font-bold transition-colors"
-                >
-                  ⏹ Fixer ici
-                </button>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => { setLocalVideoUrl(''); setFile(null); setGifUrl(''); }}
-                className="px-5 py-3.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
-              >
-                Changer
-              </button>
-              <button
-                onClick={generateGif}
-                disabled={processing}
-                className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-primary-600 hover:bg-primary-500 disabled:opacity-60 text-white text-sm font-bold rounded-xl shadow-lg shadow-primary-500/20 transition-all"
-              >
-                {processing ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> {progress || 'En cours…'}</>
-                ) : (
-                  '2. Générer le GIF'
-                )}
-              </button>
-            </div>
+            <p className="text-center text-[11px] text-slate-400 mt-3">
+              Dessinez un rectangle sur le GIF pour le recadrer, puis cliquez "Appliquer le recadrage"
+            </p>
           </div>
 
-          {/* Panneau droit : résultat */}
-          <div className="bg-slate-50 dark:bg-slate-800/30 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-[2.5rem] p-6 flex flex-col items-center justify-center min-h-[400px]">
-            {gifUrl ? (
-              <div className="w-full space-y-5 text-center">
-                <img src={gifUrl} alt="GIF généré" className="max-w-full max-h-[350px] mx-auto rounded-2xl shadow-lg object-contain" />
-                <a
-                  href={gifUrl}
-                  download="produit.gif"
-                  className="inline-flex items-center gap-2 px-8 py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold rounded-2xl shadow-lg hover:scale-105 transition-transform text-sm"
-                >
-                  <Download className="w-5 h-5" />
-                  Télécharger le GIF
-                </a>
-              </div>
-            ) : (
-              <div className="text-center space-y-4">
-                <ImageIcon className="w-14 h-14 text-slate-300 dark:text-slate-600 mx-auto" />
-                <p className="text-slate-400 dark:text-slate-500 text-sm font-medium px-8">
-                  Votre GIF apparaîtra ici. La génération se fait en local, sans aucune API.
-                </p>
-              </div>
-            )}
+          {/* Actions */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={() => { setPhase('trim'); }}
+              className="flex items-center justify-center gap-2 px-5 py-3.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+            >
+              <RotateCcw className="w-4 h-4" /> Recommencer
+            </button>
+
+            <button
+              onClick={applyCrop}
+              disabled={!completedCrop || cropping}
+              className="flex items-center justify-center gap-2 px-6 py-3.5 bg-slate-700 hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-bold rounded-xl transition-all"
+            >
+              {cropping
+                ? <><Loader2 className="w-4 h-4 animate-spin" /> Recadrage…</>
+                : <><Crop className="w-4 h-4" /> Appliquer le recadrage</>
+              }
+            </button>
+
+            <a
+              href={displayUrl}
+              download={croppedGifUrl ? 'produit-recadre.gif' : 'produit.gif'}
+              className="flex-1 flex items-center justify-center gap-2 px-8 py-3.5 bg-primary-600 hover:bg-primary-500 text-white font-bold rounded-xl shadow-lg shadow-primary-500/20 hover:scale-105 transition-transform text-sm"
+            >
+              <Download className="w-5 h-5" />
+              Télécharger le GIF
+            </a>
           </div>
 
+          {croppedGifUrl && (
+            <p className="text-center text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
+              ✅ GIF recadré — prêt au téléchargement !
+            </p>
+          )}
         </div>
       )}
     </div>
