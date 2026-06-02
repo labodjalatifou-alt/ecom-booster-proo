@@ -56,7 +56,7 @@ const menuGroups = [
       { name: 'Page Shopify', icon: Store, href: '/page-shopify' },
       { name: 'Textes Publicitaires', icon: FileText, href: '/textes-publicitaires' },
       { name: 'Script Voix Off', icon: Mic, href: '/script-voix-off' },
-      { name: 'Montage Vidéo', icon: Film, href: '/montage-video' },
+      { name: 'Création GIF', icon: Film, href: '/montage-video' },
       { name: 'Publicité Facebook', icon: Megaphone, href: '/publicite-facebook' },
     ]
   },
