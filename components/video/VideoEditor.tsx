@@ -18,7 +18,8 @@ export default function VideoEditor() {
           const config: any = {
             role: 'Creator',
             theme: 'dark',
-            license: '', 
+            license: '',
+            baseURL: 'https://cdn.img.ly/packages/imgly/cesdk-js/1.75.1/assets',
             ui: {
               elements: {
                 view: 'default',
