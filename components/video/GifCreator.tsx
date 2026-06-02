@@ -1,149 +1,121 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Image as ImageIcon, Upload, Video, CheckCircle2, Crop as CropIcon, Play, Pause, AlertTriangle } from 'lucide-react';
-import toast from 'react-hot-toast';
-import ReactCrop, { type Crop } from 'react-image-crop';
+import React, { useState, useRef, useCallback } from 'react';
+import { Image as ImageIcon, Upload, Download, Loader2, RefreshCw } from 'lucide-react';
+import ReactCrop, { type Crop, type PixelCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
+import toast from 'react-hot-toast';
 
 export default function GifCreator() {
   const [file, setFile] = useState<File | null>(null);
-  const [localVideoUrl, setLocalVideoUrl] = useState<string>('');
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadedVideoId, setUploadedVideoId] = useState('');
-  
-  const [startOffset, setStartOffset] = useState<number>(0);
-  const [duration, setDuration] = useState<number>(5);
+  const [localVideoUrl, setLocalVideoUrl] = useState('');
+  const [startOffset, setStartOffset] = useState(0);
+  const [endOffset, setEndOffset] = useState(5);
   const [crop, setCrop] = useState<Crop>();
-  const [realCrop, setRealCrop] = useState({ x: 0, y: 0, w: 0, h: 0 });
-  const [cloudError, setCloudError] = useState<string | null>(null);
-  
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
+  const [gifUrl, setGifUrl] = useState('');
+  const [processing, setProcessing] = useState(false);
+  const [progress, setProgress] = useState('');
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || '';
-  const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || '';
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const selected = e.target.files[0];
-      if (!selected.type.startsWith('video/')) {
-        toast.error("Veuillez sélectionner un fichier vidéo valide.");
-        return;
-      }
-      setFile(selected);
-      const url = URL.createObjectURL(selected);
-      setLocalVideoUrl(url);
-      setUploadedVideoId('');
-      setUploadProgress(0);
-      setCloudError(null);
-      setCrop(undefined);
-      setRealCrop({ x: 0, y: 0, w: 0, h: 0 });
+    const selected = e.target.files?.[0];
+    if (!selected) return;
+    if (!selected.type.startsWith('video/')) {
+      toast.error('Veuillez sélectionner un fichier vidéo.');
+      return;
     }
+    setFile(selected);
+    setLocalVideoUrl(URL.createObjectURL(selected));
+    setGifUrl('');
+    setCrop(undefined);
+    setCompletedCrop(undefined);
+    setStartOffset(0);
+    setEndOffset(5);
   };
 
   const handleSetStart = () => {
-    if (videoRef.current) {
-      const current = Math.floor(videoRef.current.currentTime);
-      setStartOffset(current);
-      toast.success(`Début défini à ${current}s`);
-    }
+    const t = Math.floor(videoRef.current?.currentTime ?? 0);
+    setStartOffset(t);
+    if (t >= endOffset) setEndOffset(t + 3);
+    toast.success(`Début : ${t}s`);
   };
 
-  const handleSetDuration = () => {
-    if (videoRef.current) {
-      const current = Math.floor(videoRef.current.currentTime);
-      if (current <= startOffset) {
-        toast.error("La fin doit être après le début !");
-        return;
-      }
-      const newDuration = current - startOffset;
-      setDuration(newDuration);
-      toast.success(`Durée définie à ${newDuration}s`);
-    }
+  const handleSetEnd = () => {
+    const t = Math.floor(videoRef.current?.currentTime ?? 0);
+    if (t <= startOffset) { toast.error('La fin doit être après le début !'); return; }
+    setEndOffset(t);
+    toast.success(`Fin : ${t}s`);
   };
 
-  const onCropComplete = (crop: Crop, percentCrop: Crop) => {
-    if (videoRef.current && percentCrop.width && percentCrop.height) {
-      const video = videoRef.current;
-      const w = Math.round((percentCrop.width / 100) * video.videoWidth);
-      const h = Math.round((percentCrop.height / 100) * video.videoHeight);
-      const x = Math.round((percentCrop.x / 100) * video.videoWidth);
-      const y = Math.round((percentCrop.y / 100) * video.videoHeight);
-      setRealCrop({ x, y, w, h });
-    } else {
-      setRealCrop({ x: 0, y: 0, w: 0, h: 0 });
-    }
-  };
-
-  const handleUploadAndGenerate = () => {
+  const generateGif = useCallback(async () => {
     if (!file) return;
-    if (!cloudName || !uploadPreset) {
-      toast.error("Cloudinary n'est pas configuré (.env.local)");
-      return;
-    }
+    setProcessing(true);
+    setGifUrl('');
 
-    setUploading(true);
-    setUploadProgress(0);
-    setCloudError(null);
+    try {
+      setProgress('Chargement de FFmpeg…');
+      const { FFmpeg } = await import('@ffmpeg/ffmpeg');
+      const { fetchFile, toBlobURL } = await import('@ffmpeg/util');
 
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', uploadPreset);
+      const ffmpeg = new FFmpeg();
 
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`, true);
+      // Charger FFmpeg en mode single-thread (pas besoin de SharedArrayBuffer)
+      const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+      await ffmpeg.load({
+        coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+        wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+      });
 
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable) {
-        const percentComplete = Math.round((e.loaded / e.total) * 100);
-        setUploadProgress(percentComplete);
-      }
-    };
+      setProgress('Lecture de la vidéo…');
+      const inputData = await fetchFile(file);
+      await ffmpeg.writeFile('input.mp4', inputData);
 
-    xhr.onload = () => {
-      if (xhr.status === 200) {
-        const response = JSON.parse(xhr.responseText);
-        setUploadedVideoId(response.public_id);
-        toast.success("GIF généré avec succès !");
+      const duration = endOffset - startOffset;
+
+      // Construire le filtre vidéo
+      let vf = `fps=10`;
+
+      // Appliquer le crop si défini
+      if (completedCrop && completedCrop.width > 0 && completedCrop.height > 0 && videoRef.current) {
+        const video = videoRef.current;
+        const scaleX = video.videoWidth / video.clientWidth;
+        const scaleY = video.videoHeight / video.clientHeight;
+        const cropW = Math.round(completedCrop.width * scaleX);
+        const cropH = Math.round(completedCrop.height * scaleY);
+        const cropX = Math.round(completedCrop.x * scaleX);
+        const cropY = Math.round(completedCrop.y * scaleY);
+        vf = `crop=${cropW}:${cropH}:${cropX}:${cropY},fps=10,scale=500:-1:flags=lanczos`;
       } else {
-        try {
-          const response = JSON.parse(xhr.responseText);
-          setCloudError(response.error?.message || "Erreur inconnue");
-        } catch {
-          setCloudError(xhr.responseText);
-        }
-        toast.error("Erreur lors de la génération");
+        vf = `fps=10,scale=500:-1:flags=lanczos`;
       }
-      setUploading(false);
-    };
 
-    xhr.onerror = () => {
-      setCloudError("Erreur de connexion internet ou bloqueur de publicité actif.");
-      toast.error("Erreur de connexion");
-      setUploading(false);
-    };
+      setProgress('Génération du GIF…');
+      await ffmpeg.exec([
+        '-ss', String(startOffset),
+        '-t', String(duration),
+        '-i', 'input.mp4',
+        '-vf', `${vf},split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse`,
+        '-loop', '0',
+        'output.gif'
+      ]);
 
-    xhr.send(formData);
-  };
-
-  const generateGifUrl = () => {
-    if (!uploadedVideoId || !cloudName) return '';
-    let transforms = `so_${startOffset},du_${duration}`;
-    
-    // Appliquer le crop si défini
-    if (realCrop.w > 0 && realCrop.h > 0) {
-      transforms += `,c_crop,w_${realCrop.w},h_${realCrop.h},x_${realCrop.x},y_${realCrop.y}`;
-    } else {
-      // Crop par défaut pour éviter un gif énorme
-      transforms += `,c_limit,w_500`;
+      setProgress('Finalisation…');
+      const data = await ffmpeg.readFile('output.gif');
+      const blob = new Blob([data], { type: 'image/gif' });
+      const url = URL.createObjectURL(blob);
+      setGifUrl(url);
+      toast.success('GIF généré avec succès !');
+    } catch (err: any) {
+      console.error(err);
+      toast.error('Erreur : ' + (err.message || 'Problème lors de la génération.'));
+    } finally {
+      setProcessing(false);
+      setProgress('');
     }
-
-    return `https://res.cloudinary.com/${cloudName}/video/upload/${transforms}/${uploadedVideoId}.gif`;
-  };
-
-  const generatedUrl = generateGifUrl();
+  }, [file, startOffset, endOffset, completedCrop]);
 
   return (
     <div className="p-6 md:p-10 bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-xl border-2 border-slate-100 dark:border-slate-800">
@@ -151,124 +123,111 @@ export default function GifCreator() {
         <div className="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-2xl text-primary-600 dark:text-primary-400">
           <ImageIcon className="w-6 h-6" />
         </div>
-        Créateur de GIF Visuel
+        Créateur de GIF — 100% Local (Aucune API)
       </h2>
-      
+
       {!localVideoUrl ? (
-        <div 
-          className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-[2rem] p-12 text-center hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
+        <div
+          className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-[2rem] p-16 text-center hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
           onClick={() => fileInputRef.current?.click()}
         >
           <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="video/*" className="hidden" />
-          <Upload className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
-          <h3 className="text-lg font-bold text-slate-700 dark:text-slate-300">Sélectionnez une vidéo depuis votre PC</h3>
-          <p className="text-sm text-slate-400 mt-2">MP4, WebM, MOV... La vidéo sera traitée pour générer un GIF.</p>
+          <Upload className="w-14 h-14 text-slate-300 dark:text-slate-600 mx-auto mb-5" />
+          <h3 className="text-xl font-bold text-slate-700 dark:text-slate-300">Sélectionnez une vidéo depuis votre PC</h3>
+          <p className="text-sm text-slate-400 mt-2">MP4, WebM, MOV… La conversion se fait entièrement dans votre navigateur.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-          
-          {/* Panneau de configuration Visuel */}
-          <div className="space-y-6">
-            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-3xl p-4 overflow-hidden relative border border-slate-100 dark:border-slate-700">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                <CropIcon className="w-4 h-4" /> 1. Aperçu & Recadrage
+
+          {/* Panneau gauche : config */}
+          <div className="space-y-5">
+            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-3xl p-4 border border-slate-100 dark:border-slate-700 overflow-hidden">
+              <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">
+                1. Aperçu — Dessinez pour recadrer (optionnel)
               </p>
-              
-              <div className="relative mx-auto w-fit bg-black rounded-xl overflow-hidden shadow-inner">
-                <ReactCrop 
-                  crop={crop} 
-                  onChange={(_, percentCrop) => setCrop(percentCrop)}
-                  onComplete={(c, pc) => onCropComplete(c, pc)}
-                >
-                  <video 
-                    ref={videoRef}
-                    src={localVideoUrl} 
-                    className="max-h-[300px] w-auto max-w-full"
-                    controls
-                    controlsList="nodownload nofullscreen"
-                  />
-                </ReactCrop>
-              </div>
-              <p className="text-[10px] text-center text-slate-400 mt-2">Dessinez un rectangle sur la vidéo pour recadrer le GIF (Optionnel)</p>
+              <ReactCrop
+                crop={crop}
+                onChange={(_, pct) => setCrop(pct)}
+                onComplete={(px) => setCompletedCrop(px)}
+              >
+                <video
+                  ref={videoRef}
+                  src={localVideoUrl}
+                  className="max-h-[280px] w-full object-contain rounded-xl"
+                  controls
+                  controlsList="nodownload nofullscreen"
+                />
+              </ReactCrop>
+              <p className="text-[10px] text-center text-slate-400 mt-2">
+                Dessinez un rectangle sur la vidéo pour recadrer (optionnel)
+              </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 space-y-3">
-                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Début : {startOffset}s</p>
-                 <button 
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700">
+                <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">
+                  Début : <span className="text-primary-600">{startOffset}s</span>
+                </p>
+                <button
                   onClick={handleSetStart}
-                  className="w-full py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 rounded-xl text-xs font-bold transition-colors"
-                 >
-                   Fixer au moment actuel
-                 </button>
+                  className="w-full py-2.5 bg-slate-200 dark:bg-slate-700 hover:bg-primary-100 dark:hover:bg-primary-900/30 hover:text-primary-700 rounded-xl text-xs font-bold transition-colors"
+                >
+                  ▶ Fixer ici
+                </button>
               </div>
-              <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 space-y-3">
-                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Durée : {duration}s</p>
-                 <button 
-                  onClick={handleSetDuration}
-                  className="w-full py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 rounded-xl text-xs font-bold transition-colors"
-                 >
-                   Fixer la durée d'ici
-                 </button>
+              <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700">
+                <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">
+                  Fin : <span className="text-primary-600">{endOffset}s</span>
+                </p>
+                <button
+                  onClick={handleSetEnd}
+                  className="w-full py-2.5 bg-slate-200 dark:bg-slate-700 hover:bg-primary-100 dark:hover:bg-primary-900/30 hover:text-primary-700 rounded-xl text-xs font-bold transition-colors"
+                >
+                  ⏹ Fixer ici
+                </button>
               </div>
             </div>
 
             <div className="flex gap-3">
-              <button 
-                onClick={() => setLocalVideoUrl('')}
-                className="px-4 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-sm font-bold rounded-xl transition-all"
+              <button
+                onClick={() => { setLocalVideoUrl(''); setFile(null); setGifUrl(''); }}
+                className="px-5 py-3.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
               >
-                Changer de vidéo
+                Changer
               </button>
-              <button 
-                onClick={handleUploadAndGenerate}
-                disabled={uploading}
-                className="flex-1 py-3 bg-primary-600 hover:bg-primary-500 disabled:opacity-50 text-white text-sm font-bold rounded-xl shadow-lg shadow-primary-500/20 transition-all"
+              <button
+                onClick={generateGif}
+                disabled={processing}
+                className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-primary-600 hover:bg-primary-500 disabled:opacity-60 text-white text-sm font-bold rounded-xl shadow-lg shadow-primary-500/20 transition-all"
               >
-                {uploading ? `Génération en cours (${uploadProgress}%)` : "2. Générer le GIF"}
+                {processing ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> {progress || 'En cours…'}</>
+                ) : (
+                  '2. Générer le GIF'
+                )}
               </button>
             </div>
-
-            {cloudError && (
-              <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-2xl flex gap-3">
-                <AlertTriangle className="w-5 h-5 text-red-500 shrink-0" />
-                <div>
-                  <p className="text-sm font-bold text-red-700 dark:text-red-400">Erreur Cloudinary</p>
-                  <p className="text-xs text-red-600 dark:text-red-500 mt-1">{cloudError}</p>
-                </div>
-              </div>
-            )}
           </div>
-          
-          {/* Panneau de Résultat */}
-          <div className="bg-slate-50 dark:bg-slate-800/30 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-[2.5rem] p-6 flex flex-col items-center justify-center relative overflow-hidden">
-            {uploadedVideoId ? (
-              <div className="w-full space-y-6">
-                <img 
-                  src={generatedUrl} 
-                  alt="Aperçu GIF final" 
-                  className="max-w-full max-h-[350px] mx-auto rounded-2xl object-contain shadow-lg" 
-                />
-                <div className="p-4 bg-white dark:bg-slate-900 border-2 border-primary-100 dark:border-primary-900/30 rounded-2xl space-y-3">
-                  <p className="text-[11px] font-black text-primary-600 dark:text-primary-400 uppercase tracking-widest text-center">
-                    Lien GIF Prêt
-                  </p>
-                  <a href={generatedUrl} target="_blank" rel="noreferrer" className="text-xs font-medium text-slate-700 dark:text-slate-300 break-all text-center block hover:text-primary-600">
-                    {generatedUrl}
-                  </a>
-                  <button 
-                    onClick={() => navigator.clipboard.writeText(generatedUrl)}
-                    className="w-full py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold rounded-xl shadow-sm hover:scale-105 transition-transform"
-                  >
-                    Copier le lien
-                  </button>
-                </div>
+
+          {/* Panneau droit : résultat */}
+          <div className="bg-slate-50 dark:bg-slate-800/30 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-[2.5rem] p-6 flex flex-col items-center justify-center min-h-[400px]">
+            {gifUrl ? (
+              <div className="w-full space-y-5 text-center">
+                <img src={gifUrl} alt="GIF généré" className="max-w-full max-h-[350px] mx-auto rounded-2xl shadow-lg object-contain" />
+                <a
+                  href={gifUrl}
+                  download="produit.gif"
+                  className="inline-flex items-center gap-2 px-8 py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold rounded-2xl shadow-lg hover:scale-105 transition-transform text-sm"
+                >
+                  <Download className="w-5 h-5" />
+                  Télécharger le GIF
+                </a>
               </div>
             ) : (
               <div className="text-center space-y-4">
-                <ImageIcon className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto" />
+                <ImageIcon className="w-14 h-14 text-slate-300 dark:text-slate-600 mx-auto" />
                 <p className="text-slate-400 dark:text-slate-500 text-sm font-medium px-8">
-                  Configurez votre GIF à gauche, puis cliquez sur "Générer". L'aperçu final apparaîtra ici.
+                  Votre GIF apparaîtra ici. La génération se fait en local, sans aucune API.
                 </p>
               </div>
             )}
