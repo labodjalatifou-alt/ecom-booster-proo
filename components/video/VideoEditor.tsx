@@ -15,7 +15,7 @@ export default function VideoEditor() {
         const CreativeEditorSDK = (await import('@cesdk/cesdk-js')).default;
         
         if (containerRef.current) {
-          const config = {
+          const config: any = {
             role: 'Creator',
             theme: 'dark',
             // Licence optionnelle. Vide = Community/Developer Edition
