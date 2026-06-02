@@ -24,6 +24,10 @@ export default function VideoEditor() {
           
           cesdk = await CreativeEditorSDK.create(containerRef.current, config);
           
+          // CRITIQUE : Charger les assets par défaut (tailles d'écran, polices, etc.)
+          await cesdk.addDefaultAssetSources();
+          await cesdk.addDemoAssetSources({ sceneMode: 'Video' });
+          
           // Créer une scène vidéo via l'API de l'éditeur (pour initialiser l'UI correctement)
           if (cesdk.actions && cesdk.actions.run) {
             await cesdk.actions.run('scene.create', { mode: 'Video' });
