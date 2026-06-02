@@ -104,7 +104,7 @@ export default function GifCreator() {
 
       setProgress('Finalisation…');
       const data = await ffmpeg.readFile('output.gif');
-      const blob = new Blob([data], { type: 'image/gif' });
+      const blob = new Blob([data as any], { type: 'image/gif' });
       const url = URL.createObjectURL(blob);
       setGifUrl(url);
       toast.success('GIF généré avec succès !');
