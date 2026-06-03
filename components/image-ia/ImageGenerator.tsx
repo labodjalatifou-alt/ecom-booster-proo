@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Upload, ImageIcon, Loader2, Download, CheckCircle2, RefreshCw } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
-import removeBackground from '@imgly/background-removal';
+import { removeBackground } from '@imgly/background-removal';
 
 function getAverageColor(imgElement: HTMLImageElement): { r: number, g: number, b: number } {
   const canvas = document.createElement('canvas');
