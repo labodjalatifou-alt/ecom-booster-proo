@@ -89,10 +89,10 @@ export default function ImageGenerator() {
       const blob = await fetch(sourceImage).then(r => r.blob());
 
       // webpackIgnore tells Turbopack to NOT analyze this import at build time.
-      // The browser loads it at runtime from the CDN — zero build conflict.
+      // esm.sh rewrites all bare specifiers (lodash etc.) to absolute CDN URLs — zero browser errors.
       const { removeBackground } = await import(
         /* webpackIgnore: true */
-        'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/dist/index.mjs' as string
+        'https://esm.sh/@imgly/background-removal@1.4.5' as string
       );
 
       const transparentBlob = await removeBackground(blob);
