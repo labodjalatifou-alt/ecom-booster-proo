@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     // Use BRIA RMBG model for background removal - very high quality
     const result = await hf.imageSegmentation({
       model: 'briaai/RMBG-1.4',
-      data: imageBlob,
+      inputs: imageBlob,
     });
 
     // Convert result to PNG with transparency
