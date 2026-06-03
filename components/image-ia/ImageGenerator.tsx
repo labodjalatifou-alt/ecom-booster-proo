@@ -84,17 +84,13 @@ export default function ImageGenerator() {
     setProgress(0);
 
     try {
-      // STEP 1: Remove background via HF API
-      setStatusText('Étape 1/4 : Détourage via Hugging Face IA...');
+      // STEP 1: Remove background via local imgly (Zero server cost, instant)
+      setStatusText('Étape 1/4 : Détourage précis de l\'image...');
       const blob = await fetch(sourceImage).then(r => r.blob());
-      const form = new FormData();
-      form.append('image', blob, 'product.png');
-
-      const removeBgRes = await fetch('/api/image-ia/remove-bg', { method: 'POST', body: form });
-      const removeBgData = await removeBgRes.json();
-      if (removeBgData.error) throw new Error(removeBgData.error);
-
-      const transparentDataUrl: string = removeBgData.image;
+      const { removeBackground } = await import('@imgly/background-removal');
+      
+      const transparentBlob = await removeBackground(blob);
+      const transparentDataUrl = URL.createObjectURL(transparentBlob);
       setProgress(20);
 
       // STEP 2: Analyze color
