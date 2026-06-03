@@ -128,18 +128,29 @@ export default function ImageGenerator() {
       ctxWhite.drawImage(transparentImg, (1080 - w) / 2, (1080 - h) / 2, w, h);
       images.push(canvasWhite.toDataURL('image/jpeg', 0.9));
 
-      // Images 2 & 3: AI Backgrounds
+      // Images 2 & 3: AI Backgrounds via Hugging Face FLUX.1
       const prompts = [
-        `a clean minimalistic product photography podium, ${colorName} tones, soft studio lighting, 8k resolution, photorealistic`,
-        `a beautiful lifestyle setting on a table, ${colorName} theme, natural window light, aesthetic, photorealistic`
+        `a clean minimalistic product photography empty podium, ${colorName} tones, soft studio lighting, 8k resolution, highly detailed, photorealistic, professional`,
+        `a beautiful empty lifestyle setting on a table, ${colorName} theme, natural window light, aesthetic, photorealistic, professional photography`
       ];
 
       for (let i = 0; i < prompts.length; i++) {
         try {
-          const bgSeed = Math.floor(Math.random() * 100000);
-          const bgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompts[i])}?seed=${bgSeed}&width=1080&height=1080&nologo=true`;
+          // Call our new internal API which uses Hugging Face
+          const response = await fetch('/api/image-ia/generate-bg', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: prompts[i] })
+          });
           
-          const bgImg = await loadImage(bgUrl);
+          if (!response.ok) {
+            throw new Error("Erreur de l'API de génération de décor");
+          }
+          
+          const data = await response.json();
+          if (data.error) throw new Error(data.error);
+
+          const bgImg = await loadImage(data.image);
           const canvasBg = document.createElement('canvas');
           canvasBg.width = 1080;
           canvasBg.height = 1080;
@@ -147,9 +158,9 @@ export default function ImageGenerator() {
           
           ctxBg.drawImage(bgImg, 0, 0, 1080, 1080);
           // Add soft shadow
-          ctxBg.shadowColor = 'rgba(0,0,0,0.3)';
-          ctxBg.shadowBlur = 40;
-          ctxBg.shadowOffsetY = 20;
+          ctxBg.shadowColor = 'rgba(0,0,0,0.4)';
+          ctxBg.shadowBlur = 50;
+          ctxBg.shadowOffsetY = 25;
           ctxBg.drawImage(transparentImg, (1080 - w) / 2, (1080 - h) / 2 + 50, w, h);
           
           images.push(canvasBg.toDataURL('image/jpeg', 0.9));
