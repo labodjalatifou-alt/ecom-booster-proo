@@ -26,9 +26,10 @@ export async function POST(req: Request) {
     });
 
     // Convert blob to base64
-    const buffer = Buffer.from(await blob.arrayBuffer());
+    const imageBlob = blob as unknown as Blob;
+    const buffer = Buffer.from(await imageBlob.arrayBuffer());
     const base64 = buffer.toString('base64');
-    const mimeType = blob.type;
+    const mimeType = imageBlob.type || 'image/jpeg';
 
     return NextResponse.json({
       image: `data:${mimeType};base64,${base64}`
