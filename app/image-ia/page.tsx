@@ -2,10 +2,7 @@ import React from 'react';
 import dynamic from 'next/dynamic';
 import { ImageIcon } from 'lucide-react';
 
-// Disable SSR for this component because it uses canvas and browser APIs heavily
-const ImageGenerator = dynamic(() => import('@/components/image-ia/ImageGenerator'), {
-  ssr: false,
-});
+import ImageGeneratorWrapper from '@/components/image-ia/ImageGeneratorWrapper';
 
 export default function ImageIAPage() {
   return (
@@ -23,7 +20,7 @@ export default function ImageIAPage() {
         </p>
       </div>
 
-      <ImageGenerator />
+      <ImageGeneratorWrapper />
     </div>
   );
 }
