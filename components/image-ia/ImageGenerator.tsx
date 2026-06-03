@@ -84,14 +84,19 @@ export default function ImageGenerator() {
     setProgress(0);
 
     try {
-      // STEP 1: Remove background via local imgly (Zero server cost, instant)
-      setStatusText('Étape 1/4 : Détourage précis de l\'image...');
+      // STEP 1: Remove background - dynamic import from CDN (invisible to Turbopack at build time)
+      setStatusText('Étape 1/4 : Détourage de l\'image en cours...');
       const blob = await fetch(sourceImage).then(r => r.blob());
-      
-      // Using global function loaded via CDN in page.tsx
-      // @ts-ignore
-      const transparentBlob = await window.imglyRemoveBackground(blob);
-      const transparentDataUrl = URL.createObjectURL(transparentBlob);
+
+      // webpackIgnore tells Turbopack to NOT analyze this import at build time.
+      // The browser loads it at runtime from the CDN — zero build conflict.
+      const { removeBackground } = await import(
+        /* webpackIgnore: true */
+        'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/dist/index.mjs' as string
+      );
+
+      const transparentBlob = await removeBackground(blob);
+      const transparentDataUrl = URL.createObjectURL(transparentBlob as Blob);
       setProgress(20);
 
       // STEP 2: Analyze color
