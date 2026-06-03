@@ -87,9 +87,10 @@ export default function ImageGenerator() {
       // STEP 1: Remove background via local imgly (Zero server cost, instant)
       setStatusText('Étape 1/4 : Détourage précis de l\'image...');
       const blob = await fetch(sourceImage).then(r => r.blob());
-      const { removeBackground } = await import('@imgly/background-removal');
       
-      const transparentBlob = await removeBackground(blob);
+      // Using global function loaded via CDN in page.tsx
+      // @ts-ignore
+      const transparentBlob = await window.imglyRemoveBackground(blob);
       const transparentDataUrl = URL.createObjectURL(transparentBlob);
       setProgress(20);
 

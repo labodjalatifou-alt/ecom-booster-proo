@@ -16,7 +16,6 @@
     "@ffmpeg/ffmpeg": "^0.12.15",
     "@ffmpeg/util": "^0.12.2",
     "@huggingface/inference": "^4.13.18",
-    "@imgly/background-removal": "^1.7.0",
     "@prisma/client": "^6.4.0",
     "@shopify/app-bridge-react": "^4.2.10",
     "@shopify/polaris": "^13.9.5",
