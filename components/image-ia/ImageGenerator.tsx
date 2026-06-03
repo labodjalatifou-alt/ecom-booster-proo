@@ -3,7 +3,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Upload, ImageIcon, Loader2, Download, CheckCircle2, RefreshCw } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
-import { removeBackground } from '@imgly/background-removal';
 
 function getAverageColor(imgElement: HTMLImageElement): { r: number, g: number, b: number } {
   const canvas = document.createElement('canvas');
@@ -100,6 +99,7 @@ export default function ImageGenerator() {
       
       // 1. Remove background
       const imageBlob = await fetch(sourceImage).then(r => r.blob());
+      const { removeBackground } = await import('@imgly/background-removal');
       const transparentBlob = await removeBackground(imageBlob);
       const transparentUrl = URL.createObjectURL(transparentBlob);
       const transparentImg = await loadImage(transparentUrl);
