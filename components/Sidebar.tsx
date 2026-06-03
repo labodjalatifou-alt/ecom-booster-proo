@@ -28,7 +28,8 @@ import {
   ClipboardList,
   FileText,
   Flame,
-  Film
+  Film,
+  Image as ImageIcon
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -58,6 +59,7 @@ const menuGroups = [
       { name: 'Script Voix Off', icon: Mic, href: '/script-voix-off' },
       { name: 'Création GIF', icon: Film, href: '/montage-video' },
       { name: 'Publicité Facebook', icon: Megaphone, href: '/publicite-facebook' },
+      { name: 'Image IA', icon: ImageIcon, href: '/image-ia' },
     ]
   },
   {
