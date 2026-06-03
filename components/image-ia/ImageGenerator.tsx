@@ -7,6 +7,7 @@ import * as htmlToImage from 'html-to-image';
 function getAverageColorFromDataUrl(dataUrl: string): Promise<{ r: number, g: number, b: number }> {
   return new Promise((resolve) => {
     const img = new Image();
+    img.crossOrigin = 'anonymous';
     img.onload = () => {
       const canvas = document.createElement('canvas');
       canvas.width = img.width;
@@ -84,19 +85,19 @@ export default function ImageGenerator() {
     setProgress(0);
 
     try {
-      // STEP 1: Remove background - dynamic import from CDN (invisible to Turbopack at build time)
-      setStatusText('Étape 1/4 : Détourage de l\'image en cours...');
-      const blob = await fetch(sourceImage).then(r => r.blob());
+      // STEP 1: Remove background via Fal API
+      setStatusText('Étape 1/4 : Détourage de l\'image avec Fal.ai...');
+      
+      const removeBgRes = await fetch('/api/image-ia/remove-bg', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: sourceImage })
+      });
+      const removeBgData = await removeBgRes.json();
+      if (removeBgData.error) throw new Error(removeBgData.error);
 
-      // webpackIgnore tells Turbopack to NOT analyze this import at build time.
-      // esm.sh rewrites all bare specifiers (lodash etc.) to absolute CDN URLs — zero browser errors.
-      const { removeBackground } = await import(
-        /* webpackIgnore: true */
-        'https://esm.sh/@imgly/background-removal@1.4.5' as string
-      );
-
-      const transparentBlob = await removeBackground(blob);
-      const transparentDataUrl = URL.createObjectURL(transparentBlob as Blob);
+      // The API returns the URL of the transparent image directly from Fal CDN
+      const transparentDataUrl: string = removeBgData.image;
       setProgress(20);
 
       // STEP 2: Analyze color

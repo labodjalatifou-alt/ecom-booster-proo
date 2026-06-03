@@ -13,6 +13,7 @@
     "@capacitor/core": "^8.3.4",
     "@capacitor/push-notifications": "^8.1.1",
     "@cesdk/cesdk-js": "^1.70.0",
+    "@fal-ai/client": "^1.10.1",
     "@ffmpeg/ffmpeg": "^0.12.15",
     "@ffmpeg/util": "^0.12.2",
     "@huggingface/inference": "^4.13.18",

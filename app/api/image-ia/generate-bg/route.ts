@@ -1,45 +1,38 @@
 import { NextResponse } from 'next/server';
-import { HfInference } from '@huggingface/inference';
+import { fal } from '@fal-ai/client';
 
 export async function POST(req: Request) {
   try {
     const { prompt } = await req.json();
 
-    if (!process.env.HUGGINGFACE_API_KEY) {
-      return NextResponse.json(
-        { error: 'Clé API Hugging Face manquante. Veuillez vérifier votre fichier .env.local' },
-        { status: 500 }
-      );
+    if (!prompt) {
+      return NextResponse.json({ error: 'Prompt manquant' }, { status: 400 });
     }
 
-    const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
+    if (!process.env.FAL_KEY) {
+      return NextResponse.json({ error: 'Clé API Fal manquante' }, { status: 500 });
+    }
 
-    // Call FLUX.1-schnell model for high quality product backgrounds
-    const blob = await hf.textToImage({
-      inputs: prompt,
-      model: 'black-forest-labs/FLUX.1-schnell',
-      parameters: {
-        num_inference_steps: 4, // FLUX.1-schnell is optimized for 4 steps
-        width: 1024,
-        height: 1024,
-      }
-    });
+    // Call Fal.ai FLUX schnell model
+    const result = await fal.subscribe("fal-ai/flux/schnell", {
+      input: {
+        prompt: prompt,
+        image_size: "square_hd",
+        num_inference_steps: 4,
+        num_images: 1,
+        enable_safety_checker: false
+      },
+      logs: true,
+    }) as any;
 
-    // Convert blob to base64
-    const imageBlob = blob as unknown as Blob;
-    const buffer = Buffer.from(await imageBlob.arrayBuffer());
-    const base64 = buffer.toString('base64');
-    const mimeType = imageBlob.type || 'image/jpeg';
-
-    return NextResponse.json({
-      image: `data:${mimeType};base64,${base64}`
-    });
+    if (result && result.images && result.images.length > 0) {
+      return NextResponse.json({ image: result.images[0].url });
+    } else {
+      throw new Error("Format de réponse inattendu de Fal API");
+    }
 
   } catch (error: any) {
-    console.error('Erreur API Hugging Face:', error);
-    return NextResponse.json(
-      { error: 'Erreur lors de la génération du décor' },
-      { status: 500 }
-    );
+    console.error('Erreur génération décor Fal:', error);
+    return NextResponse.json({ error: 'Erreur lors de la génération', details: error.message }, { status: 500 });
   }
 }
