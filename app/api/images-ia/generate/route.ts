@@ -1,8 +1,10 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createAdminSupabase } from '@/lib/supabase';
 import { generateImageToImage, removeBackgroundAPI } from '@/lib/image-generation/fal-client';
-import { addSideAdvantages, addLeftAdvantages } from '@/lib/image-generation/canvas-utils';
 import Anthropic from '@anthropic-ai/sdk';
+
+// Mark as max duration to avoid timeout on Vercel Pro
+export const maxDuration = 300;
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || '',
@@ -28,125 +30,208 @@ async function uploadToSupabase(buffer: Buffer, fileName: string, contentType: s
     upsert: true,
   });
   if (error) {
-    console.error('Supabase upload error:', error);
-    throw new Error(`Erreur d'upload vers Supabase: ${error.message}`);
+    throw new Error(`Erreur Supabase upload: ${error.message}`);
   }
   const { data } = supabase.storage.from('images-ia').getPublicUrl(fileName);
   return data.publicUrl;
 }
 
+async function addSideAdvantagesCanvas(imageBuffer: Buffer, advantages: string[]): Promise<Buffer> {
+  // Dynamic import to avoid build issues
+  const { createCanvas, loadImage } = await import('canvas');
+  const size = 1000;
+  const canvas = createCanvas(size, size);
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, size, size);
+
+  const img = await loadImage(imageBuffer);
+  ctx.drawImage(img as any, 300, 300, 400, 400);
+
+  const leftAdvantages = advantages.slice(0, 2);
+  const rightAdvantages = advantages.slice(2, 5);
+
+  const drawAdvantage = (text: string, x: number, y: number, color: string) => {
+    const bubbleW = 220;
+    const bubbleH = 60;
+    ctx.beginPath();
+    ctx.roundRect(x - bubbleW / 2, y - bubbleH / 2, bubbleW, bubbleH, 30);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 18px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('✓ ' + text, x, y + 7);
+  };
+
+  const colors = ['#6C63FF', '#FF6584', '#43C6AC', '#F7971E', '#2193b0'];
+  leftAdvantages.forEach((adv, i) => drawAdvantage(adv, 145, 380 + i * 120, colors[i]));
+  rightAdvantages.forEach((adv, i) => drawAdvantage(adv, 855, 320 + i * 120, colors[i + 2]));
+
+  return canvas.toBuffer('image/png');
+}
+
+async function addLeftAdvantagesCanvas(imageBuffer: Buffer, advantages: string[], productName: string): Promise<Buffer> {
+  const { createCanvas, loadImage } = await import('canvas');
+  const size = 1000;
+  const canvas = createCanvas(size, size);
+  const ctx = canvas.getContext('2d');
+
+  const gradient = ctx.createLinearGradient(0, 0, 1000, 1000);
+  gradient.addColorStop(0, '#F8F9FF');
+  gradient.addColorStop(1, '#FFFFFF');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, size, size);
+
+  const img = await loadImage(imageBuffer);
+  ctx.drawImage(img as any, 520, 150, 450, 700);
+
+  ctx.fillStyle = '#1A1A2E';
+  ctx.font = 'bold 32px Arial';
+  ctx.textAlign = 'left';
+  ctx.fillText(productName.toUpperCase().slice(0, 20), 40, 120);
+
+  ctx.fillStyle = '#6C63FF';
+  ctx.fillRect(40, 135, 80, 4);
+
+  advantages.forEach((adv, i) => {
+    const y = 220 + i * 110;
+    ctx.beginPath();
+    ctx.arc(65, y, 28, 0, Math.PI * 2);
+    ctx.fillStyle = ['#6C63FF', '#FF6584', '#43C6AC', '#F7971E', '#2193b0'][i];
+    ctx.fill();
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 22px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(String(i + 1), 65, y + 8);
+    ctx.fillStyle = '#2D2D2D';
+    ctx.font = 'bold 22px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText(adv.slice(0, 22), 105, y + 8);
+  });
+
+  return canvas.toBuffer('image/png');
+}
+
 export async function POST(req: NextRequest) {
-  const encoder = new TextEncoder();
-  
-  const stream = new ReadableStream({
-    async start(controller) {
-      const sendEvent = (data: any) => {
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
-      };
+  try {
+    const body = await req.json();
+    const { productName, productDescription, productImageBase64 } = body;
 
-      try {
-        const body = await req.json();
-        const { productName, productDescription, productImageBase64 } = body;
+    if (!productImageBase64) return NextResponse.json({ error: "Image manquante" }, { status: 400 });
+    if (!productName || !productDescription) return NextResponse.json({ error: "Nom et description requis" }, { status: 400 });
 
-        if (!productImageBase64) throw new Error("Image source manquante");
-        if (!productName || !productDescription) throw new Error("Nom et description requis");
+    const images: { id: string; label: string; url: string }[] = [];
 
-        // 1. Upload source image to Supabase
-        sendEvent({ status: 'Upload de l\'image source...', progress: 5 });
-        const sourceBuffer = Buffer.from(productImageBase64.split(',')[1], 'base64');
-        const sourceUrl = await uploadToSupabase(sourceBuffer, `source_${Date.now()}.png`, 'image/png');
+    // 1. Upload source image
+    const sourceBuffer = Buffer.from(productImageBase64.split(',')[1], 'base64');
+    const sourceUrl = await uploadToSupabase(sourceBuffer, `source_${Date.now()}.png`, 'image/png');
 
-        // 2. Generate advantages with Claude
-        sendEvent({ status: 'Génération des avantages marketing avec Claude...', progress: 10 });
-        const claudePrompt = `Génère exactement 5 avantages marketing pour ce produit :\nNom : ${productName}\nDescription : ${productDescription}\n\nRetourne UNIQUEMENT ce JSON :\n{\n  "advantages": [\n    "Avantage 1 (max 4 mots)",\n    "Avantage 2 (max 4 mots)",\n    "Avantage 3 (max 4 mots)",\n    "Avantage 4 (max 4 mots)",\n    "Avantage 5 (max 4 mots)"\n  ]\n}`;
-        
-        const claudeRes = await anthropic.messages.create({
-          model: 'claude-3-5-sonnet-20241022',
-          max_tokens: 300,
-          system: "Tu es un expert en marketing e-commerce pour le marché africain francophone. Tu génères des avantages produit courts, percutants, en bon français. Tu réponds UNIQUEMENT avec un JSON valide, aucun texte avant ou après.",
-          messages: [{ role: 'user', content: claudePrompt }]
-        });
-        
-        const claudeText = (claudeRes.content[0] as any).text;
-        let advantages: string[] = [];
-        try {
-          advantages = JSON.parse(claudeText.trim()).advantages;
-        } catch (e) {
-          console.error("Erreur de parsing JSON Claude:", claudeText);
-          advantages = ["Qualité Premium", "Design Élégant", "Facile d'utilisation", "Durable", "Innovant"];
-        }
+    // 2. Generate advantages with Claude
+    const claudeRes = await anthropic.messages.create({
+      model: 'claude-3-5-sonnet-20241022',
+      max_tokens: 300,
+      system: "Tu es un expert en marketing e-commerce pour le marché africain francophone. Tu génères des avantages produit courts, percutants, en bon français. Tu réponds UNIQUEMENT avec un JSON valide, aucun texte avant ou après.",
+      messages: [{
+        role: 'user',
+        content: `Génère exactement 5 avantages marketing pour ce produit :\nNom : ${productName}\nDescription : ${productDescription}\n\nRetourne UNIQUEMENT ce JSON :\n{\n  "advantages": ["Avantage 1 (max 4 mots)", "Avantage 2", "Avantage 3", "Avantage 4", "Avantage 5"]\n}`
+      }]
+    });
 
-        // 3. Image 1: Fond blanc pur (Remove.bg)
-        sendEvent({ status: 'Génération Image 1/7 : Fond Blanc Pur...', progress: 20 });
-        const img1Buffer = await removeBackgroundAPI(productImageBase64);
-        const img1Url = await uploadToSupabase(img1Buffer, `img1_${Date.now()}.png`, 'image/png');
-        sendEvent({ image: { id: 'img1', label: 'Fond Blanc Pur', url: img1Url } });
-
-        // 4. Image 2: Décor Studio Couleur Dominante
-        sendEvent({ status: 'Génération Image 2/7 : Décor Studio...', progress: 35 });
-        const promptStudio = "Ultra high-end product photography, the exact same product from the reference image, placed on a minimalist studio podium, background color matches the product dominant color, soft gradient backdrop, professional studio lighting with subtle shadows, shot with 85mm lens, shallow depth of field, luxury brand aesthetic, white podium or colored surface matching product, 8K resolution, clean sharp product edges, no text, no watermark, photorealistic";
-        const negStudio = "blurry, pixelated, distorted product, changed product, different product, text, watermark, cartoon, illustration, low quality, noise";
-        const img2Url = await generateImageToImage(sourceUrl, promptStudio, negStudio);
-        sendEvent({ image: { id: 'img2', label: 'Décor Studio', url: img2Url } });
-
-        // 5. Image 3: Décor Lifestyle Élégant
-        sendEvent({ status: 'Génération Image 3/7 : Lifestyle Élégant...', progress: 50 });
-        const promptLifestyle = "Luxury lifestyle product photography, the exact same product from the reference image, elegantly placed in a beautiful lifestyle scene, warm natural lighting, premium interior setting with tasteful props that complement the product, marble surface or wooden table, soft bokeh background, shot on Phase One camera, editorial magazine quality, product is sharp and central focus, colors are rich and vivid, luxury brand campaign style, no text, no watermark, photorealistic, 8K";
-        const negLifestyle = "blurry, pixelated, distorted, changed product, text, watermark, cartoon, cheap looking, overexposed, low quality";
-        const img3Url = await generateImageToImage(sourceUrl, promptLifestyle, negLifestyle);
-        sendEvent({ image: { id: 'img3', label: 'Lifestyle Élégant', url: img3Url } });
-
-        // 6. Image 4: Avantages Gauche et Droite
-        sendEvent({ status: 'Génération Image 4/7 : Base Avantages Gauche/Droite...', progress: 60 });
-        const img4BaseUrl = await generateImageToImage(sourceUrl, PURE_WHITE_PROMPT, "blurry, low quality, text, watermark");
-        
-        sendEvent({ status: 'Superposition du texte sur Image 4...', progress: 65 });
-        const img4BaseRes = await fetch(img4BaseUrl);
-        const img4BaseBuffer = Buffer.from(await img4BaseRes.arrayBuffer());
-        const img4FinalBuffer = await addSideAdvantages(img4BaseBuffer, advantages);
-        const img4FinalUrl = await uploadToSupabase(img4FinalBuffer, `img4_${Date.now()}.png`, 'image/png');
-        sendEvent({ image: { id: 'img4', label: 'Avantages Produit', url: img4FinalUrl } });
-
-        // 7. Image 5: Produit à Droite, Avantages à Gauche
-        sendEvent({ status: 'Génération Image 5/7 : Base Avantages Liste...', progress: 75 });
-        const img5BaseUrl = await generateImageToImage(sourceUrl, LEFT_WHITE_PROMPT, "blurry, low quality, text, watermark");
-        
-        sendEvent({ status: 'Superposition du texte sur Image 5...', progress: 80 });
-        const img5BaseRes = await fetch(img5BaseUrl);
-        const img5BaseBuffer = Buffer.from(await img5BaseRes.arrayBuffer());
-        const img5FinalBuffer = await addLeftAdvantages(img5BaseBuffer, advantages, productName);
-        const img5FinalUrl = await uploadToSupabase(img5FinalBuffer, `img5_${Date.now()}.png`, 'image/png');
-        sendEvent({ image: { id: 'img5', label: 'Avantages Liste', url: img5FinalUrl } });
-
-        // 8. Image 6: Produit en Action Scène 1
-        sendEvent({ status: 'Génération Image 6/7 : Action Scène 1...', progress: 85 });
-        const promptAction1 = "Authentic lifestyle photography, a young West African woman in her late 20s, natural beautiful appearance, using or holding the exact same product from reference image, modern African urban apartment, warm golden hour lighting through window, candid natural moment, genuine smile, product clearly visible and identifiable, skin tones warm and natural, editorial magazine quality, shot on Sony A7R, 85mm lens, f/1.8 aperture, bokeh background, no text, no watermark, ultra realistic, 8K";
-        const negAction1 = "blurry, distorted face, changed product, different product, text, watermark, cartoon, overexposed, artificial looking";
-        const img6Url = await generateImageToImage(sourceUrl, promptAction1, negAction1);
-        sendEvent({ image: { id: 'img6', label: 'En Action - Scène 1', url: img6Url } });
-
-        // 9. Image 7: Produit en Action Scène 2
-        sendEvent({ status: 'Génération Image 7/7 : Action Scène 2...', progress: 95 });
-        const promptAction2 = "Premium brand campaign photography, the exact same product from reference image, displayed in an elegant flat lay composition, marble or textured surface, surrounded by complementary luxury props (flowers, fabric, accessories), overhead shot from above, perfect symmetry, rich vivid colors, professional color grading, luxury brand Instagram aesthetic, Chanel/Dior campaign quality, no text, no watermark, ultra sharp, 8K resolution, photorealistic";
-        const negAction2 = "blurry, pixelated, low quality, text, watermark, cartoon, cheap";
-        const img7Url = await generateImageToImage(sourceUrl, promptAction2, negAction2);
-        sendEvent({ image: { id: 'img7', label: 'Flat Lay Premium', url: img7Url } });
-
-        sendEvent({ status: 'Terminé !', progress: 100 });
-        controller.close();
-      } catch (err: any) {
-        console.error('Erreur Génération IA:', err);
-        sendEvent({ error: err.message || 'Erreur inconnue' });
-        controller.close();
-      }
+    let advantages: string[] = ["Qualité Premium", "Design Élégant", "Facile à utiliser", "Durable", "Innovant"];
+    try {
+      const parsed = JSON.parse((claudeRes.content[0] as any).text.trim());
+      if (parsed.advantages?.length) advantages = parsed.advantages;
+    } catch (e) {
+      console.error("Claude JSON parse error");
     }
-  });
 
-  return new Response(stream, {
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
-    },
-  });
+    // IMAGE 1: Fond blanc (remove.bg)
+    try {
+      const img1Buffer = await removeBackgroundAPI(productImageBase64);
+      const img1Url = await uploadToSupabase(img1Buffer, `img1_${Date.now()}.png`, 'image/png');
+      images.push({ id: 'img1', label: 'Fond Blanc Pur', url: img1Url });
+    } catch (e: any) {
+      console.error('Image 1 error:', e.message);
+    }
+
+    // IMAGE 2: Décor Studio
+    try {
+      const url = await generateImageToImage(
+        sourceUrl,
+        "Ultra high-end product photography, the exact same product from the reference image, placed on a minimalist studio podium, background color matches the product dominant color, soft gradient backdrop, professional studio lighting with subtle shadows, shot with 85mm lens, shallow depth of field, luxury brand aesthetic, 8K resolution, clean sharp product edges, no text, no watermark, photorealistic",
+        "blurry, pixelated, distorted product, changed product, text, watermark, cartoon, low quality"
+      );
+      images.push({ id: 'img2', label: 'Décor Studio', url });
+    } catch (e: any) {
+      console.error('Image 2 error:', e.message);
+    }
+
+    // IMAGE 3: Lifestyle
+    try {
+      const url = await generateImageToImage(
+        sourceUrl,
+        "Luxury lifestyle product photography, the exact same product from the reference image, elegantly placed in a beautiful lifestyle scene, warm natural lighting, premium interior setting, marble surface or wooden table, soft bokeh background, editorial magazine quality, product is sharp and central focus, luxury brand campaign style, no text, no watermark, photorealistic, 8K",
+        "blurry, pixelated, distorted, changed product, text, watermark, cartoon, cheap looking"
+      );
+      images.push({ id: 'img3', label: 'Lifestyle Élégant', url });
+    } catch (e: any) {
+      console.error('Image 3 error:', e.message);
+    }
+
+    // IMAGE 4: Avantages Gauche/Droite (canvas)
+    try {
+      const baseUrl = await generateImageToImage(sourceUrl, PURE_WHITE_PROMPT, "blurry, low quality, text, watermark");
+      const baseRes = await fetch(baseUrl);
+      const baseBuffer = Buffer.from(await baseRes.arrayBuffer());
+      const finalBuffer = await addSideAdvantagesCanvas(baseBuffer, advantages);
+      const finalUrl = await uploadToSupabase(finalBuffer, `img4_${Date.now()}.png`, 'image/png');
+      images.push({ id: 'img4', label: 'Avantages Produit', url: finalUrl });
+    } catch (e: any) {
+      console.error('Image 4 error:', e.message);
+    }
+
+    // IMAGE 5: Avantages Liste Gauche (canvas)
+    try {
+      const baseUrl = await generateImageToImage(sourceUrl, LEFT_WHITE_PROMPT, "blurry, low quality, text, watermark");
+      const baseRes = await fetch(baseUrl);
+      const baseBuffer = Buffer.from(await baseRes.arrayBuffer());
+      const finalBuffer = await addLeftAdvantagesCanvas(baseBuffer, advantages, productName);
+      const finalUrl = await uploadToSupabase(finalBuffer, `img5_${Date.now()}.png`, 'image/png');
+      images.push({ id: 'img5', label: 'Avantages Liste', url: finalUrl });
+    } catch (e: any) {
+      console.error('Image 5 error:', e.message);
+    }
+
+    // IMAGE 6: En action scène 1
+    try {
+      const url = await generateImageToImage(
+        sourceUrl,
+        "Authentic lifestyle photography, a young West African woman in her late 20s, natural beautiful appearance, using or holding the exact same product from reference image, modern African urban apartment, warm golden hour lighting through window, candid natural moment, genuine smile, product clearly visible, editorial magazine quality, bokeh background, no text, no watermark, ultra realistic, 8K",
+        "blurry, distorted face, changed product, text, watermark, cartoon, overexposed"
+      );
+      images.push({ id: 'img6', label: 'En Action - Scène 1', url });
+    } catch (e: any) {
+      console.error('Image 6 error:', e.message);
+    }
+
+    // IMAGE 7: Flat lay
+    try {
+      const url = await generateImageToImage(
+        sourceUrl,
+        "Premium brand campaign photography, the exact same product from reference image, displayed in an elegant flat lay composition, marble or textured surface, surrounded by complementary luxury props, overhead shot from above, perfect symmetry, rich vivid colors, professional color grading, luxury brand Instagram aesthetic, no text, no watermark, ultra sharp, 8K resolution, photorealistic",
+        "blurry, pixelated, low quality, text, watermark, cartoon, cheap"
+      );
+      images.push({ id: 'img7', label: 'Flat Lay Premium', url });
+    } catch (e: any) {
+      console.error('Image 7 error:', e.message);
+    }
+
+    return NextResponse.json({ success: true, images, advantages });
+
+  } catch (err: any) {
+    console.error('Generate error:', err);
+    return NextResponse.json({ error: err.message || 'Erreur inconnue' }, { status: 500 });
+  }
 }

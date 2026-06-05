@@ -44,11 +44,14 @@ export async function GET(req: NextRequest) {
   });
   const { access_token } = await tokenRes.json();
 
-  // Sauvegarder dans Supabase
+  // Sauvegarder dans Supabase avec token chiffré
+  const { encrypt } = await import('@/lib/encryption');
+  const encryptedToken = encrypt(access_token);
+
   const supabase = createClient();
   await supabase.from('shopify_stores').upsert({
     shop_domain: shop,
-    access_token: access_token,
+    access_token: encryptedToken,
     updated_at: new Date().toISOString()
   }, { onConflict: 'shop_domain' });
 

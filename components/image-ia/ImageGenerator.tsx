@@ -3,52 +3,76 @@
 import React, { useState, useRef } from 'react';
 import { Upload, ImageIcon, Loader2, Download, CheckCircle2, Sparkles, X } from 'lucide-react';
 
-const IMAGE_LABELS = [
-  { label: 'Fond Blanc Pur', emoji: '⬜' },
-  { label: 'Décor Studio', emoji: '🎬' },
-  { label: 'Lifestyle Élégant', emoji: '🌿' },
-  { label: 'Avantages Produit', emoji: '✨' },
-  { label: 'Avantages Liste', emoji: '✨' },
-  { label: 'En Action - Scène 1', emoji: '📸' },
-  { label: 'Flat Lay Premium', emoji: '💎' },
+const IMAGE_LABELS: Record<string, string> = {
+  'Fond Blanc Pur': '⬜',
+  'Décor Studio': '🎬',
+  'Lifestyle Élégant': '🌿',
+  'Avantages Produit': '✨',
+  'Avantages Liste': '✨',
+  'En Action - Scène 1': '📸',
+  'Flat Lay Premium': '💎',
+};
+
+const STEPS = [
+  'Upload de l\'image source...',
+  'Génération des avantages avec Claude...',
+  'Image 1/7 : Fond Blanc Pur (Remove.bg)...',
+  'Image 2/7 : Décor Studio (Fal.ai)...',
+  'Image 3/7 : Lifestyle Élégant (Fal.ai)...',
+  'Image 4/7 : Avantages Produit (Fal.ai + Canvas)...',
+  'Image 5/7 : Avantages Liste (Fal.ai + Canvas)...',
+  'Image 6/7 : En Action Scène 1 (Fal.ai)...',
+  'Image 7/7 : Flat Lay Premium (Fal.ai)...',
+  'Finalisation...',
 ];
 
 export default function ImageGenerator() {
   const [sourceImages, setSourceImages] = useState<string[]>([]);
   const [productName, setProductName] = useState('');
   const [productDescription, setProductDescription] = useState('');
-  
   const [isGenerating, setIsGenerating] = useState(false);
   const [statusText, setStatusText] = useState('');
-  const [progress, setProgress] = useState(0);
-  const [generatedImages, setGeneratedImages] = useState<{id: string, label: string, url: string}[]>([]);
+  const [stepIndex, setStepIndex] = useState(0);
+  const [generatedImages, setGeneratedImages] = useState<{ id: string; label: string; url: string }[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const stepIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const newImages = Array.from(e.target.files).slice(0, 3 - sourceImages.length);
-      
-      newImages.forEach(file => {
+      Array.from(e.target.files).slice(0, 3 - sourceImages.length).forEach(file => {
         const reader = new FileReader();
-        reader.onload = (ev) => {
-          setSourceImages(prev => [...prev, ev.target?.result as string]);
-        };
+        reader.onload = (ev) => setSourceImages(prev => [...prev, ev.target?.result as string]);
         reader.readAsDataURL(file);
       });
       setGeneratedImages([]);
     }
   };
 
-  const removeImage = (index: number) => {
-    setSourceImages(prev => prev.filter((_, i) => i !== index));
+  const removeImage = (index: number) => setSourceImages(prev => prev.filter((_, i) => i !== index));
+
+  const startStepAnimation = () => {
+    let idx = 0;
+    setStepIndex(0);
+    setStatusText(STEPS[0]);
+    stepIntervalRef.current = setInterval(() => {
+      idx = Math.min(idx + 1, STEPS.length - 1);
+      setStepIndex(idx);
+      setStatusText(STEPS[idx]);
+    }, 12000); // ~12s per image
+  };
+
+  const stopStepAnimation = () => {
+    if (stepIntervalRef.current) {
+      clearInterval(stepIntervalRef.current);
+      stepIntervalRef.current = null;
+    }
   };
 
   const generateImages = async () => {
     if (sourceImages.length === 0 || !productName || !productDescription) return;
     setIsGenerating(true);
     setGeneratedImages([]);
-    setProgress(0);
-    setStatusText('Initialisation de la génération...');
+    startStepAnimation();
 
     try {
       const response = await fetch('/api/images-ia/generate', {
@@ -57,51 +81,19 @@ export default function ImageGenerator() {
         body: JSON.stringify({
           productName,
           productDescription,
-          productImageBase64: sourceImages[0] // On utilise la première image comme référence principale
-        })
+          productImageBase64: sourceImages[0],
+        }),
       });
 
-      if (!response.body) throw new Error('Pas de réponse du serveur');
+      const data = await response.json();
+      stopStepAnimation();
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
+      if (data.error) throw new Error(data.error);
 
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n\n');
-        buffer = lines.pop() || ''; // Keep the incomplete part
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.slice(6));
-              
-              if (data.status) {
-                setStatusText(data.status);
-              }
-              if (data.progress) {
-                setProgress(data.progress);
-              }
-              if (data.image) {
-                setGeneratedImages(prev => [...prev, data.image]);
-              }
-              if (data.error) {
-                throw new Error(data.error);
-              }
-            } catch (e) {
-              console.error('SSE parse error:', e, line);
-            }
-          }
-        }
-      }
-      
-      setProgress(100);
-      setStatusText(`✅ Images générées avec succès !`);
+      setGeneratedImages(data.images || []);
+      setStatusText(`✅ ${data.images?.length || 0} images générées avec succès !`);
     } catch (err: any) {
+      stopStepAnimation();
       console.error(err);
       setStatusText('❌ Erreur : ' + (err.message || 'Inconnue'));
     } finally {
@@ -109,13 +101,15 @@ export default function ImageGenerator() {
     }
   };
 
+  const progress = isGenerating ? Math.min(Math.round((stepIndex / (STEPS.length - 1)) * 100), 95) : (generatedImages.length > 0 ? 100 : 0);
+
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-        {/* --- SETTINGS COLUMN --- */}
+        {/* SETTINGS */}
         <div className="col-span-1 space-y-6">
-          
+
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-800">
             <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest mb-4">1. Détails du produit</h3>
             <div className="space-y-4">
@@ -134,7 +128,7 @@ export default function ImageGenerator() {
                 <textarea
                   value={productDescription}
                   onChange={(e) => setProductDescription(e.target.value)}
-                  placeholder="Ex: Montre de sport avec suivi cardiaque, étanche et batterie longue durée."
+                  placeholder="Ex: Montre sport avec suivi cardiaque, étanche et longue durée..."
                   rows={3}
                   className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 dark:text-white resize-none"
                 />
@@ -143,33 +137,27 @@ export default function ImageGenerator() {
           </div>
 
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-800">
-            <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest mb-4 flex justify-between items-center">
-              <span>2. Photos (1 à 3 max)</span>
+            <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest mb-4 flex justify-between">
+              <span>2. Photos produit</span>
               <span className="text-xs font-normal text-slate-400">{sourceImages.length}/3</span>
             </h3>
-            
-            <div className="grid grid-cols-3 gap-2 mb-4">
+            <div className="grid grid-cols-3 gap-2 mb-3">
               {sourceImages.map((src, idx) => (
                 <div key={idx} className="relative aspect-square rounded-xl overflow-hidden bg-slate-100 border border-slate-200 group">
-                  <img src={src} alt={`Upload ${idx+1}`} className="w-full h-full object-cover" />
-                  <button 
-                    onClick={() => removeImage(idx)}
-                    className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
+                  <img src={src} alt={`Upload ${idx + 1}`} className="w-full h-full object-cover" />
+                  <button onClick={() => removeImage(idx)} className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                     <X className="w-3 h-3" />
                   </button>
                 </div>
               ))}
               {sourceImages.length < 3 && (
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  className="aspect-square border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/10 transition-all text-slate-400 hover:text-indigo-500"
-                >
-                  <Upload className="w-6 h-6" />
+                <div onClick={() => fileInputRef.current?.click()} className="aspect-square border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/10 transition-all text-slate-400 hover:text-indigo-500">
+                  <Upload className="w-5 h-5" />
                 </div>
               )}
             </div>
             <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
+            <p className="text-xs text-slate-400 text-center">PNG ou JPG, fond clair de préférence</p>
           </div>
 
           <button
@@ -177,27 +165,25 @@ export default function ImageGenerator() {
             disabled={sourceImages.length === 0 || !productName || !productDescription || isGenerating}
             className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl py-4 font-black text-sm uppercase tracking-wider transition-all shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2"
           >
-            {isGenerating ? <><Loader2 className="w-5 h-5 animate-spin" />Génération en cours...</> : <><Sparkles className="w-5 h-5" />Générer 7 images IA</>}
+            {isGenerating ? <><Loader2 className="w-5 h-5 animate-spin" />Génération (~2 min)...</> : <><Sparkles className="w-5 h-5" />Générer 7 images IA</>}
           </button>
 
-          {/* Progress */}
-          {isGenerating && (
+          {(isGenerating || statusText) && (
             <div className="space-y-2">
               <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
                 <div
-                  className="bg-gradient-to-r from-indigo-500 to-violet-500 h-full transition-all duration-500 ease-out"
+                  className="bg-gradient-to-r from-indigo-500 to-violet-500 h-full rounded-full transition-all duration-1000 ease-out"
                   style={{ width: `${progress}%` }}
                 />
               </div>
-              <p className="text-xs text-center text-indigo-500 font-semibold animate-pulse">{statusText}</p>
+              <p className={`text-xs text-center font-semibold ${isGenerating ? 'text-indigo-500 animate-pulse' : statusText.startsWith('❌') ? 'text-red-500' : 'text-emerald-500'}`}>
+                {statusText}
+              </p>
             </div>
-          )}
-          {!isGenerating && statusText && (
-            <p className="text-xs text-center text-slate-500">{statusText}</p>
           )}
         </div>
 
-        {/* --- RESULTS COLUMN --- */}
+        {/* RESULTS */}
         <div className="col-span-1 lg:col-span-2">
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-800 min-h-[600px]">
             <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest mb-6 flex items-center justify-between">
@@ -215,34 +201,42 @@ export default function ImageGenerator() {
                 <p className="text-sm font-medium">Vos images ultra-réalistes apparaîtront ici</p>
                 <p className="text-xs opacity-70 mt-2 max-w-xs text-center">Remplissez les détails et téléchargez une image pour commencer.</p>
               </div>
+            ) : isGenerating ? (
+              <div className="h-[480px] flex flex-col items-center justify-center gap-6">
+                <div className="relative">
+                  <div className="w-20 h-20 rounded-full border-4 border-indigo-100 dark:border-slate-700" />
+                  <div className="absolute inset-0 w-20 h-20 rounded-full border-4 border-transparent border-t-indigo-600 animate-spin" />
+                  <Sparkles className="absolute inset-0 m-auto w-8 h-8 text-indigo-500" />
+                </div>
+                <div className="text-center space-y-1">
+                  <p className="text-sm font-bold text-slate-700 dark:text-slate-300">Génération en cours...</p>
+                  <p className="text-xs text-indigo-500 font-medium animate-pulse max-w-xs">{statusText}</p>
+                  <p className="text-xs text-slate-400">La génération prend environ 2 minutes. Patientez svp.</p>
+                </div>
+              </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {generatedImages.map((img, idx) => {
-                  const labelInfo = IMAGE_LABELS.find(l => l.label === img.label) || { emoji: '🖼️' };
-                  return (
-                    <div key={idx} className="group relative aspect-square rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700">
-                      <img src={img.url} alt={img.label} className="w-full h-full object-cover" />
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 pt-8">
-                        <p className="text-white text-xs font-bold">{labelInfo.emoji} {img.label}</p>
-                      </div>
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center backdrop-blur-sm">
-                        <a
-                          href={img.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          download={`${img.label.toLowerCase().replace(/\s+/g, '-')}.jpg`}
-                          className="bg-white text-slate-900 font-bold text-xs px-4 py-2 rounded-full hover:scale-105 transition-transform flex items-center gap-1.5 shadow-xl"
-                        >
-                          <Download className="w-3.5 h-3.5" /> Télécharger
-                        </a>
-                      </div>
+                {generatedImages.map((img) => (
+                  <div key={img.id} className="group relative aspect-square rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700">
+                    <img
+                      src={img.url}
+                      alt={img.label}
+                      className="w-full h-full object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.png'; }}
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 pt-8">
+                      <p className="text-white text-xs font-bold">{IMAGE_LABELS[img.label] || '🖼️'} {img.label}</p>
                     </div>
-                  );
-                })}
-                {/* Placeholders for loading images */}
-                {isGenerating && Array.from({ length: 7 - generatedImages.length }).map((_, idx) => (
-                  <div key={`loading-${idx}`} className="relative aspect-square rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center justify-center animate-pulse">
-                     <Loader2 className="w-6 h-6 text-indigo-300 dark:text-indigo-700 animate-spin" />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center backdrop-blur-sm">
+                      <a
+                        href={img.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="bg-white text-slate-900 font-bold text-xs px-4 py-2 rounded-full hover:scale-105 transition-transform flex items-center gap-1.5 shadow-xl"
+                      >
+                        <Download className="w-3.5 h-3.5" /> Télécharger
+                      </a>
+                    </div>
                   </div>
                 ))}
               </div>
