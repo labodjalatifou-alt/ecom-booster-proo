@@ -123,6 +123,7 @@ export async function POST(req: NextRequest) {
     if (!productName || !productDescription) return NextResponse.json({ error: "Nom et description requis" }, { status: 400 });
 
     const images: { id: string; label: string; url: string }[] = [];
+    const errors: string[] = [];
 
     // 1. Upload source image
     const sourceBuffer = Buffer.from(productImageBase64.split(',')[1], 'base64');
@@ -154,6 +155,7 @@ export async function POST(req: NextRequest) {
       images.push({ id: 'img1', label: 'Fond Blanc Pur', url: img1Url });
     } catch (e: any) {
       console.error('Image 1 error:', e.message);
+      errors.push(`Img1 (RemoveBG): ${e.message}`);
     }
 
     // IMAGE 2: Décor Studio
@@ -166,6 +168,7 @@ export async function POST(req: NextRequest) {
       images.push({ id: 'img2', label: 'Décor Studio', url });
     } catch (e: any) {
       console.error('Image 2 error:', e.message);
+      errors.push(`Img2: ${e.message}`);
     }
 
     // IMAGE 3: Lifestyle
@@ -178,6 +181,7 @@ export async function POST(req: NextRequest) {
       images.push({ id: 'img3', label: 'Lifestyle Élégant', url });
     } catch (e: any) {
       console.error('Image 3 error:', e.message);
+      errors.push(`Img3: ${e.message}`);
     }
 
     // IMAGE 4: Avantages Gauche/Droite (canvas)
@@ -190,6 +194,7 @@ export async function POST(req: NextRequest) {
       images.push({ id: 'img4', label: 'Avantages Produit', url: finalUrl });
     } catch (e: any) {
       console.error('Image 4 error:', e.message);
+      errors.push(`Img4: ${e.message}`);
     }
 
     // IMAGE 5: Avantages Liste Gauche (canvas)
@@ -202,6 +207,7 @@ export async function POST(req: NextRequest) {
       images.push({ id: 'img5', label: 'Avantages Liste', url: finalUrl });
     } catch (e: any) {
       console.error('Image 5 error:', e.message);
+      errors.push(`Img5: ${e.message}`);
     }
 
     // IMAGE 6: En action scène 1
@@ -214,6 +220,7 @@ export async function POST(req: NextRequest) {
       images.push({ id: 'img6', label: 'En Action - Scène 1', url });
     } catch (e: any) {
       console.error('Image 6 error:', e.message);
+      errors.push(`Img6: ${e.message}`);
     }
 
     // IMAGE 7: Flat lay
@@ -226,9 +233,14 @@ export async function POST(req: NextRequest) {
       images.push({ id: 'img7', label: 'Flat Lay Premium', url });
     } catch (e: any) {
       console.error('Image 7 error:', e.message);
+      errors.push(`Img7: ${e.message}`);
     }
 
-    return NextResponse.json({ success: true, images, advantages });
+    if (images.length === 0) {
+      return NextResponse.json({ error: "Toutes les générations ont échoué. Détails: " + errors.join(' | ') }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, images, advantages, partialErrors: errors });
 
   } catch (err: any) {
     console.error('Generate error:', err);

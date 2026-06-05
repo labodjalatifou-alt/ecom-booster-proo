@@ -196,11 +196,19 @@ export default function ImageGenerator() {
             </h3>
 
             {generatedImages.length === 0 && !isGenerating ? (
-              <div className="h-[480px] flex flex-col items-center justify-center text-slate-300 dark:text-slate-700">
-                <ImageIcon className="w-20 h-20 mb-4 opacity-50" />
-                <p className="text-sm font-medium">Vos images ultra-réalistes apparaîtront ici</p>
-                <p className="text-xs opacity-70 mt-2 max-w-xs text-center">Remplissez les détails et téléchargez une image pour commencer.</p>
-              </div>
+              statusText.startsWith('❌') ? (
+                <div className="h-[480px] flex flex-col items-center justify-center text-red-500 dark:text-red-400 p-8 text-center">
+                  <X className="w-16 h-16 mb-4 opacity-80" />
+                  <p className="text-sm font-bold mb-2">Une erreur est survenue</p>
+                  <p className="text-xs opacity-90 max-w-md break-words">{statusText}</p>
+                </div>
+              ) : (
+                <div className="h-[480px] flex flex-col items-center justify-center text-slate-300 dark:text-slate-700">
+                  <ImageIcon className="w-20 h-20 mb-4 opacity-50" />
+                  <p className="text-sm font-medium">Vos images ultra-réalistes apparaîtront ici</p>
+                  <p className="text-xs opacity-70 mt-2 max-w-xs text-center">Remplissez les détails et téléchargez une image pour commencer.</p>
+                </div>
+              )
             ) : isGenerating ? (
               <div className="h-[480px] flex flex-col items-center justify-center gap-6">
                 <div className="relative">
