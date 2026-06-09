@@ -75,7 +75,11 @@ export async function POST(req: NextRequest) {
     }
 
     const data = await response.json()
-    const text = data.content?.[0]?.text || ''
+    let text = data.content?.[0]?.text || ''
+
+    // Le nouveau modèle enveloppe parfois la réponse dans des balises markdown ```json...```
+    // On les supprime pour garder la compatibilité avec le frontend
+    text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim()
 
     return NextResponse.json({ text, usage: data.usage })
 
