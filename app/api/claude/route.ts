@@ -56,8 +56,18 @@ export async function POST(req: NextRequest) {
     if (!response.ok) {
       const error = await response.json()
       console.error('Claude API error:', error)
+      
+      let errorMessage = error.error?.message || `Erreur API Claude: ${response.status}`
+      if (response.status === 401) {
+        errorMessage = "La clé API Claude est invalide ou a été révoquée."
+      } else if (response.status === 429) {
+        errorMessage = "Le quota de l'API Claude est dépassé ou limite de requêtes atteinte."
+      } else if (response.status >= 500) {
+        errorMessage = "Erreur serveur chez Anthropic (Claude)."
+      }
+
       return NextResponse.json(
-        { error: error.error?.message || `Erreur API Claude: ${response.status}` },
+        { error: errorMessage },
         { status: response.status }
       )
     }
