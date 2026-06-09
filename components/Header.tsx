@@ -8,18 +8,27 @@ import { supabase } from '@/lib/supabase';
 import { resolveUserProfile } from '@/lib/utils';
 import Link from 'next/link';
 
+// Cache module-level pour éviter les appels répétés à Supabase
+let cachedProfile: any = null;
+
 export default function Header() {
   const { toggle } = useSidebar();
   const { selectedStore, setSelectedStore, stores, loadingStores, noStoreConnected, activeStore } = useStore();
   const [showProfile, setShowProfile] = useState(false);
-  const [profile, setProfile] = useState<any>(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  const [profile, setProfile] = useState<any>(cachedProfile);
+  const [authLoading, setAuthLoading] = useState(!cachedProfile);
   const [unreadCount, setUnreadCount] = useState(0);
   const profileRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function loadProfile() {
+      if (cachedProfile) {
+        setProfile(cachedProfile);
+        setAuthLoading(false);
+        return;
+      }
       const u = await resolveUserProfile(supabase);
+      cachedProfile = u;
       setProfile(u);
       setAuthLoading(false);
     }

@@ -101,12 +101,15 @@ export default function RealtimeNotifications() {
       }
     };
     
-    // Check every minute
+    // Delay initial check by 5s to not block page load
+    const initialTimeout = setTimeout(checkProgrammed, 5000);
+    // Then check every minute
     const interval = setInterval(checkProgrammed, 60000);
-    // Initial check
-    checkProgrammed();
     
-    return () => clearInterval(interval);
+    return () => {
+      clearTimeout(initialTimeout);
+      clearInterval(interval);
+    };
   }, []);
 
   return null;
