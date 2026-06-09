@@ -21,9 +21,11 @@ Crée une fiche produit Shopify pour "${produit}" vendu à ${prix} ${currency} a
 
 RÈGLE N°1 — TITRES DE PARAGRAPHES : Une phrase courte et percutante centrée sur un BÉNÉFICE. Exemples : "Retrouvez un teint éclatant et naturel.", "Gagnez du temps chaque matin.", "Une conception robuste pour durer."
 
-RÈGLE N°2 — TEXTE DE PARAGRAPHE : EXACTEMENT 3 phrases. MAXIMUM 3 phrases. Chaque phrase doit se concentrer UNIQUEMENT sur les caractéristiques, l'utilisation ou les BÉNÉFICES réels du produit (ce qu'il fait, en quoi il est naturel, etc.). Ajoute 1 ou 2 émojis pertinents dans le texte.
+RÈGLE N°2 — TEXTE DE PARAGRAPHE : EXACTEMENT 3 phrases. MAXIMUM 3 phrases. Chaque phrase doit se concentrer UNIQUEMENT sur les caractéristiques, l'utilisation ou les BÉNÉFICES réels du produit (ce qu'il fait, en quoi il est naturel, etc.). Ajoute 1 ou 2 émojis (stickers) pertinents dans chaque paragraphe pour rendre le texte vivant.
 
-RÈGLE N°3 — INTERDICTION ABSOLUE D'INVENTER DE LA PREUVE SOCIALE. Ne dis JAMAIS "des milliers de clients ont aimé", "recommandé par des experts", "99% des clients satisfaits". Concentre-toi UNIQUEMENT sur les avantages du produit lui-même.
+RÈGLE N°3 — INTERDICTION ABSOLUE D'INVENTER DE LA PREUVE SOCIALE ou de la rareté. Ne dis JAMAIS "des milliers de clients ont aimé", "recommandé par des experts", "plus de 2000 adoptés", "seulement 40 en stock". Concentre-toi UNIQUEMENT sur les avantages du produit lui-même.
+
+RÈGLE N°4 — AUCUN FORMATAGE MARKDOWN. Interdiction stricte d'utiliser des astérisques (* ou **). Le texte doit être totalement brut (sans gras ni italique).
 
 Réponds UNIQUEMENT avec ce format exact, sans rien ajouter avant ou après :
 
@@ -68,7 +70,7 @@ Avantages : ${avantages}
 `
 
   return await callClaude(prompt, {
-    system: 'Tu es un copywriter expert neuromarketing. Respecte STRICTEMENT le format demandé. Titres : 3-5 mots MAX. Textes : EXACTEMENT 3 phrases avec émojis. INTERDIT d\'inventer de la fausse preuve sociale, parle uniquement des bénéfices concrets du produit.',
+    system: 'Tu es un copywriter expert neuromarketing. Respecte STRICTEMENT le format demandé. Titres : 3-5 mots MAX. Textes : EXACTEMENT 3 phrases avec émojis. INTERDIT d\'utiliser du Markdown (pas d\'astérisques). Parle uniquement des bénéfices concrets du produit, pas de preuve sociale inventée ni d\'urgence.',
     max_tokens: 2000,
   })
 }
