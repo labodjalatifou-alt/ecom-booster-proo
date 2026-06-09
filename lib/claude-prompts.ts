@@ -19,42 +19,42 @@ export async function genererPageShopify(
 
 Crée une fiche produit Shopify pour "${produit}" vendu à ${prix} ${currency} au marché ${pays}.
 
-RÈGLE N°1 — TITRES DE PARAGRAPHES : Une phrase courte et percutante. Exemples corrects : "Obtenez enfin des résultats visibles.", "Rejoignez des milliers de clientes satisfaites.", "Commandez avant la rupture de stock.".
+RÈGLE N°1 — TITRES DE PARAGRAPHES : Une phrase courte et percutante centrée sur un BÉNÉFICE. Exemples : "Retrouvez un teint éclatant et naturel.", "Gagnez du temps chaque matin.", "Une conception robuste pour durer."
 
-RÈGLE N°2 — TEXTE DE PARAGRAPHE : EXACTEMENT 3 phrases. Pas 2, pas 4. 3 phrases courtes et percutantes.
+RÈGLE N°2 — TEXTE DE PARAGRAPHE : EXACTEMENT 3 phrases. MAXIMUM 3 phrases. Chaque phrase doit se concentrer UNIQUEMENT sur les caractéristiques, l'utilisation ou les BÉNÉFICES réels du produit (ce qu'il fait, en quoi il est naturel, etc.). Ajoute 1 ou 2 émojis pertinents dans le texte.
 
-RÈGLE N°3 — Chaque paragraphe utilise un principe de neuromarketing différent.
+RÈGLE N°3 — INTERDICTION ABSOLUE D'INVENTER DE LA PREUVE SOCIALE. Ne dis JAMAIS "des milliers de clients ont aimé", "recommandé par des experts", "99% des clients satisfaits". Concentre-toi UNIQUEMENT sur les avantages du produit lui-même.
 
-Réponds UNIQUEMENT avec ce format, sans rien ajouter avant ou après :
+Réponds UNIQUEMENT avec ce format exact, sans rien ajouter avant ou après :
 
 ---TITRES---
 TITRE_1: [titre SEO 5 mots max]
 TITRE_2: [titre bénéfice 5 mots max]
-TITRE_3: [titre preuve sociale 5 mots max]
+TITRE_3: [titre 5 mots max]
 
 ---ACCROCHES---
-ACCROCHE_1: [une phrase, choc émotionnel]
-ACCROCHE_2: [une phrase, transformation promise]
-ACCROCHE_3: [une phrase, garantie rassurante]
+ACCROCHE_1: [une phrase choc]
+ACCROCHE_2: [une phrase de transformation]
+ACCROCHE_3: [une phrase rassurante]
 
 ---PARAGRAPHES---
-§1_TITRE: [3-5 mots — douleur/problème]
-§1_TEXTE: [Phrase 1.] [Phrase 2.] [Phrase 3.]
+§1_TITRE: [Bénéfice principal]
+§1_TEXTE: [Phrase 1 avec émoji.] [Phrase 2.] [Phrase 3 avec émoji.]
 
-§2_TITRE: [3-5 mots — autorité/crédibilité]
-§2_TEXTE: [Phrase 1.] [Phrase 2.] [Phrase 3.]
+§2_TITRE: [Avantage spécifique]
+§2_TEXTE: [Phrase 1.] [Phrase 2 avec émoji.] [Phrase 3.]
 
-§3_TITRE: [3-5 mots — preuve sociale]
-§3_TEXTE: [Phrase 1.] [Phrase 2.] [Phrase 3.]
+§3_TITRE: [Comment ça marche/Facilité]
+§3_TEXTE: [Phrase 1 avec émoji.] [Phrase 2.] [Phrase 3.]
 
-§4_TITRE: [3-5 mots — bénéfices concrets]
-§4_TEXTE: [Phrase 1.] [Phrase 2.] [Phrase 3.]
+§4_TITRE: [Composition/Qualité/Naturel]
+§4_TEXTE: [Phrase 1.] [Phrase 2 avec émoji.] [Phrase 3.]
 
-§5_TITRE: [3-5 mots — rareté/urgence]
-§5_TEXTE: [Phrase 1.] [Phrase 2.] [Phrase 3.]
+§5_TITRE: [Résultat final attendu]
+§5_TEXTE: [Phrase 1 avec émoji.] [Phrase 2.] [Phrase 3.]
 
-§6_TITRE: [3-5 mots — réassurance/garantie]
-§6_TEXTE: [Phrase 1.] [Phrase 2.] [Phrase 3.]
+§6_TITRE: [Réassurance sur l'achat]
+§6_TEXTE: [Phrase 1.] [Phrase 2.] [Phrase 3 avec émoji.]
 
 ---BULLETS---
 • [caractéristique 1, max 8 mots]
@@ -68,7 +68,7 @@ Avantages : ${avantages}
 `
 
   return await callClaude(prompt, {
-    system: 'Tu es un copywriter expert neuromarketing. Respecte STRICTEMENT le format demandé. Titres de paragraphes : 3-5 mots MAX. Textes : EXACTEMENT 3 phrases.',
+    system: 'Tu es un copywriter expert neuromarketing. Respecte STRICTEMENT le format demandé. Titres : 3-5 mots MAX. Textes : EXACTEMENT 3 phrases avec émojis. INTERDIT d\'inventer de la fausse preuve sociale, parle uniquement des bénéfices concrets du produit.',
     max_tokens: 2000,
   })
 }
