@@ -60,6 +60,8 @@ export async function POST(req: NextRequest) {
       let errorMessage = error.error?.message || `Erreur API Claude: ${response.status}`
       if (response.status === 401) {
         errorMessage = "La clé API Claude est invalide ou a été révoquée."
+      } else if (response.status === 404) {
+        errorMessage = "Votre clé API Claude n'a pas l'autorisation d'utiliser ce modèle (accès restreint ou crédits manquants)."
       } else if (response.status === 429) {
         errorMessage = "Le quota de l'API Claude est dépassé ou limite de requêtes atteinte."
       } else if (response.status >= 500) {
