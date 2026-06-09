@@ -101,7 +101,7 @@ export function parseShopifyPage(raw: string): ShopifyPageParsed {
   const titreRegex = /TITRE_\d+:\s*(.+)/g
   let m: RegExpExecArray | null
   while ((m = titreRegex.exec(raw)) !== null) {
-    result.titres.push(m[1].trim())
+    result.titres.push(m[1].replace(/\*/g, '').trim())
   }
 
   // Parser les accroches : ACCROCHE_1: texte
@@ -116,8 +116,8 @@ export function parseShopifyPage(raw: string): ShopifyPageParsed {
     const texteMatch = raw.match(new RegExp(`§${i}_TEXTE:\\s*(.+)`))
     if (titreMatch) {
       result.paragraphes.push({
-        titre: titreMatch[1].trim(),
-        texte: texteMatch ? texteMatch[1].trim() : '',
+        titre: titreMatch[1].replace(/\*/g, '').trim(),
+        texte: texteMatch ? texteMatch[1].replace(/\*/g, '').trim() : '',
       })
     }
   }
