@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     }
 
     const requestBody: any = {
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-sonnet-4-5',
       max_tokens,
       messages: Array.isArray(userContent) && userContent[0]?.role
         ? userContent

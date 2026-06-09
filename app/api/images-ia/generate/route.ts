@@ -131,7 +131,7 @@ export async function POST(req: NextRequest) {
 
     // 2. Generate advantages with Claude
     const claudeRes = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-sonnet-4-5',
       max_tokens: 300,
       system: "Tu es un expert en marketing e-commerce pour le marché africain francophone. Tu génères des avantages produit courts, percutants, en bon français. Tu réponds UNIQUEMENT avec un JSON valide, aucun texte avant ou après.",
       messages: [{

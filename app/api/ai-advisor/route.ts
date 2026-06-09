@@ -13,9 +13,8 @@ export async function POST(req: Request) {
 
     // Try models in order of preference - using direct HTTP to avoid SDK version issues
     const models = [
-      'claude-sonnet-4-20250514',
-      'claude-3-5-sonnet-20241022',
-      'claude-3-haiku-20240307',
+      'claude-sonnet-4-5',
+      'claude-haiku-4-5',
     ];
 
     let lastErrorDetail = "";
