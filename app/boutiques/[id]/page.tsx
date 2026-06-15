@@ -349,7 +349,7 @@ export default function StoreEditorPage() {
   const [isPublished, setIsPublished] = useState(false)
   const [loading, setLoading] = useState(true)
   const [slug, setSlug] = useState('')
-  const autoSaveRef = useRef<ReturnType<typeof setInterval>>()
+  const autoSaveRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // ——— Chargement initial ———
   useEffect(() => {
