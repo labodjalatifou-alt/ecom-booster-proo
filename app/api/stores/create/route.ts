@@ -16,24 +16,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Le nom et le slug sont requis.' }, { status: 400 })
     }
 
-    const cookieStore = await cookies()
+    const authHeader = request.headers.get('Authorization')
+    const token = authHeader?.replace('Bearer ', '')
+
     const supabaseAuth = createSupabaseClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
-        auth: { persistSession: false },
-        global: {
-          headers: {
-            cookie: cookieStore.toString(),
-          },
-        },
+        auth: { persistSession: false }
       }
     )
 
-    const { data: authData } = await supabaseAuth.auth.getUser()
-    const supabase = createAdminSupabase()
+    let userId = null
 
-    let userId = authData?.user?.id ?? null
+    if (token) {
+      const { data: authData } = await supabaseAuth.auth.getUser(token)
+      userId = authData?.user?.id ?? null
+    }
+
+    const supabase = createAdminSupabase()
 
     async function ensureUserProfile(id: string, email: string | null, name: string | null) {
       const { data: existingUser, error: existingError } = await supabase
@@ -68,6 +69,7 @@ export async function POST(request: Request) {
     }
 
     if (userId) {
+      const { data: authData } = await supabaseAuth.auth.getUser(token!)
       const { id: ensuredId, error: profileError } = await ensureUserProfile(
         userId,
         authData?.user?.email ?? null,
@@ -95,13 +97,25 @@ export async function POST(request: Request) {
       if (guestUser?.id) {
         userId = guestUser.id
       } else {
-        const newGuestId = randomUUID()
+        // Create the guest in auth.users to satisfy foreign key constraints
+        const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
+          email: `guest-${Date.now()}@local.dev`,
+          password: randomUUID(),
+          email_confirm: true,
+          user_metadata: { name: 'Invité' }
+        })
+        
+        if (authError || !authUser?.user) {
+          return NextResponse.json({ error: authError?.message ?? 'Impossible de créer l’utilisateur invité.' }, { status: 500 })
+        }
+
+        const newGuestId = authUser.user.id
 
         const { data: newUser, error: createUserError } = await supabase
           .from('User')
           .insert({
             id: newGuestId,
-            email: 'guest@local',
+            email: authUser.user.email,
             name: 'Invité',
             role: 'CLOSER',
             commissionPerConfirm: 0,
@@ -112,7 +126,7 @@ export async function POST(request: Request) {
           .single()
 
         if (createUserError || !newUser?.id) {
-          return NextResponse.json({ error: createUserError?.message ?? 'Impossible de créer l’utilisateur invité.' }, { status: 500 })
+          return NextResponse.json({ error: createUserError?.message ?? 'Impossible d’initialiser le profil invité.' }, { status: 500 })
         }
 
         userId = newUser.id
