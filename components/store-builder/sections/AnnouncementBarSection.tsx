@@ -14,7 +14,7 @@ export default function AnnouncementBarSection({ props, colors, isEditing, isSel
   const [closed, setClosed] = useState(false)
   const [offset, setOffset] = useState(0)
   const trackRef = useRef<HTMLDivElement>(null)
-  const animRef = useRef<number>()
+  const animRef = useRef<number | null>(null)
 
   useEffect(() => {
     if (!trackRef.current) return
