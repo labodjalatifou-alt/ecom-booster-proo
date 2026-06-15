@@ -85,6 +85,21 @@ function PropField({ label, value, onChange, type = 'text', options, hint }: {
     </div>
   )
 
+  if (type === 'string-array') return (
+    <div>
+      <label className="text-xs font-semibold text-gray-500 mb-1.5 block">{label}</label>
+      <textarea 
+        value={(value || []).join('\n')} 
+        onChange={e => onChange(e.target.value.split('\n').filter(Boolean))} 
+        rows={4}
+        placeholder="Une URL d'image par ligne"
+        className={`${inputClass} resize-none whitespace-pre text-[10px] leading-relaxed`} 
+        style={inputStyle} 
+      />
+      {hint && <p className="text-xs text-gray-400 mt-1">{hint}</p>}
+    </div>
+  )
+
   return (
     <div>
       <label className="text-xs font-semibold text-gray-500 mb-1.5 block">{label}</label>
@@ -254,6 +269,7 @@ function buildPropFields(type: string, props: any, onChange: (key: string, val: 
       break
     case 'product':
       fields.push(
+        <PropField key="images" label="Images du produit (URL par ligne)" type="string-array" value={props.images} onChange={v => onChange('images', v)} />,
         <PropField key="cta_text" label="Texte bouton" value={props.cta_text} onChange={v => onChange('cta_text', v)} />,
         <PropField key="cta_color" label="Couleur bouton" type="color" value={props.cta_color} onChange={v => onChange('cta_color', v)} />,
         <PropField key="layout" label="Layout" type="select" value={props.layout} options={['split', 'centered', 'magazine']} onChange={v => onChange('layout', v)} />,
@@ -319,6 +335,15 @@ function buildPropFields(type: string, props: any, onChange: (key: string, val: 
         <PropField key="after_image" label="Image Après" value={props.after_image} onChange={v => onChange('after_image', v)} />,
         <PropField key="before_label" label="Label Avant" value={props.before_label} onChange={v => onChange('before_label', v)} />,
         <PropField key="after_label" label="Label Après" value={props.after_label} onChange={v => onChange('after_label', v)} />,
+      )
+      break
+    case 'order_form':
+      fields.push(
+        <PropField key="submit_text" label="Texte du bouton" value={props.submit_text} onChange={v => onChange('submit_text', v)} />,
+        <PropField key="submit_color" label="Couleur du bouton" type="color" value={props.submit_color} onChange={v => onChange('submit_color', v)} />,
+        <PropField key="success_message" label="Message de succès" type="textarea" value={props.success_message} onChange={v => onChange('success_message', v)} />,
+        <PropField key="show_quantity" label="Afficher champ quantité" type="toggle" value={props.show_quantity} onChange={v => onChange('show_quantity', v)} />,
+        <PropField key="show_product_summary" label="Afficher résumé" type="toggle" value={props.show_product_summary} onChange={v => onChange('show_product_summary', v)} />,
       )
       break
   }
@@ -564,14 +589,16 @@ export default function StoreEditorPage() {
         </div>
 
         {/* Droite */}
-        <div className="flex items-center gap-2">
-          {slug && (
-            <a href={`/s/${slug}`} target="_blank" rel="noreferrer"
-              className="flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium hover:bg-gray-50 transition-colors text-gray-600"
-              style={{ borderColor: '#e5e7eb' }}>
-              👁️ Aperçu
-            </a>
-          )}
+        <div className="flex items-center gap-3">
+            {slug && (
+              <button
+                onClick={() => window.open(`/s/${slug}?preview=1`, '_blank')}
+                className="px-4 py-2 bg-white text-gray-700 font-medium text-sm rounded-xl border hover:bg-gray-50 transition-colors shadow-sm"
+                style={{ borderColor: '#e5e7eb' }}
+              >
+                👁️ Aperçu
+              </button>
+            )}
           <button onClick={() => save()}
             disabled={isSaving}
             className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 disabled:opacity-60"
@@ -630,7 +657,21 @@ export default function StoreEditorPage() {
             )}
 
             {/* ——— Onglet Sections ——— */}
-            {tab === 'sections' && (
+            {tab === 'sections' && activeSectionId ? (
+              <div className="p-3 flex flex-col gap-4">
+                <button onClick={() => setActiveSectionId(null)} className="flex items-center justify-center w-full gap-2 text-xs font-bold text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 transition-colors bg-gray-50 p-2.5 rounded-xl border border-gray-200">
+                  ← Retour aux sections
+                </button>
+                <div className="flex flex-col gap-4">
+                  <h3 className="font-bold text-gray-800 text-sm border-b pb-2 mb-1 border-gray-200">
+                    Paramètres ({SECTIONS_CATALOG.find(c => c.type === activeSection?.type)?.label || 'Section'})
+                  </h3>
+                  <div className="flex flex-col gap-3">
+                    {activeSection && buildPropFields(activeSection.type, activeSection.props, (key, val) => updateSectionProp(activeSection.id, key, val))}
+                  </div>
+                </div>
+              </div>
+            ) : tab === 'sections' && (
               <div className="p-3 flex flex-col gap-4">
                 {/* Sections actives (drag & drop) */}
                 {sections.length > 0 && (

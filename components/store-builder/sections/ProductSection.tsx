@@ -29,6 +29,7 @@ export default function ProductSection({ props, colors, isEditing, isSelected, o
   const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({})
 
   const product = DEMO
+  const images = Array.isArray(props.images) && props.images.length > 0 ? props.images : DEMO.images
   const discount = product.compare_price
     ? Math.round((1 - product.price / product.compare_price) * 100)
     : null
@@ -52,11 +53,15 @@ export default function ProductSection({ props, colors, isEditing, isSelected, o
         {/* Galerie images */}
         {props.show_images && (
           <div className="flex-1 flex flex-col gap-4" style={{ maxWidth: 520 }}>
-            <div className="rounded-3xl overflow-hidden" style={{ aspectRatio: '1/1' }}>
-              <img src={product.images[mainImg]} alt={product.name} className="w-full h-full object-cover" />
+            <div className="rounded-3xl overflow-hidden bg-gray-100 relative" style={{ aspectRatio: '1/1' }}>
+              {images[mainImg] ? (
+                <img src={images[mainImg]} alt={product.name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="flex items-center justify-center w-full h-full text-gray-400">Aucune image</div>
+              )}
             </div>
-            <div className="flex gap-3">
-              {product.images.map((img, i) => (
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+              {images.map((img, i) => (
                 <button
                   key={i}
                   onClick={e => { e.stopPropagation(); setMainImg(i) }}

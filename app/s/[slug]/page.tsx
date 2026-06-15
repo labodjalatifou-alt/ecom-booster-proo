@@ -6,6 +6,7 @@ import PublicStoreClient from './PublicStoreClient'
 
 interface Props {
   params: Promise<{ slug: string }>
+  searchParams: Promise<{ preview?: string }>
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -18,17 +19,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function PublicStorePage({ params }: Props) {
+export default async function PublicStorePage({ params, searchParams }: Props) {
   const { slug } = await params
+  const { preview } = await searchParams
   const supabase = createClient()
 
   // 1. Boutique
-  const { data: store } = await supabase
-    .from('stores')
-    .select('*')
-    .eq('slug', slug)
-    .eq('status', 'published')
-    .single()
+  let storeQuery = supabase.from('stores').select('*').eq('slug', slug)
+  if (preview !== '1') storeQuery = storeQuery.eq('status', 'published')
+  const { data: store } = await storeQuery.single()
 
   if (!store) notFound()
 
@@ -39,14 +38,10 @@ export default async function PublicStorePage({ params }: Props) {
     .eq('store_id', store.id)
     .single()
 
-  // 3. Page home publiée
-  const { data: page } = await supabase
-    .from('store_pages')
-    .select('*')
-    .eq('store_id', store.id)
-    .eq('slug', 'home')
-    .eq('is_published', true)
-    .single()
+  // 3. Page home
+  let pageQuery = supabase.from('store_pages').select('*').eq('store_id', store.id).eq('slug', 'home')
+  if (preview !== '1') pageQuery = pageQuery.eq('is_published', true)
+  const { data: page } = await pageQuery.single()
 
   if (!page) notFound()
 

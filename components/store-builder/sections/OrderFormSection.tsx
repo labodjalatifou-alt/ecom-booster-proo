@@ -58,12 +58,13 @@ export default function OrderFormSection({ props, colors, storeId, isEditing, is
   const formContent = (
     <div className="flex flex-col gap-4">
       {success ? (
-        <div className="text-center py-12 flex flex-col items-center gap-4">
-          <div className="w-20 h-20 rounded-full flex items-center justify-center text-4xl" style={{ backgroundColor: `${colors.success}20` }}>✅</div>
-          <h3 className="text-xl font-bold" style={{ color: colors.text }}>{props.success_message}</h3>
+        <div className="text-center py-16 flex flex-col items-center gap-5">
+          <div className="w-24 h-24 rounded-full flex items-center justify-center text-5xl shadow-inner" style={{ backgroundColor: `${colors.success}15`, color: colors.success }}>✅</div>
+          <h3 className="text-2xl font-black" style={{ color: colors.text }}>{props.success_message || 'Commande confirmée !'}</h3>
+          <p className="text-gray-500">Nous vous contacterons très prochainement pour la livraison.</p>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           {(props.fields || []).map(field => (
             <div key={field.id} className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold" style={{ color: colors.text }}>
@@ -75,15 +76,15 @@ export default function OrderFormSection({ props, colors, storeId, isEditing, is
                   placeholder={field.placeholder}
                   value={form[field.id] || ''}
                   onChange={e => setForm(f => ({ ...f, [field.id]: e.target.value }))}
-                  className="px-4 py-3 text-sm outline-none transition-all resize-none"
-                  style={{ borderRadius: radius, border: `1.5px solid ${errors[field.id] ? colors.danger : colors.border}`, backgroundColor: '#fff', color: colors.text }}
+                  className="px-4 py-3.5 text-base outline-none transition-all resize-none w-full focus:ring-2 focus:ring-opacity-50"
+                  style={{ borderRadius: radius, border: `1.5px solid ${errors[field.id] ? colors.danger : colors.border}`, backgroundColor: '#f9fafb', color: colors.text, '--tw-ring-color': colors.primary } as any}
                 />
               ) : field.type === 'select' ? (
                 <select
                   value={form[field.id] || ''}
                   onChange={e => setForm(f => ({ ...f, [field.id]: e.target.value }))}
-                  className="px-4 py-3 text-sm outline-none"
-                  style={{ borderRadius: radius, border: `1.5px solid ${errors[field.id] ? colors.danger : colors.border}`, backgroundColor: '#fff', color: colors.text }}
+                  className="px-4 py-3.5 text-base outline-none transition-all w-full focus:ring-2 focus:ring-opacity-50"
+                  style={{ borderRadius: radius, border: `1.5px solid ${errors[field.id] ? colors.danger : colors.border}`, backgroundColor: '#f9fafb', color: colors.text, '--tw-ring-color': colors.primary } as any}
                 >
                   <option value="">{field.placeholder}</option>
                   {(field.options || []).map(opt => <option key={opt} value={opt}>{opt}</option>)}
@@ -94,11 +95,11 @@ export default function OrderFormSection({ props, colors, storeId, isEditing, is
                   placeholder={field.placeholder}
                   value={form[field.id] || ''}
                   onChange={e => setForm(f => ({ ...f, [field.id]: e.target.value }))}
-                  className="px-4 py-3 text-sm outline-none transition-all"
-                  style={{ borderRadius: radius, border: `1.5px solid ${errors[field.id] ? colors.danger : colors.border}`, backgroundColor: '#fff', color: colors.text }}
+                  className="px-4 py-3.5 text-base outline-none transition-all w-full focus:ring-2 focus:ring-opacity-50"
+                  style={{ borderRadius: radius, border: `1.5px solid ${errors[field.id] ? colors.danger : colors.border}`, backgroundColor: '#f9fafb', color: colors.text, '--tw-ring-color': colors.primary } as any}
                 />
               )}
-              {errors[field.id] && <span className="text-xs" style={{ color: colors.danger }}>{errors[field.id]}</span>}
+              {errors[field.id] && <span className="text-xs font-medium mt-1" style={{ color: colors.danger }}>{errors[field.id]}</span>}
             </div>
           ))}
 
@@ -159,28 +160,30 @@ export default function OrderFormSection({ props, colors, storeId, isEditing, is
 
         {props.layout === 'split' ? (
           <div className="grid md:grid-cols-2 gap-8">
-            <div className="bg-white rounded-3xl p-8 shadow-sm border" style={{ borderColor: colors.border }}>{formContent}</div>
-            <div className="bg-white rounded-3xl p-8 shadow-sm border flex flex-col gap-6" style={{ borderColor: colors.border }}>
+            <div className="bg-white rounded-3xl p-8 shadow-xl shadow-gray-100/50 border" style={{ borderColor: colors.border }}>{formContent}</div>
+            <div className="bg-white rounded-3xl p-8 shadow-xl shadow-gray-100/50 border flex flex-col gap-6" style={{ borderColor: colors.border }}>
               <h3 className="font-bold text-xl" style={{ color: colors.text }}>Récapitulatif</h3>
-              <div className="flex flex-col gap-4 text-sm">
-                <div className="flex justify-between py-3 border-b" style={{ borderColor: colors.border }}>
-                  <span style={{ color: colors.textLight }}>Quantité</span>
-                  <span className="font-bold" style={{ color: colors.text }}>{quantity}</span>
-                </div>
+              <div className="flex flex-col gap-4 text-base">
+                {props.show_quantity && (
+                  <div className="flex justify-between py-3 border-b" style={{ borderColor: colors.border }}>
+                    <span style={{ color: colors.textLight }}>Quantité</span>
+                    <span className="font-bold" style={{ color: colors.text }}>{quantity}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center">
                   <span className="font-bold" style={{ color: colors.text }}>Total</span>
                   <span className="text-2xl font-black" style={{ color: colors.primary }}>À la livraison</span>
                 </div>
               </div>
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-3 mt-4 pt-4 border-t" style={{ borderColor: colors.border }}>
                 {['🚚 Livraison rapide 2-5 jours', '✅ Paiement à la livraison', '🔒 100% sécurisé', '↩️ Retour facile 30 jours'].map(b => (
-                  <div key={b} className="flex items-center gap-2 text-sm" style={{ color: colors.textLight }}>{b}</div>
+                  <div key={b} className="flex items-center gap-3 text-sm font-medium" style={{ color: colors.textLight }}>{b}</div>
                 ))}
               </div>
             </div>
           </div>
         ) : (
-          <div className="bg-white rounded-3xl p-8 shadow-sm border" style={{ borderColor: colors.border }}>{formContent}</div>
+          <div className="bg-white rounded-3xl p-8 shadow-xl shadow-gray-100/50 border max-w-xl mx-auto" style={{ borderColor: colors.border }}>{formContent}</div>
         )}
       </div>
     </div>
