@@ -5,6 +5,7 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import { createClient } from '@/lib/supabase/client'
 import SectionRenderer from '@/components/store-builder/SectionRenderer'
 import { SECTIONS_CATALOG, generateSectionId, DEFAULT_COLORS, DEFAULT_FONTS } from '@/lib/store-builder/defaults'
+import { STORE_TEMPLATES, StoreTemplate } from '@/lib/store-builder/templates'
 import type { BuilderSection, BuilderPage, StoreColors, StoreFonts, StoreType } from '@/lib/store-builder/types'
 
 // ——————————————————————————————————————————————
@@ -15,7 +16,7 @@ const CATEGORY_EMOJI: Record<string, string> = {
   Marketing: '📣', Contenu: '🎨', Produits: '🛍️', 'Social Proof': '⭐', Info: 'ℹ️', Structure: '🏁',
 }
 
-type Tab = 'sections' | 'design' | 'settings'
+type Tab = 'templates' | 'sections' | 'design' | 'settings'
 type PreviewMode = 'desktop' | 'mobile'
 
 // ——————————————————————————————————————————————
@@ -438,6 +439,19 @@ export default function StoreEditorPage() {
     setIsPublishing(false)
   }
 
+  // ——— Templates ———
+  const loadTemplate = (template: StoreTemplate) => {
+    if (sections.length > 0) {
+      if (!confirm('Attention : Charger ce modèle remplacera toutes vos sections actuelles. Voulez-vous continuer ?')) return
+    }
+    setSections(template.sections)
+    setColors(template.colors)
+    setFonts(template.fonts)
+    setActiveSectionId(null)
+    setTab('sections')
+    markChanged()
+  }
+
   // ——— Sections actions ———
   const markChanged = () => setHasChanges(true)
 
@@ -579,16 +593,41 @@ export default function StoreEditorPage() {
         <div className="w-64 bg-white border-r border-gray-200 flex flex-col overflow-hidden shrink-0">
           {/* Onglets */}
           <div className="flex border-b border-gray-200">
-            {(['sections', 'design', 'settings'] as Tab[]).map(t => (
+            {(['templates', 'sections', 'design', 'settings'] as Tab[]).map(t => (
               <button key={t} onClick={() => setTab(t)}
                 className="flex-1 py-3 text-xs font-bold transition-colors capitalize"
                 style={{ color: tab === t ? '#6366f1' : '#6b7280', borderBottom: tab === t ? '2px solid #6366f1' : '2px solid transparent' }}>
-                {t === 'sections' ? '📐' : t === 'design' ? '🎨' : '⚙️'} {t === 'sections' ? 'Sections' : t === 'design' ? 'Design' : 'Config'}
+                {t === 'templates' ? '📑' : t === 'sections' ? '📐' : t === 'design' ? '🎨' : '⚙️'} {t === 'templates' ? 'Modèles' : t === 'sections' ? 'Sections' : t === 'design' ? 'Design' : 'Config'}
               </button>
             ))}
           </div>
 
           <div className="flex-1 overflow-y-auto">
+
+            {/* ——— Onglet Modèles ——— */}
+            {tab === 'templates' && (
+              <div className="p-3 flex flex-col gap-4">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Thèmes Premium</p>
+                <div className="flex flex-col gap-4">
+                  {STORE_TEMPLATES.map(template => (
+                    <div key={template.id} className="bg-gray-50 border border-gray-100 rounded-xl overflow-hidden group">
+                      <div className="h-32 bg-gray-200 relative overflow-hidden">
+                        {template.thumbnail && <img src={template.thumbnail} alt={template.name} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                        <span className="absolute bottom-2 left-2 text-white text-xs font-bold shadow-sm">{template.name}</span>
+                      </div>
+                      <div className="p-3">
+                        <p className="text-xs text-gray-500 mb-3 line-clamp-2">{template.description}</p>
+                        <button onClick={() => loadTemplate(template)}
+                          className="w-full py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200 transition-colors">
+                          Utiliser ce modèle
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* ——— Onglet Sections ——— */}
             {tab === 'sections' && (
@@ -756,10 +795,10 @@ export default function StoreEditorPage() {
                   <h3 className="text-xl font-bold text-gray-700 mb-2">Votre boutique est vide</h3>
                   <p className="text-gray-400 text-sm">Ajoutez des sections depuis le panneau gauche</p>
                 </div>
-                <button onClick={() => { setTab('sections'); addSection(SECTIONS_CATALOG.find(c => c.type === 'hero')!) }}
+                <button onClick={() => setTab('templates')}
                   className="px-6 py-3 rounded-xl font-bold text-white text-sm transition-all hover:scale-105"
                   style={{ backgroundColor: '#6366f1' }}>
-                  + Ajouter un Hero
+                  + Choisir un modèle Shrine
                 </button>
               </div>
             ) : (
