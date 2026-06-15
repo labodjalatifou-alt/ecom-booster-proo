@@ -142,10 +142,13 @@ export async function POST(req: NextRequest) {
 
     let advantages: string[] = ["Qualité Premium", "Design Élégant", "Facile à utiliser", "Durable", "Innovant"];
     try {
-      const parsed = JSON.parse((claudeRes.content[0] as any).text.trim());
+      let rawText = (claudeRes.content[0] as any).text.trim();
+      // Strip markdown code fences (claude-sonnet-4-5 wraps JSON in ```json...```)
+      rawText = rawText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
+      const parsed = JSON.parse(rawText);
       if (parsed.advantages?.length) advantages = parsed.advantages;
     } catch (e) {
-      console.error("Claude JSON parse error");
+      console.error("Claude JSON parse error for advantages:", e);
     }
 
     // IMAGE 1: Fond blanc (remove.bg)

@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { randomUUID } from 'crypto'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { createAdminSupabase } from '@/lib/supabase'
 import { THEMES } from '@/lib/store-builder/defaults'
@@ -33,6 +34,53 @@ export async function POST(request: Request) {
     const supabase = createAdminSupabase()
 
     let userId = authData?.user?.id ?? null
+
+    async function ensureUserProfile(id: string, email: string | null, name: string | null) {
+      const { data: existingUser, error: existingError } = await supabase
+        .from('User')
+        .select('id')
+        .eq('id', id)
+        .maybeSingle()
+
+      if (existingError) {
+        return { error: existingError }
+      }
+
+      if (existingUser?.id) {
+        return { id: existingUser.id }
+      }
+
+      const { data: newUser, error: createUserError } = await supabase
+        .from('User')
+        .insert({
+          id,
+          email: email ?? `guest-${Date.now()}@local`,
+          name: name ?? 'Utilisateur',
+          role: 'CLOSER',
+          commissionPerConfirm: 0,
+          commissionPerDeliver: 0,
+          earnings: 0,
+        })
+        .select('id')
+        .single()
+
+      return { id: newUser?.id ?? null, error: createUserError }
+    }
+
+    if (userId) {
+      const { id: ensuredId, error: profileError } = await ensureUserProfile(
+        userId,
+        authData?.user?.email ?? null,
+        authData?.user?.user_metadata?.name ?? authData?.user?.email ?? null
+      )
+
+      if (profileError) {
+        return NextResponse.json({ error: profileError.message ?? 'Erreur lors de la validation du profil utilisateur.' }, { status: 500 })
+      }
+
+      userId = ensuredId
+    }
+
     if (!userId) {
       const { data: guestUser, error: guestError } = await supabase
         .from('User')
@@ -47,9 +95,7 @@ export async function POST(request: Request) {
       if (guestUser?.id) {
         userId = guestUser.id
       } else {
-        const newGuestId = typeof crypto?.randomUUID === 'function'
-          ? crypto.randomUUID()
-          : '00000000-0000-0000-0000-000000000000'
+        const newGuestId = randomUUID()
 
         const { data: newUser, error: createUserError } = await supabase
           .from('User')
