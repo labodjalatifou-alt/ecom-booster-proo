@@ -1,84 +1,82 @@
 'use client'
-
-import type { BenefitsProps, StoreColors, StoreFonts } from '@/lib/store-builder/types'
+import { useEffect, useRef, useState } from 'react'
+import type { BenefitsProps, StoreColors } from '@/lib/store-builder/types'
 
 interface Props {
-  data: BenefitsProps
+  props: BenefitsProps
   colors: StoreColors
-  fonts: StoreFonts
+  isEditing?: boolean
+  isSelected?: boolean
+  onClick?: () => void
 }
 
-export default function BenefitsSection({ data, colors, fonts }: Props) {
-  const cols = data.layout === 'grid' ? Math.min(data.items.length, 4) : Math.min(data.items.length, 4)
+export default function BenefitsSection({ props, colors, isEditing, isSelected, onClick }: Props) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    if (!ref.current) return
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setVisible(true) }, { threshold: 0.1 })
+    obs.observe(ref.current)
+    return () => obs.disconnect()
+  }, [])
+
+  const items = props.items || []
+  const isGrid = props.layout === 'grid' || props.layout === 'cards'
+  const isNumbered = props.layout === 'numbered'
 
   return (
-    <section style={{ backgroundColor: data.bg_color || colors.bgSection, padding: '80px 24px' }}>
-      <div className="mx-auto max-w-6xl">
-        {data.title && (
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-black" style={{ color: colors.text, fontFamily: fonts.heading }}>
-              {data.title}
-            </h2>
-          </div>
-        )}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: `repeat(auto-fit, minmax(220px, 1fr))`,
-            gap: 24,
-          }}
-        >
-          {data.items.map(item => (
+    <div
+      ref={ref}
+      onClick={onClick}
+      className={`py-16 px-4 relative ${isEditing ? 'cursor-pointer' : ''} ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+      style={{ backgroundColor: props.bg_color || colors.bgSection }}
+    >
+      {isSelected && <span className="absolute top-0 left-0 bg-blue-500 text-white text-[10px] px-2 py-0.5 z-20 font-medium">Avantages</span>}
+
+      <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold mb-3" style={{ color: colors.text }}>{props.title}</h2>
+          {props.subtitle && <p className="text-lg" style={{ color: colors.textLight }}>{props.subtitle}</p>}
+        </div>
+
+        <div className={`${isGrid ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6' : 'flex flex-wrap gap-6 justify-center'}`}>
+          {items.map((item, i) => (
             <div
               key={item.id}
+              className={`flex ${isGrid ? 'flex-col items-center text-center' : 'flex-row items-start'} gap-4 ${props.layout === 'cards' ? 'bg-white rounded-2xl p-6 shadow-sm border hover:shadow-md transition-shadow' : ''}`}
               style={{
-                background: '#fff',
-                borderRadius: 24,
-                padding: '36px 28px',
-                textAlign: 'center',
-                boxShadow: '0 2px 16px rgba(0,0,0,0.05)',
-                border: '1px solid rgba(0,0,0,0.05)',
-                transition: 'all 0.3s cubic-bezier(0.16,1,0.3,1)',
-              }}
-              onMouseEnter={e => {
-                const el = e.currentTarget as HTMLDivElement
-                el.style.transform = 'translateY(-8px)'
-                el.style.boxShadow = `0 20px 40px ${colors.primary}20`
-              }}
-              onMouseLeave={e => {
-                const el = e.currentTarget as HTMLDivElement
-                el.style.transform = 'translateY(0)'
-                el.style.boxShadow = '0 2px 16px rgba(0,0,0,0.05)'
+                opacity: visible ? 1 : 0,
+                transform: visible ? 'none' : 'translateY(20px)',
+                transition: `opacity 0.5s ease ${i * 0.1}s, transform 0.5s ease ${i * 0.1}s`,
+                ...(props.layout === 'cards' ? { borderColor: colors.border } : {}),
               }}
             >
-              {/* Icon bubble */}
+              {/* Icône */}
               <div
+                className="flex items-center justify-center text-2xl flex-shrink-0"
                 style={{
-                  width: 72, height: 72, borderRadius: 20,
-                  background: `linear-gradient(135deg, ${colors.primary}20, ${colors.primary}10)`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 32, margin: '0 auto 20px',
-                  border: `1px solid ${colors.primary}20`,
+                  width: 56,
+                  height: 56,
+                  borderRadius: props.icon_style === 'square' ? 12 : '50%',
+                  backgroundColor: `${item.color || colors.primary}20`,
                 }}
               >
-                {item.icon}
+                {isNumbered ? (
+                  <span className="font-black text-xl" style={{ color: item.color || colors.primary }}>{i + 1}</span>
+                ) : (
+                  <span>{item.icon}</span>
+                )}
               </div>
-              <h3
-                className="font-bold text-lg mb-3"
-                style={{ color: colors.text, fontFamily: fonts.heading }}
-              >
-                {item.title}
-              </h3>
-              <p
-                className="text-sm leading-relaxed"
-                style={{ color: colors.textLight, fontFamily: fonts.body }}
-              >
-                {item.text}
-              </p>
+
+              <div className={`${isGrid ? 'text-center' : ''}`}>
+                <h3 className="font-bold text-lg mb-1" style={{ color: colors.text }}>{item.title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: colors.textLight }}>{item.text}</p>
+              </div>
             </div>
           ))}
         </div>
       </div>
-    </section>
+    </div>
   )
 }

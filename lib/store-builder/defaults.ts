@@ -1,5 +1,5 @@
 // ============================================
-// STORE BUILDER — Defaults & Catalogue
+// STORE BUILDER — Defaults & Catalogue (v2 — 25 sections)
 // lib/store-builder/defaults.ts
 // ============================================
 
@@ -9,23 +9,35 @@ import type {
   StoreColors,
   StoreFonts,
   ThemePreview,
+  AnnouncementBarProps,
   HeroProps,
+  MarqueeProps,
   ProductProps,
   CountdownProps,
-  OrderFormProps,
   TestimonialsProps,
   BenefitsProps,
+  BeforeAfterProps,
+  StatsProps,
   GalleryProps,
   FaqProps,
-  BadgeTrustProps,
+  ComparisonTableProps,
+  GuaranteesProps,
   VideoProps,
+  ImageWithTextProps,
+  OrderFormProps,
+  PricingTableProps,
+  NewsletterProps,
+  SlideshowProps,
+  IconGridProps,
+  ProductGridProps,
   TextBlockProps,
   SpacerProps,
+  PopupProps,
   FooterProps,
 } from './types'
 
 // ============================================
-// COULEURS PAR DÉFAUT
+// COULEURS & FONTS PAR DÉFAUT
 // ============================================
 
 export const DEFAULT_COLORS: StoreColors = {
@@ -47,13 +59,25 @@ export const DEFAULT_FONTS: StoreFonts = {
 }
 
 // ============================================
-// PROPS PAR DÉFAUT DE CHAQUE SECTION
+// DEFAULT PROPS
 // ============================================
+
+export const DEFAULT_ANNOUNCEMENT_BAR_PROPS: AnnouncementBarProps = {
+  messages: ['🚀 Livraison gratuite dès 50 000 FCFA', '⭐ 4.9/5 sur 2000+ avis', '🎁 Cadeau offert pour toute commande'],
+  bg_color: '#1e1b4b',
+  text_color: '#ffffff',
+  speed: 30,
+  show_close: true,
+}
 
 export const DEFAULT_HERO_PROPS: HeroProps = {
   headline: 'Titre accrocheur de votre produit',
-  subheadline: 'Décrivez en une phrase le bénéfice principal de votre offre',
+  subheadline: 'Décrivez en une phrase le bénéfice principal de votre offre. Soyez précis et percutant.',
+  badge_text: 'NOUVEAU',
+  show_badge: true,
+  badge_color: '#f59e0b',
   cta_text: 'Commander maintenant',
+  cta_text_2: 'En savoir plus',
   cta_link: '#order-form',
   image_url: '',
   image_position: 'right',
@@ -64,22 +88,40 @@ export const DEFAULT_HERO_PROPS: HeroProps = {
   animation: 'fadeIn',
 }
 
+export const DEFAULT_MARQUEE_PROPS: MarqueeProps = {
+  items: [
+    { text: 'Livraison rapide', icon: '🚚' },
+    { text: 'Qualité garantie', icon: '✅' },
+    { text: 'Paiement sécurisé', icon: '🔒' },
+    { text: 'Support 24/7', icon: '💬' },
+    { text: '2000+ clients satisfaits', icon: '⭐' },
+  ],
+  speed: 40,
+  bg_color: '#f9fafb',
+  text_color: '#374151',
+  direction: 'left',
+}
+
 export const DEFAULT_PRODUCT_PROPS: ProductProps = {
   product_id: '',
+  layout: 'split',
   show_price: true,
   show_compare_price: true,
   show_description: true,
   show_images: true,
   show_variants: true,
-  show_stock: false,
-  cta_text: 'Ajouter au panier',
+  show_stock_counter: true,
+  show_reviews_count: true,
+  cta_text: 'Commander maintenant',
   cta_color: '#6366f1',
-  layout: 'split',
+  urgency_text: '🔥 12 personnes regardent ce produit',
+  show_urgency: true,
 }
 
 export const DEFAULT_COUNTDOWN_PROPS: CountdownProps = {
   target_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
   title: 'Offre limitée — Se termine dans :',
+  subtitle: 'Ne ratez pas cette opportunité unique !',
   show_days: true,
   show_hours: true,
   show_minutes: true,
@@ -87,34 +129,146 @@ export const DEFAULT_COUNTDOWN_PROPS: CountdownProps = {
   bg_color: '#1e1b4b',
   text_color: '#ffffff',
   timer_bg: '#312e81',
+  accent_color: '#f59e0b',
   on_expire: 'reset',
   expire_message: "L'offre est terminée",
 }
 
+export const DEFAULT_TESTIMONIALS_PROPS: TestimonialsProps = {
+  title: 'Ce que disent nos clients',
+  subtitle: 'Plus de 2000 clients satisfaits dans toute l\'Afrique',
+  items: [
+    { id: 't1', name: 'Aminata K.', text: 'Produit de très bonne qualité, livraison rapide. Je recommande vraiment !', avatar_url: '', rating: 5, location: 'Conakry', date: '12 mai 2025', verified: true },
+    { id: 't2', name: 'Moussa D.', text: 'Excellent service client, le produit correspond parfaitement à la description.', avatar_url: '', rating: 5, location: 'Lomé', date: '3 juin 2025', verified: true },
+    { id: 't3', name: 'Fatoumata B.', text: 'Je suis très satisfaite de mon achat. Je commanderai à nouveau sans hésiter.', avatar_url: '', rating: 4, location: 'Dakar', date: '18 avril 2025', verified: false },
+  ],
+  layout: 'grid',
+  bg_color: '#ffffff',
+  show_stars: true,
+  show_verified: true,
+  show_photos: true,
+}
+
+export const DEFAULT_BENEFITS_PROPS: BenefitsProps = {
+  title: 'Pourquoi choisir notre produit ?',
+  subtitle: 'Des avantages pensés pour vous',
+  items: [
+    { id: 'b1', icon: '🚚', title: 'Livraison rapide', text: 'Recevez votre commande en 2-5 jours ouvrables', color: '#6366f1' },
+    { id: 'b2', icon: '✅', title: 'Qualité garantie', text: 'Produits testés et approuvés par nos experts', color: '#10b981' },
+    { id: 'b3', icon: '🔒', title: 'Paiement sécurisé', text: 'Paiement à la livraison disponible partout', color: '#f59e0b' },
+    { id: 'b4', icon: '💬', title: 'Support 24/7', text: 'Notre équipe est toujours disponible pour vous', color: '#ec4899' },
+  ],
+  layout: 'grid',
+  bg_color: '#f9fafb',
+  icon_style: 'circle',
+}
+
+export const DEFAULT_BEFORE_AFTER_PROPS: BeforeAfterProps = {
+  title: 'Voyez la différence par vous-même',
+  before_image: '',
+  after_image: '',
+  before_label: 'Avant',
+  after_label: 'Après',
+  bg_color: '#ffffff',
+}
+
+export const DEFAULT_STATS_PROPS: StatsProps = {
+  title: 'Nos chiffres parlent',
+  items: [
+    { id: 's1', number: 2000, suffix: '+', label: 'Clients satisfaits', icon: '😊' },
+    { id: 's2', number: 98, suffix: '%', label: 'Taux de satisfaction', icon: '⭐' },
+    { id: 's3', number: 5, suffix: 'j', label: 'Délai de livraison', icon: '🚚' },
+    { id: 's4', number: 50, suffix: 'k+', label: 'Produits vendus', icon: '🛍️' },
+  ],
+  bg_color: '#1e1b4b',
+  text_color: '#ffffff',
+  accent_color: '#f59e0b',
+}
+
+export const DEFAULT_GALLERY_PROPS: GalleryProps = {
+  title: 'Galerie',
+  images: [],
+  layout: 'grid',
+  columns: 3,
+  gap: 12,
+  border_radius: 12,
+  show_lightbox: true,
+}
+
+export const DEFAULT_FAQ_PROPS: FaqProps = {
+  title: 'Questions fréquentes',
+  subtitle: 'Tout ce que vous devez savoir',
+  items: [
+    { id: 'f1', question: 'Quels sont les délais de livraison ?', answer: 'Nous livrons en 2 à 5 jours ouvrables selon votre localisation.' },
+    { id: 'f2', question: 'Comment passer une commande ?', answer: 'Remplissez simplement le formulaire et notre équipe vous contactera pour confirmer.' },
+    { id: 'f3', question: 'Puis-je payer à la livraison ?', answer: 'Oui, le paiement à la livraison est disponible dans toutes nos zones.' },
+  ],
+  bg_color: '#ffffff',
+  accent_color: '#6366f1',
+  style: 'bordered',
+}
+
+export const DEFAULT_COMPARISON_TABLE_PROPS: ComparisonTableProps = {
+  title: 'Pourquoi nous choisir ?',
+  our_label: 'Nous',
+  competitor_label: 'Concurrents',
+  rows: [
+    { feature: 'Qualité premium', us: true, them: false },
+    { feature: 'Livraison rapide', us: true, them: false },
+    { feature: 'Service après-vente', us: true, them: false },
+    { feature: 'Prix compétitif', us: true, them: true },
+    { feature: 'Garantie produit', us: true, them: false },
+  ],
+  bg_color: '#ffffff',
+  accent_color: '#6366f1',
+}
+
+export const DEFAULT_GUARANTEES_PROPS: GuaranteesProps = {
+  title: 'Nos garanties',
+  items: [
+    { id: 'g1', icon: '🛡️', title: 'Paiement sécurisé', text: 'Transaction 100% sécurisée' },
+    { id: 'g2', icon: '📦', title: 'Livraison garantie', text: 'Suivi en temps réel' },
+    { id: 'g3', icon: '↩️', title: 'Retour facile', text: '30 jours pour changer d\'avis' },
+    { id: 'g4', icon: '⭐', title: 'Satisfaction client', text: '98% de clients satisfaits' },
+  ],
+  layout: 'row',
+  bg_color: '#f9fafb',
+  icon_color: '#6366f1',
+  style: 'cards',
+}
+
+export const DEFAULT_VIDEO_PROPS: VideoProps = {
+  title: 'Découvrez notre produit en vidéo',
+  subtitle: 'Une démonstration vaut mille mots',
+  url: '',
+  poster_image: '',
+  autoplay: false,
+  loop: false,
+  show_controls: true,
+  aspect_ratio: '16:9',
+  bg_color: '#111827',
+}
+
+export const DEFAULT_IMAGE_WITH_TEXT_PROPS: ImageWithTextProps = {
+  title: 'Notre histoire',
+  subtitle: 'Sous-titre de la section',
+  text: 'Racontez votre histoire ici. Expliquez pourquoi votre produit est unique et pourquoi vos clients devraient vous faire confiance.',
+  image_url: '',
+  image_position: 'right',
+  cta_text: 'En savoir plus',
+  cta_link: '#',
+  bg_color: '#ffffff',
+  text_color: '#111827',
+  image_style: 'rounded',
+}
+
 export const DEFAULT_ORDER_FORM_PROPS: OrderFormProps = {
   title: 'Passer votre commande',
+  subtitle: 'Remplissez le formulaire, nous vous appelons dans les 24h',
   fields: [
-    {
-      id: 'field-name',
-      type: 'text',
-      label: 'Nom complet',
-      placeholder: 'Votre nom et prénom',
-      required: true,
-    },
-    {
-      id: 'field-phone',
-      type: 'tel',
-      label: 'Téléphone',
-      placeholder: 'Ex: +224 620 000 000',
-      required: true,
-    },
-    {
-      id: 'field-address',
-      type: 'text',
-      label: 'Adresse de livraison',
-      placeholder: 'Quartier, ville',
-      required: true,
-    },
+    { id: 'field-name', type: 'text', label: 'Nom complet', placeholder: 'Votre nom et prénom', required: true },
+    { id: 'field-phone', type: 'tel', label: 'Téléphone', placeholder: 'Ex: +224 620 000 000', required: true },
+    { id: 'field-address', type: 'text', label: 'Adresse de livraison', placeholder: 'Quartier, ville', required: true },
   ],
   submit_text: 'Confirmer ma commande',
   submit_color: '#6366f1',
@@ -123,232 +277,155 @@ export const DEFAULT_ORDER_FORM_PROPS: OrderFormProps = {
   bg_color: '#f9fafb',
   border_radius: 12,
   show_product_summary: true,
+  show_quantity: true,
+  show_variants: false,
+  layout: 'standard',
 }
 
-export const DEFAULT_TESTIMONIALS_PROPS: TestimonialsProps = {
-  title: 'Ce que disent nos clients',
+export const DEFAULT_PRICING_TABLE_PROPS: PricingTableProps = {
+  title: 'Nos offres',
   items: [
-    {
-      id: 'testi-1',
-      name: 'Aminata K.',
-      text: 'Produit de très bonne qualité, livraison rapide. Je recommande vraiment !',
-      avatar_url: '',
-      rating: 5,
-      location: 'Conakry',
-    },
-    {
-      id: 'testi-2',
-      name: 'Moussa D.',
-      text: 'Excellent service client, le produit correspond parfaitement à la description.',
-      avatar_url: '',
-      rating: 5,
-      location: 'Lomé',
-    },
-    {
-      id: 'testi-3',
-      name: 'Fatoumata B.',
-      text: 'Je suis très satisfaite de mon achat. Je commanderai à nouveau sans hésiter.',
-      avatar_url: '',
-      rating: 4,
-      location: 'Dakar',
-    },
+    { id: 'p1', name: 'Basique', price: '9 900', period: 'FCFA', features: ['1 produit', 'Support email', 'Livraison standard'], cta_text: 'Choisir', highlighted: false },
+    { id: 'p2', name: 'Premium', price: '19 900', period: 'FCFA', features: ['3 produits', 'Support prioritaire', 'Livraison express', 'Cadeau offert'], cta_text: 'Choisir', highlighted: true },
+    { id: 'p3', name: 'VIP', price: '29 900', period: 'FCFA', features: ['Illimité', 'Support 24/7', 'Livraison gratuite', 'Cadeaux exclusifs'], cta_text: 'Choisir', highlighted: false },
   ],
-  layout: 'grid',
-  bg_color: '#ffffff',
-  show_stars: true,
-  stars_count: 5,
-}
-
-export const DEFAULT_BENEFITS_PROPS: BenefitsProps = {
-  title: 'Pourquoi choisir notre produit ?',
-  items: [
-    { id: 'b-1', icon: '🚚', title: 'Livraison rapide', text: 'Recevez votre commande en 2-5 jours' },
-    { id: 'b-2', icon: '✅', title: 'Qualité garantie', text: 'Produits testés et approuvés' },
-    { id: 'b-3', icon: '🔒', title: 'Paiement sécurisé', text: 'Paiement à la livraison disponible' },
-    { id: 'b-4', icon: '💬', title: 'Support 24/7', text: 'Notre équipe est toujours disponible' },
-  ],
-  layout: 'row',
-  icon_color: '#6366f1',
   bg_color: '#f9fafb',
-}
-
-export const DEFAULT_GALLERY_PROPS: GalleryProps = {
-  images: [],
-  columns: 3,
-  gap: 12,
-  border_radius: 8,
-}
-
-export const DEFAULT_FAQ_PROPS: FaqProps = {
-  title: 'Questions fréquentes',
-  items: [
-    {
-      id: 'faq-1',
-      question: 'Quels sont les délais de livraison ?',
-      answer: 'Nous livrons en 2 à 5 jours ouvrables selon votre localisation.',
-    },
-    {
-      id: 'faq-2',
-      question: 'Comment passer une commande ?',
-      answer: 'Remplissez simplement le formulaire ci-dessus et notre équipe vous contactera pour confirmer.',
-    },
-    {
-      id: 'faq-3',
-      question: 'Puis-je payer à la livraison ?',
-      answer: 'Oui, le paiement à la livraison est disponible dans toutes nos zones de livraison.',
-    },
-  ],
-  bg_color: '#ffffff',
   accent_color: '#6366f1',
 }
 
-export const DEFAULT_BADGE_TRUST_PROPS: BadgeTrustProps = {
-  items: [
-    { id: 'badge-1', icon: '🛡️', text: 'Paiement sécurisé' },
-    { id: 'badge-2', icon: '📦', text: 'Livraison garantie' },
-    { id: 'badge-3', icon: '↩️', text: 'Retour facile' },
-    { id: 'badge-4', icon: '⭐', text: '4.9/5 satisfaction' },
-  ],
-  layout: 'row',
-  bg_color: '#f9fafb',
-  icon_color: '#6366f1',
+export const DEFAULT_NEWSLETTER_PROPS: NewsletterProps = {
+  title: 'Rejoignez notre communauté',
+  subtitle: 'Recevez nos offres exclusives et promotions',
+  placeholder: 'Votre numéro WhatsApp',
+  button_text: 'S\'inscrire',
+  bg_color: '#6366f1',
+  style: 'fullwidth',
+  type: 'whatsapp',
 }
 
-export const DEFAULT_VIDEO_PROPS: VideoProps = {
-  url: '',
-  title: 'Découvrez notre produit en vidéo',
-  autoplay: false,
-  loop: false,
-  muted: true,
+export const DEFAULT_SLIDESHOW_PROPS: SlideshowProps = {
+  slides: [
+    { image_url: '', title: 'Titre du slide 1', subtitle: 'Sous-titre accrocheur', cta_text: 'Commander', cta_link: '#order-form', overlay_color: 'rgba(0,0,0,0.4)' },
+    { image_url: '', title: 'Titre du slide 2', subtitle: 'Deuxième accroche', cta_text: 'Découvrir', cta_link: '#', overlay_color: 'rgba(30,27,75,0.6)' },
+  ],
+  autoplay: true,
+  interval: 5000,
+  show_dots: true,
+  show_arrows: true,
+  height: 600,
+}
+
+export const DEFAULT_ICON_GRID_PROPS: IconGridProps = {
+  title: 'Nos services',
+  items: [
+    { id: 'ig1', icon: 'Truck', title: 'Livraison', text: 'Livraison partout en Afrique', link: '#' },
+    { id: 'ig2', icon: 'Shield', title: 'Garantie', text: 'Produits certifiés', link: '#' },
+    { id: 'ig3', icon: 'Headphones', title: 'Support', text: 'Disponible 24h/24', link: '#' },
+    { id: 'ig4', icon: 'Star', title: 'Qualité', text: 'Les meilleurs produits', link: '#' },
+    { id: 'ig5', icon: 'Gift', title: 'Cadeaux', text: 'Offres exclusives', link: '#' },
+    { id: 'ig6', icon: 'Zap', title: 'Rapidité', text: 'Traitement en 24h', link: '#' },
+  ],
+  columns: 3,
+  bg_color: '#ffffff',
+  icon_color: '#6366f1',
+  card_style: 'card',
+}
+
+export const DEFAULT_PRODUCT_GRID_PROPS: ProductGridProps = {
+  title: 'Nos meilleures ventes',
+  subtitle: 'Découvrez nos produits les plus populaires',
+  product_ids: [],
+  columns: 3,
+  show_price: true,
+  show_badge: true,
+  badge_text: 'PROMO',
+  bg_color: '#f9fafb',
 }
 
 export const DEFAULT_TEXT_BLOCK_PROPS: TextBlockProps = {
+  title: '',
   content: 'Ajoutez votre texte ici. Décrivez votre produit, votre histoire ou votre offre.',
   text_align: 'center',
   bg_color: '#ffffff',
   text_color: '#374151',
   max_width: 720,
+  show_divider: false,
 }
 
 export const DEFAULT_SPACER_PROPS: SpacerProps = {
   height: 48,
   bg_color: 'transparent',
+  show_divider: false,
+  divider_style: 'line',
+}
+
+export const DEFAULT_POPUP_PROPS: PopupProps = {
+  title: 'Offre spéciale !',
+  subtitle: 'Profitez de -20% sur votre première commande',
+  image_url: '',
+  cta_text: 'Profiter de l\'offre',
+  trigger: 'timer',
+  delay: 5,
+  bg_color: '#ffffff',
+  show_once: true,
 }
 
 export const DEFAULT_FOOTER_PROPS: FooterProps = {
-  text: '© 2025 Ma Boutique. Tous droits réservés.',
-  links: [
-    { label: 'Politique de confidentialité', url: '#' },
-    { label: 'Conditions générales', url: '#' },
-    { label: 'Contact', url: '#' },
+  logo_text: 'Ma Boutique',
+  description: 'Votre boutique de confiance pour tous vos achats.',
+  columns: [
+    { title: 'Liens utiles', links: [{ label: 'Accueil', url: '#' }, { label: 'Produits', url: '#' }] },
+    { title: 'Support', links: [{ label: 'Contact', url: '#' }, { label: 'FAQ', url: '#' }] },
   ],
-  bg_color: '#111827',
-  text_color: '#9ca3af',
+  social_links: [{ platform: 'facebook', url: '#' }, { platform: 'instagram', url: '#' }],
   show_whatsapp: true,
   whatsapp_number: '',
+  payment_icons: true,
+  bg_color: '#111827',
+  text_color: '#9ca3af',
+  copyright: `© ${new Date().getFullYear()} Ma Boutique. Tous droits réservés.`,
 }
 
 // ============================================
-// CATALOGUE DES SECTIONS
-// (affiché dans le panneau gauche de l'éditeur)
+// CATALOGUE PAR CATÉGORIE
 // ============================================
 
 export const SECTIONS_CATALOG: SectionCatalogItem[] = [
-  {
-    type: 'hero',
-    label: 'Hero / Bannière',
-    icon: 'layout-2',
-    description: 'Grande section d\'accroche avec titre, sous-titre et image',
-    defaultProps: DEFAULT_HERO_PROPS,
-  },
-  {
-    type: 'product',
-    label: 'Fiche produit',
-    icon: 'shopping-bag',
-    description: 'Affiche votre produit avec images, prix et variantes',
-    defaultProps: DEFAULT_PRODUCT_PROPS,
-  },
-  {
-    type: 'countdown',
-    label: 'Compte à rebours',
-    icon: 'clock',
-    description: 'Timer pour créer de l\'urgence sur votre offre',
-    defaultProps: DEFAULT_COUNTDOWN_PROPS,
-  },
-  {
-    type: 'order_form',
-    label: 'Formulaire commande',
-    icon: 'forms',
-    description: 'Formulaire personnalisable pour recevoir les commandes',
-    defaultProps: DEFAULT_ORDER_FORM_PROPS,
-  },
-  {
-    type: 'testimonials',
-    label: 'Témoignages',
-    icon: 'message-circle',
-    description: 'Avis et témoignages de vos clients',
-    defaultProps: DEFAULT_TESTIMONIALS_PROPS,
-  },
-  {
-    type: 'benefits',
-    label: 'Avantages',
-    icon: 'check-circle',
-    description: 'Liste des bénéfices et points forts de votre offre',
-    defaultProps: DEFAULT_BENEFITS_PROPS,
-  },
-  {
-    type: 'gallery',
-    label: 'Galerie photos',
-    icon: 'photo',
-    description: 'Grille d\'images de votre produit',
-    defaultProps: DEFAULT_GALLERY_PROPS,
-  },
-  {
-    type: 'faq',
-    label: 'FAQ',
-    icon: 'help-circle',
-    description: 'Questions / réponses fréquentes',
-    defaultProps: DEFAULT_FAQ_PROPS,
-  },
-  {
-    type: 'badge_trust',
-    label: 'Badges confiance',
-    icon: 'shield-check',
-    description: 'Icônes de réassurance : livraison, paiement, retour...',
-    defaultProps: DEFAULT_BADGE_TRUST_PROPS,
-  },
-  {
-    type: 'video',
-    label: 'Vidéo',
-    icon: 'player-play',
-    description: 'Intégrez une vidéo YouTube ou MP4',
-    defaultProps: DEFAULT_VIDEO_PROPS,
-  },
-  {
-    type: 'text_block',
-    label: 'Bloc texte',
-    icon: 'text-size',
-    description: 'Paragraphe de texte libre',
-    defaultProps: DEFAULT_TEXT_BLOCK_PROPS,
-  },
-  {
-    type: 'spacer',
-    label: 'Espaceur',
-    icon: 'separator',
-    description: 'Espace vide pour aérer la page',
-    defaultProps: DEFAULT_SPACER_PROPS,
-  },
-  {
-    type: 'footer',
-    label: 'Footer',
-    icon: 'layout-bottom-bar',
-    description: 'Pied de page avec liens et mentions légales',
-    defaultProps: DEFAULT_FOOTER_PROPS,
-  },
+  // 📣 Marketing
+  { type: 'announcement_bar', label: 'Bandeau annonce', icon: '📣', description: 'Texte défilant en haut de page', category: 'Marketing', defaultProps: DEFAULT_ANNOUNCEMENT_BAR_PROPS },
+  { type: 'countdown', label: 'Compte à rebours', icon: '⏱️', description: 'Timer pour créer de l\'urgence', category: 'Marketing', defaultProps: DEFAULT_COUNTDOWN_PROPS },
+  { type: 'stats', label: 'Statistiques', icon: '📊', description: 'Chiffres clés animés', category: 'Marketing', defaultProps: DEFAULT_STATS_PROPS },
+  { type: 'popup', label: 'Pop-up promo', icon: '🎯', description: 'Fenêtre promotionnelle', category: 'Marketing', defaultProps: DEFAULT_POPUP_PROPS },
+  // 🎨 Contenu
+  { type: 'hero', label: 'Hero / Bannière', icon: '🖼️', description: 'Grande section d\'accroche principale', category: 'Contenu', defaultProps: DEFAULT_HERO_PROPS },
+  { type: 'slideshow', label: 'Diaporama', icon: '🎠', description: 'Carousel d\'images ou contenus', category: 'Contenu', defaultProps: DEFAULT_SLIDESHOW_PROPS },
+  { type: 'image_with_text', label: 'Image + Texte', icon: '📰', description: 'Image et texte côte à côte', category: 'Contenu', defaultProps: DEFAULT_IMAGE_WITH_TEXT_PROPS },
+  { type: 'text_block', label: 'Bloc texte', icon: '📝', description: 'Paragraphe de texte libre', category: 'Contenu', defaultProps: DEFAULT_TEXT_BLOCK_PROPS },
+  { type: 'video', label: 'Vidéo', icon: '🎬', description: 'YouTube, Vimeo ou MP4', category: 'Contenu', defaultProps: DEFAULT_VIDEO_PROPS },
+  { type: 'gallery', label: 'Galerie photos', icon: '🖼️', description: 'Grille d\'images', category: 'Contenu', defaultProps: DEFAULT_GALLERY_PROPS },
+  // 🛍️ Produits
+  { type: 'product', label: 'Fiche produit', icon: '📦', description: 'Affiche votre produit principal', category: 'Produits', defaultProps: DEFAULT_PRODUCT_PROPS },
+  { type: 'product_grid', label: 'Grille produits', icon: '🛒', description: 'Collection de produits', category: 'Produits', defaultProps: DEFAULT_PRODUCT_GRID_PROPS },
+  { type: 'order_form', label: 'Formulaire commande', icon: '📋', description: 'Formulaire de commande personnalisable', category: 'Produits', defaultProps: DEFAULT_ORDER_FORM_PROPS },
+  // ⭐ Social Proof
+  { type: 'testimonials', label: 'Témoignages', icon: '💬', description: 'Avis et témoignages clients', category: 'Social Proof', defaultProps: DEFAULT_TESTIMONIALS_PROPS },
+  { type: 'before_after', label: 'Avant / Après', icon: '🔄', description: 'Comparaison avec slider interactif', category: 'Social Proof', defaultProps: DEFAULT_BEFORE_AFTER_PROPS },
+  { type: 'comparison_table', label: 'Comparaison', icon: '📊', description: 'Nous vs concurrents', category: 'Social Proof', defaultProps: DEFAULT_COMPARISON_TABLE_PROPS },
+  // ℹ️ Info
+  { type: 'benefits', label: 'Avantages', icon: '✅', description: 'Points forts et bénéfices', category: 'Info', defaultProps: DEFAULT_BENEFITS_PROPS },
+  { type: 'faq', label: 'FAQ', icon: '❓', description: 'Questions / réponses accordéon', category: 'Info', defaultProps: DEFAULT_FAQ_PROPS },
+  { type: 'guarantees', label: 'Garanties', icon: '🛡️', description: 'Badges de confiance', category: 'Info', defaultProps: DEFAULT_GUARANTEES_PROPS },
+  { type: 'pricing_table', label: 'Tableau de prix', icon: '💰', description: 'Offres et tarifs', category: 'Info', defaultProps: DEFAULT_PRICING_TABLE_PROPS },
+  { type: 'icon_grid', label: 'Grille d\'icônes', icon: '🔷', description: 'Services avec icônes', category: 'Info', defaultProps: DEFAULT_ICON_GRID_PROPS },
+  { type: 'newsletter', label: 'Newsletter', icon: '📧', description: 'Inscription email ou WhatsApp', category: 'Info', defaultProps: DEFAULT_NEWSLETTER_PROPS },
+  // 🏁 Structure
+  { type: 'marquee', label: 'Marquee défilant', icon: '🔁', description: 'Bandeau texte en boucle', category: 'Structure', defaultProps: DEFAULT_MARQUEE_PROPS },
+  { type: 'spacer', label: 'Espaceur', icon: '⬜', description: 'Espace vide / séparateur', category: 'Structure', defaultProps: DEFAULT_SPACER_PROPS },
+  { type: 'footer', label: 'Footer', icon: '🏁', description: 'Pied de page complet', category: 'Structure', defaultProps: DEFAULT_FOOTER_PROPS },
 ]
 
 // ============================================
-// THÈMES DISPONIBLES
+// THÈMES
 // ============================================
 
 export const THEMES: ThemePreview[] = [
@@ -358,18 +435,7 @@ export const THEMES: ThemePreview[] = [
     description: 'Moderne et épuré, parfait pour les produits tech et beauté',
     preview_image: '/themes/alpha-preview.jpg',
     tags: ['moderne', 'minimal', 'beauté'],
-    default_colors: {
-      primary: '#6366f1',
-      secondary: '#f8fafc',
-      accent: '#f59e0b',
-      text: '#111827',
-      textLight: '#6b7280',
-      bg: '#ffffff',
-      bgSection: '#f9fafb',
-      border: '#e5e7eb',
-      success: '#10b981',
-      danger: '#ef4444',
-    },
+    default_colors: { primary: '#6366f1', secondary: '#f8fafc', accent: '#f59e0b', text: '#111827', textLight: '#6b7280', bg: '#ffffff', bgSection: '#f9fafb', border: '#e5e7eb', success: '#10b981', danger: '#ef4444' },
     default_fonts: { heading: 'Inter', body: 'Inter' },
   },
   {
@@ -378,18 +444,7 @@ export const THEMES: ThemePreview[] = [
     description: 'Couleurs intenses, fort impact visuel pour les produits de santé',
     preview_image: '/themes/bold-preview.jpg',
     tags: ['santé', 'sport', 'impact'],
-    default_colors: {
-      primary: '#dc2626',
-      secondary: '#fef2f2',
-      accent: '#f97316',
-      text: '#111827',
-      textLight: '#6b7280',
-      bg: '#ffffff',
-      bgSection: '#fff7ed',
-      border: '#fed7aa',
-      success: '#16a34a',
-      danger: '#dc2626',
-    },
+    default_colors: { primary: '#dc2626', secondary: '#fef2f2', accent: '#f97316', text: '#111827', textLight: '#6b7280', bg: '#ffffff', bgSection: '#fff7ed', border: '#fed7aa', success: '#16a34a', danger: '#dc2626' },
     default_fonts: { heading: 'Inter', body: 'Inter' },
   },
   {
@@ -398,18 +453,7 @@ export const THEMES: ThemePreview[] = [
     description: 'Style luxe et sobre, idéal pour la mode et les cosmétiques premium',
     preview_image: '/themes/elegant-preview.jpg',
     tags: ['luxe', 'mode', 'premium'],
-    default_colors: {
-      primary: '#1c1917',
-      secondary: '#fafaf9',
-      accent: '#ca8a04',
-      text: '#1c1917',
-      textLight: '#78716c',
-      bg: '#ffffff',
-      bgSection: '#fafaf9',
-      border: '#e7e5e4',
-      success: '#15803d',
-      danger: '#b91c1c',
-    },
+    default_colors: { primary: '#1c1917', secondary: '#fafaf9', accent: '#ca8a04', text: '#1c1917', textLight: '#78716c', bg: '#ffffff', bgSection: '#fafaf9', border: '#e7e5e4', success: '#15803d', danger: '#b91c1c' },
     default_fonts: { heading: 'Inter', body: 'Inter' },
   },
   {
@@ -418,24 +462,13 @@ export const THEMES: ThemePreview[] = [
     description: 'Frais et coloré, adapté aux produits alimentaires et bien-être',
     preview_image: '/themes/tropical-preview.jpg',
     tags: ['alimentation', 'bien-être', 'naturel'],
-    default_colors: {
-      primary: '#059669',
-      secondary: '#ecfdf5',
-      accent: '#f59e0b',
-      text: '#064e3b',
-      textLight: '#6b7280',
-      bg: '#ffffff',
-      bgSection: '#f0fdf4',
-      border: '#a7f3d0',
-      success: '#059669',
-      danger: '#dc2626',
-    },
+    default_colors: { primary: '#059669', secondary: '#ecfdf5', accent: '#f59e0b', text: '#064e3b', textLight: '#6b7280', bg: '#ffffff', bgSection: '#f0fdf4', border: '#a7f3d0', success: '#059669', danger: '#dc2626' },
     default_fonts: { heading: 'Inter', body: 'Inter' },
   },
 ]
 
 // ============================================
-// HELPER — générer un ID unique pour une section
+// HELPER
 // ============================================
 
 export function generateSectionId(type: SectionType): string {

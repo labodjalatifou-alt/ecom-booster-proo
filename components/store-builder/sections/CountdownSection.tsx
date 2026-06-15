@@ -1,129 +1,115 @@
 'use client'
-
 import { useEffect, useState } from 'react'
-import type { CountdownProps, StoreColors, StoreFonts } from '@/lib/store-builder/types'
+import type { CountdownProps, StoreColors } from '@/lib/store-builder/types'
 
 interface Props {
-  data: CountdownProps
+  props: CountdownProps
   colors: StoreColors
-  fonts: StoreFonts
+  isEditing?: boolean
+  isSelected?: boolean
+  onClick?: () => void
 }
 
-function getTimeLeft(target: string) {
-  const diff = Math.max(0, Date.parse(target) - Date.now())
-  return {
-    days: Math.floor(diff / (1000 * 60 * 60 * 24)),
-    hours: Math.floor(diff / (1000 * 60 * 60)) % 24,
-    minutes: Math.floor(diff / (1000 * 60)) % 60,
-    seconds: Math.floor(diff / 1000) % 60,
-    expired: diff === 0,
-  }
-}
+function pad(n: number) { return String(n).padStart(2, '0') }
 
-function FlipUnit({ value, label, textColor }: { value: number; label: string; textColor: string }) {
-  const formatted = String(value).padStart(2, '0')
-  return (
-    <div className="flex flex-col items-center">
-      <div
-        style={{
-          background: 'rgba(255,255,255,0.12)',
-          border: '1px solid rgba(255,255,255,0.2)',
-          borderRadius: 20,
-          padding: '20px 28px',
-          minWidth: 90,
-          backdropFilter: 'blur(12px)',
-        }}
-      >
-        <span
-          style={{
-            fontFamily: 'monospace',
-            fontSize: 56,
-            fontWeight: 900,
-            color: textColor,
-            display: 'block',
-            textAlign: 'center',
-            lineHeight: 1,
-            textShadow: `0 0 30px ${textColor}50`,
-          }}
-        >
-          {formatted}
-        </span>
-      </div>
-      <span
-        style={{
-          color: textColor,
-          opacity: 0.65,
-          fontSize: 11,
-          fontWeight: 700,
-          letterSpacing: '0.2em',
-          textTransform: 'uppercase',
-          marginTop: 10,
-        }}
-      >
-        {label}
-      </span>
-    </div>
-  )
-}
-
-export default function CountdownSection({ data, colors, fonts }: Props) {
-  const [time, setTime] = useState(getTimeLeft(data.target_date))
+export default function CountdownSection({ props, colors, isEditing, isSelected, onClick }: Props) {
+  const [timeLeft, setTimeLeft] = useState({ d: 0, h: 0, m: 0, s: 0 })
+  const [expired, setExpired] = useState(false)
+  const [flip, setFlip] = useState({ d: false, h: false, m: false, s: false })
 
   useEffect(() => {
-    const interval = setInterval(() => setTime(getTimeLeft(data.target_date)), 1000)
-    return () => clearInterval(interval)
-  }, [data.target_date])
+    const tick = () => {
+      let target = new Date(props.target_date).getTime()
+      const now = Date.now()
+      let diff = target - now
 
-  if (time.expired && data.on_expire === 'hide') return null
+      if (diff <= 0) {
+        if (props.on_expire === 'reset') {
+          target = Date.now() + 24 * 60 * 60 * 1000
+          diff = target - now
+        } else {
+          setExpired(true)
+          return
+        }
+      }
+
+      const prev = timeLeft
+      const d = Math.floor(diff / 86400000)
+      const h = Math.floor((diff % 86400000) / 3600000)
+      const m = Math.floor((diff % 3600000) / 60000)
+      const s = Math.floor((diff % 60000) / 1000)
+
+      setFlip({
+        d: prev.d !== d,
+        h: prev.h !== h,
+        m: prev.m !== m,
+        s: prev.s !== s,
+      })
+      setTimeLeft({ d, h, m, s })
+    }
+
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [props.target_date, props.on_expire])
+
+  if (expired && props.on_expire === 'hide') return null
 
   const units = [
-    { show: data.show_days, value: time.days, label: 'Jours' },
-    { show: data.show_hours, value: time.hours, label: 'Heures' },
-    { show: data.show_minutes, value: time.minutes, label: 'Min' },
-    { show: data.show_seconds, value: time.seconds, label: 'Sec' },
+    { key: 'd', label: 'Jours', value: timeLeft.d, show: props.show_days },
+    { key: 'h', label: 'Heures', value: timeLeft.h, show: props.show_hours },
+    { key: 'm', label: 'Min', value: timeLeft.m, show: props.show_minutes },
+    { key: 's', label: 'Sec', value: timeLeft.s, show: props.show_seconds },
   ].filter(u => u.show)
 
   return (
-    <section
-      style={{
-        background: `linear-gradient(135deg, ${data.bg_color} 0%, ${data.timer_bg} 100%)`,
-        padding: '64px 24px',
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-    >
-      {/* decorative glow */}
-      <div style={{
-        position: 'absolute', top: '50%', left: '50%',
-        transform: 'translate(-50%,-50%)',
-        width: 500, height: 500, borderRadius: '50%',
-        background: `radial-gradient(circle, ${data.text_color}10 0%, transparent 70%)`,
-        pointerEvents: 'none',
-      }} />
+    <>
+      <style>{`
+        @keyframes flip-in { 0% { transform: rotateX(-90deg); opacity: 0; } 100% { transform: rotateX(0); opacity: 1; } }
+        .flip-anim { animation: flip-in 0.35s ease; }
+        .timer-block { perspective: 400px; }
+      `}</style>
 
-      <div className="mx-auto max-w-4xl relative z-10 text-center">
-        <p style={{ color: data.text_color, opacity: 0.6, fontSize: 12, fontWeight: 700, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 16 }}>
-          ⏰ Offre limitée
-        </p>
-        <h2 style={{ color: data.text_color, fontFamily: fonts.heading, fontSize: 28, fontWeight: 800, marginBottom: 48 }}>
-          {data.title}
-        </h2>
+      <div
+        onClick={onClick}
+        className={`py-14 px-4 relative text-center ${isEditing ? 'cursor-pointer' : ''} ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+        style={{ backgroundColor: props.bg_color || '#1e1b4b', color: props.text_color || '#fff' }}
+      >
+        {isSelected && <span className="absolute top-0 left-0 bg-blue-500 text-white text-[10px] px-2 py-0.5 z-20 font-medium">Compte à rebours</span>}
 
-        {time.expired && data.on_expire === 'message' ? (
-          <p style={{ color: data.text_color, fontSize: 24, fontWeight: 600 }}>{data.expire_message}</p>
-        ) : (
-          <div className="flex items-start justify-center gap-4 md:gap-6 flex-wrap">
-            {units.map(({ value, label }, i) => (
-              <div key={label} className="flex items-start gap-4">
-                <FlipUnit value={value} label={label} textColor={data.text_color} />
-                {i < units.length - 1 && (
-                  <span style={{ color: data.text_color, fontSize: 48, fontWeight: 900, opacity: 0.4, marginTop: 20, lineHeight: 1 }}>:</span>
-                )}
-              </div>
-            ))}
+        <div style={{ maxWidth: 640, margin: '0 auto' }}>
+          <div style={{ color: props.accent_color || colors.accent }} className="text-sm font-bold tracking-widest uppercase mb-2">
+            ⚡ Offre limitée
           </div>
-        )}
+          <h2 className="text-2xl font-bold mb-2">{props.title || 'L\'offre expire dans :'}</h2>
+          {props.subtitle && <p className="opacity-70 mb-8 text-sm">{props.subtitle}</p>}
+
+          {expired && props.on_expire === 'message' ? (
+            <div className="text-xl font-bold" style={{ color: props.accent_color || colors.accent }}>
+              {props.expire_message || 'L\'offre est terminée'}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center gap-3 flex-wrap">
+              {units.map((unit, idx) => (
+                <div key={unit.key} className="flex items-center gap-3">
+                  <div className="timer-block flex flex-col items-center">
+                    <div
+                      className={`rounded-xl flex items-center justify-center font-black text-5xl min-w-[80px] py-4 px-2 ${flip[unit.key as keyof typeof flip] ? 'flip-anim' : ''}`}
+                      style={{ backgroundColor: props.timer_bg || '#312e81', color: props.text_color || '#fff', boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}
+                    >
+                      {pad(unit.value)}
+                    </div>
+                    <span className="text-xs mt-2 font-semibold opacity-70 tracking-wide uppercase">{unit.label}</span>
+                  </div>
+                  {idx < units.length - 1 && (
+                    <span className="text-4xl font-black opacity-50 mb-4">:</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-    </section>
+    </>
   )
 }

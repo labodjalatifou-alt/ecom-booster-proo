@@ -1,125 +1,116 @@
 'use client'
-
 import { useEffect, useRef } from 'react'
-import type { HeroProps, StoreColors, StoreFonts } from '@/lib/store-builder/types'
+import type { HeroProps, StoreColors } from '@/lib/store-builder/types'
 
 interface Props {
-  data: HeroProps
+  props: HeroProps
   colors: StoreColors
-  fonts: StoreFonts
+  isEditing?: boolean
+  isSelected?: boolean
+  onClick?: () => void
 }
 
-export default function HeroSection({ data, colors, fonts }: Props) {
-  const contentRef = useRef<HTMLDivElement>(null)
+export default function HeroSection({ props, colors, isEditing, isSelected, onClick }: Props) {
+  const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const el = contentRef.current
-    if (!el || data.animation === 'none') return
-    el.style.opacity = '0'
-    el.style.transform = data.animation === 'slideUp' ? 'translateY(48px)' : 'scale(0.96)'
-    const timer = setTimeout(() => {
-      el.style.transition = 'opacity 0.9s cubic-bezier(0.16,1,0.3,1), transform 0.9s cubic-bezier(0.16,1,0.3,1)'
-      el.style.opacity = '1'
-      el.style.transform = 'translateY(0) scale(1)'
-    }, 120)
-    return () => clearTimeout(timer)
-  }, [data.animation])
+    if (!ref.current) return
+    const el = ref.current
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) el.classList.add('hero-visible') },
+      { threshold: 0.1 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
 
-  const isBackground = data.image_position === 'background'
-  const isNone = data.image_position === 'none'
-  const isSplit = data.image_position === 'left' || data.image_position === 'right'
-  const textColor = isBackground && data.image_url ? '#ffffff' : (data.text_color || colors.text)
+  const hasImage = !!props.image_url
+  const isBackground = props.image_position === 'background'
+  const isSplit = !isBackground && hasImage && props.image_position !== 'none'
 
-  const ImagePlaceholder = () => (
-    <div
-      className="rounded-3xl overflow-hidden shadow-2xl flex items-center justify-center bg-gray-100"
-      style={{ minHeight: 380 }}
-    >
-      <svg className="w-20 h-20 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
-          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-      </svg>
-    </div>
-  )
+  const bgStyle = isBackground && hasImage
+    ? { backgroundImage: `url(${props.image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+    : { backgroundColor: props.bg_color || colors.bg }
+
+  const align = props.text_align === 'center' ? 'items-center text-center' : props.text_align === 'right' ? 'items-end text-right' : 'items-start text-left'
 
   return (
-    <section style={{ backgroundColor: data.bg_color || colors.bg, position: 'relative', overflow: 'hidden' }}>
-      {isBackground && data.image_url && (
-        <>
-          <div style={{
-            position: 'absolute', inset: 0,
-            backgroundImage: `url(${data.image_url})`,
-            backgroundSize: 'cover', backgroundPosition: 'center',
-          }} />
-          <div style={{ position: 'absolute', inset: 0, backgroundColor: '#000', opacity: data.overlay_opacity }} />
-        </>
-      )}
+    <>
+      <style>{`
+        .hero-animate { opacity: 0; transform: translateY(32px); transition: opacity 0.7s ease, transform 0.7s ease; }
+        .hero-visible .hero-animate { opacity: 1; transform: none; }
+        .hero-animate-delay-1 { transition-delay: 0.1s; }
+        .hero-animate-delay-2 { transition-delay: 0.25s; }
+        .hero-animate-delay-3 { transition-delay: 0.4s; }
+        .hero-animate-delay-4 { transition-delay: 0.55s; }
+        .hero-btn-primary { display: inline-flex; align-items: center; gap: 8px; padding: 14px 32px; border-radius: 12px; font-weight: 700; font-size: 16px; transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; border: none; }
+        .hero-btn-primary:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+        .hero-btn-secondary { display: inline-flex; align-items: center; gap: 8px; padding: 14px 24px; border-radius: 12px; font-weight: 600; font-size: 16px; transition: all 0.2s; cursor: pointer; background: transparent; border: 2px solid currentColor; }
+        .hero-btn-secondary:hover { background: rgba(255,255,255,0.1); transform: translateY(-1px); }
+        @keyframes badge-pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        .badge-anim { animation: badge-pulse 2s infinite; }
+      `}</style>
 
       <div
-        ref={contentRef}
-        className={`relative z-10 mx-auto max-w-7xl px-6 py-24 md:py-36 ${isSplit ? 'grid md:grid-cols-2 gap-16 items-center' : 'flex flex-col'}`}
-        style={{
-          alignItems: data.text_align === 'center' ? 'center' : data.text_align === 'right' ? 'flex-end' : 'flex-start',
-          textAlign: data.text_align,
-        }}
+        ref={ref}
+        style={{ ...bgStyle, color: props.text_color || colors.text, position: 'relative' }}
+        className={`relative ${isEditing ? 'cursor-pointer' : ''} ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+        onClick={onClick}
       >
-        {data.image_position === 'left' && (
-          data.image_url
-            ? <div className="rounded-3xl overflow-hidden shadow-2xl order-first"><img src={data.image_url} alt="Hero" className="w-full h-96 object-cover" /></div>
-            : <ImagePlaceholder />
+        {isSelected && (
+          <span className="absolute top-0 left-0 bg-blue-500 text-white text-[10px] px-2 py-0.5 z-20 font-medium">Hero</span>
         )}
 
-        <div className="space-y-8" style={{ maxWidth: (isNone || isBackground) ? 720 : '100%' }}>
-          <div>
-            <span className="inline-block text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-full mb-4"
-              style={{ backgroundColor: colors.primary + '20', color: colors.primary }}>
-              ✨ Nouveau
-            </span>
-            <h1 className="text-5xl md:text-6xl font-black leading-tight tracking-tight"
-              style={{ fontFamily: fonts.heading, color: textColor, lineHeight: 1.1 }}>
-              {data.headline}
-            </h1>
-          </div>
-          <p className="text-xl leading-relaxed" style={{ color: textColor, opacity: 0.85, fontFamily: fonts.body }}>
-            {data.subheadline}
-          </p>
-          <div>
-            <a
-              href={data.cta_link || '#order-form'}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 12,
-                backgroundColor: colors.primary, color: '#fff',
-                padding: '18px 40px', borderRadius: 50,
-                fontSize: 18, fontWeight: 700, fontFamily: fonts.body,
-                boxShadow: `0 12px 32px ${colors.primary}55`,
-                transition: 'all 0.25s cubic-bezier(0.16,1,0.3,1)',
-                textDecoration: 'none',
-              }}
-              onMouseEnter={e => {
-                const el = e.currentTarget as HTMLAnchorElement
-                el.style.transform = 'translateY(-4px) scale(1.04)'
-                el.style.boxShadow = `0 24px 48px ${colors.primary}70`
-              }}
-              onMouseLeave={e => {
-                const el = e.currentTarget as HTMLAnchorElement
-                el.style.transform = 'translateY(0) scale(1)'
-                el.style.boxShadow = `0 12px 32px ${colors.primary}55`
-              }}
-            >
-              {data.cta_text}
-              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </svg>
-            </a>
+        {/* Overlay pour mode background */}
+        {isBackground && hasImage && (
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: `rgba(0,0,0,${props.overlay_opacity || 0.4})`, zIndex: 1 }} />
+        )}
+
+        <div style={{ position: 'relative', zIndex: 2, maxWidth: 1280, margin: '0 auto', padding: '80px 24px' }}>
+          <div className={`flex gap-12 ${isSplit ? (props.image_position === 'left' ? 'flex-row-reverse' : 'flex-row') : 'flex-col'} items-center flex-wrap`}>
+            {/* Texte */}
+            <div className={`flex flex-col gap-6 flex-1 min-w-[280px] ${align}`}>
+              {props.show_badge && props.badge_text && (
+                <div className="hero-animate hero-animate-delay-1 badge-anim self-start inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold"
+                  style={{ backgroundColor: props.badge_color || colors.accent, color: '#fff' }}>
+                  ✨ {props.badge_text}
+                </div>
+              )}
+
+              <h1 className="hero-animate hero-animate-delay-2 font-black leading-tight"
+                style={{ fontSize: 'clamp(36px, 5vw, 64px)', lineHeight: 1.1 }}>
+                {props.headline || 'Titre principal de votre boutique'}
+              </h1>
+
+              <p className="hero-animate hero-animate-delay-3 text-lg leading-relaxed opacity-80" style={{ maxWidth: 540 }}>
+                {props.subheadline || 'Votre sous-titre percutant ici'}
+              </p>
+
+              <div className="hero-animate hero-animate-delay-4 flex flex-wrap gap-4">
+                <button className="hero-btn-primary" style={{ backgroundColor: colors.primary, color: '#fff' }}>
+                  {props.cta_text || 'Commander maintenant'} →
+                </button>
+                {props.cta_text_2 && (
+                  <button className="hero-btn-secondary" style={{ color: props.text_color || colors.text }}>
+                    {props.cta_text_2}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Image */}
+            {isSplit && hasImage && (
+              <div className="hero-animate hero-animate-delay-2 flex-1 min-w-[280px]" style={{ maxWidth: 540 }}>
+                <img
+                  src={props.image_url}
+                  alt="Hero"
+                  style={{ width: '100%', height: 'auto', borderRadius: 24, objectFit: 'cover', boxShadow: '0 24px 64px rgba(0,0,0,0.15)' }}
+                />
+              </div>
+            )}
           </div>
         </div>
-
-        {data.image_position === 'right' && (
-          data.image_url
-            ? <div className="rounded-3xl overflow-hidden shadow-2xl"><img src={data.image_url} alt="Hero" className="w-full h-96 object-cover" /></div>
-            : <ImagePlaceholder />
-        )}
       </div>
-    </section>
+    </>
   )
 }
