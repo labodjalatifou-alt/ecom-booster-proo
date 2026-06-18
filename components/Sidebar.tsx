@@ -12,6 +12,7 @@ import {
   User,
   Megaphone,
   Store,
+  ShoppingBag,
   Mic,
   Trophy,
   History,
@@ -73,10 +74,16 @@ const menuGroups = [
     ]
   },
   {
+    title: 'BOUTIQUE',
+    items: [
+      { name: 'Boutique en ligne', icon: Store, href: '/boutique-en-ligne' },
+      { name: 'Mes Boutiques', icon: ShoppingBag, href: '/boutiques' },
+    ]
+  },
+  {
     title: 'CONFIGURATION',
     items: [
       { name: 'Gestion Équipe', icon: Users, href: '/equipe' },
-      { name: 'Mes Boutiques', icon: Store, href: '/boutiques' },
       { name: 'Notifications', icon: Bell, href: '/notifications' },
     ]
   }
