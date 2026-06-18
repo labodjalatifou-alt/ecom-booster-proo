@@ -114,8 +114,12 @@ export default function RichTextEditor({
 
   if (!editor) return null
 
-  const isActive = (type: string, attrs?: Record<string, unknown>) =>
-    editor.isActive(type, attrs)
+  const isActive = (typeOrAttrs: string | Record<string, unknown>, attrs?: Record<string, unknown>) => {
+    if (typeof typeOrAttrs === 'string') {
+      return editor.isActive(typeOrAttrs, attrs)
+    }
+    return editor.isActive(typeOrAttrs)
+  }
 
   return (
     <div className="border border-gray-200 dark:border-slate-600 rounded-xl overflow-hidden bg-white dark:bg-slate-900 shadow-sm">
