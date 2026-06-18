@@ -192,8 +192,8 @@ export default function NouvelleBoutiquePage() {
                     </div>
                     <p className="text-xs text-gray-500 leading-relaxed">{theme.description}</p>
                     <div className="flex flex-wrap gap-1 mt-2">
-                      {theme.tags.map(tag => (
-                        <span key={tag} className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
+                      {theme.tags.map((tag: string) => (
+                        <span key={tag} className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded">
                           {tag}
                         </span>
                       ))}
