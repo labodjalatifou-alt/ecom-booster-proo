@@ -67,3 +67,7 @@ export interface Store {
     }
   };
 }
+
+export type StoreColors = StoreTheme['colors'];
+export type StoreFonts = StoreTheme['typography'];
+export type BuilderSection = StoreSection;

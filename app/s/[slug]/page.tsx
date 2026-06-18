@@ -12,6 +12,8 @@ async function getStoreBySlug(slug: string): Promise<Store | null> {
       id: 'store-1',
       name: 'Boutique de Démo',
       slug: 'demo',
+      status: 'published',
+      created_at: new Date().toISOString(),
       theme: {
         colors: { primary: '#008060', secondary: '#ffffff', accent: '#ff0000', text: '#333333', background: '#f9fafb' },
         typography: { headingFont: 'Inter', bodyFont: 'Inter' },
