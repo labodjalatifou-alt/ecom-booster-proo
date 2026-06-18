@@ -3,6 +3,8 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd'
+import toast from 'react-hot-toast'
 import {
   ArrowLeft,
   Upload,
@@ -117,6 +119,19 @@ export default function BoutiqueEnLignePage() {
     }
   }
 
+  const onDragEnd = (result: DropResult) => {
+    if (!result.destination) return
+    const items = Array.from(form.medias)
+    const [reorderedItem] = items.splice(result.source.index, 1)
+    items.splice(result.destination.index, 0, reorderedItem)
+
+    const previews = Array.from(form.mediaPreviews)
+    const [reorderedPreview] = previews.splice(result.source.index, 1)
+    previews.splice(result.destination.index, 0, reorderedPreview)
+
+    set({ medias: items, mediaPreviews: previews })
+  }
+
   const handleSave = async () => {
     if (!form.titre.trim()) return
     setSaving(true)
@@ -124,6 +139,9 @@ export default function BoutiqueEnLignePage() {
     setSavedForm({ ...form })
     setSaving(false)
     setHasChanges(false)
+    toast.success('Produit enregistré avec succès !', { position: 'bottom-center' })
+    // On pourrait rediriger vers la liste des produits :
+    // router.push('/stock')
   }
 
   const handleDiscard = () => {
@@ -217,21 +235,42 @@ export default function BoutiqueEnLignePage() {
           <Card>
             <div className="p-5">
               <Label>Supports multimédias</Label>
+              <p className="text-xs text-gray-400 mb-3">Tu peux glisser-déposer les images pour changer leur ordre. La première sera l'image principale.</p>
               {form.mediaPreviews.length > 0 ? (
-                <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 mt-2">
-                  {form.mediaPreviews.map((src, i) => (
-                    <div key={i} className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-slate-600">
-                      <img src={src} alt="" className="w-full h-full object-cover" />
-                      <button onClick={() => removeMedia(i)} className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <X className="w-3 h-3" />
-                      </button>
-                      {i === 0 && <div className="absolute bottom-0 left-0 right-0 bg-indigo-600 text-white text-[9px] font-bold text-center py-0.5">PRINCIPALE</div>}
-                    </div>
-                  ))}
-                  <button onClick={() => fileInputRef.current?.click()} className="aspect-square rounded-lg border-2 border-dashed border-gray-300 dark:border-slate-600 hover:border-indigo-400 flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-indigo-500 transition-all">
-                    <Plus className="w-5 h-5" /><span className="text-[9px] font-bold uppercase">Ajouter</span>
-                  </button>
-                </div>
+                <DragDropContext onDragEnd={onDragEnd}>
+                  <Droppable droppableId="medias" direction="horizontal">
+                    {(provided) => (
+                      <div 
+                        {...provided.droppableProps} 
+                        ref={provided.innerRef}
+                        className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-2"
+                      >
+                        {form.mediaPreviews.map((src, i) => (
+                          <Draggable key={src + i} draggableId={src + i} index={i}>
+                            {(provided) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                className={`relative group rounded-lg overflow-hidden border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-800 ${i === 0 ? 'col-span-2 row-span-2 aspect-square shadow-md' : 'aspect-square'}`}
+                              >
+                                <img src={src} alt="" className="w-full h-full object-cover" />
+                                <button type="button" onClick={() => removeMedia(i)} className="absolute top-2 right-2 w-6 h-6 bg-red-500/90 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-sm">
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                                {i === 0 && <div className="absolute bottom-0 left-0 right-0 bg-indigo-600/90 text-white text-xs font-bold text-center py-1.5 backdrop-blur-sm tracking-widest uppercase">Principale</div>}
+                              </div>
+                            )}
+                          </Draggable>
+                        ))}
+                        {provided.placeholder}
+                        <button onClick={() => fileInputRef.current?.click()} className="aspect-square rounded-lg border-2 border-dashed border-gray-300 dark:border-slate-600 hover:border-indigo-400 flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-indigo-500 transition-all bg-white dark:bg-slate-900">
+                          <Plus className="w-6 h-6" /><span className="text-[10px] font-bold uppercase tracking-wider">Ajouter</span>
+                        </button>
+                      </div>
+                    )}
+                  </Droppable>
+                </DragDropContext>
               ) : (
                 <div
                   onDrop={e => { e.preventDefault(); handleMediaUpload(e.dataTransfer.files) }}
