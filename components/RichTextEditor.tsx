@@ -32,6 +32,7 @@ export default function RichTextEditor({
 }: RichTextEditorProps) {
   const colorInputRef = useRef<HTMLInputElement>(null)
   const imageInputRef = useRef<HTMLInputElement>(null)
+  const mediaInputRef = useRef<HTMLInputElement>(null)
 
   const editor = useEditor({
     extensions: [
@@ -73,21 +74,37 @@ export default function RichTextEditor({
 
   const insertImage = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (!editor || !e.target.files?.length) return
-    const file = e.target.files[0]
-    const reader = new FileReader()
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        editor.chain().focus().setImage({ src: reader.result }).run()
+    Array.from(e.target.files).forEach(file => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          editor.chain().focus().setImage({ src: reader.result }).run()
+        }
       }
-    }
-    reader.readAsDataURL(file)
+      reader.readAsDataURL(file)
+    })
     e.target.value = ''
   }, [editor])
 
-  const insertImageByUrl = useCallback(() => {
-    if (!editor) return
-    const url = window.prompt('URL de l\'image :')
-    if (url) editor.chain().focus().setImage({ src: url }).run()
+  const insertMedia = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!editor || !e.target.files?.length) return
+    Array.from(e.target.files).forEach(file => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          // GIF and images via img tag, videos via video tag
+          if (file.type.startsWith('video/') && !file.type.includes('gif')) {
+            editor.chain().focus().insertContent(
+              `<p><video controls style="max-width:100%;border-radius:8px;"><source src="${reader.result}" type="${file.type}" /></video></p>`
+            ).run()
+          } else {
+            editor.chain().focus().setImage({ src: reader.result, alt: file.name }).run()
+          }
+        }
+      }
+      reader.readAsDataURL(file)
+    })
+    e.target.value = ''
   }, [editor])
 
   const applyColor = useCallback((color: string) => {
@@ -277,47 +294,45 @@ export default function RichTextEditor({
 
         <Sep />
 
-        {/* Image depuis fichier */}
-        <TB
-          active={false}
-          onClick={() => imageInputRef.current?.click()}
-          tooltip="Insérer une image (depuis fichier)"
-          icon={<ImageIcon className="w-3.5 h-3.5" />}
-        />
-        {/* Image depuis URL */}
-        <TB
-          active={false}
-          onClick={insertImageByUrl}
-          tooltip="Insérer une image (URL)"
-          icon={
-            <span className="flex items-center gap-0.5 text-[10px] font-bold">
-              <ImageIcon className="w-3 h-3" />
-              <span>URL</span>
-            </span>
-          }
-        />
-        {/* Vidéo / GIF par URL */}
-        <TB
-          active={false}
-          onClick={() => {
-            const url = window.prompt('URL de la vidéo ou GIF :')
-            if (url) {
-              editor.chain().focus().insertContent(
-                `<p><img src="${url}" alt="media" /></p>`
-              ).run()
-            }
-          }}
-          tooltip="Insérer une vidéo / GIF (URL)"
-          icon={<Film className="w-3.5 h-3.5" />}
-        />
+        {/* Image — ouvre directement l'explorateur de fichiers */}
+        <div className="relative" title="Insérer une image depuis votre ordinateur">
+          <button
+            type="button"
+            onClick={() => imageInputRef.current?.click()}
+            className="p-1.5 rounded text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600 transition-all"
+            title="Insérer une image"
+          >
+            <ImageIcon className="w-3.5 h-3.5" />
+          </button>
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={insertImage}
+          />
+        </div>
 
-        <input
-          ref={imageInputRef}
-          type="file"
-          accept="image/*,video/gif"
-          className="hidden"
-          onChange={insertImage}
-        />
+        {/* Vidéo / GIF — ouvre l'explorateur */}
+        <div className="relative" title="Insérer une vidéo ou un GIF depuis votre ordinateur">
+          <button
+            type="button"
+            onClick={() => mediaInputRef.current?.click()}
+            className="p-1.5 rounded text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600 transition-all"
+            title="Insérer une vidéo / GIF"
+          >
+            <Film className="w-3.5 h-3.5" />
+          </button>
+          <input
+            ref={mediaInputRef}
+            type="file"
+            accept="video/*,image/gif"
+            multiple
+            className="hidden"
+            onChange={insertMedia}
+          />
+        </div>
 
         <Sep />
 
