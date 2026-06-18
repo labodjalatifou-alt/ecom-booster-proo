@@ -6,26 +6,16 @@ import SidebarLeft from './SidebarLeft';
 import Canvas from './Canvas';
 import PropertiesPanel from './PropertiesPanel';
 import SectionCatalog from './SectionCatalog';
+import { createClient } from '@/lib/supabase/client';
 
-// Mock initial data
-const INITIAL_HEADER = [
-  { id: 'announcement-bar', type: 'AnnouncementBar', title: 'Barre d\'annonce', hidden: false, settings: { text: "Livraison gratuite à partir de 50€" } }
-];
-const INITIAL_FOOTER = [
-  { id: 'footer-main', type: 'Footer', title: 'Pied de page', hidden: false, settings: {} }
-];
-const INITIAL_SECTIONS = [
-  { id: 'sec-1', type: 'Hero', title: 'Bannière Principale', hidden: false, settings: { title: "La Révolution E-commerce", subtitle: "Découvrez nos offres exclusives." } },
-  { id: 'sec-2', type: 'Benefits', title: 'Nos Avantages', hidden: false, settings: {} },
-  { id: 'sec-3', type: 'OrderForm', title: 'Formulaire de Commande', hidden: false, settings: {} },
-];
+export default function Editor({ storeId, initialData }: { storeId: string, initialData: any }) {
+  const supabase = createClient();
 
-export default function Editor() {
   // State
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
-  const [headerSections, setHeaderSections] = useState<any[]>(INITIAL_HEADER);
-  const [footerSections, setFooterSections] = useState<any[]>(INITIAL_FOOTER);
-  const [sections, setSections] = useState<any[]>(INITIAL_SECTIONS);
+  const [headerSections, setHeaderSections] = useState<any[]>(initialData?.header || []);
+  const [footerSections, setFooterSections] = useState<any[]>(initialData?.footer || []);
+  const [sections, setSections] = useState<any[]>(initialData?.template || []);
   
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
@@ -45,13 +35,29 @@ export default function Editor() {
     return () => clearTimeout(timer);
   }, [hasUnsavedChanges, sections, headerSections, footerSections]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
+    
+    const builderJson = {
+      header: headerSections,
+      template: sections,
+      footer: footerSections
+    };
+
+    const { error } = await supabase
+      .from('store_pages')
+      .update({ builder_json: builderJson })
+      .eq('store_id', storeId)
+      .eq('slug', 'home');
+
+    setIsSaving(false);
+    
+    if (!error) {
       setHasUnsavedChanges(false);
       setLastSavedAt(new Date());
-    }, 800);
+    } else {
+      console.error('Erreur lors de la sauvegarde:', error);
+    }
   };
 
   const handlePublish = () => {
