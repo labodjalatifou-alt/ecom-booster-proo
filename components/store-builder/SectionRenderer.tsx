@@ -1,100 +1,97 @@
-'use client'
-import dynamic from 'next/dynamic'
-import type { BuilderSection, StoreColors } from '@/lib/store-builder/types'
+import React, { Suspense } from 'react';
+import dynamic from 'next/dynamic';
+import { Loader2 } from 'lucide-react';
 
-// Dynamic imports — tous ssr:false pour éviter les erreurs hydration
-const AnnouncementBarSection = dynamic(() => import('./sections/AnnouncementBarSection'), { ssr: false })
-const HeroSection = dynamic(() => import('./sections/HeroSection'), { ssr: false })
-const MarqueeSection = dynamic(() => import('./sections/MarqueeSection'), { ssr: false })
-const ProductSection = dynamic(() => import('./sections/ProductSection'), { ssr: false })
-const CountdownSection = dynamic(() => import('./sections/CountdownSection'), { ssr: false })
-const TestimonialsSection = dynamic(() => import('./sections/TestimonialsSection'), { ssr: false })
-const BenefitsSection = dynamic(() => import('./sections/BenefitsSection'), { ssr: false })
-const BeforeAfterSection = dynamic(() => import('./sections/BeforeAfterSection'), { ssr: false })
-const StatsSection = dynamic(() => import('./sections/StatsSection'), { ssr: false })
-const GallerySection = dynamic(() => import('./sections/GallerySection'), { ssr: false })
-const FaqSection = dynamic(() => import('./sections/FaqSection'), { ssr: false })
-const ComparisonTableSection = dynamic(() => import('./sections/ComparisonTableSection'), { ssr: false })
-const GuaranteesSection = dynamic(() => import('./sections/GuaranteesSection'), { ssr: false })
-const VideoSection = dynamic(() => import('./sections/VideoSection'), { ssr: false })
-const ImageWithTextSection = dynamic(() => import('./sections/ImageWithTextSection'), { ssr: false })
-const OrderFormSection = dynamic(() => import('./sections/OrderFormSection'), { ssr: false })
-const PricingTableSection = dynamic(() => import('./sections/PricingTableSection'), { ssr: false })
-const NewsletterSection = dynamic(() => import('./sections/NewsletterSection'), { ssr: false })
-const SlideshowSection = dynamic(() => import('./sections/SlideshowSection'), { ssr: false })
-const IconGridSection = dynamic(() => import('./sections/IconGridSection'), { ssr: false })
-const ProductGridSection = dynamic(() => import('./sections/ProductGridSection'), { ssr: false })
-const TextBlockSection = dynamic(() => import('./sections/TextBlockSection'), { ssr: false })
-const SpacerSection = dynamic(() => import('./sections/SpacerSection'), { ssr: false })
-const PopupSection = dynamic(() => import('./sections/PopupSection'), { ssr: false })
-const FooterSection = dynamic(() => import('./sections/FooterSection'), { ssr: false })
+// Chargement dynamique des 25 sections avec SSR désactivé (recommandation stricte)
+const AnnouncementBarSection = dynamic(() => import('./sections/AnnouncementBarSection'), { ssr: false, loading: () => <SectionLoader /> });
+const HeroSection = dynamic(() => import('./sections/HeroSection'), { ssr: false, loading: () => <SectionLoader /> });
+const MarqueeSection = dynamic(() => import('./sections/MarqueeSection'), { ssr: false, loading: () => <SectionLoader /> });
+const ProductSection = dynamic(() => import('./sections/ProductSection'), { ssr: false, loading: () => <SectionLoader /> });
+const CountdownSection = dynamic(() => import('./sections/CountdownSection'), { ssr: false, loading: () => <SectionLoader /> });
+const TestimonialsSection = dynamic(() => import('./sections/TestimonialsSection'), { ssr: false, loading: () => <SectionLoader /> });
+const BenefitsSection = dynamic(() => import('./sections/BenefitsSection'), { ssr: false, loading: () => <SectionLoader /> });
+const BeforeAfterSection = dynamic(() => import('./sections/BeforeAfterSection'), { ssr: false, loading: () => <SectionLoader /> });
+const StatsSection = dynamic(() => import('./sections/StatsSection'), { ssr: false, loading: () => <SectionLoader /> });
+const GallerySection = dynamic(() => import('./sections/GallerySection'), { ssr: false, loading: () => <SectionLoader /> });
+const FaqSection = dynamic(() => import('./sections/FaqSection'), { ssr: false, loading: () => <SectionLoader /> });
+const ComparisonTableSection = dynamic(() => import('./sections/ComparisonTableSection'), { ssr: false, loading: () => <SectionLoader /> });
+const GuaranteesSection = dynamic(() => import('./sections/GuaranteesSection'), { ssr: false, loading: () => <SectionLoader /> });
+const VideoSection = dynamic(() => import('./sections/VideoSection'), { ssr: false, loading: () => <SectionLoader /> });
+const ImageWithTextSection = dynamic(() => import('./sections/ImageWithTextSection'), { ssr: false, loading: () => <SectionLoader /> });
+const OrderFormSection = dynamic(() => import('./sections/OrderFormSection'), { ssr: false, loading: () => <SectionLoader /> });
+const ProductGridSection = dynamic(() => import('./sections/ProductGridSection'), { ssr: false, loading: () => <SectionLoader /> });
+const PricingTableSection = dynamic(() => import('./sections/PricingTableSection'), { ssr: false, loading: () => <SectionLoader /> });
+const NewsletterSection = dynamic(() => import('./sections/NewsletterSection'), { ssr: false, loading: () => <SectionLoader /> });
+const SlideshowSection = dynamic(() => import('./sections/SlideshowSection'), { ssr: false, loading: () => <SectionLoader /> });
+const IconGridSection = dynamic(() => import('./sections/IconGridSection'), { ssr: false, loading: () => <SectionLoader /> });
+const TextBlockSection = dynamic(() => import('./sections/TextBlockSection'), { ssr: false, loading: () => <SectionLoader /> });
+const SpacerSection = dynamic(() => import('./sections/SpacerSection'), { ssr: false, loading: () => <SectionLoader /> });
+const PopupSection = dynamic(() => import('./sections/PopupSection'), { ssr: false, loading: () => <SectionLoader /> });
+const FooterSection = dynamic(() => import('./sections/FooterSection'), { ssr: false, loading: () => <SectionLoader /> });
 
-interface Props {
-  section: BuilderSection
-  colors: StoreColors
-  storeId?: string
-  isEditing?: boolean
-  isSelected?: boolean
-  onClick?: () => void
+function SectionLoader() {
+  return (
+    <div className="w-full py-12 flex items-center justify-center bg-gray-50/50">
+      <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+    </div>
+  );
 }
 
-export default function SectionRenderer({ section, colors, storeId, isEditing, isSelected, onClick }: Props) {
-  if (!section.visible && !isEditing) return null
+const sectionComponents: Record<string, React.ComponentType<any>> = {
+  AnnouncementBar: AnnouncementBarSection,
+  Hero: HeroSection,
+  Marquee: MarqueeSection,
+  Product: ProductSection,
+  Countdown: CountdownSection,
+  Testimonials: TestimonialsSection,
+  Benefits: BenefitsSection,
+  BeforeAfter: BeforeAfterSection,
+  Stats: StatsSection,
+  Gallery: GallerySection,
+  Faq: FaqSection,
+  ComparisonTable: ComparisonTableSection,
+  Guarantees: GuaranteesSection,
+  Video: VideoSection,
+  ImageWithText: ImageWithTextSection,
+  OrderForm: OrderFormSection,
+  ProductGrid: ProductGridSection,
+  PricingTable: PricingTableSection,
+  Newsletter: NewsletterSection,
+  Slideshow: SlideshowSection,
+  IconGrid: IconGridSection,
+  TextBlock: TextBlockSection,
+  Spacer: SpacerSection,
+  Popup: PopupSection,
+  Footer: FooterSection,
+};
 
-  const commonProps = { colors, isEditing, isSelected, onClick }
+interface SectionRendererProps {
+  type: string;
+  settings: any;
+  isSelected?: boolean;
+}
 
-  switch (section.type) {
-    case 'announcement_bar':
-      return <AnnouncementBarSection props={section.props as any} {...commonProps} />
-    case 'hero':
-      return <HeroSection props={section.props as any} {...commonProps} />
-    case 'marquee':
-      return <MarqueeSection props={section.props as any} {...commonProps} />
-    case 'product':
-      return <ProductSection props={section.props as any} {...commonProps} />
-    case 'countdown':
-      return <CountdownSection props={section.props as any} {...commonProps} />
-    case 'testimonials':
-      return <TestimonialsSection props={section.props as any} {...commonProps} />
-    case 'benefits':
-      return <BenefitsSection props={section.props as any} {...commonProps} />
-    case 'before_after':
-      return <BeforeAfterSection props={section.props as any} {...commonProps} />
-    case 'stats':
-      return <StatsSection props={section.props as any} {...commonProps} />
-    case 'gallery':
-      return <GallerySection props={section.props as any} {...commonProps} />
-    case 'faq':
-      return <FaqSection props={section.props as any} {...commonProps} />
-    case 'comparison_table':
-      return <ComparisonTableSection props={section.props as any} {...commonProps} />
-    case 'guarantees':
-      return <GuaranteesSection props={section.props as any} {...commonProps} />
-    case 'video':
-      return <VideoSection props={section.props as any} {...commonProps} />
-    case 'image_with_text':
-      return <ImageWithTextSection props={section.props as any} {...commonProps} />
-    case 'order_form':
-      return <OrderFormSection props={section.props as any} storeId={storeId} {...commonProps} />
-    case 'pricing_table':
-      return <PricingTableSection props={section.props as any} {...commonProps} />
-    case 'newsletter':
-      return <NewsletterSection props={section.props as any} {...commonProps} />
-    case 'slideshow':
-      return <SlideshowSection props={section.props as any} {...commonProps} />
-    case 'icon_grid':
-      return <IconGridSection props={section.props as any} {...commonProps} />
-    case 'product_grid':
-      return <ProductGridSection props={section.props as any} {...commonProps} />
-    case 'text_block':
-      return <TextBlockSection props={section.props as any} {...commonProps} />
-    case 'spacer':
-      return <SpacerSection props={section.props as any} {...commonProps} />
-    case 'popup':
-      return <PopupSection props={section.props as any} {...commonProps} />
-    case 'footer':
-      return <FooterSection props={section.props as any} {...commonProps} />
-    default:
-      return null
+export default function SectionRenderer({ type, settings, isSelected }: SectionRendererProps) {
+  const Component = sectionComponents[type];
+
+  if (!Component) {
+    console.warn(`Section type "${type}" introuvable.`);
+    return (
+      <div className="w-full p-8 text-center bg-red-50 text-red-600 border border-red-200">
+        Composant <b>{type}</b> non défini.
+      </div>
+    );
   }
+
+  return (
+    <div className={`relative w-full group transition-all ${isSelected ? 'ring-2 ring-blue-500 z-10' : 'hover:ring-2 hover:ring-blue-500/50'}`}>
+      
+      {/* Overlay bleu au survol ou sélection (style Shopify) */}
+      <div className={`absolute top-0 left-0 w-full h-8 bg-blue-500 text-white text-xs font-bold flex items-center px-3 gap-2 opacity-0 -translate-y-full transition-all z-20 ${isSelected ? 'opacity-100 translate-y-0' : 'group-hover:opacity-100 group-hover:translate-y-0'}`}>
+        <span className="truncate">{type}</span>
+      </div>
+
+      <Component settings={settings} />
+    </div>
+  );
 }
