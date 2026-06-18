@@ -14,7 +14,7 @@ import Placeholder from '@tiptap/extension-placeholder'
 import {
   Bold, Italic, Underline as UnderlineIcon,
   AlignLeft, AlignCenter, AlignRight, AlignJustify,
-  List, ListOrdered, Link2, LinkOff, ImageIcon,
+  List, ListOrdered, Link2, Link2Off, ImageIcon,
   Quote, Code2, Minus, Undo2, Redo2, Highlighter,
   Strikethrough, Film,
 } from 'lucide-react'
@@ -288,7 +288,7 @@ export default function RichTextEditor({
             active={false}
             onClick={() => editor.chain().focus().unsetLink().run()}
             tooltip="Supprimer le lien"
-            icon={<LinkOff className="w-3.5 h-3.5" />}
+            icon={<Link2Off className="w-3.5 h-3.5" />}
           />
         )}
 
