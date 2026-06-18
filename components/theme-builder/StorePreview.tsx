@@ -75,7 +75,7 @@ export default function StorePreview({ product, blocks, globalSettings }: { prod
                    case 'Boutons d\'achat':
                      return (
                        <div key={block.id} className="space-y-3 mb-8">
-                         <button className="w-full py-4 rounded-xl text-white font-black text-lg uppercase tracking-widest shadow-xl transition-transform flex justify-center items-center gap-3 hover:scale-[1.02]" style={{ backgroundColor: primaryColor, boxShadow: \`0 15px 30px -5px \${primaryColor}50\` }}>
+                         <button className="w-full py-4 rounded-xl text-white font-black text-lg uppercase tracking-widest shadow-xl transition-transform flex justify-center items-center gap-3 hover:scale-[1.02]" style={{ backgroundColor: primaryColor, boxShadow: `0 15px 30px -5px ${primaryColor}50` }}>
                            <ShoppingCart className="w-6 h-6" /> Ajouter au panier
                          </button>
                          <button className="w-full py-4 rounded-xl bg-black text-white font-black text-lg hover:bg-gray-900 transition-colors">Acheter avec ShopPay</button>
