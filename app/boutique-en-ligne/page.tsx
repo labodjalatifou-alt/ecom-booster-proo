@@ -1,229 +1,329 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { 
+  Monitor, Smartphone, CornerUpLeft, CornerUpRight, EyeOff, GripVertical, 
+  Plus, ChevronRight, ChevronDown, Edit2, LayoutTemplate, MoreHorizontal,
+  Search, Home, Tags, Box, LayoutList, Gift, ShoppingBag, FileText, 
+  MessageSquare, Lock
+} from 'lucide-react';
 import StorePreview, { ThemeSettings } from '@/components/theme-builder/StorePreview';
-import { Palette, LayoutTemplate, Type, Eye, Save, Monitor, Smartphone, ChevronDown, MonitorSmartphone } from 'lucide-react';
-import toast from 'react-hot-toast';
+
+// Mock Data pour la structure des sections comme sur Shopify
+const initialSections = {
+  header: [
+    { id: 'h1', type: 'Marquee', title: 'Marquee', hidden: false },
+    { id: 'h2', type: 'Barre d\'annonces', title: 'Barre d\'annonces', hidden: true },
+    { id: 'h3', type: 'En-tête', title: 'En-tête', hidden: false },
+    { id: 'h4', type: 'Marquee', title: 'Marquee', hidden: true },
+  ],
+  template: [
+    {
+      id: 't1', 
+      type: 'Informations produits', 
+      title: 'Informations produits',
+      expanded: true,
+      blocks: [
+        { id: 'b1', type: 'Titre', title: 'Titre', hidden: false },
+        { id: 'b2', type: 'Texte', title: 'Texte - 🧠 Moins d\'envies', hidden: true },
+        { id: 'b3', type: 'Texte', title: 'Texte - 🛡️ Protéger sa sa...', hidden: true },
+        { id: 'b4', type: 'Texte', title: 'Texte - ⚡ Résultat rapide', hidden: true },
+        { id: 'b5', type: 'Texte', title: 'Texte - ⭐⭐⭐⭐⭐Qualité gara...', hidden: false },
+        { id: 'b6', type: 'Note de produit', title: 'Note de produit', hidden: false },
+        { id: 'b7', type: 'Prix', title: 'Prix', hidden: false },
+        { id: 'b8', type: 'Sélecteur de variante', title: 'Sélecteur de variante', hidden: false },
+        { id: 'b9', type: 'Boutons d\'achat', title: 'Boutons d\'achat', hidden: false },
+        { id: 'b10', type: 'Description', title: 'Description', hidden: false },
+      ]
+    },
+    { id: 't2', type: 'Produits associés', title: 'Produits associés', hidden: false, blocks: [] }
+  ],
+  footer: [
+    { id: 'f1', type: 'Pied de page', title: 'Pied de page', hidden: false }
+  ]
+};
 
 export default function ThemeBuilderPage() {
-  const [activeTab, setActiveTab] = useState('header');
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop');
+  const [sections, setSections] = useState(initialSections);
+  const [pageSelectorOpen, setPageSelectorOpen] = useState(false);
+  const [activePage, setActivePage] = useState('Produit par défaut');
   
-  const [settings, setSettings] = useState<ThemeSettings>({
+  const [settings] = useState<ThemeSettings>({
     storeName: 'Zenvyra',
     announcementText: 'Livraison rapide 🚚 | Livraison gratuite 📦 | Qualité supérieure ⭐⭐⭐',
     showAnnouncement: true,
-    primaryColor: '#c084fc', // Un violet/rose clair typique de certains sites dropshipping
+    primaryColor: '#c084fc',
     backgroundColor: '#ffffff',
     textColor: '#111827',
   });
 
-  // Charger depuis le localStorage au démarrage
-  useEffect(() => {
-    const saved = localStorage.getItem('theme_settings');
-    if (saved) {
-      setSettings(JSON.parse(saved));
+  const toggleSection = (category: keyof typeof sections, id: string) => {
+    const updated = { ...sections };
+    const sectionIndex = updated[category].findIndex((s: any) => s.id === id);
+    if (sectionIndex > -1) {
+      updated[category][sectionIndex].hidden = !updated[category][sectionIndex].hidden;
+      setSections(updated);
     }
-  }, []);
-
-  const handleSave = () => {
-    localStorage.setItem('theme_settings', JSON.stringify(settings));
-    toast.success('Thème sauvegardé avec succès !');
   };
 
-  const updateSetting = (key: keyof ThemeSettings, value: any) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
+  const toggleBlock = (sectionId: string, blockId: string) => {
+    const updated = { ...sections };
+    const section = updated.template.find((s: any) => s.id === sectionId);
+    if (section && section.blocks) {
+      const blockIndex = section.blocks.findIndex((b: any) => b.id === blockId);
+      if (blockIndex > -1) {
+        section.blocks[blockIndex].hidden = !section.blocks[blockIndex].hidden;
+        setSections(updated);
+      }
+    }
   };
 
   return (
-    <div className="flex h-[calc(100vh-theme(spacing.24))] -mx-4 md:-mx-8 -mb-10 overflow-hidden bg-gray-100">
+    <div className="flex flex-col h-screen overflow-hidden bg-[#f1f2f4] font-sans -mx-4 md:-mx-8 -mt-6 -mb-10 fixed inset-0 z-[100] top-0 left-0">
       
-      {/* ── Sidebar Gauche (Éditeur) ── */}
-      <div className="w-80 bg-white border-r border-gray-200 flex flex-col z-10 shadow-xl flex-shrink-0">
-        <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-          <div className="font-black text-sm uppercase tracking-widest text-gray-800 flex items-center gap-2">
-            <Palette className="w-4 h-4 text-indigo-600" />
-            Personnalisation
+      {/* ── TOP BAR (Header) ── */}
+      <div className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 flex-shrink-0">
+        
+        {/* Left: Page Selector */}
+        <div className="flex items-center gap-2 relative">
+          <div className="p-1.5 rounded hover:bg-gray-100 cursor-pointer">
+            <LayoutTemplate className="w-5 h-5 text-gray-600" />
           </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto">
-          {/* Tabs */}
-          <div className="flex border-b border-gray-100">
-            <button 
-              onClick={() => setActiveTab('header')} 
-              className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest transition-colors ${activeTab === 'header' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}
-            >
-              En-tête
-            </button>
-            <button 
-              onClick={() => setActiveTab('colors')} 
-              className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest transition-colors ${activeTab === 'colors' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}
-            >
-              Couleurs
-            </button>
-            <button 
-              onClick={() => setActiveTab('sections')} 
-              className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest transition-colors ${activeTab === 'sections' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}
-            >
-              Sections
-            </button>
-          </div>
-
-          <div className="p-5 space-y-6">
-            
-            {activeTab === 'header' && (
-              <div className="space-y-6 animate-in fade-in slide-in-from-left-2 duration-300">
-                {/* Store Name */}
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Nom de la boutique</label>
-                  <input 
-                    type="text" 
-                    value={settings.storeName}
-                    onChange={(e) => updateSetting('storeName', e.target.value)}
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                  />
-                </div>
-
-                {/* Announcement Bar */}
-                <div className="space-y-4 pt-4 border-t border-gray-100">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 flex items-center gap-2">
-                      <MonitorSmartphone className="w-3.5 h-3.5" />
-                      Barre d'annonce
-                    </label>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" checked={settings.showAnnouncement} onChange={(e) => updateSetting('showAnnouncement', e.target.checked)} className="sr-only peer" />
-                      <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
-                    </label>
-                  </div>
-                  
-                  {settings.showAnnouncement && (
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-gray-400">Texte de l'annonce</label>
-                      <textarea 
-                        value={settings.announcementText}
-                        onChange={(e) => updateSetting('announcementText', e.target.value)}
-                        rows={2}
-                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'colors' && (
-              <div className="space-y-6 animate-in fade-in slide-in-from-left-2 duration-300">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Couleur Principale</label>
-                  <div className="flex items-center gap-3">
-                    <input 
-                      type="color" 
-                      value={settings.primaryColor}
-                      onChange={(e) => updateSetting('primaryColor', e.target.value)}
-                      className="w-10 h-10 rounded-lg cursor-pointer border-0 p-0"
-                    />
-                    <input 
-                      type="text" 
-                      value={settings.primaryColor}
-                      onChange={(e) => updateSetting('primaryColor', e.target.value)}
-                      className="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm font-mono uppercase focus:outline-none focus:border-indigo-500"
-                    />
-                  </div>
-                  <p className="text-[10px] text-gray-400 mt-1">Utilisée pour les boutons, la barre d'annonce et le logo texte.</p>
-                </div>
-
-                <div className="space-y-2 pt-4 border-t border-gray-100">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Arrière-plan</label>
-                  <div className="flex items-center gap-3">
-                    <input 
-                      type="color" 
-                      value={settings.backgroundColor}
-                      onChange={(e) => updateSetting('backgroundColor', e.target.value)}
-                      className="w-10 h-10 rounded-lg cursor-pointer border-0 p-0"
-                    />
-                    <span className="text-sm font-mono text-gray-600 uppercase">{settings.backgroundColor}</span>
-                  </div>
-                </div>
-
-                <div className="space-y-2 pt-4 border-t border-gray-100">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Texte principal</label>
-                  <div className="flex items-center gap-3">
-                    <input 
-                      type="color" 
-                      value={settings.textColor}
-                      onChange={(e) => updateSetting('textColor', e.target.value)}
-                      className="w-10 h-10 rounded-lg cursor-pointer border-0 p-0"
-                    />
-                    <span className="text-sm font-mono text-gray-600 uppercase">{settings.textColor}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'sections' && (
-              <div className="space-y-4 animate-in fade-in slide-in-from-left-2 duration-300">
-                <div className="p-4 rounded-xl bg-gray-50 border border-gray-200 border-dashed text-center">
-                  <LayoutTemplate className="w-6 h-6 text-gray-400 mx-auto mb-2" />
-                  <p className="text-xs text-gray-500 font-medium">Bientôt : Ajoutez des blocs "Avant/Après", "Témoignages", etc.</p>
-                </div>
-              </div>
-            )}
-
-          </div>
-        </div>
-
-        <div className="p-4 border-t border-gray-100 bg-gray-50/50">
           <button 
-            onClick={handleSave}
-            className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase tracking-widest text-xs rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2"
+            onClick={() => setPageSelectorOpen(!pageSelectorOpen)}
+            className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-100 rounded-md text-sm font-semibold text-gray-800 transition-colors"
           >
-            <Save className="w-4 h-4" />
+            {activePage}
+            <ChevronDown className="w-4 h-4 text-gray-500" />
+          </button>
+
+          {/* Shopify-like Page Dropdown */}
+          {pageSelectorOpen && (
+            <div className="absolute top-full left-0 mt-2 w-80 bg-white border border-gray-200 rounded-xl shadow-2xl z-50 overflow-hidden flex flex-col max-h-[70vh]">
+              <div className="p-2 border-b border-gray-100">
+                <div className="relative">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input type="text" placeholder="Rechercher dans la boutique en ligne" className="w-full pl-9 pr-3 py-1.5 bg-gray-100 border-none rounded-md text-sm outline-none" />
+                </div>
+              </div>
+              <div className="overflow-y-auto p-1">
+                <div className="px-3 py-1.5 text-[11px] font-bold text-gray-500 uppercase tracking-wider mt-1">Pages</div>
+                {[
+                  { name: 'Page d\'accueil', icon: Home },
+                  { name: 'Produits', icon: Tags, hasArrow: true },
+                  { name: 'Collections', icon: Box, hasArrow: true },
+                  { name: 'Liste de collections', icon: LayoutList },
+                  { name: 'Carte-cadeau', icon: Gift },
+                  { name: 'Panier', icon: ShoppingBag },
+                  { name: 'Paiement et comptes clients', icon: ShoppingBag },
+                  { name: 'Pages', icon: FileText, hasArrow: true },
+                  { name: 'Blogs', icon: MessageSquare, hasArrow: true },
+                  { name: 'Recherche', icon: Search },
+                  { name: 'Mot de passe', icon: Lock },
+                ].map((item, idx) => (
+                  <button key={idx} onClick={() => { setActivePage(item.name); setPageSelectorOpen(false); }} className={`w-full flex items-center justify-between px-3 py-1.5 rounded-md text-sm ${activePage === item.name ? 'bg-gray-100 font-semibold' : 'hover:bg-gray-50 text-gray-700'}`}>
+                    <div className="flex items-center gap-3">
+                      <item.icon className="w-4 h-4 text-gray-500" />
+                      {item.name}
+                    </div>
+                    {item.hasArrow && <ChevronRight className="w-4 h-4 text-gray-400" />}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Center: Status & Theme Info */}
+        <div className="hidden md:flex items-center gap-3 text-sm">
+          <span className="text-gray-600 font-medium truncate max-w-[200px]">theme-export-www-nuveria...</span>
+          <span className="px-2 py-0.5 bg-green-100 text-green-800 text-[11px] font-bold rounded-full uppercase tracking-wider">Actif</span>
+          <div className="w-px h-4 bg-gray-300 mx-1"></div>
+          <span className="text-gray-500 text-xs flex items-center gap-1.5"><Edit2 className="w-3.5 h-3.5" /> {activePage}</span>
+        </div>
+
+        {/* Right: Actions */}
+        <div className="flex items-center gap-1.5">
+          <div className="flex bg-gray-100 rounded-md p-0.5 mr-2">
+            <button onClick={() => setPreviewMode('desktop')} className={`p-1.5 rounded transition-colors ${previewMode === 'desktop' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}>
+              <Monitor className="w-4 h-4" />
+            </button>
+            <button onClick={() => setPreviewMode('mobile')} className={`p-1.5 rounded transition-colors ${previewMode === 'mobile' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}>
+              <Smartphone className="w-4 h-4" />
+            </button>
+          </div>
+          <button className="p-2 text-gray-400 hover:bg-gray-100 rounded-md" title="Annuler">
+            <CornerUpLeft className="w-4 h-4" />
+          </button>
+          <button className="p-2 text-gray-400 hover:bg-gray-100 rounded-md mr-2" title="Rétablir">
+            <CornerUpRight className="w-4 h-4" />
+          </button>
+          <button className="px-4 py-1.5 bg-[#008060] hover:bg-[#006e52] text-white text-sm font-semibold rounded-md shadow-sm transition-colors">
             Enregistrer
           </button>
         </div>
       </div>
 
-      {/* ── Zone Principale (Prévisualisation) ── */}
-      <div className="flex-1 flex flex-col relative bg-gray-200/50">
+      {/* ── MAIN AREA ── */}
+      <div className="flex flex-1 overflow-hidden">
         
-        {/* Topbar Preview Controls */}
-        <div className="h-14 bg-white border-b border-gray-200 flex items-center justify-center gap-2 shadow-sm z-10">
-          <button 
-            onClick={() => setPreviewMode('desktop')}
-            className={`p-2 rounded-lg transition-colors ${previewMode === 'desktop' ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-600'}`}
-            title="Vue Ordinateur"
-          >
-            <Monitor className="w-5 h-5" />
-          </button>
-          <button 
-            onClick={() => setPreviewMode('mobile')}
-            className={`p-2 rounded-lg transition-colors ${previewMode === 'mobile' ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-600'}`}
-            title="Vue Mobile"
-          >
-            <Smartphone className="w-5 h-5" />
-          </button>
-          <div className="w-px h-5 bg-gray-300 mx-2"></div>
-          <div className="text-[10px] font-black uppercase text-gray-400 tracking-widest flex items-center gap-2">
-            <Eye className="w-3.5 h-3.5" /> Prévisualisation en direct
+        {/* ── LEFT SIDEBAR (Editor) ── */}
+        <div className="w-[300px] bg-white border-r border-gray-200 flex flex-col flex-shrink-0 shadow-[2px_0_10px_rgba(0,0,0,0.02)] z-10">
+          
+          <div className="flex-1 overflow-y-auto custom-scrollbar pb-20">
+            {/* Context Header */}
+            <div className="p-4 border-b border-gray-100">
+              <h2 className="text-sm font-bold text-gray-900 mb-1">{activePage}</h2>
+              <div className="flex items-center justify-between group cursor-pointer">
+                <div className="flex items-center gap-2 text-xs text-gray-600">
+                  <div className="w-4 h-4 bg-blue-100 rounded flex items-center justify-center"><LayoutTemplate className="w-2.5 h-2.5 text-blue-600" /></div>
+                  Prévisualiser
+                </div>
+                <Edit2 className="w-3.5 h-3.5 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+            </div>
+
+            {/* EN-TÊTE SECTION */}
+            <div className="py-3">
+              <div className="px-4 text-[11px] font-bold text-gray-500 mb-1">En-tête</div>
+              <ul className="space-y-0.5">
+                {sections.header.map((section) => (
+                  <li key={section.id} className="group flex items-center justify-between px-2 py-1.5 mx-2 rounded-md hover:bg-gray-100 cursor-pointer">
+                    <div className="flex items-center gap-2 text-sm text-gray-700">
+                      <ChevronRight className="w-3.5 h-3.5 text-gray-400 opacity-0 group-hover:opacity-100" />
+                      <span className={section.hidden ? 'opacity-50 line-through' : ''}>{section.title}</span>
+                    </div>
+                    <button onClick={() => toggleSection('header', section.id)} className={`p-1 rounded hover:bg-gray-200 ${section.hidden ? 'text-gray-400' : 'text-gray-400 opacity-0 group-hover:opacity-100'}`}>
+                      <EyeOff className="w-3.5 h-3.5" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <button className="flex items-center gap-2 px-6 py-2 text-sm text-blue-600 font-medium hover:underline mt-1">
+                <Plus className="w-4 h-4" /> Ajouter une section
+              </button>
+            </div>
+
+            <div className="w-full h-px bg-gray-200 my-2"></div>
+
+            {/* MODÈLE SECTION */}
+            <div className="py-2">
+              <div className="px-4 text-[11px] font-bold text-gray-500 mb-1">Modèle</div>
+              
+              {sections.template.map((section) => (
+                <div key={section.id}>
+                  {/* Main Section Header */}
+                  <div className="group flex items-center justify-between px-2 py-1.5 mx-2 rounded-md hover:bg-gray-100 cursor-pointer bg-gray-50">
+                    <div className="flex items-center gap-2 text-sm text-gray-800 font-medium">
+                      <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
+                      <LayoutTemplate className="w-4 h-4 text-gray-400" />
+                      <span className={section.hidden ? 'opacity-50 line-through' : ''}>{section.title}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <button onClick={() => toggleSection('template', section.id)} className={`p-1 rounded hover:bg-gray-200 ${section.hidden ? 'text-gray-400' : 'text-gray-400 opacity-0 group-hover:opacity-100'}`}>
+                        <EyeOff className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Blocks inside Section */}
+                  {section.expanded && section.blocks && (
+                    <div className="mt-1 relative before:absolute before:left-[19px] before:top-0 before:bottom-0 before:w-px before:bg-gray-200">
+                      <ul className="space-y-0.5">
+                        {section.blocks.map((block: any) => (
+                          <li key={block.id} className="group flex items-center justify-between pl-8 pr-2 py-1 mx-2 rounded-md hover:bg-gray-100 cursor-pointer">
+                            <div className="flex items-center gap-2 text-[13px] text-gray-700 overflow-hidden">
+                              <GripVertical className="w-3.5 h-3.5 text-gray-300 opacity-0 group-hover:opacity-100 flex-shrink-0 cursor-grab" />
+                              <span className={`truncate ${block.hidden ? 'opacity-50 line-through' : ''}`}>
+                                {block.type === 'Titre' ? 'T Titre' : ''}
+                                {block.type === 'Texte' ? '≡ Texte' : ''}
+                                {block.type === 'Note de produit' ? '★ Note de produit' : ''}
+                                {block.type === 'Prix' ? '💰 Prix' : ''}
+                                {block.type === 'Sélecteur de variante' ? '⊞ Sélecteur de variante' : ''}
+                                {block.type === 'Description' ? '☰ Description' : ''}
+                                {block.type === 'Boutons d\'achat' ? '💳 Boutons d\'achat' : ''}
+                                {block.type === 'Produits associés' ? '🛍️ Produits associés' : ''}
+                                {!['Titre', 'Texte', 'Note de produit', 'Prix', 'Sélecteur de variante', 'Description', 'Boutons d\'achat', 'Produits associés'].includes(block.type) && block.title}
+                              </span>
+                            </div>
+                            <button onClick={(e) => { e.stopPropagation(); toggleBlock(section.id, block.id); }} className={`p-1 rounded hover:bg-gray-200 flex-shrink-0 ${block.hidden ? 'text-gray-400' : 'text-gray-400 opacity-0 group-hover:opacity-100'}`}>
+                              <EyeOff className="w-3.5 h-3.5" />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                      <button className="flex items-center gap-2 pl-9 py-1.5 text-[13px] text-blue-600 font-medium hover:underline w-full text-left">
+                        <Plus className="w-3.5 h-3.5" /> Ajouter un bloc
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+              
+              <button className="flex items-center gap-2 px-6 py-2 text-sm text-blue-600 font-medium hover:underline mt-2">
+                <Plus className="w-4 h-4" /> Ajouter une section
+              </button>
+            </div>
+
+            <div className="w-full h-px bg-gray-200 my-2"></div>
+
+            {/* PIED DE PAGE SECTION */}
+            <div className="py-2">
+              <div className="px-4 text-[11px] font-bold text-gray-500 mb-1">Pied de page</div>
+              <button className="flex items-center gap-2 px-6 py-1.5 text-sm text-blue-600 font-medium hover:underline w-full text-left mb-1">
+                <Plus className="w-4 h-4" /> Ajouter une section
+              </button>
+              <ul className="space-y-0.5">
+                {sections.footer.map((section) => (
+                  <li key={section.id} className="group flex items-center justify-between px-2 py-1.5 mx-2 rounded-md hover:bg-gray-100 cursor-pointer">
+                    <div className="flex items-center gap-2 text-sm text-gray-700">
+                      <ChevronRight className="w-3.5 h-3.5 text-gray-400 opacity-0 group-hover:opacity-100" />
+                      <span className={section.hidden ? 'opacity-50 line-through' : ''}>{section.title}</span>
+                    </div>
+                    <button onClick={() => toggleSection('footer', section.id)} className={`p-1 rounded hover:bg-gray-200 ${section.hidden ? 'text-gray-400' : 'text-gray-400 opacity-0 group-hover:opacity-100'}`}>
+                      <EyeOff className="w-3.5 h-3.5" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+          </div>
+          
+          {/* Bottom Settings Link */}
+          <div className="p-3 border-t border-gray-200 bg-gray-50 flex justify-between items-center text-sm text-gray-700 hover:bg-gray-100 cursor-pointer">
+            <div className="flex items-center gap-2 font-medium">
+              <span className="w-5 h-5 flex items-center justify-center bg-gray-200 rounded text-gray-600 text-xs">⚙️</span>
+              Paramètres du thème
+            </div>
           </div>
         </div>
 
-        {/* Preview Container */}
-        <div className="flex-1 overflow-hidden flex items-center justify-center p-4 lg:p-8">
-          <div 
-            className={`bg-white shadow-2xl overflow-hidden transition-all duration-500 ease-in-out ${
-              previewMode === 'desktop' 
-                ? 'w-full max-w-[1440px] h-full rounded-2xl border border-gray-200' 
-                : 'w-[375px] h-[812px] rounded-[3rem] border-[8px] border-gray-900 flex-shrink-0'
-            }`}
-          >
-            <StorePreview settings={settings} />
+        {/* ── RIGHT AREA (Live Preview) ── */}
+        <div className="flex-1 flex flex-col relative bg-[#f1f2f4] overflow-hidden">
+          <div className="w-full h-full p-4 flex justify-center overflow-auto custom-scrollbar">
+            <div 
+              className={`bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_10px_20px_rgba(0,0,0,0.05)] transition-all duration-300 ease-in-out ${
+                previewMode === 'desktop' 
+                  ? 'w-full h-[1000px]' // Hauteur arbitraire pour simuler le scroll
+                  : 'w-[375px] h-[812px] flex-shrink-0'
+              }`}
+            >
+              {/* Le composant de rendu final */}
+              <StorePreview settings={settings} />
+            </div>
           </div>
         </div>
-        
+
       </div>
+      
+      <style dangerouslySetInnerHTML={{__html: `
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+      `}} />
     </div>
   );
 }
