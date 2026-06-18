@@ -1,136 +1,65 @@
-'use client'
-import { useEffect, useRef, useState } from 'react'
-import type { TestimonialsProps, StoreColors } from '@/lib/store-builder/types'
+import React from 'react';
+import { Star, CheckCircle } from 'lucide-react';
 
-interface Props {
-  props: TestimonialsProps
-  colors: StoreColors
-  isEditing?: boolean
-  isSelected?: boolean
-  onClick?: () => void
-}
-
-function Stars({ count, max = 5 }: { count: number; max?: number }) {
-  return (
-    <div className="flex gap-0.5">
-      {Array.from({ length: max }).map((_, i) => (
-        <span key={i} style={{ color: i < count ? '#f59e0b' : '#d1d5db', fontSize: 16 }}>★</span>
-      ))}
-    </div>
-  )
-}
-
-function Avatar({ name, url }: { name: string; url: string }) {
-  const colors = ['#6366f1', '#ec4899', '#10b981', '#f59e0b', '#3b82f6', '#8b5cf6']
-  const color = colors[name.charCodeAt(0) % colors.length]
-  if (url) return <img src={url} alt={name} className="w-12 h-12 rounded-full object-cover" />
-  return (
-    <div className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-white text-lg flex-shrink-0"
-      style={{ backgroundColor: color }}>
-      {name.charAt(0).toUpperCase()}
-    </div>
-  )
-}
-
-function TestimonialCard({ item, show_stars, show_verified, colors }: any) {
-  return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm border flex flex-col gap-4 transition-all hover:shadow-md hover:-translate-y-1"
-      style={{ borderColor: colors.border }}>
-      {show_stars && <Stars count={item.rating} />}
-      <p className="text-sm leading-relaxed" style={{ color: colors.text }}>"{item.text}"</p>
-      <div className="flex items-center gap-3 mt-auto">
-        <Avatar name={item.name} url={item.avatar_url} />
-        <div>
-          <div className="font-semibold text-sm" style={{ color: colors.text }}>{item.name}</div>
-          <div className="text-xs" style={{ color: colors.textLight }}>
-            {item.location} • {item.date}
-          </div>
-        </div>
-        {show_verified && item.verified && (
-          <span className="ml-auto text-xs px-2 py-1 rounded-full font-medium"
-            style={{ backgroundColor: '#dcfce7', color: '#16a34a' }}>
-            ✓ Vérifié
-          </span>
-        )}
-      </div>
-    </div>
-  )
-}
-
-export default function TestimonialsSection({ props, colors, isEditing, isSelected, onClick }: Props) {
-  const ref = useRef<HTMLDivElement>(null)
-  const [visible, setVisible] = useState(false)
-  const [slide, setSlide] = useState(0)
-
-  useEffect(() => {
-    if (!ref.current) return
-    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setVisible(true) }, { threshold: 0.1 })
-    obs.observe(ref.current)
-    return () => obs.disconnect()
-  }, [])
-
-  useEffect(() => {
-    if (props.layout !== 'carousel') return
-    const id = setInterval(() => setSlide(s => (s + 1) % (props.items?.length || 1)), 4000)
-    return () => clearInterval(id)
-  }, [props.layout, props.items?.length])
-
-  const items = props.items || []
-
-  const gridCols = items.length >= 3 ? 'grid-cols-1 md:grid-cols-3' : items.length === 2 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'
+export default function TestimonialsSection({ settings }: { settings: any }) {
+  const title = settings?.title || "Ce que disent nos clients";
+  const subtitle = settings?.subtitle || "Plus de 10 000 clients satisfaits font confiance à nos produits tous les jours.";
+  const bgColor = settings?.bgColor || "#ffffff";
+  const layout = settings?.layout || "grid"; // grid, masonry, floating
+  
+  // Mocks s'il n'y a pas d'items configurés
+  const items = settings?.items && settings.items.length > 0 ? settings.items : [
+    { name: "Marie Dupont", location: "Paris, France", text: "Vraiment impressionnée par la qualité. La livraison a été très rapide et le produit correspond exactement à la description. Je recommande !", rating: 5, date: "Il y a 2 jours", verified: true },
+    { name: "Thomas Martin", location: "Lyon, France", text: "Le service client est exceptionnel. J'ai eu une question et on m'a répondu en 5 minutes. Le produit est top.", rating: 5, date: "Il y a 1 semaine", verified: true },
+    { name: "Sophie L.", location: "Bordeaux, France", text: "Je n'étais pas sûre au début, mais je ne regrette absolument pas mon achat. C'est devenu indispensable pour moi au quotidien.", rating: 4, date: "Il y a 2 semaines", verified: true }
+  ];
 
   return (
-    <div
-      ref={ref}
-      onClick={onClick}
-      className={`py-16 px-4 relative transition-all ${isEditing ? 'cursor-pointer' : ''} ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
-      style={{ backgroundColor: props.bg_color || colors.bg, opacity: visible ? 1 : 0, transform: visible ? 'none' : 'translateY(24px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}
-    >
-      {isSelected && <span className="absolute top-0 left-0 bg-blue-500 text-white text-[10px] px-2 py-0.5 z-20 font-medium">Témoignages</span>}
-
-      <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-3" style={{ color: colors.text }}>{props.title}</h2>
-          {props.subtitle && <p className="text-lg" style={{ color: colors.textLight }}>{props.subtitle}</p>}
+    <section className="w-full py-16 md:py-24 px-4 md:px-8" style={{ backgroundColor: bgColor }}>
+      <div className="max-w-7xl mx-auto">
+        
+        <div className="text-center mb-16 max-w-3xl mx-auto">
+          <h2 className="text-3xl md:text-5xl font-black text-gray-900 tracking-tight mb-4">{title}</h2>
+          {subtitle && <p className="text-lg md:text-xl text-gray-500">{subtitle}</p>}
         </div>
 
-        {props.layout === 'carousel' ? (
-          <div className="relative max-w-2xl mx-auto">
-            <TestimonialCard item={items[slide] || items[0]} show_stars={props.show_stars} show_verified={props.show_verified} colors={colors} />
-            <div className="flex justify-center gap-2 mt-6">
-              {items.map((_, i) => (
-                <button key={i} onClick={() => setSlide(i)}
-                  className="w-2.5 h-2.5 rounded-full transition-all"
-                  style={{ backgroundColor: i === slide ? colors.primary : colors.border }} />
-              ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+          {items.map((item: any, idx: number) => (
+            <div key={idx} className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-full hover:shadow-md transition-shadow relative overflow-hidden">
+              {/* Stars */}
+              <div className="flex gap-1 mb-4 text-yellow-400">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className={\`w-5 h-5 \${i < item.rating ? 'fill-current' : 'text-gray-200'}\`} />
+                ))}
+              </div>
+              
+              {/* Text */}
+              <p className="text-gray-700 leading-relaxed mb-8 flex-1 italic">
+                "{item.text}"
+              </p>
+              
+              {/* Author */}
+              <div className="flex items-center gap-4 mt-auto">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-blue-100 to-indigo-50 flex items-center justify-center text-blue-800 font-black text-lg flex-shrink-0">
+                  {item.name.charAt(0)}
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <h4 className="font-bold text-gray-900">{item.name}</h4>
+                    {item.verified && <CheckCircle className="w-4 h-4 text-green-500" />}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <span>{item.location}</span>
+                    <span className="w-1 h-1 rounded-full bg-gray-300"></span>
+                    <span>{item.date}</span>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        ) : props.layout === 'floating' ? (
-          <div className={`grid gap-6 ${gridCols}`}>
-            {items.map((item, i) => (
-              <div key={item.id} style={{ animation: `float-card ${2 + i * 0.5}s ease-in-out infinite alternate` }}>
-                <TestimonialCard item={item} show_stars={props.show_stars} show_verified={props.show_verified} colors={colors} />
-              </div>
-            ))}
-            <style>{`@keyframes float-card { from { transform: translateY(0); } to { transform: translateY(-8px); } }`}</style>
-          </div>
-        ) : (
-          <div className={`grid gap-6 ${gridCols}`}>
-            {items.map((item, i) => (
-              <div key={item.id} style={{ transitionDelay: `${i * 0.1}s` }}>
-                <TestimonialCard item={item} show_stars={props.show_stars} show_verified={props.show_verified} colors={colors} />
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Rating global */}
-        <div className="flex items-center justify-center gap-3 mt-10">
-          <Stars count={5} />
-          <span className="font-bold" style={{ color: colors.text }}>4.9/5</span>
-          <span style={{ color: colors.textLight }}>· {items.length * 150}+ avis vérifiés</span>
+          ))}
         </div>
+
       </div>
-    </div>
-  )
+    </section>
+  );
 }

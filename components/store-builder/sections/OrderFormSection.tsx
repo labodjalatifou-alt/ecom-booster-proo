@@ -1,191 +1,149 @@
-'use client'
-import { useState } from 'react'
-import type { OrderFormProps, StoreColors } from '@/lib/store-builder/types'
+import React, { useState } from 'react';
+import { ShieldCheck, Truck, CheckCircle2, Loader2 } from 'lucide-react';
 
-interface Props {
-  props: OrderFormProps
-  colors: StoreColors
-  storeId?: string
-  isEditing?: boolean
-  isSelected?: boolean
-  onClick?: () => void
-}
+export default function OrderFormSection({ settings }: { settings: any }) {
+  const title = settings?.title || "Finaliser la commande";
+  const subtitle = settings?.subtitle || "Veuillez remplir vos informations pour la livraison.";
+  const btnText = settings?.btnText || "Confirmer la commande";
+  const btnColor = settings?.btnColor || "#008060";
+  const btnTextColor = settings?.btnTextColor || "#ffffff";
+  const successMessage = settings?.successMessage || "Votre commande a été confirmée avec succès !";
+  const layout = settings?.layout || "split"; // split, standard, compact
+  const bgColor = settings?.bgColor || "#f9fafb";
+  const borderRadius = settings?.borderRadius || 16;
+  
+  // Simulation de l'état de soumission
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
-export default function OrderFormSection({ props, colors, storeId, isEditing, isSelected, onClick }: Props) {
-  const [form, setForm] = useState<Record<string, string>>({})
-  const [quantity, setQuantity] = useState(1)
-  const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string>>({})
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setTimeout(() => {
+      setIsSubmitting(false);
+      setIsSuccess(true);
+    }, 1500);
+  };
 
-  const validate = () => {
-    const errs: Record<string, string> = {}
-    ;(props.fields || []).forEach(f => {
-      if (f.required && !form[f.id]?.trim()) errs[f.id] = 'Ce champ est requis'
-    })
-    setErrors(errs)
-    return !Object.keys(errs).length
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (isEditing) return
-    if (!validate()) return
-    setLoading(true)
-    try {
-      const nameField = props.fields?.find(f => f.type === 'text' && f.label.toLowerCase().includes('nom'))
-      const phoneField = props.fields?.find(f => f.type === 'tel')
-      const addressField = props.fields?.find(f => f.label.toLowerCase().includes('adresse'))
-      await fetch('/api/store/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          store_id: storeId,
-          customer_name: form[nameField?.id || ''] || '',
-          customer_phone: form[phoneField?.id || ''] || '',
-          customer_address: form[addressField?.id || ''] || '',
-          quantity,
-          notes: JSON.stringify(form),
-        }),
-      })
-      setSuccess(true)
-    } catch { setLoading(false) }
-    setLoading(false)
-  }
-
-  const radius = props.border_radius || 12
-
-  const formContent = (
-    <div className="flex flex-col gap-4">
-      {success ? (
-        <div className="text-center py-16 flex flex-col items-center gap-5">
-          <div className="w-24 h-24 rounded-full flex items-center justify-center text-5xl shadow-inner" style={{ backgroundColor: `${colors.success}15`, color: colors.success }}>✅</div>
-          <h3 className="text-2xl font-black" style={{ color: colors.text }}>{props.success_message || 'Commande confirmée !'}</h3>
-          <p className="text-gray-500">Nous vous contacterons très prochainement pour la livraison.</p>
-        </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-          {(props.fields || []).map(field => (
-            <div key={field.id} className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold" style={{ color: colors.text }}>
-                {field.label} {field.required && <span style={{ color: colors.danger }}>*</span>}
-              </label>
-              {field.type === 'textarea' ? (
-                <textarea
-                  rows={3}
-                  placeholder={field.placeholder}
-                  value={form[field.id] || ''}
-                  onChange={e => setForm(f => ({ ...f, [field.id]: e.target.value }))}
-                  className="px-4 py-3.5 text-base outline-none transition-all resize-none w-full focus:ring-2 focus:ring-opacity-50"
-                  style={{ borderRadius: radius, border: `1.5px solid ${errors[field.id] ? colors.danger : colors.border}`, backgroundColor: '#f9fafb', color: colors.text, '--tw-ring-color': colors.primary } as any}
-                />
-              ) : field.type === 'select' ? (
-                <select
-                  value={form[field.id] || ''}
-                  onChange={e => setForm(f => ({ ...f, [field.id]: e.target.value }))}
-                  className="px-4 py-3.5 text-base outline-none transition-all w-full focus:ring-2 focus:ring-opacity-50"
-                  style={{ borderRadius: radius, border: `1.5px solid ${errors[field.id] ? colors.danger : colors.border}`, backgroundColor: '#f9fafb', color: colors.text, '--tw-ring-color': colors.primary } as any}
-                >
-                  <option value="">{field.placeholder}</option>
-                  {(field.options || []).map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                </select>
-              ) : (
-                <input
-                  type={field.type}
-                  placeholder={field.placeholder}
-                  value={form[field.id] || ''}
-                  onChange={e => setForm(f => ({ ...f, [field.id]: e.target.value }))}
-                  className="px-4 py-3.5 text-base outline-none transition-all w-full focus:ring-2 focus:ring-opacity-50"
-                  style={{ borderRadius: radius, border: `1.5px solid ${errors[field.id] ? colors.danger : colors.border}`, backgroundColor: '#f9fafb', color: colors.text, '--tw-ring-color': colors.primary } as any}
-                />
-              )}
-              {errors[field.id] && <span className="text-xs font-medium mt-1" style={{ color: colors.danger }}>{errors[field.id]}</span>}
-            </div>
-          ))}
-
-          {props.show_quantity && (
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold" style={{ color: colors.text }}>Quantité</label>
-              <div className="flex items-center gap-3">
-                <button type="button" onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                  className="w-10 h-10 rounded-xl font-bold text-xl flex items-center justify-center transition-all hover:opacity-80"
-                  style={{ backgroundColor: colors.bgSection, color: colors.text, border: `1.5px solid ${colors.border}` }}>−</button>
-                <span className="text-lg font-bold w-8 text-center" style={{ color: colors.text }}>{quantity}</span>
-                <button type="button" onClick={() => setQuantity(q => q + 1)}
-                  className="w-10 h-10 rounded-xl font-bold text-xl flex items-center justify-center transition-all hover:opacity-80"
-                  style={{ backgroundColor: colors.bgSection, color: colors.text, border: `1.5px solid ${colors.border}` }}>+</button>
-              </div>
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-4 font-black text-base mt-2 flex items-center justify-center gap-3 transition-all"
-            style={{
-              backgroundColor: props.submit_color || colors.primary,
-              color: props.submit_text_color || '#fff',
-              borderRadius: radius,
-              boxShadow: `0 8px 24px ${props.submit_color || colors.primary}50`,
-              transform: loading ? 'none' : undefined,
-            }}
-            onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-2px)' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'none' }}
-          >
-            {loading ? (
-              <><span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> Envoi en cours...</>
-            ) : (
-              <>{props.submit_text || 'Confirmer ma commande'} 🛒</>
-            )}
-          </button>
-        </form>
-      )}
+  const FloatingInput = ({ label, type = "text", required = true }: any) => (
+    <div className="relative mb-5">
+      <input 
+        type={type}
+        required={required}
+        placeholder=" "
+        className="block w-full px-4 py-3.5 text-gray-900 bg-white border border-gray-300 rounded-xl appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 peer transition-shadow"
+      />
+      <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white px-2 peer-focus:px-2 peer-focus:text-blue-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4 left-3 font-medium">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
     </div>
-  )
+  );
 
   return (
-    <div
-      id="order-form"
-      onClick={onClick}
-      className={`py-16 px-4 relative ${isEditing ? 'cursor-pointer' : ''} ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
-      style={{ backgroundColor: props.bg_color || colors.bgSection }}
-    >
-      {isSelected && <span className="absolute top-0 left-0 bg-blue-500 text-white text-[10px] px-2 py-0.5 z-20 font-medium">Formulaire commande</span>}
-
-      <div style={{ maxWidth: props.layout === 'split' ? 1100 : 560, margin: '0 auto' }}>
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold mb-2" style={{ color: colors.text }}>{props.title}</h2>
-          {props.subtitle && <p style={{ color: colors.textLight }}>{props.subtitle}</p>}
+    <section className="w-full py-12 md:py-20 px-4 md:px-8" style={{ backgroundColor: bgColor }}>
+      <div className="max-w-6xl mx-auto flex flex-col items-center">
+        
+        {/* Header */}
+        <div className="text-center mb-10 max-w-2xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight mb-3">{title}</h2>
+          {subtitle && <p className="text-gray-600 text-lg">{subtitle}</p>}
         </div>
 
-        {props.layout === 'split' ? (
-          <div className="grid md:grid-cols-2 gap-8">
-            <div className="bg-white rounded-3xl p-8 shadow-xl shadow-gray-100/50 border" style={{ borderColor: colors.border }}>{formContent}</div>
-            <div className="bg-white rounded-3xl p-8 shadow-xl shadow-gray-100/50 border flex flex-col gap-6" style={{ borderColor: colors.border }}>
-              <h3 className="font-bold text-xl" style={{ color: colors.text }}>Récapitulatif</h3>
-              <div className="flex flex-col gap-4 text-base">
-                {props.show_quantity && (
-                  <div className="flex justify-between py-3 border-b" style={{ borderColor: colors.border }}>
-                    <span style={{ color: colors.textLight }}>Quantité</span>
-                    <span className="font-bold" style={{ color: colors.text }}>{quantity}</span>
-                  </div>
-                )}
-                <div className="flex justify-between items-center">
-                  <span className="font-bold" style={{ color: colors.text }}>Total</span>
-                  <span className="text-2xl font-black" style={{ color: colors.primary }}>À la livraison</span>
-                </div>
-              </div>
-              <div className="flex flex-col gap-3 mt-4 pt-4 border-t" style={{ borderColor: colors.border }}>
-                {['🚚 Livraison rapide 2-5 jours', '✅ Paiement à la livraison', '🔒 100% sécurisé', '↩️ Retour facile 30 jours'].map(b => (
-                  <div key={b} className="flex items-center gap-3 text-sm font-medium" style={{ color: colors.textLight }}>{b}</div>
-                ))}
-              </div>
+        {isSuccess ? (
+          <div className="bg-white p-8 md:p-12 rounded-2xl shadow-xl flex flex-col items-center text-center w-full max-w-2xl" style={{ borderRadius: \`\${borderRadius}px\` }}>
+            <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6 animate-in zoom-in duration-500">
+              <CheckCircle2 className="w-10 h-10" />
             </div>
+            <h3 className="text-2xl font-black text-gray-900 mb-2">Merci pour votre commande !</h3>
+            <p className="text-gray-600 mb-8">{successMessage}</p>
+            <button 
+              onClick={() => setIsSuccess(false)}
+              className="px-8 py-3 bg-gray-100 text-gray-800 font-bold rounded-xl hover:bg-gray-200 transition-colors"
+            >
+              Faire une nouvelle commande
+            </button>
           </div>
         ) : (
-          <div className="bg-white rounded-3xl p-8 shadow-xl shadow-gray-100/50 border max-w-xl mx-auto" style={{ borderColor: colors.border }}>{formContent}</div>
+          <div className={\`w-full max-w-6xl \${layout === 'split' ? 'grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12' : 'max-w-3xl flex flex-col'}\`}>
+            
+            {/* Formulaire */}
+            <form onSubmit={handleSubmit} className={\`bg-white p-6 md:p-8 shadow-xl border border-gray-100 \${layout === 'split' ? 'lg:col-span-7' : 'w-full'}\`} style={{ borderRadius: \`\${borderRadius}px\` }}>
+              <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <Truck className="w-5 h-5 text-gray-400" /> Adresse de livraison
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+                <FloatingInput label="Prénom" />
+                <FloatingInput label="Nom" />
+              </div>
+              <FloatingInput label="Numéro de téléphone" type="tel" />
+              <FloatingInput label="Adresse e-mail (optionnel)" type="email" required={false} />
+              
+              <h3 className="text-xl font-bold text-gray-900 mt-6 mb-6 flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-gray-400" /> Paiement sécurisé
+              </h3>
+              <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-8">
+                <div className="flex items-center gap-3">
+                  <div className="w-4 h-4 rounded-full border-4 border-blue-600 bg-white"></div>
+                  <span className="font-bold text-gray-800">Paiement à la livraison (Cash on Delivery)</span>
+                </div>
+                <p className="text-sm text-gray-500 mt-2 ml-7">Payez uniquement lorsque vous recevez le produit entre vos mains. Aucun risque.</p>
+              </div>
+
+              <button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="w-full py-4 text-lg font-black uppercase tracking-widest rounded-xl shadow-lg transition-transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed"
+                style={{ backgroundColor: btnColor, color: btnTextColor }}
+              >
+                {isSubmitting ? <Loader2 className="w-6 h-6 animate-spin" /> : btnText}
+              </button>
+            </form>
+
+            {/* Résumé (Optionnel selon layout) */}
+            {layout === 'split' && (
+              <div className="lg:col-span-5 flex flex-col">
+                <div className="bg-gray-50 border border-gray-200 p-6 md:p-8 sticky top-24" style={{ borderRadius: \`\${borderRadius}px\` }}>
+                  <h3 className="text-lg font-bold text-gray-900 mb-6 border-b border-gray-200 pb-4">Résumé de la commande</h3>
+                  
+                  {/* Article factice */}
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="w-16 h-16 bg-white border border-gray-200 rounded-lg overflow-hidden flex-shrink-0 relative">
+                      <img src="https://images.unsplash.com/photo-1558089687-f282ffcbc126?auto=format&fit=crop&w=150&q=80" alt="Produit" className="w-full h-full object-cover" />
+                      <span className="absolute -top-2 -right-2 w-5 h-5 bg-gray-500 text-white text-xs flex items-center justify-center rounded-full font-bold">1</span>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-bold text-gray-900 text-sm">La Prise Intelligente</h4>
+                      <p className="text-gray-500 text-xs">Variante: Blanc</p>
+                    </div>
+                    <div className="font-bold text-gray-900">15 000 FCFA</div>
+                  </div>
+
+                  <div className="space-y-3 text-sm text-gray-600 border-t border-gray-200 pt-4">
+                    <div className="flex justify-between">
+                      <span>Sous-total</span>
+                      <span className="font-bold text-gray-900">15 000 FCFA</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Expédition</span>
+                      <span className="font-bold text-green-600">Gratuite</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between items-center mt-6 pt-4 border-t-2 border-gray-200">
+                    <span className="font-black text-gray-900 text-lg">Total</span>
+                    <div className="text-right">
+                      <span className="font-black text-2xl text-gray-900">15 000 FCFA</span>
+                      <p className="text-xs text-gray-500 mt-1">Taxes incluses</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         )}
+
       </div>
-    </div>
-  )
+    </section>
+  );
 }

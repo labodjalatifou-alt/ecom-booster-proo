@@ -1,115 +1,80 @@
-'use client'
-import { useEffect, useState } from 'react'
-import type { CountdownProps, StoreColors } from '@/lib/store-builder/types'
+import React, { useState, useEffect } from 'react';
 
-interface Props {
-  props: CountdownProps
-  colors: StoreColors
-  isEditing?: boolean
-  isSelected?: boolean
-  onClick?: () => void
-}
-
-function pad(n: number) { return String(n).padStart(2, '0') }
-
-export default function CountdownSection({ props, colors, isEditing, isSelected, onClick }: Props) {
-  const [timeLeft, setTimeLeft] = useState({ d: 0, h: 0, m: 0, s: 0 })
-  const [expired, setExpired] = useState(false)
-  const [flip, setFlip] = useState({ d: false, h: false, m: false, s: false })
+export default function CountdownSection({ settings }: { settings: any }) {
+  const targetDate = settings?.targetDate || new Date(Date.now() + 86400000).toISOString(); // Default to +24h
+  const title = settings?.title || "Offre à durée limitée !";
+  const subtitle = settings?.subtitle || "Dépêchez-vous avant la fin de la promotion exceptionnelle.";
+  const showDays = settings?.showDays ?? true;
+  const showHours = settings?.showHours ?? true;
+  const showMinutes = settings?.showMinutes ?? true;
+  const showSeconds = settings?.showSeconds ?? true;
+  const bgColor = settings?.bgColor || "#111827";
+  const textColor = settings?.textColor || "#ffffff";
+  const timerBgColor = settings?.timerBgColor || "#1f2937";
+  const accentColor = settings?.accentColor || "#ef4444";
+  
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0
+  });
 
   useEffect(() => {
-    const tick = () => {
-      let target = new Date(props.target_date).getTime()
-      const now = Date.now()
-      let diff = target - now
+    const calculateTimeLeft = () => {
+      const difference = +new Date(targetDate) - +new Date();
+      let timeLeft = { days: 0, hours: 0, minutes: 0, seconds: 0 };
 
-      if (diff <= 0) {
-        if (props.on_expire === 'reset') {
-          target = Date.now() + 24 * 60 * 60 * 1000
-          diff = target - now
-        } else {
-          setExpired(true)
-          return
-        }
+      if (difference > 0) {
+        timeLeft = {
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((difference / 1000 / 60) % 60),
+          seconds: Math.floor((difference / 1000) % 60)
+        };
       }
+      return timeLeft;
+    };
 
-      const prev = timeLeft
-      const d = Math.floor(diff / 86400000)
-      const h = Math.floor((diff % 86400000) / 3600000)
-      const m = Math.floor((diff % 3600000) / 60000)
-      const s = Math.floor((diff % 60000) / 1000)
+    setTimeLeft(calculateTimeLeft());
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
 
-      setFlip({
-        d: prev.d !== d,
-        h: prev.h !== h,
-        m: prev.m !== m,
-        s: prev.s !== s,
-      })
-      setTimeLeft({ d, h, m, s })
-    }
+    return () => clearInterval(timer);
+  }, [targetDate]);
 
-    tick()
-    const id = setInterval(tick, 1000)
-    return () => clearInterval(id)
-  }, [props.target_date, props.on_expire])
-
-  if (expired && props.on_expire === 'hide') return null
-
-  const units = [
-    { key: 'd', label: 'Jours', value: timeLeft.d, show: props.show_days },
-    { key: 'h', label: 'Heures', value: timeLeft.h, show: props.show_hours },
-    { key: 'm', label: 'Min', value: timeLeft.m, show: props.show_minutes },
-    { key: 's', label: 'Sec', value: timeLeft.s, show: props.show_seconds },
-  ].filter(u => u.show)
+  const TimeUnit = ({ value, label }: { value: number, label: string }) => (
+    <div className="flex flex-col items-center justify-center min-w-[80px] p-4 rounded-xl shadow-lg border border-white/10 backdrop-blur-md" style={{ backgroundColor: timerBgColor }}>
+      <span className="text-4xl md:text-5xl font-black tabular-nums" style={{ color: accentColor }}>
+        {value.toString().padStart(2, '0')}
+      </span>
+      <span className="text-xs md:text-sm font-bold uppercase tracking-widest mt-2" style={{ color: textColor, opacity: 0.8 }}>
+        {label}
+      </span>
+    </div>
+  );
 
   return (
-    <>
-      <style>{`
-        @keyframes flip-in { 0% { transform: rotateX(-90deg); opacity: 0; } 100% { transform: rotateX(0); opacity: 1; } }
-        .flip-anim { animation: flip-in 0.35s ease; }
-        .timer-block { perspective: 400px; }
-      `}</style>
-
-      <div
-        onClick={onClick}
-        className={`py-14 px-4 relative text-center ${isEditing ? 'cursor-pointer' : ''} ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
-        style={{ backgroundColor: props.bg_color || '#1e1b4b', color: props.text_color || '#fff' }}
-      >
-        {isSelected && <span className="absolute top-0 left-0 bg-blue-500 text-white text-[10px] px-2 py-0.5 z-20 font-medium">Compte à rebours</span>}
-
-        <div style={{ maxWidth: 640, margin: '0 auto' }}>
-          <div style={{ color: props.accent_color || colors.accent }} className="text-sm font-bold tracking-widest uppercase mb-2">
-            ⚡ Offre limitée
-          </div>
-          <h2 className="text-2xl font-bold mb-2">{props.title || 'L\'offre expire dans :'}</h2>
-          {props.subtitle && <p className="opacity-70 mb-8 text-sm">{props.subtitle}</p>}
-
-          {expired && props.on_expire === 'message' ? (
-            <div className="text-xl font-bold" style={{ color: props.accent_color || colors.accent }}>
-              {props.expire_message || 'L\'offre est terminée'}
-            </div>
-          ) : (
-            <div className="flex items-center justify-center gap-3 flex-wrap">
-              {units.map((unit, idx) => (
-                <div key={unit.key} className="flex items-center gap-3">
-                  <div className="timer-block flex flex-col items-center">
-                    <div
-                      className={`rounded-xl flex items-center justify-center font-black text-5xl min-w-[80px] py-4 px-2 ${flip[unit.key as keyof typeof flip] ? 'flip-anim' : ''}`}
-                      style={{ backgroundColor: props.timer_bg || '#312e81', color: props.text_color || '#fff', boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}
-                    >
-                      {pad(unit.value)}
-                    </div>
-                    <span className="text-xs mt-2 font-semibold opacity-70 tracking-wide uppercase">{unit.label}</span>
-                  </div>
-                  {idx < units.length - 1 && (
-                    <span className="text-4xl font-black opacity-50 mb-4">:</span>
-                  )}
-                </div>
-              ))}
-            </div>
+    <section className="w-full py-16 px-4 md:px-8 flex flex-col items-center justify-center text-center" style={{ backgroundColor: bgColor }}>
+      <div className="max-w-4xl mx-auto flex flex-col items-center gap-8">
+        <div className="space-y-3">
+          <h2 className="text-3xl md:text-4xl font-black tracking-tight" style={{ color: textColor }}>{title}</h2>
+          {subtitle && (
+            <p className="text-lg font-medium opacity-80 max-w-xl mx-auto" style={{ color: textColor }}>{subtitle}</p>
           )}
         </div>
+
+        <div className="flex flex-wrap items-center justify-center gap-3 md:gap-6">
+          {showDays && <TimeUnit value={timeLeft.days} label="Jours" />}
+          {showDays && showHours && <span className="text-2xl font-black opacity-30" style={{ color: textColor }}>:</span>}
+          {showHours && <TimeUnit value={timeLeft.hours} label="Heures" />}
+          {(showHours || showDays) && showMinutes && <span className="text-2xl font-black opacity-30" style={{ color: textColor }}>:</span>}
+          {showMinutes && <TimeUnit value={timeLeft.minutes} label="Minutes" />}
+          {(showMinutes || showHours || showDays) && showSeconds && <span className="text-2xl font-black opacity-30" style={{ color: textColor }}>:</span>}
+          {showSeconds && <TimeUnit value={timeLeft.seconds} label="Secondes" />}
+        </div>
       </div>
-    </>
-  )
+    </section>
+  );
 }

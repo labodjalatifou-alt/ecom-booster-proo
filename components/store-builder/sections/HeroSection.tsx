@@ -1,116 +1,86 @@
-'use client'
-import { useEffect, useRef } from 'react'
-import type { HeroProps, StoreColors } from '@/lib/store-builder/types'
+import React from 'react';
 
-interface Props {
-  props: HeroProps
-  colors: StoreColors
-  isEditing?: boolean
-  isSelected?: boolean
-  onClick?: () => void
-}
+export default function HeroSection({ settings }: { settings: any }) {
+  // Use default or provided settings
+  const title = settings?.title || "Titre de la bannière";
+  const subtitle = settings?.subtitle || "Rédigez un sous-titre accrocheur ici pour capter l'attention de vos visiteurs.";
+  const button1Text = settings?.button1Text || "Acheter maintenant";
+  const button1Url = settings?.button1Url || "#";
+  const button2Text = settings?.button2Text || "";
+  const button2Url = settings?.button2Url || "#";
+  const imageUrl = settings?.image || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1200&q=80";
+  const overlayColor = settings?.overlayColor || "#000000";
+  const overlayOpacity = settings?.overlayOpacity || 40;
+  const textAlign = settings?.textAlign || "center";
+  const badgeText = settings?.badgeText || "";
+  const showBadge = settings?.showBadge || false;
+  const badgeColor = settings?.badgeColor || "#008060";
+  const animation = settings?.animation || "fadeIn";
+  const minHeight = settings?.minHeight || 500;
+  
+  // For overlay
+  const rgbaColor = `rgba(0, 0, 0, ${overlayOpacity / 100})`;
 
-export default function HeroSection({ props, colors, isEditing, isSelected, onClick }: Props) {
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!ref.current) return
-    const el = ref.current
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) el.classList.add('hero-visible') },
-      { threshold: 0.1 }
-    )
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
-
-  const hasImage = !!props.image_url
-  const isBackground = props.image_position === 'background'
-  const isSplit = !isBackground && hasImage && props.image_position !== 'none'
-
-  const bgStyle = isBackground && hasImage
-    ? { backgroundImage: `url(${props.image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-    : { backgroundColor: props.bg_color || colors.bg }
-
-  const align = props.text_align === 'center' ? 'items-center text-center' : props.text_align === 'right' ? 'items-end text-right' : 'items-start text-left'
+  const alignClass = textAlign === 'gauche' ? 'items-start text-left' : textAlign === 'droite' ? 'items-end text-right' : 'items-center text-center';
 
   return (
-    <>
-      <style>{`
-        .hero-animate { opacity: 0; transform: translateY(32px); transition: opacity 0.7s ease, transform 0.7s ease; }
-        .hero-visible .hero-animate { opacity: 1; transform: none; }
-        .hero-animate-delay-1 { transition-delay: 0.1s; }
-        .hero-animate-delay-2 { transition-delay: 0.25s; }
-        .hero-animate-delay-3 { transition-delay: 0.4s; }
-        .hero-animate-delay-4 { transition-delay: 0.55s; }
-        .hero-btn-primary { display: inline-flex; align-items: center; gap: 8px; padding: 14px 32px; border-radius: 12px; font-weight: 700; font-size: 16px; transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; border: none; }
-        .hero-btn-primary:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
-        .hero-btn-secondary { display: inline-flex; align-items: center; gap: 8px; padding: 14px 24px; border-radius: 12px; font-weight: 600; font-size: 16px; transition: all 0.2s; cursor: pointer; background: transparent; border: 2px solid currentColor; }
-        .hero-btn-secondary:hover { background: rgba(255,255,255,0.1); transform: translateY(-1px); }
-        @keyframes badge-pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-        .badge-anim { animation: badge-pulse 2s infinite; }
-      `}</style>
+    <section 
+      className="relative w-full overflow-hidden flex items-center justify-center bg-gray-100"
+      style={{ minHeight: `${minHeight}px` }}
+    >
+      {/* Background Image */}
+      <div 
+        className="absolute inset-0 z-0 bg-cover bg-center"
+        style={{ backgroundImage: `url(${imageUrl})` }}
+      />
+      
+      {/* Overlay */}
+      <div 
+        className="absolute inset-0 z-10 transition-opacity"
+        style={{ backgroundColor: overlayColor, opacity: overlayOpacity / 100 }}
+      />
 
-      <div
-        ref={ref}
-        style={{ ...bgStyle, color: props.text_color || colors.text, position: 'relative' }}
-        className={`relative ${isEditing ? 'cursor-pointer' : ''} ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
-        onClick={onClick}
-      >
-        {isSelected && (
-          <span className="absolute top-0 left-0 bg-blue-500 text-white text-[10px] px-2 py-0.5 z-20 font-medium">Hero</span>
+      {/* Content */}
+      <div className={`relative z-20 w-full max-w-5xl mx-auto px-6 md:px-12 py-16 flex flex-col ${alignClass} gap-6 ${animation === 'slideUp' ? 'animate-in slide-in-from-bottom-8 duration-1000' : 'animate-in fade-in duration-1000'}`}>
+        
+        {showBadge && badgeText && (
+          <span 
+            className="px-4 py-1.5 text-xs font-bold tracking-widest uppercase text-white rounded-full shadow-lg backdrop-blur-sm"
+            style={{ backgroundColor: badgeColor }}
+          >
+            {badgeText}
+          </span>
         )}
 
-        {/* Overlay pour mode background */}
-        {isBackground && hasImage && (
-          <div style={{ position: 'absolute', inset: 0, backgroundColor: `rgba(0,0,0,${props.overlay_opacity || 0.4})`, zIndex: 1 }} />
+        <h1 className="text-4xl md:text-5xl lg:text-7xl font-black text-white leading-[1.1] tracking-tight drop-shadow-lg">
+          {title}
+        </h1>
+        
+        {subtitle && (
+          <p className="text-lg md:text-xl text-white/90 max-w-2xl font-medium drop-shadow-md">
+            {subtitle}
+          </p>
         )}
 
-        <div style={{ position: 'relative', zIndex: 2, maxWidth: 1280, margin: '0 auto', padding: '80px 24px' }}>
-          <div className={`flex gap-12 ${isSplit ? (props.image_position === 'left' ? 'flex-row-reverse' : 'flex-row') : 'flex-col'} items-center flex-wrap`}>
-            {/* Texte */}
-            <div className={`flex flex-col gap-6 flex-1 min-w-[280px] ${align}`}>
-              {props.show_badge && props.badge_text && (
-                <div className="hero-animate hero-animate-delay-1 badge-anim self-start inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold"
-                  style={{ backgroundColor: props.badge_color || colors.accent, color: '#fff' }}>
-                  ✨ {props.badge_text}
-                </div>
-              )}
-
-              <h1 className="hero-animate hero-animate-delay-2 font-black leading-tight"
-                style={{ fontSize: 'clamp(36px, 5vw, 64px)', lineHeight: 1.1 }}>
-                {props.headline || 'Titre principal de votre boutique'}
-              </h1>
-
-              <p className="hero-animate hero-animate-delay-3 text-lg leading-relaxed opacity-80" style={{ maxWidth: 540 }}>
-                {props.subheadline || 'Votre sous-titre percutant ici'}
-              </p>
-
-              <div className="hero-animate hero-animate-delay-4 flex flex-wrap gap-4">
-                <button className="hero-btn-primary" style={{ backgroundColor: colors.primary, color: '#fff' }}>
-                  {props.cta_text || 'Commander maintenant'} →
-                </button>
-                {props.cta_text_2 && (
-                  <button className="hero-btn-secondary" style={{ color: props.text_color || colors.text }}>
-                    {props.cta_text_2}
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Image */}
-            {isSplit && hasImage && (
-              <div className="hero-animate hero-animate-delay-2 flex-1 min-w-[280px]" style={{ maxWidth: 540 }}>
-                <img
-                  src={props.image_url}
-                  alt="Hero"
-                  style={{ width: '100%', height: 'auto', borderRadius: 24, objectFit: 'cover', boxShadow: '0 24px 64px rgba(0,0,0,0.15)' }}
-                />
-              </div>
-            )}
-          </div>
+        <div className="flex flex-wrap items-center gap-4 mt-4">
+          {button1Text && (
+            <a 
+              href={button1Url}
+              className="px-8 py-4 bg-white text-gray-900 font-bold text-sm uppercase tracking-widest rounded-xl hover:scale-105 transition-transform shadow-xl"
+            >
+              {button1Text}
+            </a>
+          )}
+          {button2Text && (
+            <a 
+              href={button2Url}
+              className="px-8 py-4 border-2 border-white text-white font-bold text-sm uppercase tracking-widest rounded-xl hover:bg-white hover:text-gray-900 transition-colors shadow-lg"
+            >
+              {button2Text}
+            </a>
+          )}
         </div>
       </div>
-    </>
-  )
+    </section>
+  );
 }
