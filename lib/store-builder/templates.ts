@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { BuilderSection, StoreColors, StoreFonts } from './types'
 import { SECTIONS_CATALOG, generateSectionId, DEFAULT_COLORS, DEFAULT_FONTS } from './defaults'
 

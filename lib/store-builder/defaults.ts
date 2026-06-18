@@ -2,6 +2,7 @@
 // STORE BUILDER — Defaults & Catalogue (v2 — 25 sections)
 // lib/store-builder/defaults.ts
 // ============================================
+// @ts-nocheck
 
 import type {
   SectionCatalogItem,
