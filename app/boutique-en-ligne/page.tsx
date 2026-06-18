@@ -2,20 +2,9 @@
 
 import React, { useState, useRef, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import dynamic from 'next/dynamic'
 import {
   ArrowLeft,
-  Bold,
-  Italic,
-  Underline,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  AlignJustify,
-  Link2,
-  ImageIcon,
-  Table,
-  MoreHorizontal,
-  Code,
   Upload,
   FolderOpen,
   ChevronDown,
@@ -26,13 +15,14 @@ import {
   Globe,
   Tag,
   Loader2,
-  Package,
   Truck,
   Search,
   Info,
-  ToggleLeft,
   Pencil,
 } from 'lucide-react'
+
+// Chargement dynamique pour éviter les erreurs SSR avec Tiptap
+const RichTextEditor = dynamic(() => import('@/components/RichTextEditor'), { ssr: false, loading: () => <div className="h-[240px] border border-gray-200 dark:border-slate-600 rounded-xl bg-gray-50 dark:bg-slate-800 animate-pulse" /> })
 
 type StatusType = 'Actif' | 'Brouillon' | 'Archivé'
 
@@ -96,7 +86,6 @@ export default function BoutiqueEnLignePage() {
   const [stockExpanded, setStockExpanded] = useState(false)
   const [expeditionExpanded, setExpeditionExpanded] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const editorRef = useRef<HTMLDivElement>(null)
 
   // Detect changes
   useEffect(() => {
@@ -126,11 +115,6 @@ export default function BoutiqueEnLignePage() {
       set({ balises: [...form.balises, newBalise.trim()] })
       setNewBalise('')
     }
-  }
-
-  const execCmd = (cmd: string, val?: string) => {
-    document.execCommand(cmd, false, val)
-    editorRef.current?.focus()
   }
 
   const handleSave = async () => {
@@ -219,41 +203,13 @@ export default function BoutiqueEnLignePage() {
             </div>
             <div className="p-5">
               <Label>Description</Label>
-              {/* Toolbar */}
-              <div className="flex flex-wrap items-center gap-0.5 p-1.5 border border-gray-200 dark:border-slate-600 border-b-0 rounded-t-lg bg-gray-50 dark:bg-slate-800">
-                <ToolbarBtn icon={<span className="text-xs">¶</span>} tooltip="Paragraphe" />
-                <select onChange={e => execCmd('formatBlock', e.target.value)} className="text-xs border-none bg-transparent text-gray-600 dark:text-gray-300 outline-none cursor-pointer px-1 py-1">
-                  <option value="p">Paragraphe</option>
-                  <option value="h1">Titre 1</option>
-                  <option value="h2">Titre 2</option>
-                  <option value="h3">Titre 3</option>
-                </select>
-                <Div />
-                <ToolbarBtn icon={<Bold className="w-3.5 h-3.5" />} tooltip="Gras" onClick={() => execCmd('bold')} />
-                <ToolbarBtn icon={<Italic className="w-3.5 h-3.5" />} tooltip="Italique" onClick={() => execCmd('italic')} />
-                <ToolbarBtn icon={<Underline className="w-3.5 h-3.5" />} tooltip="Souligné" onClick={() => execCmd('underline')} />
-                <ToolbarBtn icon={<span className="text-xs font-bold" style={{ color: '#e11d48' }}>A</span>} tooltip="Couleur" />
-                <Div />
-                <ToolbarBtn icon={<AlignLeft className="w-3.5 h-3.5" />} tooltip="Gauche" onClick={() => execCmd('justifyLeft')} />
-                <ToolbarBtn icon={<AlignCenter className="w-3.5 h-3.5" />} tooltip="Centre" onClick={() => execCmd('justifyCenter')} />
-                <ToolbarBtn icon={<AlignRight className="w-3.5 h-3.5" />} tooltip="Droite" onClick={() => execCmd('justifyRight')} />
-                <ToolbarBtn icon={<AlignJustify className="w-3.5 h-3.5" />} tooltip="Justifier" onClick={() => execCmd('justifyFull')} />
-                <Div />
-                <ToolbarBtn icon={<Link2 className="w-3.5 h-3.5" />} tooltip="Lien" onClick={() => { const u = prompt('URL :'); if (u) execCmd('createLink', u) }} />
-                <ToolbarBtn icon={<ImageIcon className="w-3.5 h-3.5" />} tooltip="Image" />
-                <ToolbarBtn icon={<Table className="w-3.5 h-3.5" />} tooltip="Tableau" />
-                <ToolbarBtn icon={<MoreHorizontal className="w-3.5 h-3.5" />} tooltip="Plus" />
-                <Div />
-                <ToolbarBtn icon={<Code className="w-3.5 h-3.5" />} tooltip="Code source" />
+              <div className="mt-1">
+                <RichTextEditor
+                  content={form.description}
+                  onChange={html => set({ description: html })}
+                  placeholder="Décrivez votre produit en détail..."
+                />
               </div>
-              <div
-                ref={editorRef}
-                contentEditable
-                suppressContentEditableWarning
-                onInput={e => set({ description: (e.target as HTMLDivElement).innerHTML })}
-                data-placeholder="Décrivez votre produit..."
-                className="min-h-[150px] p-3.5 text-sm text-gray-800 dark:text-gray-200 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-b-lg outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400 transition-all leading-relaxed empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400 empty:before:pointer-events-none"
-              />
             </div>
           </Card>
 
@@ -837,14 +793,4 @@ function TabBtn({ label, active, onClick }: { label: string; active: boolean; on
   )
 }
 
-function ToolbarBtn({ icon, tooltip, onClick }: { icon: React.ReactNode; tooltip: string; onClick?: () => void }) {
-  return (
-    <button type="button" title={tooltip} onClick={onClick} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-300 transition-colors">
-      {icon}
-    </button>
-  )
-}
 
-function Div() {
-  return <div className="w-px h-5 bg-gray-200 dark:bg-slate-600 mx-0.5" />
-}
