@@ -55,6 +55,9 @@ export interface Store {
   id: string;
   name: string;
   slug: string;
+  status: 'published' | 'paused' | 'draft';
+  created_at: string;
+  updated_at?: string;
   theme: StoreTheme;
   pages: {
     [pageSlug: string]: {
