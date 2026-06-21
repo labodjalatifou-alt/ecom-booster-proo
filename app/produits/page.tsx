@@ -11,6 +11,7 @@ export default function ProduitsList() {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [produits, setProduits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const fetchProducts = async () => {
     try {
@@ -32,14 +33,22 @@ export default function ProduitsList() {
     fetchProducts();
   }, []);
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Voulez-vous vraiment supprimer ce produit ?')) {
-      const { error } = await supabase.from('products').delete().eq('id', id);
-      if (!error) {
-        setProduits(produits.filter(p => p.id !== id));
-      }
-      setActiveMenu(null);
+  const requestDelete = (id: string) => {
+    setActiveMenu(null);
+    setDeleteConfirmId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirmId) return;
+    const { error } = await supabase.from('products').delete().eq('id', deleteConfirmId);
+    if (!error) {
+      setProduits(produits.filter(p => p.id !== deleteConfirmId));
     }
+    setDeleteConfirmId(null);
+  };
+
+  const cancelDelete = () => {
+    setDeleteConfirmId(null);
   };
 
   return (
@@ -110,7 +119,7 @@ export default function ProduitsList() {
                   <tr 
                     key={item.id} 
                     className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all group cursor-pointer" 
-                    onClick={() => router.push(`/produits/ajouter`)}
+                    onClick={() => router.push(`/produits/ajouter?id=${item.id}`)}
                   >
                     <td className="px-8 py-5 overflow-hidden">
                       <div className="flex items-center gap-4">
@@ -155,7 +164,7 @@ export default function ProduitsList() {
                             <button onClick={() => { router.push(`/produits/ajouter?id=${item.id}`); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-5 py-3 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors">
                               <Edit3 className="w-4 h-4 text-blue-500" /> Modifier
                             </button>
-                            <button onClick={() => handleDelete(item.id)} className="w-full flex items-center gap-3 px-5 py-3 text-[10px] font-black uppercase text-red-500 hover:bg-red-50 transition-colors">
+                            <button onClick={(e) => { e.stopPropagation(); requestDelete(item.id); }} className="w-full flex items-center gap-3 px-5 py-3 text-[10px] font-black uppercase text-red-500 hover:bg-red-50 transition-colors">
                               <Trash2 className="w-4 h-4" /> Supprimer
                             </button>
                           </div>
@@ -169,6 +178,36 @@ export default function ProduitsList() {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={cancelDelete} />
+          <div className="relative bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-2xl flex items-center justify-center mb-6">
+              <Trash2 className="w-8 h-8 text-red-500" />
+            </div>
+            <h3 className="text-2xl font-black mb-2">Supprimer le produit ?</h3>
+            <p className="text-slate-500 dark:text-slate-400 mb-8">
+              Cette action est irréversible. Le produit sera définitivement supprimé de votre boutique.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={cancelDelete}
+                className="flex-1 py-3 px-4 rounded-xl font-bold border-2 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="flex-1 py-3 px-4 rounded-xl font-bold bg-red-500 hover:bg-red-600 text-white transition-colors shadow-lg shadow-red-500/30"
+              >
+                Oui, supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

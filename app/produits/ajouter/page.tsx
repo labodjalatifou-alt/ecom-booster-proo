@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef, useCallback, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd'
 import toast from 'react-hot-toast'
@@ -78,6 +78,8 @@ const INITIAL: FormData = {
 
 export default function BoutiqueEnLignePage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const productId = searchParams.get('id')
   const [form, setForm] = useState<FormData>(INITIAL)
   const [savedForm, setSavedForm] = useState<FormData>(INITIAL)
   const [hasChanges, setHasChanges] = useState(false)
@@ -89,6 +91,33 @@ export default function BoutiqueEnLignePage() {
   const [stockExpanded, setStockExpanded] = useState(false)
   const [expeditionExpanded, setExpeditionExpanded] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Fetch existing product
+  useEffect(() => {
+    if (!productId) return;
+    const fetchProduct = async () => {
+      try {
+        const { data, error } = await supabase.from('products').select('*').eq('id', productId).single();
+        if (error) throw error;
+        if (data) {
+          const loadedForm: FormData = {
+            ...INITIAL,
+            titre: data.title || '',
+            prix: data.price || '',
+            prixAvantReduction: data.compare_price || '',
+            statut: data.status === 'active' ? 'Actif' : data.status === 'draft' ? 'Brouillon' : 'Archivé',
+            quantite: (data.stock || 0).toString(),
+          };
+          setForm(loadedForm);
+          setSavedForm(loadedForm);
+        }
+      } catch (err) {
+        console.error("Failed to fetch product:", err);
+        toast.error("Erreur lors du chargement du produit");
+      }
+    };
+    fetchProduct();
+  }, [productId]);
 
   // Detect changes
   useEffect(() => {
@@ -141,14 +170,23 @@ export default function BoutiqueEnLignePage() {
       // Save to Supabase
       const statusVal = form.statut.toLowerCase() === 'brouillon' ? 'draft' : form.statut.toLowerCase() === 'archivé' ? 'archived' : 'active'
       
-      const { data, error } = await supabase.from('products').insert({
+      const payload = {
         title: form.titre.trim(),
         price: form.prix || '0',
         compare_price: form.prixAvantReduction || null,
         status: statusVal,
         stock: parseInt(form.quantite) || 0,
         currency: 'FCFA',
-      })
+      };
+
+      let error;
+      if (productId) {
+        const result = await supabase.from('products').update(payload).eq('id', productId);
+        error = result.error;
+      } else {
+        const result = await supabase.from('products').insert(payload);
+        error = result.error;
+      }
 
       if (error) {
         toast.error('Erreur lors de l\'enregistrement', { position: 'bottom-center' })
@@ -221,7 +259,7 @@ export default function BoutiqueEnLignePage() {
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
           <span className="text-gray-400 text-base font-normal cursor-pointer hover:text-indigo-500 transition-colors" onClick={() => router.back()}>Produits</span>
           <span className="text-gray-300 dark:text-gray-600">›</span>
-          Ajouter un produit
+          {productId ? 'Modifier le produit' : 'Ajouter un produit'}
         </h1>
       </div>
 
