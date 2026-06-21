@@ -25,9 +25,10 @@ interface EditorProps {
   storeId: string
   storeName?: string
   initialData: EditorData
+  products?: any[]
 }
 
-export default function Editor({ storeId, storeName, initialData }: EditorProps) {
+export default function Editor({ storeId, storeName, initialData, products }: EditorProps) {
   const supabase = createClient()
   const [data, setData] = useState<EditorData>(initialData)
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null)
@@ -149,6 +150,7 @@ export default function Editor({ storeId, storeName, initialData }: EditorProps)
           selectedBlockId={selectedBlockId}
           previewMode={previewMode}
           onSelectBlock={setSelectedBlockId}
+          products={products}
         />
         <PropertiesPanel
           block={selectedBlock}

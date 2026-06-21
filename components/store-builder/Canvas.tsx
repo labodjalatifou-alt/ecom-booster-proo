@@ -25,10 +25,12 @@ interface CanvasProps {
   selectedBlockId: string | null
   previewMode: 'desktop' | 'mobile'
   onSelectBlock: (id: string) => void
+  products?: any[]
 }
 
-export default function Canvas({ data, selectedBlockId, previewMode, onSelectBlock }: CanvasProps) {
+export default function Canvas({ data, selectedBlockId, previewMode, onSelectBlock, products }: CanvasProps) {
   
+  const product = products && products.length > 0 ? products[0] : null
   const BlockWrapper = ({ block, children }: { block: EditorBlock, children: React.ReactNode }) => {
     if (block.hidden) return null
     
@@ -71,7 +73,7 @@ export default function Canvas({ data, selectedBlockId, previewMode, onSelectBlo
       
       // Inline simple product blocks
       case 'Titre': 
-        return <h1 className={`font-black text-gray-900 ${block.settings.size || 'text-3xl'}`} style={{ color: block.settings.color }}>{block.settings.text || 'Titre du produit'}</h1>
+        return <h1 className={`font-black text-gray-900 ${block.settings.size || 'text-3xl'}`} style={{ color: block.settings.color }}>{block.settings.text || product?.title || 'Titre du produit'}</h1>
       case 'Note de produit':
         if (block.settings.show === false) return null
         return (
@@ -85,9 +87,9 @@ export default function Canvas({ data, selectedBlockId, previewMode, onSelectBlo
       case 'Prix':
         return (
           <div className="flex items-center gap-3 mb-4">
-            <span className="text-2xl font-bold text-gray-900">{block.settings.price || '15000 FCFA'}</span>
-            {block.settings.compare_at_price && (
-              <span className="text-lg text-gray-400 line-through">{block.settings.compare_at_price}</span>
+            <span className="text-2xl font-bold text-gray-900">{block.settings.price || (product?.price ? `${product.price} FCFA` : '15000 FCFA')}</span>
+            {(block.settings.compare_at_price || product?.compare_at_price) && (
+              <span className="text-lg text-gray-400 line-through">{block.settings.compare_at_price || `${product?.compare_at_price} FCFA`}</span>
             )}
             {block.settings.show_badge && (
               <span className="bg-red-100 text-red-600 text-xs font-bold px-2 py-1 rounded">{block.settings.badge_text || '-50%'}</span>
@@ -109,9 +111,7 @@ export default function Canvas({ data, selectedBlockId, previewMode, onSelectBlo
         )
       case 'Description':
         return (
-          <div className="prose text-gray-600 whitespace-pre-wrap text-sm md:text-base my-6">
-            {block.settings.content || 'Description détaillée de votre produit...'}
-          </div>
+          <div className="prose text-gray-600 whitespace-pre-wrap text-sm md:text-base my-6" dangerouslySetInnerHTML={{ __html: block.settings.content || product?.description || 'Description détaillée de votre produit...' }} />
         )
       default:
         return <div className="p-4 bg-red-50 text-red-500 rounded border border-red-200">Type de bloc inconnu: {block.type}</div>
@@ -121,6 +121,17 @@ export default function Canvas({ data, selectedBlockId, previewMode, onSelectBlo
   // Filter core blocks
   const productBlocks = data.template.filter(b => ['Titre', 'Note de produit', 'Prix', 'Boutons d\'achat', 'Description'].includes(b.type))
   const sectionBlocks = data.template.filter(b => !['Titre', 'Note de produit', 'Prix', 'Boutons d\'achat', 'Description'].includes(b.type))
+
+  if (!product) {
+    return (
+      <div className="flex-1 bg-[#e5e7eb] flex items-center justify-center p-8 relative" onClick={() => onSelectBlock('')}>
+        <div className="bg-white p-8 rounded-xl shadow-sm text-center max-w-md w-full" onClick={e => e.stopPropagation()}>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">Aucun produit</h2>
+          <p className="text-gray-500">Ajoutez un produit depuis la section Produits pour prévisualiser votre boutique.</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex-1 bg-[#e5e7eb] overflow-y-auto p-4 flex flex-col items-center custom-scrollbar relative" onClick={() => onSelectBlock('')}>
@@ -150,7 +161,7 @@ export default function Canvas({ data, selectedBlockId, previewMode, onSelectBlo
             
             {/* Medias Column */}
             <div className="w-full md:w-1/2 flex-shrink-0">
-              <MediasRender />
+              <MediasRender settings={{ images: product?.images || (product?.image_url ? [product.image_url] : undefined) }} />
             </div>
 
             {/* Product Info Column */}

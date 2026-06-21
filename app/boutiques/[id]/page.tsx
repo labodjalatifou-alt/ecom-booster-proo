@@ -24,6 +24,11 @@ export default async function StoreBuilderPage({ params }: { params: Promise<{ i
     .eq('slug', 'home')
     .single();
 
+  const { data: products } = await supabase
+    .from('store_products')
+    .select('*')
+    .eq('store_id', id);
+
   let builderJson = storePage?.builder_json;
 
   if (!builderJson || !builderJson.template || builderJson.template.length === 0) {
@@ -78,6 +83,7 @@ export default async function StoreBuilderPage({ params }: { params: Promise<{ i
     <EditorClient
       storeId={id}
       initialData={builderJson}
+      products={products || []}
     />
   );
 }

@@ -15,6 +15,7 @@ const Editor = dynamic(() => import('@/components/store-builder/Editor'), {
 interface EditorClientProps {
     storeId: string
     initialData: any
+    products?: any[]
 }
 
 export default function EditorClient({ storeId, initialData }: EditorClientProps) {
@@ -22,6 +23,7 @@ export default function EditorClient({ storeId, initialData }: EditorClientProps
         <Editor
             storeId={storeId}
             initialData={initialData}
+            products={products}
         />
     )
 }
