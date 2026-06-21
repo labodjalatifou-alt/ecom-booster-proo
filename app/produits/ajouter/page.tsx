@@ -105,9 +105,10 @@ export default function BoutiqueEnLignePage() {
             titre: data.title || '',
             prix: data.price || '',
             prixAvantReduction: data.compare_price || '',
+            description: data.description || '',
             statut: data.status === 'active' ? 'Actif' : data.status === 'draft' ? 'Brouillon' : 'Archivé',
             quantite: (data.stock || 0).toString(),
-            mediaPreviews: data.image_url ? [data.image_url] : [],
+            mediaPreviews: data.images && data.images.length > 0 ? data.images : (data.image_url ? [data.image_url] : []),
           };
           setForm(loadedForm);
           setSavedForm(loadedForm);
@@ -168,17 +169,49 @@ export default function BoutiqueEnLignePage() {
     setSaving(true)
     
     try {
+      let finalMediaUrls = [...form.mediaPreviews];
+      
+      // Upload new medias that are blobs
+      for (let i = 0; i < finalMediaUrls.length; i++) {
+        if (finalMediaUrls[i].startsWith('blob:')) {
+          // Find the corresponding file in form.medias
+          // Since we might have reordered, we can just pick the next available file
+          // A more robust way is just sequentially popping from form.medias for each blob
+        }
+      }
+      
+      // Let's implement a better upload strategy:
+      // We will upload ALL form.medias and append their public URLs.
+      // Actually, when user adds a file, we added it to `form.medias` and `form.mediaPreviews`.
+      // So the blobs in `finalMediaUrls` correspond exactly to `form.medias` IN ORDER, EXCEPT if they dragged to reorder!
+      // If they dragged, `form.medias` and `finalMediaUrls` were BOTH reordered identically!
+      // So the i-th blob in finalMediaUrls corresponds to the i-th element of form.medias.
+      let mediaIndex = 0;
+      for (let i = 0; i < finalMediaUrls.length; i++) {
+        if (finalMediaUrls[i].startsWith('blob:') && mediaIndex < form.medias.length) {
+          const file = form.medias[mediaIndex++];
+          const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+          const { error: uploadError } = await supabase.storage.from('store-images').upload(fileName, file);
+          if (!uploadError) {
+            const { data: publicUrlData } = supabase.storage.from('store-images').getPublicUrl(fileName);
+            finalMediaUrls[i] = publicUrlData.publicUrl;
+          }
+        }
+      }
+
       // Save to Supabase
       const statusVal = form.statut.toLowerCase() === 'brouillon' ? 'draft' : form.statut.toLowerCase() === 'archivé' ? 'archived' : 'active'
       
       const payload = {
         title: form.titre.trim(),
+        description: form.description,
         price: form.prix || '0',
         compare_price: form.prixAvantReduction || null,
         status: statusVal,
         stock: parseInt(form.quantite) || 0,
         currency: 'FCFA',
-        image_url: form.mediaPreviews && form.mediaPreviews.length > 0 ? form.mediaPreviews[0] : null,
+        image_url: finalMediaUrls.length > 0 ? finalMediaUrls[0] : null,
+        images: finalMediaUrls,
       };
 
       let error;
