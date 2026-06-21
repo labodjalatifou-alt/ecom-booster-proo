@@ -88,6 +88,7 @@ export default function StockPage() {
           stock: p.variants?.[0]?.inventory_quantity || 0,
           image_url: p.image?.src || null,
           description: p.body_html || null,
+          images: p.images?.map((img: any) => img.src) || [],
         }));
 
         await supabase.from('products').upsert(productsToUpsert, { onConflict: 'shopify_id' });
