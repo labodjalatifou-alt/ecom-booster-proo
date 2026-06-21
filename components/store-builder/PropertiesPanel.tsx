@@ -34,16 +34,19 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete }: P
 
   const renderFields = () => {
     switch (block.type) {
+      // Barre d'annonce — gère les DEUX noms (header utilise "AnnouncementBar", template utilise "announcement_bar")
+      case 'AnnouncementBar':
       case 'announcement_bar':
         return (
           <>
             <TextField label="Texte de l'annonce" value={s.text} onChange={v => update('text', v)} />
-            <SliderField label="Vitesse (px/s)" value={s.speed} onChange={v => update('speed', v)} min={10} max={200} />
+            <SliderField label="Vitesse (px/s)" value={s.speed || 30} onChange={v => update('speed', v)} min={10} max={200} />
             <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
             <ColorField label="Couleur texte" value={s.text_color} onChange={v => update('text_color', v)} />
-            <ToggleField label="Bouton fermer" value={s.close_button} onChange={v => update('close_button', v)} />
+            <ToggleField label="Bouton fermer" value={s.show_close ?? s.close_button} onChange={v => update('show_close', v)} />
           </>
         )
+      case 'Header':
       case 'header':
         return (
           <>
@@ -59,15 +62,18 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete }: P
         return (
           <>
             <TextareaField label="Titre du produit" value={s.text} onChange={v => update('text', v)} />
-            <SelectField label="Taille" value={s.size || 'text-3xl'} options={['text-2xl', 'text-3xl', 'text-4xl', 'text-5xl']} onChange={v => update('size', v)} />
+            <SelectField label="Taille" value={s.size_key || 'md'} options={['sm', 'md', 'lg']} onChange={v => update('size_key', v)} />
+            <SelectField label="Alignement" value={s.text_align || 'left'} options={['left', 'center', 'right']} onChange={v => update('text_align', v)} />
             <ColorField label="Couleur" value={s.color} onChange={v => update('color', v)} />
           </>
         )
       case 'Note de produit':
         return (
           <>
-            <SliderField label="Note" value={s.rating || 5} onChange={v => update('rating', v)} min={1} max={5} />
+            <SliderField label="Note" value={s.rating ?? 5} onChange={v => update('rating', v)} min={1} max={5} />
             <TextField label="Nombre d'avis (ex: 128 avis)" value={s.reviews_count} onChange={v => update('reviews_count', v)} />
+            <ColorField label="Couleur étoiles" value={s.star_color} onChange={v => update('star_color', v)} />
+            <ColorField label="Couleur texte" value={s.text_color} onChange={v => update('text_color', v)} />
             <ToggleField label="Afficher" value={s.show !== false} onChange={v => update('show', v)} />
           </>
         )
@@ -76,23 +82,46 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete }: P
           <>
             <TextField label="Prix principal (ex: 15000 FCFA)" value={s.price} onChange={v => update('price', v)} />
             <TextField label="Prix barré (ex: 30000 FCFA)" value={s.compare_at_price} onChange={v => update('compare_at_price', v)} />
-            <ToggleField label="Afficher badge promo" value={s.show_badge} onChange={v => update('show_badge', v)} />
+            <ColorField label="Couleur prix" value={s.price_color} onChange={v => update('price_color', v)} />
+            <ColorField label="Couleur prix barré" value={s.compare_color} onChange={v => update('compare_color', v)} />
+            <ToggleField label="Afficher badge promo" value={s.show_badge !== false} onChange={v => update('show_badge', v)} />
             <TextField label="Texte badge (ex: -50%)" value={s.badge_text} onChange={v => update('badge_text', v)} />
+            <ColorField label="Couleur fond badge" value={s.badge_bg} onChange={v => update('badge_bg', v)} />
+            <ColorField label="Couleur texte badge" value={s.badge_color} onChange={v => update('badge_color', v)} />
           </>
         )
-      case 'Boutons d\'achat':
+      case "Boutons d'achat":
         return (
           <>
             <TextField label="Texte bouton principal" value={s.btn_main_text} onChange={v => update('btn_main_text', v)} />
             <ColorField label="Couleur bouton principal" value={s.btn_main_color} onChange={v => update('btn_main_color', v)} />
-            <TextField label="Texte bouton secondaire (optionnel)" value={s.btn_sub_text} onChange={v => update('btn_sub_text', v)} />
             <ToggleField label="Afficher bouton secondaire" value={s.show_btn_sub} onChange={v => update('show_btn_sub', v)} />
+            <TextField label="Texte bouton secondaire" value={s.btn_sub_text} onChange={v => update('btn_sub_text', v)} />
+            <ColorField label="Couleur fond bouton secondaire" value={s.btn_sub_bg} onChange={v => update('btn_sub_bg', v)} />
+            <ColorField label="Couleur texte bouton secondaire" value={s.btn_sub_color} onChange={v => update('btn_sub_color', v)} />
           </>
         )
       case 'Description':
         return (
           <>
             <TextareaField label="Contenu description" value={s.content} onChange={v => update('content', v)} rows={6} />
+            <ColorField label="Couleur texte" value={s.text_color} onChange={v => update('text_color', v)} />
+          </>
+        )
+      // Bloc générique hérité de l'ancien système — on lui donne des vrais champs en attendant la migration
+      case 'product':
+      case 'Product':
+        return (
+          <>
+            <div className="text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-lg p-3 mb-4">
+              Ce bloc est un ancien format. Utilise plutôt les blocs séparés (Titre, Prix, Description...) pour plus de contrôle.
+            </div>
+            <ToggleField label="Afficher prix" value={s.show_price !== false} onChange={v => update('show_price', v)} />
+            <ToggleField label="Afficher description" value={s.show_description !== false} onChange={v => update('show_description', v)} />
+            <ToggleField label="Afficher avis" value={s.show_reviews_count !== false} onChange={v => update('show_reviews_count', v)} />
+            <TextField label="Texte urgence" value={s.urgency_text} onChange={v => update('urgency_text', v)} />
+            <TextField label="Texte bouton" value={s.cta_text} onChange={v => update('cta_text', v)} />
+            <ColorField label="Couleur bouton" value={s.cta_color} onChange={v => update('cta_color', v)} />
           </>
         )
       case 'countdown':
@@ -116,8 +145,8 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete }: P
             <TextField label="Titre section" value={s.title} onChange={v => update('title', v)} />
             <SelectField label="Mise en page" value={s.layout || 'grid'} options={['grid', 'carousel', 'masonry']} onChange={v => update('layout', v)} />
             <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
-            <ItemsListField 
-              label="Avis clients" value={s.items} onChange={v => update('items', v)} 
+            <ItemsListField
+              label="Avis clients" value={s.items} onChange={v => update('items', v)}
               itemSchema={[
                 { type: 'text', id: 'name', label: 'Nom' },
                 { type: 'text', id: 'location', label: 'Localisation' },
@@ -125,22 +154,25 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete }: P
                 { type: 'slider', id: 'rating', label: 'Note', min: 1, max: 5 },
                 { type: 'image', id: 'image', label: 'Photo' },
                 { type: 'toggle', id: 'verified', label: 'Vérifié' }
-              ]} 
+              ]}
             />
           </>
         )
       case 'benefits':
+      case 'icon_grid':
         return (
           <>
             <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
             <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
-            <ItemsListField 
-              label="Avantages" value={s.items} onChange={v => update('items', v)} 
+            <ColorField label="Couleur icônes" value={s.icon_color} onChange={v => update('icon_color', v)} />
+            <ItemsListField
+              label="Avantages" value={s.items} onChange={v => update('items', v)}
               itemSchema={[
                 { type: 'text', id: 'icon', label: 'Icône (emoji)' },
                 { type: 'text', id: 'title', label: 'Titre' },
-                { type: 'text', id: 'text', label: 'Texte' }
-              ]} 
+                { type: 'text', id: 'text', label: 'Texte' },
+                { type: 'text', id: 'description', label: 'Description' }
+              ]}
             />
           </>
         )
@@ -155,18 +187,19 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete }: P
           </>
         )
       case 'comparison':
+      case 'comparison_table':
         return (
           <>
             <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
-            <TextField label="Nom colonne Nous" value={s.our_label} onChange={v => update('our_label', v)} />
-            <TextField label="Nom colonne Concurrent" value={s.competitor_label} onChange={v => update('competitor_label', v)} />
-            <ItemsListField 
-              label="Lignes" value={s.rows} onChange={v => update('rows', v)} 
+            <TextField label="Nom colonne Nous" value={s.our_label || s.us_name} onChange={v => update('our_label', v)} />
+            <TextField label="Nom colonne Concurrent" value={s.competitor_label || s.them_name} onChange={v => update('competitor_label', v)} />
+            <ItemsListField
+              label="Lignes" value={s.rows} onChange={v => update('rows', v)}
               itemSchema={[
                 { type: 'text', id: 'feature', label: 'Fonctionnalité' },
                 { type: 'toggle', id: 'us', label: 'Nous ✓' },
                 { type: 'toggle', id: 'them', label: 'Concurrent ✓' }
-              ]} 
+              ]}
             />
           </>
         )
@@ -174,14 +207,14 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete }: P
         return (
           <>
             <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
-            <ItemsListField 
-              label="Stats" value={s.items} onChange={v => update('items', v)} 
+            <ItemsListField
+              label="Stats" value={s.items} onChange={v => update('items', v)}
               itemSchema={[
                 { type: 'text', id: 'icon', label: 'Icône emoji' },
                 { type: 'text', id: 'number', label: 'Chiffre' },
                 { type: 'text', id: 'suffix', label: 'Suffixe (%, +, k...)' },
                 { type: 'text', id: 'label', label: 'Label' }
-              ]} 
+              ]}
             />
           </>
         )
@@ -190,12 +223,12 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete }: P
           <>
             <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
             <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
-            <ItemsListField 
-              label="Questions" value={s.items} onChange={v => update('items', v)} 
+            <ItemsListField
+              label="Questions" value={s.items} onChange={v => update('items', v)}
               itemSchema={[
                 { type: 'text', id: 'question', label: 'Question' },
                 { type: 'textarea', id: 'answer', label: 'Réponse' }
-              ]} 
+              ]}
             />
           </>
         )
@@ -203,13 +236,13 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete }: P
         return (
           <>
             <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
-            <ItemsListField 
-              label="Garanties" value={s.items} onChange={v => update('items', v)} 
+            <ItemsListField
+              label="Garanties" value={s.items} onChange={v => update('items', v)}
               itemSchema={[
                 { type: 'text', id: 'icon', label: 'Icône emoji' },
                 { type: 'text', id: 'title', label: 'Titre' },
                 { type: 'text', id: 'text', label: 'Texte' }
-              ]} 
+              ]}
             />
           </>
         )
@@ -237,7 +270,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete }: P
           <>
             <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
             <TextField label="URL YouTube ou MP4" value={s.url} onChange={v => update('url', v)} />
-            <ImageUploadField label="Image poster" value={s.poster_url} onChange={v => update('poster_url', v)} />
+            <ImageUploadField label="Image poster" value={s.poster_url || s.poster_image} onChange={v => update('poster_url', v)} />
             <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
           </>
         )
@@ -248,6 +281,16 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete }: P
             <SelectField label="Alignement" value={s.text_align || 'center'} options={['left', 'center', 'right']} onChange={v => update('text_align', v)} />
             <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
             <ColorField label="Couleur texte" value={s.text_color} onChange={v => update('text_color', v)} />
+          </>
+        )
+      case 'order_form':
+        return (
+          <>
+            <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
+            <TextField label="Texte bouton" value={s.submit_text || s.btn_text} onChange={v => update('btn_text', v)} />
+            <ColorField label="Couleur bouton" value={s.submit_color || s.btn_color} onChange={v => update('btn_color', v)} />
+            <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+            <ToggleField label="Afficher quantité" value={s.show_quantity} onChange={v => update('show_quantity', v)} />
           </>
         )
       case 'spacer':
@@ -269,13 +312,14 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete }: P
         )
       default:
         return (
-          <div className="text-sm text-gray-500">Aucun paramètre disponible pour ce type d'élément.</div>
+          <div className="text-sm text-gray-500">
+            Aucun paramètre disponible pour le type <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">{block.type}</code>.
+          </div>
         )
     }
   }
 
-  // Seuls les éléments de template peuvent être supprimés (pas header ni footer)
-  const isDeletable = !['header', 'announcement_bar', 'Footer', 'footer'].includes(block.type)
+  const isDeletable = !['Header', 'header', 'AnnouncementBar', 'announcement_bar', 'Footer', 'footer'].includes(block.type)
 
   return (
     <div className="w-[300px] h-full bg-white border-l border-gray-200 flex flex-col flex-shrink-0">
@@ -285,7 +329,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete }: P
           <span className="text-[10px] uppercase font-semibold text-gray-400 tracking-wider">Édition</span>
         </div>
         {isDeletable && (
-          <button 
+          <button
             onClick={() => onDelete(block.id)}
             className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
             title="Supprimer"

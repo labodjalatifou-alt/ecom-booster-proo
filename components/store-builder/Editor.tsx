@@ -174,7 +174,6 @@ export default function Editor({ storeId, storeName, initialData, products }: Ed
             block={selectedBlock}
             onUpdateSettings={updateBlockSettings}
             onDelete={deleteBlock}
-            onClose={() => setSelectedBlockId(null)}
           />
         )}
       </div>
