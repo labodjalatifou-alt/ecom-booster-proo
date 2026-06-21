@@ -1,17 +1,12 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import dynamic from 'next/dynamic';
 import { STORE_TEMPLATES } from '@/lib/store-builder/templates';
+import EditorClient from './EditorClient';
 
-const Editor = dynamic(() => import('@/components/store-builder/Editor'), {
-  ssr: false,
-});
-
-export default async function StoreBuilderPage({ params }: { params: { id: string } }) {
+export default async function StoreBuilderPage({ params }: { params: Promise<{ id: string }> }) {
   const supabase = createClient();
   const { id } = await params;
 
-  // 1. Fetch store
   const { data: store, error: storeError } = await supabase
     .from('stores')
     .select('*, store_settings(*)')
@@ -22,7 +17,6 @@ export default async function StoreBuilderPage({ params }: { params: { id: strin
     redirect('/boutiques');
   }
 
-  // 2. Fetch page 'home'
   const { data: storePage } = await supabase
     .from('store_pages')
     .select('*')
@@ -32,7 +26,6 @@ export default async function StoreBuilderPage({ params }: { params: { id: strin
 
   let builderJson = storePage?.builder_json;
 
-  // 3. Init depuis le template si vide
   if (!builderJson || !builderJson.template || builderJson.template.length === 0) {
     const templateId = store.store_settings?.theme_id || 'shrine-mono-product';
     const template = STORE_TEMPLATES.find((t: any) => t.id === templateId) || STORE_TEMPLATES[0];
@@ -70,26 +63,20 @@ export default async function StoreBuilderPage({ params }: { params: { id: strin
     };
 
     if (storePage) {
-      await supabase
-        .from('store_pages')
-        .update({ builder_json: builderJson })
-        .eq('id', storePage.id);
+      await supabase.from('store_pages').update({ builder_json: builderJson }).eq('id', storePage.id);
     } else {
-      await supabase
-        .from('store_pages')
-        .insert({
-          store_id: id,
-          title: 'Accueil',
-          slug: 'home',
-          builder_json: builderJson
-        });
+      await supabase.from('store_pages').insert({
+        store_id: id,
+        title: 'Accueil',
+        slug: 'home',
+        builder_json: builderJson
+      });
     }
   }
 
   return (
-    <Editor
+    <EditorClient
       storeId={id}
-      storeName={store.name}
       initialData={builderJson}
     />
   );
