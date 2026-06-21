@@ -18,7 +18,7 @@ interface EditorClientProps {
     products?: any[]
 }
 
-export default function EditorClient({ storeId, initialData }: EditorClientProps) {
+export default function EditorClient({ storeId, initialData, products }: EditorClientProps) {
     return (
         <Editor
             storeId={storeId}
