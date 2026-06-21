@@ -1,37 +1,75 @@
 'use client'
 import { useEffect, useState } from 'react'
+
 export default function CountdownRender({ settings }: { settings: any }) {
   const s = settings || {}
-  const [time, setTime] = useState({ d: 0, h: 0, m: 0, sec: 0 })
+  const [time, setTime] = useState({ d: 0, h: 0, m: 0, s: 0 })
+  const [expired, setExpired] = useState(false)
+
   useEffect(() => {
-    const tick = () => {
-      const diff = Math.max(0, new Date(s.target_date || Date.now() + 86400000).getTime() - Date.now())
-      setTime({ d: Math.floor(diff/86400000), h: Math.floor(diff/3600000)%24, m: Math.floor(diff/60000)%60, sec: Math.floor(diff/1000)%60 })
-    }
-    tick()
-    const id = setInterval(tick, 1000)
-    return () => clearInterval(id)
+    const target = s.target_date ? new Date(s.target_date).getTime() : new Date().getTime() + 86400000
+    
+    const interval = setInterval(() => {
+      const now = new Date().getTime()
+      const diff = target - now
+
+      if (diff <= 0) {
+        setExpired(true)
+        clearInterval(interval)
+        return
+      }
+
+      setTime({
+        d: Math.floor(diff / (1000 * 60 * 60 * 24)),
+        h: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+        m: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+        s: Math.floor((diff % (1000 * 60)) / 1000)
+      })
+    }, 1000)
+
+    return () => clearInterval(interval)
   }, [s.target_date])
-  const Box = ({ v, label }: { v: number, label: string }) => (
-    <div className="flex flex-col items-center">
-      <div className="w-16 h-16 md:w-20 md:h-20 rounded-xl flex items-center justify-center text-2xl md:text-3xl font-black" style={{ backgroundColor: s.timer_bg || '#312e81', color: s.accent_color || '#ef4444' }}>
-        {String(v).padStart(2,'0')}
+
+  if (expired && s.on_expire === 'hide') return null
+
+  if (expired && s.on_expire === 'message') {
+    return (
+      <div className="w-full py-4 text-center font-bold" style={{ backgroundColor: s.bg_color || 'var(--color-secondary)', color: s.text_color || 'var(--color-text)' }}>
+        {s.expire_message || 'Offre expirée'}
       </div>
-      <span className="text-xs mt-1 font-semibold uppercase tracking-wide" style={{ color: s.text_color || '#fff' }}>{label}</span>
+    )
+  }
+
+  const Unit = ({ value, label }: { value: number, label: string }) => (
+    <div className="flex flex-col items-center">
+      <div 
+        className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl flex items-center justify-center text-xl sm:text-3xl font-black shadow-inner"
+        style={{ backgroundColor: 'rgba(0,0,0,0.1)', color: s.accent_color || 'var(--color-primary)' }}
+      >
+        {value.toString().padStart(2, '0')}
+      </div>
+      <span className="text-[10px] sm:text-xs mt-2 uppercase font-bold tracking-wider opacity-80">{label}</span>
     </div>
   )
+
   return (
-    <div className="w-full py-10 px-4 text-center" style={{ backgroundColor: s.bg_color || '#1e1b4b' }}>
-      <p className="text-sm font-semibold uppercase tracking-widest mb-2" style={{ color: s.accent_color || '#ef4444' }}>⚡ OFFRE LIMITÉE</p>
-      <h3 className="text-xl md:text-2xl font-bold mb-6" style={{ color: s.text_color || '#fff' }}>{s.title || 'Offre expire dans'}</h3>
-      <div className="flex items-center justify-center gap-3 md:gap-5">
-        <Box v={time.d} label="JOURS" />
-        <span className="text-2xl font-black mb-5" style={{ color: s.accent_color || '#ef4444' }}>:</span>
-        <Box v={time.h} label="HEURES" />
-        <span className="text-2xl font-black mb-5" style={{ color: s.accent_color || '#ef4444' }}>:</span>
-        <Box v={time.m} label="MIN" />
-        <span className="text-2xl font-black mb-5" style={{ color: s.accent_color || '#ef4444' }}>:</span>
-        <Box v={time.sec} label="SEC" />
+    <div 
+      className="w-full py-8 px-4 flex flex-col items-center justify-center gap-6 shadow-sm border-y border-black/5"
+      style={{ backgroundColor: s.bg_color || 'var(--color-bg)', color: s.text_color || 'var(--color-text)' }}
+    >
+      <h3 className="text-lg sm:text-xl font-black tracking-tight uppercase text-center max-w-2xl">
+        {s.title || '🔥 L\'OFFRE EXPIRE BIENTÔT'}
+      </h3>
+      
+      <div className="flex items-center gap-3 sm:gap-6">
+        {time.d > 0 && <Unit value={time.d} label="Jours" />}
+        {time.d > 0 && <span className="text-2xl font-bold opacity-50 -mt-6">:</span>}
+        
+        <Unit value={time.h} label="Heures" />
+        <span className="text-2xl font-bold opacity-50 -mt-6">:</span>
+        <Unit value={time.m} label="Minutes" />
+        <span className="text-2xl font-bold opacity-50 -mt-6">:</span>
+        <Unit value={time.s} label="Secondes" />
       </div>
     </div>
   )

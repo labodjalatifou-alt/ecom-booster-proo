@@ -1,17 +1,23 @@
 'use client'
 
 import { useState } from 'react'
-import { Eye, EyeOff, MoreVertical, GripVertical, Plus, Trash2, Edit3, X } from 'lucide-react'
+import { Eye, EyeOff, MoreVertical, GripVertical, Plus, Trash2, Edit3, X, Palette, LayoutTemplate } from 'lucide-react'
 import type { EditorData, EditorBlock } from './Editor'
+import ColorField from './fields/ColorField'
+import SelectField from './fields/SelectField'
 
 interface SidebarLeftProps {
   data: EditorData
   selectedBlockId: string | null
+  activeTab: 'sections' | 'theme_settings'
+  onTabChange: (tab: 'sections' | 'theme_settings') => void
   onSelectBlock: (id: string) => void
   onToggleVisibility: (id: string) => void
   onDeleteBlock: (id: string) => void
   onAddBlock: (type: string, title: string, defaultSettings: Record<string, any>) => void
   onReorder: (fromIndex: number, toIndex: number) => void
+  themeSettings: Record<string, any>
+  onUpdateThemeSettings: (settings: Record<string, any>) => void
 }
 
 const CATALOG_CATEGORIES = [
@@ -53,14 +59,20 @@ const CATALOG_CATEGORIES = [
 export default function SidebarLeft({
   data,
   selectedBlockId,
+  activeTab,
+  onTabChange,
   onSelectBlock,
   onToggleVisibility,
   onDeleteBlock,
   onAddBlock,
-  onReorder
+  onReorder,
+  themeSettings,
+  onUpdateThemeSettings
 }: SidebarLeftProps) {
   const [showCatalog, setShowCatalog] = useState(false)
   const [contextMenuBlock, setContextMenuBlock] = useState<{ id: string, type: 'header' | 'template' | 'footer' } | null>(null)
+
+  const updateTheme = (key: string, value: any) => onUpdateThemeSettings({ ...themeSettings, [key]: value })
 
   const BlockItem = ({ block, type, index }: { block: EditorBlock, type: 'header' | 'template' | 'footer', index?: number }) => {
     const isSelected = selectedBlockId === block.id
@@ -142,12 +154,35 @@ export default function SidebarLeft({
   }
 
   return (
-    <div className="w-[260px] h-full bg-white border-r border-gray-200 flex flex-col flex-shrink-0 relative">
-      <div className="p-4 border-b border-gray-100">
-        <h2 className="font-bold text-sm uppercase tracking-wide text-gray-500">Structure</h2>
+    <div className="flex h-full border-r border-gray-200">
+      {/* Icon Tab Bar */}
+      <div className="w-[60px] bg-gray-50 flex flex-col items-center py-4 border-r border-gray-100 shrink-0">
+        <button 
+          onClick={() => onTabChange('sections')}
+          className={`p-3 rounded-xl mb-2 transition-all ${activeTab === 'sections' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'}`}
+          title="Sections"
+        >
+          <LayoutTemplate size={20} />
+        </button>
+        <button 
+          onClick={() => onTabChange('theme_settings')}
+          className={`p-3 rounded-xl transition-all ${activeTab === 'theme_settings' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'}`}
+          title="Paramètres du thème"
+        >
+          <Palette size={20} />
+        </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+      <div className="w-[260px] bg-white flex flex-col flex-shrink-0 relative">
+        <div className="p-4 border-b border-gray-100">
+          <h2 className="font-bold text-sm uppercase tracking-wide text-gray-800">
+            {activeTab === 'sections' ? 'Structure du site' : 'Paramètres du thème'}
+          </h2>
+        </div>
+
+        {activeTab === 'sections' ? (
+          <>
+            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
         
         {/* HEADER */}
         <div className="mb-6">
@@ -179,17 +214,37 @@ export default function SidebarLeft({
           </div>
         </div>
 
-      </div>
+            </div>
 
-      <div className="p-4 border-t border-gray-100">
-        <button 
-          onClick={() => setShowCatalog(true)}
-          className="w-full py-2.5 px-4 bg-gray-50 hover:bg-blue-50 text-blue-600 text-sm font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 border border-gray-200 hover:border-blue-200 border-dashed"
-        >
-          <Plus size={16} />
-          Ajouter une section
-        </button>
-      </div>
+            <div className="p-4 border-t border-gray-100">
+              <button 
+                onClick={() => setShowCatalog(true)}
+                className="w-full py-2.5 px-4 bg-gray-50 hover:bg-blue-50 text-blue-600 text-sm font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 border border-gray-200 hover:border-blue-200 border-dashed"
+              >
+                <Plus size={16} />
+                Ajouter une section
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 overflow-y-auto p-5 custom-scrollbar bg-gray-50/30">
+            <h3 className="text-xs font-semibold text-gray-400 mb-4 uppercase tracking-wide">Couleurs Globales</h3>
+            <ColorField label="Couleur Principale" value={themeSettings.primaryColor} onChange={v => updateTheme('primaryColor', v)} />
+            <ColorField label="Couleur Secondaire" value={themeSettings.secondaryColor} onChange={v => updateTheme('secondaryColor', v)} />
+            <ColorField label="Arrière-plan" value={themeSettings.backgroundColor} onChange={v => updateTheme('backgroundColor', v)} />
+            <ColorField label="Texte Principal" value={themeSettings.textColor} onChange={v => updateTheme('textColor', v)} />
+            
+            <div className="h-px w-full bg-gray-200 my-6"></div>
+            
+            <h3 className="text-xs font-semibold text-gray-400 mb-4 uppercase tracking-wide">Typographie</h3>
+            <SelectField 
+              label="Police Principale" 
+              value={themeSettings.fontFamily} 
+              options={['Inter', 'Roboto', 'Playfair Display', 'Montserrat', 'Poppins']} 
+              onChange={v => updateTheme('fontFamily', v)} 
+            />
+          </div>
+        )}
 
       {/* CATALOG SLIDE PANEL */}
       <div className={`absolute top-0 bottom-0 left-0 w-full bg-white z-30 transition-transform duration-300 flex flex-col ${showCatalog ? 'translate-x-0' : '-translate-x-full'}`}>
@@ -223,7 +278,7 @@ export default function SidebarLeft({
           ))}
         </div>
       </div>
-
+      </div>
     </div>
   )
 }

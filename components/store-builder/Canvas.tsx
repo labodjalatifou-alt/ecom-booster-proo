@@ -26,11 +26,21 @@ interface CanvasProps {
   previewMode: 'desktop' | 'mobile'
   onSelectBlock: (id: string) => void
   products?: any[]
+  themeSettings?: Record<string, any>
 }
 
-export default function Canvas({ data, selectedBlockId, previewMode, onSelectBlock, products }: CanvasProps) {
+const FALLBACK_PRODUCT = {
+  id: 'preview',
+  title: 'Nom de votre Produit (Aperçu)',
+  price: '19900',
+  compare_at_price: '39900',
+  description: 'Ceci est un produit d\'exemple pour vous permettre de configurer le design de votre boutique. Ajoutez un vrai produit depuis l\'onglet "Produits".',
+  images: ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80']
+}
+
+export default function Canvas({ data, selectedBlockId, previewMode, onSelectBlock, products, themeSettings }: CanvasProps) {
   
-  const product = products && products.length > 0 ? products[0] : null
+  const product = products && products.length > 0 ? products[0] : FALLBACK_PRODUCT
   const BlockWrapper = ({ block, children }: { block: EditorBlock, children: React.ReactNode }) => {
     if (block.hidden) return null
     
@@ -157,18 +167,6 @@ export default function Canvas({ data, selectedBlockId, previewMode, onSelectBlo
   const productBlocks = data.template.filter(b => ['Titre', 'Note de produit', 'Prix', 'Boutons d\'achat', 'Description'].includes(b.type))
   const sectionBlocks = data.template.filter(b => !['Titre', 'Note de produit', 'Prix', 'Boutons d\'achat', 'Description'].includes(b.type))
 
-  if (!product) {
-    return (
-      <div className="flex-1 bg-[#e5e7eb] flex items-center justify-center p-8 relative" onClick={() => onSelectBlock('')}>
-        <div className="bg-white p-8 rounded-xl shadow-sm text-center max-w-md w-full" onClick={e => e.stopPropagation()}>
-          <h2 className="text-xl font-bold text-gray-800 mb-2">Aucun produit</h2>
-          <p className="text-gray-500">Ajoutez un produit depuis la section Produits pour prévisualiser votre boutique.</p>
-        </div>
-      </div>
-    )
-  }
-
-  return (
     <div className="flex-1 bg-[#e5e7eb] overflow-y-auto p-4 flex flex-col items-center custom-scrollbar relative" onClick={() => onSelectBlock('')}>
       
       {/* Wrapper */}
@@ -178,6 +176,15 @@ export default function Canvas({ data, selectedBlockId, previewMode, onSelectBlo
             ? 'w-[390px] rounded-[2rem] overflow-hidden border-[8px] border-gray-900 my-4' 
             : 'w-full max-w-[1920px] min-h-full'
         }`}
+        style={{
+          '--color-primary': themeSettings?.primaryColor || '#000000',
+          '--color-secondary': themeSettings?.secondaryColor || '#f3f4f6',
+          '--color-bg': themeSettings?.backgroundColor || '#ffffff',
+          '--color-text': themeSettings?.textColor || '#111827',
+          backgroundColor: 'var(--color-bg)',
+          color: 'var(--color-text)',
+          fontFamily: themeSettings?.fontFamily || 'Inter, sans-serif'
+        } as React.CSSProperties}
         onClick={e => e.stopPropagation()}
       >
         

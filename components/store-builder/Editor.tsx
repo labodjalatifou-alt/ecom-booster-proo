@@ -19,6 +19,7 @@ export interface EditorData {
   header: EditorBlock[]
   template: EditorBlock[]
   footer: EditorBlock[]
+  themeSettings?: Record<string, any>
 }
 
 interface EditorProps {
@@ -32,10 +33,20 @@ export default function Editor({ storeId, storeName, initialData, products }: Ed
   const supabase = createClient()
   const [data, setData] = useState<EditorData>(initialData)
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<'sections' | 'theme_settings'>('sections')
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(true)
   const saveTimer = useRef<NodeJS.Timeout | null>(null)
+
+  // Initialiser les paramètres de thème si absents
+  const [themeSettings, setThemeSettings] = useState<Record<string, any>>(initialData.themeSettings || {
+    primaryColor: '#000000',
+    secondaryColor: '#f3f4f6',
+    backgroundColor: '#ffffff',
+    textColor: '#111827',
+    fontFamily: 'Inter',
+  })
 
   // Trouver le bloc sélectionné dans toutes les zones
   const allBlocks = [...data.header, ...data.template, ...data.footer]
@@ -54,9 +65,10 @@ export default function Editor({ storeId, storeName, initialData, products }: Ed
   // Sauvegarder dans Supabase
   async function handleSave() {
     setSaving(true)
+    const dataToSave = { ...data, themeSettings }
     await supabase
       .from('store_pages')
-      .update({ builder_json: data, updated_at: new Date().toISOString() })
+      .update({ builder_json: dataToSave, updated_at: new Date().toISOString() })
       .eq('store_id', storeId)
       .eq('slug', 'home')
     setSaving(false)
@@ -139,11 +151,15 @@ export default function Editor({ storeId, storeName, initialData, products }: Ed
         <SidebarLeft
           data={data}
           selectedBlockId={selectedBlockId}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
           onSelectBlock={setSelectedBlockId}
           onToggleVisibility={toggleBlockVisibility}
           onDeleteBlock={deleteBlock}
           onAddBlock={addBlock}
           onReorder={reorderBlocks}
+          themeSettings={themeSettings}
+          onUpdateThemeSettings={setThemeSettings}
         />
         <Canvas
           data={data}
@@ -151,12 +167,16 @@ export default function Editor({ storeId, storeName, initialData, products }: Ed
           previewMode={previewMode}
           onSelectBlock={setSelectedBlockId}
           products={products}
+          themeSettings={themeSettings}
         />
-        <PropertiesPanel
-          block={selectedBlock}
-          onUpdateSettings={updateBlockSettings}
-          onDelete={deleteBlock}
-        />
+        {selectedBlockId && (
+          <PropertiesPanel
+            block={selectedBlock}
+            onUpdateSettings={updateBlockSettings}
+            onDelete={deleteBlock}
+            onClose={() => setSelectedBlockId(null)}
+          />
+        )}
       </div>
     </div>
   )

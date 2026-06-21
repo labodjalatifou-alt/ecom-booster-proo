@@ -1,17 +1,31 @@
 'use client'
+
 export default function StatsRender({ settings }: { settings: any }) {
   const s = settings || {}
-  const items = s.items || []
+  const items = s.items || [
+    { id: '1', icon: '😊', number: '10 000', suffix: '+', label: 'Clients satisfaits' },
+    { id: '2', icon: '⭐', number: '4.9', suffix: '/5', label: 'Note moyenne' },
+    { id: '3', icon: '🚚', number: '24', suffix: 'h', label: 'Expédition rapide' },
+  ]
+
   return (
-    <div className="w-full py-12 px-4" style={{ backgroundColor: s.bg_color || '#fff' }}>
-      <div className="max-w-4xl mx-auto flex flex-wrap justify-center gap-8 md:gap-16">
-        {items.map((item: any) => (
-          <div key={item.id} className="flex flex-col items-center text-center">
-            <span className="text-3xl mb-2">{item.icon}</span>
-            <span className="text-4xl md:text-5xl font-black text-gray-900">{item.number}{item.suffix}</span>
-            <span className="text-sm text-gray-500 mt-1 font-medium">{item.label}</span>
-          </div>
-        ))}
+    <div 
+      className="w-full py-16 px-4"
+      style={{ backgroundColor: s.bg_color || 'var(--color-bg)' }}
+    >
+      <div className="max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {items.map((item: any) => (
+            <div key={item.id} className="flex flex-col items-center text-center p-6 bg-white rounded-3xl shadow-sm border border-gray-100 hover:-translate-y-1 transition-transform">
+              <div className="text-4xl mb-4">{item.icon}</div>
+              <div className="text-4xl font-black text-gray-900 mb-2 flex items-baseline gap-1" style={{ color: 'var(--color-primary)' }}>
+                {item.number}
+                <span className="text-2xl font-bold opacity-80">{item.suffix}</span>
+              </div>
+              <div className="text-sm font-semibold text-gray-500 uppercase tracking-widest">{item.label}</div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )
