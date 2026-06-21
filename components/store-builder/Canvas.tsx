@@ -167,6 +167,7 @@ export default function Canvas({ data, selectedBlockId, previewMode, onSelectBlo
   const productBlocks = data.template.filter(b => ['Titre', 'Note de produit', 'Prix', 'Boutons d\'achat', 'Description'].includes(b.type))
   const sectionBlocks = data.template.filter(b => !['Titre', 'Note de produit', 'Prix', 'Boutons d\'achat', 'Description'].includes(b.type))
 
+  return (
     <div className="flex-1 bg-[#e5e7eb] overflow-y-auto p-4 flex flex-col items-center custom-scrollbar relative" onClick={() => onSelectBlock('')}>
       
       {/* Wrapper */}
