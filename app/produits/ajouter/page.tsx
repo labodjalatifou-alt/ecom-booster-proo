@@ -137,30 +137,35 @@ export default function BoutiqueEnLignePage() {
     if (!form.titre.trim()) return
     setSaving(true)
     
-    // Save to Supabase
-    const statusVal = form.statut.toLowerCase() === 'brouillon' ? 'draft' : form.statut.toLowerCase() === 'archivé' ? 'archived' : 'active'
-    
-    const { data, error } = await supabase.from('products').insert({
-      title: form.titre.trim(),
-      price: form.prix || '0',
-      compare_price: form.prixAvantReduction || null,
-      status: statusVal,
-      stock: parseInt(form.quantite) || 0,
-      currency: 'FCFA',
-    })
+    try {
+      // Save to Supabase
+      const statusVal = form.statut.toLowerCase() === 'brouillon' ? 'draft' : form.statut.toLowerCase() === 'archivé' ? 'archived' : 'active'
+      
+      const { data, error } = await supabase.from('products').insert({
+        title: form.titre.trim(),
+        price: form.prix || '0',
+        compare_price: form.prixAvantReduction || null,
+        status: statusVal,
+        stock: parseInt(form.quantite) || 0,
+        currency: 'FCFA',
+      })
 
-    setSaving(false)
+      if (error) {
+        toast.error('Erreur lors de l\'enregistrement', { position: 'bottom-center' })
+        console.error(error)
+        return
+      }
 
-    if (error) {
-      toast.error('Erreur lors de l\'enregistrement', { position: 'bottom-center' })
-      console.error(error)
-      return
+      setSavedForm({ ...form })
+      setHasChanges(false)
+      toast.success('Produit enregistré avec succès !', { position: 'bottom-center' })
+      router.push('/produits')
+    } catch (err) {
+      console.error("Unexpected insert error:", err)
+      toast.error('Une erreur inattendue est survenue.', { position: 'bottom-center' })
+    } finally {
+      setSaving(false)
     }
-
-    setSavedForm({ ...form })
-    setHasChanges(false)
-    toast.success('Produit enregistré avec succès !', { position: 'bottom-center' })
-    router.push('/produits')
   }
 
   const handleDiscard = () => {

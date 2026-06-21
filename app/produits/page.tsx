@@ -13,11 +13,19 @@ export default function ProduitsList() {
   const [loading, setLoading] = useState(true);
 
   const fetchProducts = async () => {
-    const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false });
-    if (data) {
-      setProduits(data);
+    try {
+      const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false });
+      if (error) {
+        console.error("Supabase fetch error:", error);
+      }
+      if (data) {
+        setProduits(data);
+      }
+    } catch (err) {
+      console.error("Unexpected fetch error:", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
