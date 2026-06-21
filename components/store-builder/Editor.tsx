@@ -34,7 +34,7 @@ export default function Editor({ storeId, storeName, initialData }: EditorProps)
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(true)
-  const saveTimer = useRef<NodeJS.Timeout>()
+  const saveTimer = useRef<NodeJS.Timeout | null>(null)
 
   // Trouver le bloc sélectionné dans toutes les zones
   const allBlocks = [...data.header, ...data.template, ...data.footer]

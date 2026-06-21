@@ -75,7 +75,7 @@ export default function BeforeAfterRender({ settings }: { settings: Record<strin
         {/* BEFORE Image (Foreground clipped) */}
         <div 
           className="absolute inset-0 top-0 left-0 h-full overflow-hidden border-r-2 border-white"
-          style={{ width: \`\${position}%\` }}
+          style={{ width: `${position}%` }}
         >
           {beforeImage ? (
             <img src={beforeImage} alt={beforeLabel} className="absolute inset-0 w-[100vw] max-w-[none] h-full object-cover" 
@@ -99,7 +99,7 @@ export default function BeforeAfterRender({ settings }: { settings: Record<strin
         {/* Handle */}
         <div 
           className="absolute top-0 bottom-0 flex items-center justify-center z-20 pointer-events-none"
-          style={{ left: \`\${position}%\`, transform: 'translateX(-50%)' }}
+          style={{ left: `${position}%`, transform: 'translateX(-50%)' }}
         >
           <div className="w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center">
             <div className="flex gap-1">
