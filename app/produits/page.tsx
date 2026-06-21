@@ -1,20 +1,38 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Package, Plus, Search, MoreVertical, Edit3, Trash2, ImageIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 
 export default function ProduitsList() {
   const router = useRouter();
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [produits, setProduits] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data pour la démonstration
-  const [produits, setProduits] = useState([
-    { id: '1', title: 'T-shirt Premium Oversize', price: '15000', stock: 45, status: 'Actif', category: 'Mode', image: null },
-    { id: '2', title: 'Montre Connectée Sport X2', price: '35000', stock: 12, status: 'Actif', category: 'High-Tech', image: null },
-    { id: '3', title: 'Gourde Isotherme 1L', price: '8500', stock: 0, status: 'Rupture', category: 'Sport', image: null },
-  ]);
+  const fetchProducts = async () => {
+    const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false });
+    if (data) {
+      setProduits(data);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Voulez-vous vraiment supprimer ce produit ?')) {
+      const { error } = await supabase.from('products').delete().eq('id', id);
+      if (!error) {
+        setProduits(produits.filter(p => p.id !== id));
+      }
+      setActiveMenu(null);
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto pb-10 px-4 pt-8 text-slate-800 dark:text-slate-100 animate-in fade-in duration-500">
@@ -54,7 +72,12 @@ export default function ProduitsList() {
 
       {/* Liste des produits */}
       <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-3xl shadow-sm overflow-hidden min-h-[400px]">
-        {produits.length === 0 ? (
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-40 gap-4 text-slate-400">
+            <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4" />
+            <p className="text-sm font-black text-slate-600">Chargement...</p>
+          </div>
+        ) : produits.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-40 gap-4 text-slate-400">
             <Package className="w-12 h-12 opacity-20" />
             <p className="text-sm font-black text-slate-600">Aucun produit</p>
@@ -83,8 +106,8 @@ export default function ProduitsList() {
                   >
                     <td className="px-8 py-5 overflow-hidden">
                       <div className="flex items-center gap-4">
-                        {item.image ? (
-                          <img src={item.image} alt="" className="w-12 h-12 rounded-xl object-cover border-2 border-slate-100 dark:border-slate-800" />
+                        {item.image_url ? (
+                          <img src={item.image_url} alt="" className="w-12 h-12 rounded-xl object-cover border-2 border-slate-100 dark:border-slate-800" />
                         ) : (
                           <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                             <ImageIcon className="w-5 h-5 text-slate-300" />
@@ -93,14 +116,14 @@ export default function ProduitsList() {
                         <div>
                           <div className="font-black text-sm truncate max-w-[250px]">{item.title}</div>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className={`w-1.5 h-1.5 rounded-full ${item.status === 'Actif' ? 'bg-emerald-500' : 'bg-red-500'}`} />
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{item.status}</span>
+                            <span className={`w-1.5 h-1.5 rounded-full ${item.status === 'active' ? 'bg-emerald-500' : item.status === 'draft' ? 'bg-gray-400' : 'bg-red-500'}`} />
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{item.status === 'active' ? 'Actif' : item.status === 'draft' ? 'Brouillon' : item.status === 'archived' ? 'Archivé' : item.status}</span>
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-8 py-5">
-                      <span className="text-xs font-semibold text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg">{item.category}</span>
+                      <span className="text-xs font-semibold text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg">{item.category || 'Général'}</span>
                     </td>
                     <td className="px-8 py-5">
                       <div className="flex flex-col items-center gap-1.5">
@@ -108,7 +131,7 @@ export default function ProduitsList() {
                       </div>
                     </td>
                     <td className="px-8 py-5 font-black text-sm text-right">
-                      {new Intl.NumberFormat('fr-FR').format(parseInt(item.price))} FCFA
+                      {new Intl.NumberFormat('fr-FR').format(parseInt(item.price || '0'))} {item.currency || 'FCFA'}
                     </td>
                     <td className="px-8 py-5 text-right relative" onClick={e => e.stopPropagation()}>
                       <button
@@ -121,10 +144,10 @@ export default function ProduitsList() {
                         <>
                           <div className="fixed inset-0 z-40" onClick={() => setActiveMenu(null)} />
                           <div className="absolute right-8 top-full mt-2 w-44 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden py-2 animate-in zoom-in-95 duration-200">
-                            <button onClick={() => { router.push(`/produits/ajouter`); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-5 py-3 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors">
+                            <button onClick={() => { router.push(`/produits/ajouter?id=${item.id}`); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-5 py-3 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-colors">
                               <Edit3 className="w-4 h-4 text-blue-500" /> Modifier
                             </button>
-                            <button onClick={() => setActiveMenu(null)} className="w-full flex items-center gap-3 px-5 py-3 text-[10px] font-black uppercase text-red-500 hover:bg-red-50 transition-colors">
+                            <button onClick={() => handleDelete(item.id)} className="w-full flex items-center gap-3 px-5 py-3 text-[10px] font-black uppercase text-red-500 hover:bg-red-50 transition-colors">
                               <Trash2 className="w-4 h-4" /> Supprimer
                             </button>
                           </div>

@@ -22,6 +22,7 @@ import {
   Info,
   Pencil,
 } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 
 // Chargement dynamique pour éviter les erreurs SSR avec Tiptap
 const RichTextEditor = dynamic(() => import('@/components/RichTextEditor'), { ssr: false, loading: () => <div className="h-[240px] border border-gray-200 dark:border-slate-600 rounded-xl bg-gray-50 dark:bg-slate-800 animate-pulse" /> })
@@ -135,9 +136,28 @@ export default function BoutiqueEnLignePage() {
   const handleSave = async () => {
     if (!form.titre.trim()) return
     setSaving(true)
-    await new Promise(r => setTimeout(r, 900))
-    setSavedForm({ ...form })
+    
+    // Save to Supabase
+    const statusVal = form.statut.toLowerCase() === 'brouillon' ? 'draft' : form.statut.toLowerCase() === 'archivé' ? 'archived' : 'active'
+    
+    const { data, error } = await supabase.from('products').insert({
+      title: form.titre.trim(),
+      price: form.prix || '0',
+      compare_price: form.prixAvantReduction || null,
+      status: statusVal,
+      stock: parseInt(form.quantite) || 0,
+      currency: 'FCFA',
+    })
+
     setSaving(false)
+
+    if (error) {
+      toast.error('Erreur lors de l\'enregistrement', { position: 'bottom-center' })
+      console.error(error)
+      return
+    }
+
+    setSavedForm({ ...form })
     setHasChanges(false)
     toast.success('Produit enregistré avec succès !', { position: 'bottom-center' })
     router.push('/produits')

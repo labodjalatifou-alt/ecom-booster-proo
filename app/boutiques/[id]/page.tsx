@@ -25,9 +25,9 @@ export default async function StoreBuilderPage({ params }: { params: Promise<{ i
     .single();
 
   const { data: products } = await supabase
-    .from('store_products')
+    .from('products')
     .select('*')
-    .eq('store_id', id);
+    .order('created_at', { ascending: false });
 
   let builderJson = storePage?.builder_json;
 

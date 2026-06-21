@@ -77,7 +77,6 @@ const menuGroups = [
     title: 'BOUTIQUE',
     items: [
       { name: 'Produits', icon: Tags, href: '/produits' },
-      { name: 'Boutique en ligne', icon: Store, href: '/boutique-en-ligne' },
       { name: 'Mes Boutiques', icon: ShoppingBag, href: '/boutiques' },
     ]
   },
