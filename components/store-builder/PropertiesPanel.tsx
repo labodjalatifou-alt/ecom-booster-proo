@@ -1,125 +1,302 @@
-import React from 'react';
-import { ArrowLeft, Trash2, Sliders } from 'lucide-react';
-import TextField from './fields/TextField';
-import ColorField from './fields/ColorField';
-import SliderField from './fields/SliderField';
-import ToggleField from './fields/ToggleField';
-import TextareaField from './fields/TextareaField';
-import SelectField from './fields/SelectField';
+'use client'
+
+import { Trash2 } from 'lucide-react'
+import TextField from './fields/TextField'
+import TextareaField from './fields/TextareaField'
+import ColorField from './fields/ColorField'
+import ToggleField from './fields/ToggleField'
+import SliderField from './fields/SliderField'
+import SelectField from './fields/SelectField'
+import ImageUploadField from './fields/ImageUploadField'
+import ItemsListField, { FieldSchema } from './fields/ItemsListField'
+import type { EditorBlock } from './Editor'
 
 interface PropertiesPanelProps {
-  section: any;
-  onUpdate: (sectionId: string, newSettings: any) => void;
-  onDelete: (sectionId: string) => void;
-  onClose: () => void;
-  isFixed?: boolean;
+  block: EditorBlock | null
+  onUpdateSettings: (blockId: string, settings: Record<string, any>) => void
+  onDelete: (blockId: string) => void
 }
 
-export default function PropertiesPanel({ section, onUpdate, onDelete, onClose, isFixed = false }: PropertiesPanelProps) {
-  
-  const updateSetting = (key: string, value: any) => {
-    onUpdate(section.id, { ...section.settings, [key]: value });
-  };
+export default function PropertiesPanel({ block, onUpdateSettings, onDelete }: PropertiesPanelProps) {
+  if (!block) {
+    return (
+      <div className="w-[300px] h-full bg-white border-l border-gray-200 flex flex-col items-center justify-center p-6 text-center text-gray-400 flex-shrink-0">
+        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+        </div>
+        <p className="font-medium">Cliquez sur un élément pour le modifier</p>
+      </div>
+    )
+  }
 
-  // Rendu dynamique basé sur le type de la section
+  const s = block.settings || {}
+  const update = (key: string, value: any) => onUpdateSettings(block.id, { [key]: value })
+
   const renderFields = () => {
-    switch (section.type) {
-      case 'Hero':
+    switch (block.type) {
+      case 'announcement_bar':
         return (
           <>
-            <TextField label="Titre principal" value={section.settings.title} onChange={(val: string) => updateSetting('title', val)} />
-            <TextareaField label="Sous-titre" value={section.settings.subtitle} onChange={(val: string) => updateSetting('subtitle', val)} />
-            <TextField label="Texte bouton 1" value={section.settings.button1Text} onChange={(val: string) => updateSetting('button1Text', val)} />
-            <ColorField label="Couleur de l'overlay" value={section.settings.overlayColor} onChange={(val: string) => updateSetting('overlayColor', val)} />
-            <SliderField label="Opacité de l'overlay" min={0} max={100} value={section.settings.overlayOpacity} onChange={(val: number) => updateSetting('overlayOpacity', val)} />
-            <SelectField label="Alignement" value={section.settings.textAlign} options={[{label: 'Gauche', value: 'gauche'}, {label: 'Centre', value: 'centre'}, {label: 'Droite', value: 'droite'}]} onChange={(val: string) => updateSetting('textAlign', val)} />
+            <TextField label="Texte de l'annonce" value={s.text} onChange={v => update('text', v)} />
+            <SliderField label="Vitesse (px/s)" value={s.speed} onChange={v => update('speed', v)} min={10} max={200} />
+            <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+            <ColorField label="Couleur texte" value={s.text_color} onChange={v => update('text_color', v)} />
+            <ToggleField label="Bouton fermer" value={s.close_button} onChange={v => update('close_button', v)} />
           </>
-        );
-      case 'Countdown':
+        )
+      case 'header':
         return (
           <>
-            <TextField label="Titre" value={section.settings.title} onChange={(val: string) => updateSetting('title', val)} />
-            <TextareaField label="Sous-titre" value={section.settings.subtitle} onChange={(val: string) => updateSetting('subtitle', val)} />
-            <ToggleField label="Afficher les jours" value={section.settings.showDays} onChange={(val: boolean) => updateSetting('showDays', val)} />
-            <ColorField label="Couleur de fond" value={section.settings.bgColor} onChange={(val: string) => updateSetting('bgColor', val)} />
-            <ColorField label="Couleur d'accent" value={section.settings.accentColor} onChange={(val: string) => updateSetting('accentColor', val)} />
+            <TextField label="Nom / Logo texte" value={s.logo_text} onChange={v => update('logo_text', v)} />
+            <SelectField label="Position logo" value={s.logo_position || 'center'} options={['left', 'center', 'right']} onChange={v => update('logo_position', v)} />
+            <ToggleField label="Afficher recherche" value={s.show_search} onChange={v => update('show_search', v)} />
+            <ToggleField label="Afficher panier" value={s.show_cart} onChange={v => update('show_cart', v)} />
+            <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+            <ColorField label="Couleur texte" value={s.text_color} onChange={v => update('text_color', v)} />
           </>
-        );
-      case 'OrderForm':
+        )
+      case 'Titre':
         return (
           <>
-            <TextField label="Titre" value={section.settings.title} onChange={(val: string) => updateSetting('title', val)} />
-            <TextField label="Texte du bouton" value={section.settings.btnText} onChange={(val: string) => updateSetting('btnText', val)} />
-            <ColorField label="Couleur du bouton" value={section.settings.btnColor} onChange={(val: string) => updateSetting('btnColor', val)} />
-            <SelectField label="Mise en page" value={section.settings.layout} options={[{label: 'Split', value: 'split'}, {label: 'Standard', value: 'standard'}]} onChange={(val: string) => updateSetting('layout', val)} />
+            <TextareaField label="Titre du produit" value={s.text} onChange={v => update('text', v)} />
+            <SelectField label="Taille" value={s.size || 'text-3xl'} options={['text-2xl', 'text-3xl', 'text-4xl', 'text-5xl']} onChange={v => update('size', v)} />
+            <ColorField label="Couleur" value={s.color} onChange={v => update('color', v)} />
           </>
-        );
-      case 'Testimonials':
+        )
+      case 'Note de produit':
         return (
           <>
-            <TextField label="Titre" value={section.settings.title} onChange={(val: string) => updateSetting('title', val)} />
-            <ColorField label="Couleur de fond" value={section.settings.bgColor} onChange={(val: string) => updateSetting('bgColor', val)} />
-            {/* TODO: Implement ItemsListField for managing array of testimonials */}
-            <div className="p-4 bg-yellow-50 text-yellow-800 text-xs rounded-lg border border-yellow-200 mt-4">
-              L'édition avancée des items (liste dynamique) sera ajoutée dans la prochaine mise à jour.
+            <SliderField label="Note" value={s.rating || 5} onChange={v => update('rating', v)} min={1} max={5} />
+            <TextField label="Nombre d'avis (ex: 128 avis)" value={s.reviews_count} onChange={v => update('reviews_count', v)} />
+            <ToggleField label="Afficher" value={s.show !== false} onChange={v => update('show', v)} />
+          </>
+        )
+      case 'Prix':
+        return (
+          <>
+            <TextField label="Prix principal (ex: 15000 FCFA)" value={s.price} onChange={v => update('price', v)} />
+            <TextField label="Prix barré (ex: 30000 FCFA)" value={s.compare_at_price} onChange={v => update('compare_at_price', v)} />
+            <ToggleField label="Afficher badge promo" value={s.show_badge} onChange={v => update('show_badge', v)} />
+            <TextField label="Texte badge (ex: -50%)" value={s.badge_text} onChange={v => update('badge_text', v)} />
+          </>
+        )
+      case 'Boutons d\'achat':
+        return (
+          <>
+            <TextField label="Texte bouton principal" value={s.btn_main_text} onChange={v => update('btn_main_text', v)} />
+            <ColorField label="Couleur bouton principal" value={s.btn_main_color} onChange={v => update('btn_main_color', v)} />
+            <TextField label="Texte bouton secondaire (optionnel)" value={s.btn_sub_text} onChange={v => update('btn_sub_text', v)} />
+            <ToggleField label="Afficher bouton secondaire" value={s.show_btn_sub} onChange={v => update('show_btn_sub', v)} />
+          </>
+        )
+      case 'Description':
+        return (
+          <>
+            <TextareaField label="Contenu description" value={s.content} onChange={v => update('content', v)} rows={6} />
+          </>
+        )
+      case 'countdown':
+        return (
+          <>
+            <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
+            <div className="mb-4">
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Date cible</label>
+              <input type="datetime-local" value={s.target_date ? s.target_date.slice(0, 16) : ''} onChange={e => update('target_date', new Date(e.target.value).toISOString())} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400" />
             </div>
+            <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+            <ColorField label="Couleur texte" value={s.text_color} onChange={v => update('text_color', v)} />
+            <ColorField label="Couleur accent (chiffres)" value={s.accent_color} onChange={v => update('accent_color', v)} />
+            <SelectField label="À expiration" value={s.on_expire || 'message'} options={['reset', 'hide', 'message']} onChange={v => update('on_expire', v)} />
+            <TextField label="Message d'expiration" value={s.expire_message} onChange={v => update('expire_message', v)} />
           </>
-        );
-      case 'Benefits':
+        )
+      case 'testimonials':
         return (
           <>
-            <TextField label="Titre" value={section.settings.title} onChange={(val: string) => updateSetting('title', val)} />
-            <ColorField label="Couleur de fond" value={section.settings.bgColor} onChange={(val: string) => updateSetting('bgColor', val)} />
+            <TextField label="Titre section" value={s.title} onChange={v => update('title', v)} />
+            <SelectField label="Mise en page" value={s.layout || 'grid'} options={['grid', 'carousel', 'masonry']} onChange={v => update('layout', v)} />
+            <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+            <ItemsListField 
+              label="Avis clients" value={s.items} onChange={v => update('items', v)} 
+              itemSchema={[
+                { type: 'text', id: 'name', label: 'Nom' },
+                { type: 'text', id: 'location', label: 'Localisation' },
+                { type: 'textarea', id: 'text', label: 'Avis' },
+                { type: 'slider', id: 'rating', label: 'Note', min: 1, max: 5 },
+                { type: 'image', id: 'image', label: 'Photo' },
+                { type: 'toggle', id: 'verified', label: 'Vérifié' }
+              ]} 
+            />
           </>
-        );
+        )
+      case 'benefits':
+        return (
+          <>
+            <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
+            <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+            <ItemsListField 
+              label="Avantages" value={s.items} onChange={v => update('items', v)} 
+              itemSchema={[
+                { type: 'text', id: 'icon', label: 'Icône (emoji)' },
+                { type: 'text', id: 'title', label: 'Titre' },
+                { type: 'text', id: 'text', label: 'Texte' }
+              ]} 
+            />
+          </>
+        )
+      case 'before_after':
+        return (
+          <>
+            <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
+            <ImageUploadField label="Image Avant" value={s.before_image} onChange={v => update('before_image', v)} />
+            <ImageUploadField label="Image Après" value={s.after_image} onChange={v => update('after_image', v)} />
+            <TextField label="Label Avant" value={s.before_label} onChange={v => update('before_label', v)} />
+            <TextField label="Label Après" value={s.after_label} onChange={v => update('after_label', v)} />
+          </>
+        )
+      case 'comparison':
+        return (
+          <>
+            <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
+            <TextField label="Nom colonne Nous" value={s.our_label} onChange={v => update('our_label', v)} />
+            <TextField label="Nom colonne Concurrent" value={s.competitor_label} onChange={v => update('competitor_label', v)} />
+            <ItemsListField 
+              label="Lignes" value={s.rows} onChange={v => update('rows', v)} 
+              itemSchema={[
+                { type: 'text', id: 'feature', label: 'Fonctionnalité' },
+                { type: 'toggle', id: 'us', label: 'Nous ✓' },
+                { type: 'toggle', id: 'them', label: 'Concurrent ✓' }
+              ]} 
+            />
+          </>
+        )
+      case 'stats':
+        return (
+          <>
+            <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+            <ItemsListField 
+              label="Stats" value={s.items} onChange={v => update('items', v)} 
+              itemSchema={[
+                { type: 'text', id: 'icon', label: 'Icône emoji' },
+                { type: 'text', id: 'number', label: 'Chiffre' },
+                { type: 'text', id: 'suffix', label: 'Suffixe (%, +, k...)' },
+                { type: 'text', id: 'label', label: 'Label' }
+              ]} 
+            />
+          </>
+        )
+      case 'faq':
+        return (
+          <>
+            <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
+            <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+            <ItemsListField 
+              label="Questions" value={s.items} onChange={v => update('items', v)} 
+              itemSchema={[
+                { type: 'text', id: 'question', label: 'Question' },
+                { type: 'textarea', id: 'answer', label: 'Réponse' }
+              ]} 
+            />
+          </>
+        )
+      case 'guarantees':
+        return (
+          <>
+            <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+            <ItemsListField 
+              label="Garanties" value={s.items} onChange={v => update('items', v)} 
+              itemSchema={[
+                { type: 'text', id: 'icon', label: 'Icône emoji' },
+                { type: 'text', id: 'title', label: 'Titre' },
+                { type: 'text', id: 'text', label: 'Texte' }
+              ]} 
+            />
+          </>
+        )
+      case 'marquee':
+        return (
+          <>
+            <TextField label="Texte" value={s.text} onChange={v => update('text', v)} />
+            <SliderField label="Vitesse" value={s.speed} onChange={v => update('speed', v)} min={10} max={100} />
+            <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+            <ColorField label="Couleur texte" value={s.text_color} onChange={v => update('text_color', v)} />
+          </>
+        )
+      case 'image_text':
+        return (
+          <>
+            <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
+            <TextareaField label="Texte" value={s.text} onChange={v => update('text', v)} />
+            <ImageUploadField label="Image" value={s.image_url} onChange={v => update('image_url', v)} />
+            <SelectField label="Position image" value={s.image_position || 'left'} options={['left', 'right']} onChange={v => update('image_position', v)} />
+            <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+          </>
+        )
+      case 'video':
+        return (
+          <>
+            <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
+            <TextField label="URL YouTube ou MP4" value={s.url} onChange={v => update('url', v)} />
+            <ImageUploadField label="Image poster" value={s.poster_url} onChange={v => update('poster_url', v)} />
+            <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+          </>
+        )
+      case 'text_block':
+        return (
+          <>
+            <TextareaField label="Contenu" value={s.content} onChange={v => update('content', v)} rows={6} />
+            <SelectField label="Alignement" value={s.text_align || 'center'} options={['left', 'center', 'right']} onChange={v => update('text_align', v)} />
+            <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+            <ColorField label="Couleur texte" value={s.text_color} onChange={v => update('text_color', v)} />
+          </>
+        )
+      case 'spacer':
+        return (
+          <>
+            <SliderField label="Hauteur (px)" value={s.height} onChange={v => update('height', v)} min={8} max={200} />
+          </>
+        )
       case 'Footer':
+      case 'footer':
         return (
           <>
-            <TextField label="Texte du Logo" value={section.settings.logoText} onChange={(val: string) => updateSetting('logoText', val)} />
-            <TextareaField label="Description" value={section.settings.description} onChange={(val: string) => updateSetting('description', val)} />
-            <ColorField label="Couleur de fond" value={section.settings.bgColor} onChange={(val: string) => updateSetting('bgColor', val)} />
-            <ColorField label="Couleur du texte" value={section.settings.textColor} onChange={(val: string) => updateSetting('textColor', val)} />
+            <TextField label="Texte copyright" value={s.copyright} onChange={v => update('copyright', v)} />
+            <TextField label="Numéro WhatsApp" value={s.whatsapp_number} onChange={v => update('whatsapp_number', v)} />
+            <ToggleField label="Bouton WhatsApp flottant" value={s.show_whatsapp !== false} onChange={v => update('show_whatsapp', v)} />
+            <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+            <ColorField label="Couleur texte" value={s.text_color} onChange={v => update('text_color', v)} />
           </>
-        );
+        )
       default:
         return (
-          <div className="p-4 text-center">
-            <Sliders className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-            <p className="text-sm text-gray-500">Paramètres pour {section.type} non encore implémentés.</p>
-          </div>
-        );
+          <div className="text-sm text-gray-500">Aucun paramètre disponible pour ce type d'élément.</div>
+        )
     }
-  };
+  }
+
+  // Seuls les éléments de template peuvent être supprimés (pas header ni footer)
+  const isDeletable = !['header', 'announcement_bar', 'Footer', 'footer'].includes(block.type)
 
   return (
-    <div className="absolute inset-0 bg-gray-50 z-20 flex flex-col animate-in slide-in-from-right duration-200 border-l border-gray-200 shadow-xl">
-      {/* Header */}
-      <div className="p-3 border-b border-gray-200 flex items-center gap-3 bg-white flex-shrink-0">
-        <button onClick={onClose} className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors">
-          <ArrowLeft className="w-5 h-5" />
-        </button>
+    <div className="w-[300px] h-full bg-white border-l border-gray-200 flex flex-col flex-shrink-0">
+      <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-white z-10">
         <div>
-          <h2 className="text-sm font-bold text-gray-900 truncate max-w-[180px]">{section.title}</h2>
-          <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">{section.type}</p>
+          <h2 className="font-bold text-sm text-gray-800">{block.title}</h2>
+          <span className="text-[10px] uppercase font-semibold text-gray-400 tracking-wider">Édition</span>
         </div>
+        {isDeletable && (
+          <button 
+            onClick={() => onDelete(block.id)}
+            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+            title="Supprimer"
+          >
+            <Trash2 size={16} />
+          </button>
+        )}
       </div>
-
-      {/* Fields */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-4">
+      <div className="flex-1 overflow-y-auto p-5 custom-scrollbar bg-gray-50/30">
         {renderFields()}
       </div>
-
-      {/* Footer Action */}
-      {!isFixed && (
-        <div className="p-4 bg-white border-t border-gray-200 flex-shrink-0">
-          <button 
-            onClick={() => onDelete(section.id)}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 text-sm font-semibold transition-colors"
-          >
-            <Trash2 className="w-4 h-4" /> Supprimer la section
-          </button>
-        </div>
-      )}
     </div>
-  );
+  )
 }

@@ -1,16 +1,23 @@
-import React from 'react';
+'use client'
 
-export default function TextField({ label, value, onChange, placeholder }: any) {
+interface TextFieldProps {
+  label: string
+  value: string
+  onChange: (val: string) => void
+  placeholder?: string
+}
+
+export default function TextField({ label, value, onChange, placeholder }: TextFieldProps) {
   return (
-    <div className="flex flex-col gap-1.5 mb-4">
-      <label className="text-[13px] font-semibold text-gray-800">{label}</label>
-      <input 
-        type="text" 
-        value={value || ''} 
-        onChange={(e) => onChange(e.target.value)}
+    <div className="mb-4">
+      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">{label}</label>
+      <input
+        type="text"
+        value={value || ''}
+        onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-[13px] shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow"
+        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
       />
     </div>
-  );
+  )
 }

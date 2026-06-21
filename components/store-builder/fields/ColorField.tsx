@@ -1,25 +1,29 @@
-import React from 'react';
+'use client'
 
-export default function ColorField({ label, value, onChange }: any) {
+interface ColorFieldProps {
+  label: string
+  value: string
+  onChange: (val: string) => void
+}
+
+export default function ColorField({ label, value, onChange }: ColorFieldProps) {
   return (
-    <div className="flex flex-col gap-1.5 mb-4">
-      <label className="text-[13px] font-semibold text-gray-800">{label}</label>
-      <div className="flex items-center gap-3">
-        <div className="relative w-8 h-8 rounded-full border border-gray-200 shadow-inner overflow-hidden flex-shrink-0 cursor-pointer">
-          <input 
-            type="color" 
-            value={value || '#000000'} 
-            onChange={(e) => onChange(e.target.value)}
-            className="absolute -top-2 -left-2 w-12 h-12 cursor-pointer"
-          />
-        </div>
+    <div className="mb-4">
+      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">{label}</label>
+      <div className="flex items-center gap-2">
+        <input 
+          type="color" 
+          value={value || '#000000'} 
+          onChange={e => onChange(e.target.value)}
+          className="w-9 h-9 rounded-lg border border-gray-200 cursor-pointer p-0.5" 
+        />
         <input 
           type="text" 
-          value={value || ''} 
-          onChange={(e) => onChange(e.target.value)}
-          className="flex-1 px-3 py-1.5 bg-white border border-gray-300 rounded-md text-[13px] shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          value={value || '#000000'} 
+          onChange={e => onChange(e.target.value)}
+          className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400 font-mono uppercase" 
         />
       </div>
     </div>
-  );
+  )
 }
