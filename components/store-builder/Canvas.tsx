@@ -53,7 +53,9 @@ export default function Canvas({ data, selectedBlockId, previewMode, onSelectBlo
 
   const renderBlockContent = (block: EditorBlock) => {
     switch (block.type) {
+      case 'AnnouncementBar':
       case 'announcement_bar': return <AnnouncementBarRender settings={block.settings} />
+      case 'Header':
       case 'header': return <HeaderRender settings={block.settings} />
       case 'countdown': return <CountdownRender settings={block.settings} />
       case 'testimonials': return <TestimonialsRender settings={block.settings} />
@@ -113,8 +115,41 @@ export default function Canvas({ data, selectedBlockId, previewMode, onSelectBlo
         return (
           <div className="prose text-gray-600 whitespace-pre-wrap text-sm md:text-base my-6" dangerouslySetInnerHTML={{ __html: block.settings.content || product?.description || 'Description détaillée de votre produit...' }} />
         )
+      case 'OrderForm':
+      case 'order_form':
+        return (
+          <div className="w-full max-w-lg mx-auto bg-white p-6 rounded-xl shadow-lg border border-gray-100 my-8">
+            <h3 className="text-xl font-bold text-gray-900 mb-4 text-center">{block.settings.title || 'Formulaire de commande'}</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nom complet</label>
+                <input type="text" className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 pointer-events-none" placeholder="Ex: Jean Dupont" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Numéro de téléphone</label>
+                <input type="tel" className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 pointer-events-none" placeholder="Ex: 01 23 45 67 89" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Adresse de livraison</label>
+                <textarea className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 pointer-events-none" rows={3} placeholder="Ex: 123 rue de la République, 75001 Paris" />
+              </div>
+              <button className="w-full py-3 rounded-xl text-white font-bold text-lg shadow-md" style={{ backgroundColor: block.settings.btn_color || '#ef4444' }}>
+                {block.settings.btn_text || 'Commander'}
+              </button>
+            </div>
+          </div>
+        )
+      case 'IconGrid':
+      case 'icon_grid':
+      case 'Product':
+      case 'product':
       default:
-        return <div className="p-4 bg-red-50 text-red-500 rounded border border-red-200">Type de bloc inconnu: {block.type}</div>
+        return (
+          <div className="p-8 my-4 bg-blue-50 text-blue-500 rounded-xl border-2 border-dashed border-blue-200 flex flex-col items-center justify-center text-center">
+            <span className="font-bold mb-1">{block.type}</span>
+            <span className="text-sm opacity-80">Section en construction (Placeholder)</span>
+          </div>
+        )
     }
   }
 
