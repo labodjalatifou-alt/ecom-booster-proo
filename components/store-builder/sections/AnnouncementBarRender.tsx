@@ -1,51 +1,15 @@
 'use client'
-
-import { X } from 'lucide-react'
-import { useState } from 'react'
-
-export default function AnnouncementBarRender({ settings }: { settings: Record<string, any> }) {
-  const [isVisible, setIsVisible] = useState(true)
-
-  if (!isVisible) return null
-
-  const bgColor = settings.bg_color ?? '#000000'
-  const textColor = settings.text_color ?? '#ffffff'
-  const speed = settings.speed ?? 30
-  const text = settings.text ?? '⭐ Livraison gratuite ⭐'
-  const showClose = settings.close_button ?? false
-
+import { useEffect, useRef } from 'react'
+export default function AnnouncementBarRender({ settings }: { settings: any }) {
+  const s = settings || {}
   return (
-    <div 
-      className="relative flex items-center justify-center overflow-hidden w-full"
-      style={{ backgroundColor: bgColor, color: textColor, height: 40 }}
-    >
-      <div className="absolute whitespace-nowrap w-full overflow-hidden">
-        <div 
-          className="inline-block"
-          style={{ animation: `marquee ${speed}s linear infinite` }}
-        >
-          <span className="text-sm font-medium px-4">{text}</span>
-          <span className="text-sm font-medium px-4">{text}</span>
-          <span className="text-sm font-medium px-4">{text}</span>
-          <span className="text-sm font-medium px-4">{text}</span>
-        </div>
+    <div style={{ backgroundColor: s.bg_color || '#000', color: s.text_color || '#fff' }} className="w-full overflow-hidden py-2.5 relative">
+      <div className="flex whitespace-nowrap" style={{ animation: `marquee ${120 / (s.speed || 30)}s linear infinite` }}>
+        {[...Array(3)].map((_, i) => (
+          <span key={i} className="mx-8 text-sm font-medium tracking-wide">{s.text || '⭐ Livraison gratuite ⭐'}</span>
+        ))}
       </div>
-      
-      {showClose && (
-        <button 
-          onClick={() => setIsVisible(false)}
-          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-black/10 rounded-full z-10 transition-colors"
-        >
-          <X size={16} />
-        </button>
-      )}
-
-      <style jsx>{`
-        @keyframes marquee {
-          from { transform: translateX(100%); }
-          to { transform: translateX(-100%); }
-        }
-      `}</style>
+      <style>{`@keyframes marquee { from { transform: translateX(0) } to { transform: translateX(-33.33%) } }`}</style>
     </div>
   )
 }

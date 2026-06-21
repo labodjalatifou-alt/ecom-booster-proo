@@ -1,18 +1,10 @@
 'use client'
-
-export default function TextBlockRender({ settings }: { settings: Record<string, any> }) {
-  const content = settings.content ?? 'Votre texte ici...'
-  const textAlign = settings.text_align ?? 'center' // left, center, right
-  const bgColor = settings.bg_color ?? '#ffffff'
-  const textColor = settings.text_color ?? '#111827'
-
+export default function TextBlockRender({ settings }: { settings: any }) {
+  const s = settings || {}
   return (
-    <div 
-      className="w-full py-8 px-4 md:px-8 rounded-xl"
-      style={{ backgroundColor: bgColor, color: textColor, textAlign: textAlign as any }}
-    >
-      <div className="prose max-w-none whitespace-pre-wrap font-medium">
-        {content}
+    <div className="w-full py-8 px-4" style={{ backgroundColor: s.bg_color || '#fff' }}>
+      <div className="max-w-2xl mx-auto" style={{ textAlign: s.text_align || 'center', color: s.text_color || '#374151' }}>
+        <p className="text-base leading-relaxed whitespace-pre-wrap">{s.content}</p>
       </div>
     </div>
   )

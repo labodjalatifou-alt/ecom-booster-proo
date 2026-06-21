@@ -1,37 +1,17 @@
 'use client'
-
-import { ImageIcon } from 'lucide-react'
-
-export default function ImageTextRender({ settings }: { settings: Record<string, any> }) {
-  const title = settings.title ?? 'Notre Histoire'
-  const text = settings.text ?? 'Découvrez notre engagement envers la qualité et nos clients...'
-  const imageUrl = settings.image_url
-  const imagePosition = settings.image_position ?? 'left' // left, right
-  const bgColor = settings.bg_color ?? '#ffffff'
-
+export default function ImageTextRender({ settings }: { settings: any }) {
+  const s = settings || {}
+  const isRight = s.image_position === 'right'
   return (
-    <div className="w-full py-12 px-4 md:px-8 rounded-xl" style={{ backgroundColor: bgColor }}>
-      <div className={`flex flex-col gap-8 md:gap-12 items-center ${imagePosition === 'right' ? 'md:flex-row-reverse' : 'md:flex-row'}`}>
-        
-        {/* Image Side */}
-        <div className="flex-1 w-full">
-          <div className="aspect-square md:aspect-[4/3] rounded-2xl overflow-hidden bg-gray-100 flex items-center justify-center border border-gray-100 shadow-sm">
-            {imageUrl ? (
-              <img src={imageUrl} alt={title} className="w-full h-full object-cover" />
-            ) : (
-              <ImageIcon size={48} className="text-gray-300" />
-            )}
-          </div>
+    <div className="w-full py-12 px-4" style={{ backgroundColor: s.bg_color || '#fff' }}>
+      <div className={`max-w-5xl mx-auto flex flex-col ${isRight ? 'md:flex-row-reverse' : 'md:flex-row'} gap-10 items-center`}>
+        <div className="w-full md:w-1/2">
+          {s.image_url ? <img src={s.image_url} alt="" className="w-full rounded-2xl object-cover aspect-square" /> : <div className="w-full aspect-square bg-gray-100 rounded-2xl flex items-center justify-center text-gray-400 text-sm">Image</div>}
         </div>
-
-        {/* Text Side */}
-        <div className="flex-1 w-full flex flex-col justify-center">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">{title}</h2>
-          <div className="prose prose-blue text-gray-600 whitespace-pre-wrap">
-            {text}
-          </div>
+        <div className="w-full md:w-1/2">
+          {s.title && <h2 className="text-2xl md:text-3xl font-black text-gray-900 mb-4">{s.title}</h2>}
+          {s.text && <p className="text-gray-600 leading-relaxed">{s.text}</p>}
         </div>
-        
       </div>
     </div>
   )

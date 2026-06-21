@@ -1,61 +1,24 @@
 'use client'
-
-import { Check, X } from 'lucide-react'
-
-export default function ComparisonRender({ settings }: { settings: Record<string, any> }) {
-  const title = settings.title ?? 'Pourquoi nous ?'
-  const ourLabel = settings.our_label ?? 'Notre Produit'
-  const competitorLabel = settings.competitor_label ?? 'Les Autres'
-  const bgColor = settings.bg_color ?? '#ffffff'
-  
-  const rows = settings.rows || [
-    { id: '1', feature: 'Qualité Premium', us: true, them: false },
-    { id: '2', feature: 'Garantie à vie', us: true, them: false },
-    { id: '3', feature: 'Support 24/7', us: true, them: true }
-  ]
-
+export default function ComparisonRender({ settings }: { settings: any }) {
+  const s = settings || {}
+  const rows = s.rows || []
   return (
-    <div className="w-full py-8 px-4 rounded-xl" style={{ backgroundColor: bgColor }}>
-      {title && (
-        <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 text-gray-900">{title}</h2>
-      )}
-      
-      <div className="max-w-3xl mx-auto overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr>
-              <th className="p-4 md:p-6 border-b border-gray-200 bg-gray-50 w-1/3"></th>
-              <th className="p-4 md:p-6 border-b border-gray-200 bg-blue-50/50 text-center font-bold text-blue-700 w-1/3 text-lg md:text-xl">
-                {ourLabel}
-              </th>
-              <th className="p-4 md:p-6 border-b border-gray-200 bg-gray-50 text-center font-bold text-gray-500 w-1/3 text-sm md:text-base">
-                {competitorLabel}
-              </th>
+    <div className="w-full py-12 px-4" style={{ backgroundColor: s.bg_color || '#fff' }}>
+      {s.title && <h2 className="text-2xl font-black text-center text-gray-900 mb-8">{s.title}</h2>}
+      <div className="max-w-2xl mx-auto overflow-hidden rounded-2xl border border-gray-200">
+        <table className="w-full">
+          <thead><tr>
+            <th className="p-4 text-left text-sm font-bold text-gray-500 bg-gray-50">Fonctionnalité</th>
+            <th className="p-4 text-center text-sm font-bold text-indigo-700 bg-indigo-50">{s.our_label || 'Nous'}</th>
+            <th className="p-4 text-center text-sm font-bold text-gray-500 bg-gray-50">{s.competitor_label || 'Autres'}</th>
+          </tr></thead>
+          <tbody>{rows.map((row: any) => (
+            <tr key={row.id} className="border-t border-gray-100">
+              <td className="p-4 text-sm text-gray-700 font-medium">{row.feature}</td>
+              <td className="p-4 text-center bg-indigo-50/50">{row.us ? <span className="text-green-600 text-lg font-bold">✓</span> : <span className="text-red-400 text-lg">✗</span>}</td>
+              <td className="p-4 text-center">{row.them ? <span className="text-green-600 text-lg font-bold">✓</span> : <span className="text-red-400 text-lg">✗</span>}</td>
             </tr>
-          </thead>
-          <tbody>
-            {rows.map((row: any, idx: number) => (
-              <tr key={row.id || idx} className="group">
-                <td className="p-4 md:p-6 border-b border-gray-100 font-medium text-gray-900 group-hover:bg-gray-50/50 transition-colors">
-                  {row.feature}
-                </td>
-                <td className="p-4 md:p-6 border-b border-gray-100 bg-blue-50/30 text-center">
-                  {row.us ? (
-                    <Check className="mx-auto text-green-500 w-6 h-6 md:w-8 md:h-8" />
-                  ) : (
-                    <X className="mx-auto text-gray-300 w-5 h-5 md:w-6 md:h-6" />
-                  )}
-                </td>
-                <td className="p-4 md:p-6 border-b border-gray-100 text-center group-hover:bg-gray-50/50 transition-colors">
-                  {row.them ? (
-                    <Check className="mx-auto text-gray-400 w-5 h-5 md:w-6 md:h-6" />
-                  ) : (
-                    <X className="mx-auto text-red-400/80 w-5 h-5 md:w-6 md:h-6" />
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
+          ))}</tbody>
         </table>
       </div>
     </div>

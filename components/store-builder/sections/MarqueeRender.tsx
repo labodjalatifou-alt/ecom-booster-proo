@@ -1,30 +1,13 @@
 'use client'
-
-export default function MarqueeRender({ settings }: { settings: Record<string, any> }) {
-  const bgColor = settings.bg_color ?? '#000000'
-  const textColor = settings.text_color ?? '#ffffff'
-  const speed = settings.speed ?? 30
-  const text = settings.text ?? '⭐ Offre spéciale aujourd\'hui ⭐'
-
+export default function MarqueeRender({ settings }: { settings: any }) {
+  const s = settings || {}
+  const speed = 120 / (s.speed || 30)
   return (
-    <div 
-      className="relative flex items-center overflow-hidden w-full py-3"
-      style={{ backgroundColor: bgColor, color: textColor }}
-    >
-      <div className="whitespace-nowrap flex" style={{ animation: `marquee ${speed}s linear infinite` }}>
-        {Array.from({ length: 10 }).map((_, i) => (
-          <span key={i} className="text-lg md:text-xl font-bold uppercase tracking-widest px-8">
-            {text}
-          </span>
-        ))}
+    <div className="w-full overflow-hidden py-3" style={{ backgroundColor: s.bg_color || '#000', color: s.text_color || '#fff' }}>
+      <div className="flex whitespace-nowrap" style={{ animation: `marquee2 ${speed}s linear infinite` }}>
+        {[...Array(4)].map((_, i) => <span key={i} className="mx-6 text-sm font-semibold">⭐ {s.text || 'Livraison gratuite'}</span>)}
       </div>
-
-      <style jsx>{`
-        @keyframes marquee {
-          from { transform: translateX(0); }
-          to { transform: translateX(-50%); }
-        }
-      `}</style>
+      <style>{`@keyframes marquee2 { from{transform:translateX(0)} to{transform:translateX(-25%)} }`}</style>
     </div>
   )
 }
