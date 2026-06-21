@@ -107,6 +107,7 @@ export default function BoutiqueEnLignePage() {
             prixAvantReduction: data.compare_price || '',
             statut: data.status === 'active' ? 'Actif' : data.status === 'draft' ? 'Brouillon' : 'Archivé',
             quantite: (data.stock || 0).toString(),
+            mediaPreviews: data.image_url ? [data.image_url] : [],
           };
           setForm(loadedForm);
           setSavedForm(loadedForm);
@@ -177,6 +178,7 @@ export default function BoutiqueEnLignePage() {
         status: statusVal,
         stock: parseInt(form.quantite) || 0,
         currency: 'FCFA',
+        image_url: form.mediaPreviews && form.mediaPreviews.length > 0 ? form.mediaPreviews[0] : null,
       };
 
       let error;
