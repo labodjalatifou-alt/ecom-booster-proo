@@ -240,7 +240,7 @@ export default function BoutiquesPage() {
                   <div className="mt-3 flex gap-2">
                     <button
                       onClick={() => router.push(`/boutiques/${store.id}`)}
-                      className="flex-1 flex items-center justify-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-medium py-2 rounded-lg transition-colors"
+                      className="flex-[2] flex items-center justify-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-medium py-2 rounded-lg transition-colors"
                     >
                       <Edit3 className="w-3.5 h-3.5" />
                       Éditer
@@ -250,7 +250,15 @@ export default function BoutiquesPage() {
                       className="flex-1 flex items-center justify-center gap-1.5 bg-gray-50 hover:bg-gray-100 text-gray-600 text-xs font-medium py-2 rounded-lg transition-colors"
                     >
                       <TrendingUp className="w-3.5 h-3.5" />
-                      Statistiques
+                      Stats
+                    </button>
+                    <button
+                      onClick={() => deleteStore(store.id)}
+                      disabled={deleting === store.id}
+                      className="flex-1 flex items-center justify-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-medium py-2 rounded-lg transition-colors"
+                      title="Supprimer la boutique"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
