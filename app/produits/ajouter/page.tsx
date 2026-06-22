@@ -109,6 +109,30 @@ export default function BoutiqueEnLignePage() {
             statut: data.status === 'active' ? 'Actif' : data.status === 'draft' ? 'Brouillon' : 'Archivé',
             quantite: (data.stock || 0).toString(),
             mediaPreviews: data.images && data.images.length > 0 ? data.images : (data.image_url ? [data.image_url] : []),
+            // Organisation
+            type: data.type || 'Aucun',
+            fournisseur: data.vendor || 'Aucun',
+            categorie: data.category || '',
+            collections: Array.isArray(data.collections) ? data.collections : [],
+            balises: Array.isArray(data.tags) ? data.tags : [],
+            modeleTheme: data.theme_template || 'Modèle par défaut : Produit',
+            // Prix
+            facturationTaxe: data.charge_tax !== null ? data.charge_tax : true,
+            coutParArticle: data.cost_per_item ? data.cost_per_item.toString() : '',
+            // Stock
+            sku: data.sku || '',
+            codeBarres: data.barcode || '',
+            vendreEnRupture: data.continue_selling_when_out_of_stock || false,
+            // Expédition
+            produitPhysique: data.physical_product !== null ? data.physical_product : true,
+            poids: data.weight ? data.weight.toString() : '0.0',
+            unitePoids: data.weight_unit || 'kg',
+            paysOrigine: data.origin_country || '',
+            codeSH: data.hs_code || '',
+            // SEO
+            seoTitre: data.seo_title || '',
+            seoDescription: data.seo_description || '',
+            seoUrl: data.seo_url || '',
           };
           setForm(loadedForm);
           setSavedForm(loadedForm);
@@ -215,6 +239,7 @@ export default function BoutiqueEnLignePage() {
       const statusVal = form.statut.toLowerCase() === 'brouillon' ? 'draft' : form.statut.toLowerCase() === 'archivé' ? 'archived' : 'active'
       
       const payload = {
+        // Core
         title: form.titre.trim(),
         description: form.description,
         price: form.prix || '0',
@@ -224,6 +249,30 @@ export default function BoutiqueEnLignePage() {
         currency: 'FCFA',
         image_url: finalMediaUrls.length > 0 ? finalMediaUrls[0] : null,
         images: finalMediaUrls,
+        // Organisation
+        type: form.type !== 'Aucun' ? form.type : null,
+        vendor: form.fournisseur !== 'Aucun' ? form.fournisseur : null,
+        category: form.categorie || null,
+        collections: form.collections,
+        tags: form.balises,
+        theme_template: form.modeleTheme || null,
+        // Prix
+        charge_tax: form.facturationTaxe,
+        cost_per_item: form.coutParArticle ? parseFloat(form.coutParArticle) : null,
+        // Stock
+        sku: form.sku || null,
+        barcode: form.codeBarres || null,
+        continue_selling_when_out_of_stock: form.vendreEnRupture,
+        // Expédition
+        physical_product: form.produitPhysique,
+        weight: parseFloat(form.poids) || 0,
+        weight_unit: form.unitePoids,
+        origin_country: form.paysOrigine || null,
+        hs_code: form.codeSH || null,
+        // SEO
+        seo_title: form.seoTitre || null,
+        seo_description: form.seoDescription || null,
+        seo_url: form.seoUrl || null,
       };
 
       let error;
