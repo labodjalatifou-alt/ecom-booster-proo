@@ -27,6 +27,7 @@ import PrixRender from './sections/PrixRender'
 import BoutonsAchatRender from './sections/BoutonsAchatRender'
 import DescriptionRender from './sections/DescriptionRender'
 import OrderFormRender from './sections/OrderFormRender'
+import ProductSectionRender from './sections/ProductSectionRender'
 
 interface CanvasProps {
   data: EditorData
@@ -142,6 +143,8 @@ export default function Canvas({
 
       case 'product':
       case 'Product':
+        return <ProductSectionRender product={product} settings={block.settings} />
+
       default:
         return (
           <div className="p-8 my-4 bg-indigo-50 text-indigo-500 rounded-3xl border-2 border-dashed border-indigo-200 flex flex-col items-center justify-center text-center">
