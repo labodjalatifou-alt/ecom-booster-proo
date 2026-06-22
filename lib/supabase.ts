@@ -9,10 +9,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     detectSessionInUrl: true,
     storageKey: 'ecomdash-auth',
-  },
-  global: {
-    fetch: (...args) => fetch(...args),
-  },
+  }
 });
 
 export const createAdminSupabase = () => {
