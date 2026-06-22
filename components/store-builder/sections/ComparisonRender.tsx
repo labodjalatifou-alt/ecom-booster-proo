@@ -32,8 +32,8 @@ export default function ComparisonRender({ settings }: { settings: any }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {rows.map((row: any) => (
-                <tr key={row.id} className="hover:bg-gray-50/50 transition-colors">
+              {rows.map((row: any, i: number) => (
+                <tr key={row.id ?? i} className="hover:bg-gray-50/50 transition-colors">
                   <td className="p-6 font-medium text-gray-800">{row.feature}</td>
                   <td className="p-6 text-center border-l border-gray-100 bg-blue-50/30">
                     {row.us ? (
