@@ -310,6 +310,53 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete }: P
             <ColorField label="Couleur texte" value={s.text_color} onChange={v => update('text_color', v)} />
           </>
         )
+      case 'testimonials_floating':
+        return (
+          <>
+            <TextField label="Titre section" value={s.title} onChange={v => update('title', v)} />
+            <SliderField label="Vitesse animation (s)" value={s.animation_time || 30} onChange={v => update('animation_time', v)} min={10} max={60} />
+            <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+            <ColorField label="Couleur accent (badge note)" value={s.accent_color} onChange={v => update('accent_color', v)} />
+            <ItemsListField
+              label="Témoignages" value={s.items} onChange={v => update('items', v)}
+              itemSchema={[
+                { type: 'text', id: 'name', label: 'Nom' },
+                { type: 'textarea', id: 'text', label: 'Avis' },
+                { type: 'slider', id: 'rating', label: 'Note', min: 1, max: 5 },
+                { type: 'image', id: 'image', label: 'Photo' }
+              ] as FieldSchema[]}
+            />
+          </>
+        )
+      case 'trust_bar':
+        return (
+          <>
+            <ToggleField label="Afficher la note" value={s.show_score !== false} onChange={v => update('show_score', v)} />
+            <TextField label="Note (ex: 4.8)" value={s.score} onChange={v => update('score', v)} />
+            <TextField label="Texte sous la note" value={s.score_label} onChange={v => update('score_label', v)} />
+            <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+            <ColorField label="Couleur icônes" value={s.icon_color} onChange={v => update('icon_color', v)} />
+            <ItemsListField
+              label="Éléments de confiance" value={s.items} onChange={v => update('items', v)}
+              itemSchema={[
+                { type: 'select', id: 'icon', label: 'Icône', options: ['check', 'shield', 'truck', 'lock', 'star', 'heart', 'refresh'] },
+                { type: 'text', id: 'label', label: 'Texte' }
+              ] as FieldSchema[]}
+            />
+          </>
+        )
+      case 'stock_urgency':
+        return (
+          <>
+            <TextField label="Message" value={s.message} onChange={v => update('message', v)} />
+            <SliderField label="Stock restant" value={s.stock_left ?? 7} onChange={v => update('stock_left', v)} min={1} max={50} />
+            <SliderField label="Stock total (pour la barre)" value={s.stock_total ?? 20} onChange={v => update('stock_total', v)} min={1} max={100} />
+            <ColorField label="Couleur barre" value={s.bar_color} onChange={v => update('bar_color', v)} />
+            <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+            <ToggleField label="Afficher ventes du jour" value={s.show_sold_count} onChange={v => update('show_sold_count', v)} />
+            <TextField label="Texte ventes (ex: 38 vendus aujourd'hui)" value={s.sold_text} onChange={v => update('sold_text', v)} />
+          </>
+        )
       default:
         return (
           <div className="text-sm text-gray-500">

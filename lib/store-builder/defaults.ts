@@ -410,6 +410,9 @@ export const SECTIONS_CATALOG: SectionCatalogItem[] = [
   { type: 'order_form', label: 'Formulaire commande', icon: '📋', description: 'Formulaire de commande personnalisable', category: 'Produits', defaultProps: DEFAULT_ORDER_FORM_PROPS },
   // ⭐ Social Proof
   { type: 'testimonials', label: 'Témoignages', icon: '💬', description: 'Avis et témoignages clients', category: 'Social Proof', defaultProps: DEFAULT_TESTIMONIALS_PROPS },
+  { type: 'testimonials_floating', label: 'Témoignages flottants', icon: '💬', description: 'Témoignages défilants en bandeau', category: 'Social Proof', defaultProps: { title: 'Ils nous font confiance', items: [] } },
+  { type: 'trust_bar', label: 'Barre de confiance', icon: '✓', description: 'Score et arguments de confiance', category: 'Social Proof', defaultProps: {} },
+  { type: 'stock_urgency', label: 'Stock urgent', icon: '🔥', description: 'Barre de stock avec urgence', category: 'Social Proof', defaultProps: {} },
   { type: 'before_after', label: 'Avant / Après', icon: '🔄', description: 'Comparaison avec slider interactif', category: 'Social Proof', defaultProps: DEFAULT_BEFORE_AFTER_PROPS },
   { type: 'comparison_table', label: 'Comparaison', icon: '📊', description: 'Nous vs concurrents', category: 'Social Proof', defaultProps: DEFAULT_COMPARISON_TABLE_PROPS },
   // ℹ️ Info
