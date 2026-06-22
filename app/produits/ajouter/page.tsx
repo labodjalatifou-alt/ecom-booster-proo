@@ -195,6 +195,11 @@ export default function BoutiqueEnLignePage() {
           if (!uploadError) {
             const { data: publicUrlData } = supabase.storage.from('store-images').getPublicUrl(fileName);
             finalMediaUrls[i] = publicUrlData.publicUrl;
+          } else {
+            console.error("Upload error:", uploadError);
+            toast.error(`Erreur upload: ${uploadError.message}`);
+            setSaving(false);
+            return;
           }
         }
       }
@@ -224,8 +229,9 @@ export default function BoutiqueEnLignePage() {
       }
 
       if (error) {
-        toast.error('Erreur lors de l\'enregistrement', { position: 'bottom-center' })
+        toast.error(`Erreur: ${error.message}`, { position: 'bottom-center' })
         console.error(error)
+        setSaving(false)
         return
       }
 
