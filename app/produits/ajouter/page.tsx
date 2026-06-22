@@ -191,7 +191,14 @@ export default function BoutiqueEnLignePage() {
         if (finalMediaUrls[i].startsWith('blob:') && mediaIndex < form.medias.length) {
           const file = form.medias[mediaIndex++];
           const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-          const { error: uploadError } = await supabase.storage.from('store-images').upload(fileName, file);
+          
+          // Convert file to ArrayBuffer to bypass Next.js FormData hanging bug
+          const arrayBuffer = await file.arrayBuffer();
+          
+          const { error: uploadError } = await supabase.storage.from('store-images').upload(fileName, arrayBuffer, {
+            contentType: file.type,
+            upsert: false
+          });
           if (!uploadError) {
             const { data: publicUrlData } = supabase.storage.from('store-images').getPublicUrl(fileName);
             finalMediaUrls[i] = publicUrlData.publicUrl;
