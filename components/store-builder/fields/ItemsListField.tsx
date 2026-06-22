@@ -100,7 +100,7 @@ export default function ItemsListField({ label, value = [], onChange, itemSchema
           const itemTitle = titleField ? item[titleField.id] : `Item ${index + 1}`
 
           return (
-            <div key={item.id} className="border border-gray-200 rounded-lg bg-white overflow-hidden">
+            <div key={item.id || index} className="border border-gray-200 rounded-lg bg-white overflow-hidden">
               <div 
                 className="flex items-center p-2 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
                 onClick={() => setExpandedId(isExpanded ? null : item.id)}
