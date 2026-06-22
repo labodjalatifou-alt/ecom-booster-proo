@@ -97,53 +97,60 @@ export default function BoutiqueEnLignePage() {
   useEffect(() => {
     if (!productId) return;
     const fetchProduct = async () => {
-      try {
-        const { data, error } = await supabase.from('products').select('*').eq('id', productId).single();
-        if (error) throw error;
-        if (data) {
-          const loadedForm: FormData = {
-            ...INITIAL,
-            titre: data.title || '',
-            prix: data.price || '',
-            prixAvantReduction: data.compare_price || '',
-            description: data.description || '',
-            statut: data.status === 'active' ? 'Actif' : data.status === 'draft' ? 'Brouillon' : 'Archivé',
-            quantite: (data.stock || 0).toString(),
-            mediaPreviews: data.images && data.images.length > 0 ? data.images : (data.image_url ? [data.image_url] : []),
-            // Organisation
-            type: data.type || 'Aucun',
-            fournisseur: data.vendor || 'Aucun',
-            categorie: data.category || '',
-            collections: Array.isArray(data.collections) ? data.collections : [],
-            balises: Array.isArray(data.tags) ? data.tags : [],
-            modeleTheme: data.theme_template || 'Modèle par défaut : Produit',
-            // Prix
-            facturationTaxe: data.charge_tax !== null ? data.charge_tax : true,
-            coutParArticle: data.cost_per_item ? data.cost_per_item.toString() : '',
-            // Stock
-            sku: data.sku || '',
-            codeBarres: data.barcode || '',
-            vendreEnRupture: data.continue_selling_when_out_of_stock || false,
-            // Expédition
-            produitPhysique: data.physical_product !== null ? data.physical_product : true,
-            poids: data.weight ? data.weight.toString() : '0.0',
-            unitePoids: data.weight_unit || 'kg',
-            paysOrigine: data.origin_country || '',
-            codeSH: data.hs_code || '',
-            // SEO
-            seoTitre: data.seo_title || '',
-            seoDescription: data.seo_description || '',
-            seoUrl: data.seo_url || '',
-          };
-          setForm(loadedForm);
-          setSavedForm(loadedForm);
-          // Force TipTap to re-mount with the loaded content
-          setEditorKey(`loaded-${productId}`);
+      let lastError: any = null;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          const { data, error } = await supabase.from('products').select('*').eq('id', productId).single();
+          if (error) throw error;
+          if (data) {
+            const loadedForm: FormData = {
+              ...INITIAL,
+              titre: data.title || '',
+              prix: data.price || '',
+              prixAvantReduction: data.compare_price || '',
+              description: data.description || '',
+              statut: data.status === 'active' ? 'Actif' : data.status === 'draft' ? 'Brouillon' : 'Archivé',
+              quantite: (data.stock || 0).toString(),
+              mediaPreviews: data.images && data.images.length > 0 ? data.images : (data.image_url ? [data.image_url] : []),
+              // Organisation
+              type: data.type || 'Aucun',
+              fournisseur: data.vendor || 'Aucun',
+              categorie: data.category || '',
+              collections: Array.isArray(data.collections) ? data.collections : [],
+              balises: Array.isArray(data.tags) ? data.tags : [],
+              modeleTheme: data.theme_template || 'Modèle par défaut : Produit',
+              // Prix
+              facturationTaxe: data.charge_tax !== null ? data.charge_tax : true,
+              coutParArticle: data.cost_per_item ? data.cost_per_item.toString() : '',
+              // Stock
+              sku: data.sku || '',
+              codeBarres: data.barcode || '',
+              vendreEnRupture: data.continue_selling_when_out_of_stock || false,
+              // Expédition
+              produitPhysique: data.physical_product !== null ? data.physical_product : true,
+              poids: data.weight ? data.weight.toString() : '0.0',
+              unitePoids: data.weight_unit || 'kg',
+              paysOrigine: data.origin_country || '',
+              codeSH: data.hs_code || '',
+              // SEO
+              seoTitre: data.seo_title || '',
+              seoDescription: data.seo_description || '',
+              seoUrl: data.seo_url || '',
+            };
+            setForm(loadedForm);
+            setSavedForm(loadedForm);
+            setEditorKey(`loaded-${productId}`);
+            return; // success
+          }
+        } catch (err: any) {
+          lastError = err;
+          if (attempt < 3) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+          }
         }
-      } catch (err) {
-        console.error("Failed to fetch product:", err);
-        toast.error("Erreur lors du chargement du produit");
       }
+      console.error('Failed to fetch product after 3 attempts:', lastError);
+      toast.error('Erreur de connexion. Rafraîchis la page (F5).');
     };
     fetchProduct();
   }, [productId]);
