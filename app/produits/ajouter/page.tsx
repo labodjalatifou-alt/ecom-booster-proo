@@ -90,6 +90,7 @@ export default function BoutiqueEnLignePage() {
   const [seoOpen, setSeoOpen] = useState(false)
   const [stockExpanded, setStockExpanded] = useState(false)
   const [expeditionExpanded, setExpeditionExpanded] = useState(false)
+  const [editorKey, setEditorKey] = useState('new')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Fetch existing product
@@ -136,6 +137,8 @@ export default function BoutiqueEnLignePage() {
           };
           setForm(loadedForm);
           setSavedForm(loadedForm);
+          // Force TipTap to re-mount with the loaded content
+          setEditorKey(`loaded-${productId}`);
         }
       } catch (err) {
         console.error("Failed to fetch product:", err);
@@ -382,6 +385,7 @@ export default function BoutiqueEnLignePage() {
               <Label>Description</Label>
               <div className="mt-1">
                 <RichTextEditor
+                  key={editorKey}
                   content={form.description}
                   onChange={html => set({ description: html })}
                   placeholder="Décrivez votre produit en détail..."

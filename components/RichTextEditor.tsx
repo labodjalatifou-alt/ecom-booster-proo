@@ -11,6 +11,7 @@ import ImageResize from 'tiptap-extension-resize-image'
 import { Link } from '@tiptap/extension-link'
 import { Highlight } from '@tiptap/extension-highlight'
 import { Placeholder } from '@tiptap/extension-placeholder'
+import { supabase } from '@/lib/supabase'
 import {
   Bold, Italic, Underline as UnderlineIcon,
   AlignLeft, AlignCenter, AlignRight, AlignJustify,
@@ -72,38 +73,61 @@ export default function RichTextEditor({
     editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
   }, [editor])
 
-  const insertImage = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const insertImage = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!editor || !e.target.files?.length) return
-    Array.from(e.target.files).forEach(file => {
-      const reader = new FileReader()
-      reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          editor.chain().focus().setImage({ src: reader.result }).run()
-        }
+    const files = Array.from(e.target.files)
+    for (const file of files) {
+      try {
+        const fileName = `desc-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+        const arrayBuffer = await file.arrayBuffer()
+        const { error: uploadError } = await supabase.storage.from('store-images').upload(fileName, arrayBuffer, { contentType: file.type })
+        if (uploadError) throw uploadError
+        const { data } = supabase.storage.from('store-images').getPublicUrl(fileName)
+        editor.chain().focus().setImage({ src: data.publicUrl, alt: file.name }).run()
+      } catch (err) {
+        console.error('Image upload error:', err)
+        // Fallback: use base64
+        const reader = new FileReader()
+        reader.onload = () => { if (typeof reader.result === 'string') editor.chain().focus().setImage({ src: reader.result }).run() }
+        reader.readAsDataURL(file)
       }
-      reader.readAsDataURL(file)
-    })
+    }
     e.target.value = ''
   }, [editor])
 
-  const insertMedia = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const insertMedia = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!editor || !e.target.files?.length) return
-    Array.from(e.target.files).forEach(file => {
-      const reader = new FileReader()
-      reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          // GIF and images via img tag, videos via video tag
-          if (file.type.startsWith('video/') && !file.type.includes('gif')) {
-            editor.chain().focus().insertContent(
-              `<p><video controls style="max-width:100%;border-radius:8px;"><source src="${reader.result}" type="${file.type}" /></video></p>`
-            ).run()
-          } else {
-            editor.chain().focus().setImage({ src: reader.result, alt: file.name }).run()
+    const files = Array.from(e.target.files)
+    for (const file of files) {
+      try {
+        const fileName = `desc-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+        const arrayBuffer = await file.arrayBuffer()
+        const { error: uploadError } = await supabase.storage.from('store-images').upload(fileName, arrayBuffer, { contentType: file.type })
+        if (uploadError) throw uploadError
+        const { data } = supabase.storage.from('store-images').getPublicUrl(fileName)
+        if (file.type.startsWith('video/') && !file.type.includes('gif')) {
+          editor.chain().focus().insertContent(
+            `<p><video controls style="max-width:100%;border-radius:8px;"><source src="${data.publicUrl}" type="${file.type}" /></video></p>`
+          ).run()
+        } else {
+          editor.chain().focus().setImage({ src: data.publicUrl, alt: file.name }).run()
+        }
+      } catch (err) {
+        console.error('Media upload error:', err)
+        // Fallback: base64
+        const reader = new FileReader()
+        reader.onload = () => {
+          if (typeof reader.result === 'string') {
+            if (file.type.startsWith('video/') && !file.type.includes('gif')) {
+              editor.chain().focus().insertContent(`<p><video controls style="max-width:100%;border-radius:8px;"><source src="${reader.result}" type="${file.type}" /></video></p>`).run()
+            } else {
+              editor.chain().focus().setImage({ src: reader.result, alt: file.name }).run()
+            }
           }
         }
+        reader.readAsDataURL(file)
       }
-      reader.readAsDataURL(file)
-    })
+    }
     e.target.value = ''
   }, [editor])
 
