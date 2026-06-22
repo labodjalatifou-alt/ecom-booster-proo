@@ -10,11 +10,17 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import StorePreview from '@/components/theme-builder/StorePreview';
 
 const initialBlocks = [
-  { id: 'b1', type: 'Titre', title: 'Titre', hidden: false, settings: { color: '#000000', size: 'large' } },
+  { id: 'b1', type: 'Titre', title: 'Titre', hidden: false, settings: {} },
   { id: 'b2', type: 'Note de produit', title: 'Note de produit', hidden: false, settings: {} },
   { id: 'b3', type: 'Prix', title: 'Prix', hidden: false, settings: {} },
-  { id: 'b4', type: 'Description', title: 'Description', hidden: false, settings: {} },
-  { id: 'b5', type: 'Boutons d\'achat', title: 'Boutons d\'achat', hidden: false, settings: {} },
+  { id: "b4", type: "Boutons d'achat", title: "Boutons d'achat", hidden: false, settings: {} },
+  { id: 'b5', type: 'Description', title: 'Description', hidden: false, settings: {} },
+  { id: 'b6', type: 'icon_grid', title: 'icon_grid', hidden: false, settings: {} },
+  { id: 'b7', type: 'video', title: 'video', hidden: true, settings: {} },
+  { id: 'b8', type: 'comparison_table', title: 'comparison_table', hidden: true, settings: {} },
+  { id: 'b9', type: 'testimonials', title: 'testimonials', hidden: true, settings: {} },
+  { id: 'b10', type: 'faq', title: 'faq', hidden: true, settings: {} },
+  { id: 'b11', type: 'order_form', title: 'order_form', hidden: false, settings: {} },
 ];
 
 export default function ThemeBuilderPage() {
