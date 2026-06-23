@@ -24,10 +24,10 @@ import TextBlockRender from './sections/TextBlockRender'
 import TitreRender from './sections/TitreRender'
 import NoteProduitRender from './sections/NoteProduitRender'
 import PrixRender from './sections/PrixRender'
-import BoutonsAchatRender from './sections/BoutonsAchatRender'
 import DescriptionRender from './sections/DescriptionRender'
 import OrderFormRender from './sections/OrderFormRender'
 import ProductSectionRender from './sections/ProductSectionRender'
+import CountdownTopBarRender from './sections/CountdownTopBarRender'
 
 interface CanvasProps {
   data: EditorData
@@ -133,17 +133,14 @@ export default function Canvas({
         return <NoteProduitRender settings={block.settings} />
       case 'Prix':
         return <PrixRender settings={block.settings} product={product} />
-      case "Boutons d'achat":
-        return <BoutonsAchatRender settings={block.settings} />
       case 'Description':
         return <DescriptionRender settings={block.settings} product={product} />
       case 'OrderForm':
       case 'order_form':
         return <OrderFormRender settings={block.settings} />
 
-      case 'product':
-      case 'Product':
-        return <ProductSectionRender product={product} settings={block.settings} />
+      case 'countdown_top_bar':
+        return <CountdownTopBarRender settings={block.settings} />
 
       default:
         return (
@@ -155,7 +152,7 @@ export default function Canvas({
     }
   }
 
-  const PRODUCT_BLOCK_TYPES = ['Titre', 'Note de produit', 'Prix', "Boutons d'achat", 'Description']
+  const PRODUCT_BLOCK_TYPES = ['Titre', 'Note de produit', 'Prix', 'Description']
   const productBlocks = data.template.filter((b) => PRODUCT_BLOCK_TYPES.includes(b.type))
   const sectionBlocks = data.template.filter((b) => !PRODUCT_BLOCK_TYPES.includes(b.type))
 

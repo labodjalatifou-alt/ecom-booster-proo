@@ -2,63 +2,78 @@
 
 export default function OrderFormRender({ settings }: { settings: any }) {
   const s = settings || {}
-  const btnColor = s.btn_color || '#ef4444'
-  const bg = s.bg_color || '#ffffff'
 
   return (
     <div
-      className="w-full max-w-lg mx-auto p-6 md:p-8 rounded-3xl border border-gray-100 shadow-lg my-8"
-      style={{ backgroundColor: bg }}
+      className="w-full p-7 rounded-3xl border my-2"
+      style={{ backgroundColor: s.bg_color || '#ffffff', borderColor: s.border_color || '#f0d9d2' }}
     >
-      <h3 className="text-xl font-bold text-gray-900 mb-6 text-center">
-        {s.title || 'Formulaire de commande'}
+      <h3 className="text-lg font-bold mb-5" style={{ color: s.title_color || '#111827' }}>
+        {s.title || 'Finaliser ma commande'}
       </h3>
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">Nom complet</label>
+          <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: s.label_color || '#7A6469' }}>
+            Nom complet
+          </label>
           <input
             type="text"
-            className="w-full px-4 py-3 border border-gray-200 rounded-full bg-gray-50 pointer-events-none text-sm"
-            placeholder="Ex: Jean Dupont"
             readOnly
+            className="w-full px-4 py-3 border rounded-full bg-gray-50 pointer-events-none"
+            style={{ borderColor: s.input_border || '#f0d9d2' }}
+            placeholder="Ex: Aïcha Diallo"
           />
         </div>
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">Numéro de téléphone</label>
+          <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: s.label_color || '#7A6469' }}>
+            Téléphone
+          </label>
           <input
             type="tel"
-            className="w-full px-4 py-3 border border-gray-200 rounded-full bg-gray-50 pointer-events-none text-sm"
-            placeholder="Ex: +224 620 000 000"
             readOnly
+            className="w-full px-4 py-3 border rounded-full bg-gray-50 pointer-events-none"
+            style={{ borderColor: s.input_border || '#f0d9d2' }}
+            placeholder="Ex: 620 00 00 00"
           />
         </div>
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">Adresse de livraison</label>
-          <textarea
-            className="w-full px-4 py-3 border border-gray-200 rounded-2xl bg-gray-50 pointer-events-none text-sm resize-none"
-            rows={3}
-            placeholder="Ex: Quartier, ville"
+          <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: s.label_color || '#7A6469' }}>
+            Adresse de livraison
+          </label>
+          <input
+            type="text"
             readOnly
+            className="w-full px-4 py-3 border rounded-full bg-gray-50 pointer-events-none"
+            style={{ borderColor: s.input_border || '#f0d9d2' }}
+            placeholder="Quartier, ville, repère"
           />
         </div>
-        {s.show_quantity && (
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Quantité</label>
-            <input
-              type="number"
-              defaultValue={1}
-              className="w-full px-4 py-3 border border-gray-200 rounded-full bg-gray-50 pointer-events-none text-sm"
-              readOnly
-            />
-          </div>
-        )}
         <button
-          className="w-full py-4 rounded-full text-white font-bold text-lg shadow-md transition-all duration-200 hover:brightness-110"
-          style={{ backgroundColor: btnColor }}
+          className="w-full py-4 rounded-full text-white font-bold text-base shadow-lg"
+          style={{
+            backgroundColor: s.btn_color || '#C23A5E',
+            animation: s.shake_animation !== false ? 'orderBtnShake 4.5s ease-in-out infinite' : 'none',
+          }}
         >
-          {s.btn_text || 'Commander maintenant'}
+          {s.btn_text || 'COMMANDER MAINTENANT'}
         </button>
+        <p className="text-xs text-center" style={{ color: s.trust_text_color || '#9B9590' }}>
+          🔒 Vos informations restent confidentielles
+        </p>
       </div>
+
+      <style>{`
+        @keyframes orderBtnShake {
+          0%, 88%, 100% { transform: translateX(0) scale(1); }
+          89% { transform: translateX(-3px) scale(1.01); }
+          90.5% { transform: translateX(3px) scale(1.01); }
+          92% { transform: translateX(-3px) scale(1.01); }
+          93.5% { transform: translateX(3px) scale(1.01); }
+          95% { transform: translateX(-2px) scale(1.01); }
+          96.5% { transform: translateX(2px) scale(1.01); }
+          98% { transform: translateX(0) scale(1.01); }
+        }
+      `}</style>
     </div>
   )
 }

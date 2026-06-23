@@ -39,13 +39,19 @@ export default function Editor({ storeId, storeName, initialData, products }: Ed
   const [saved, setSaved] = useState(true)
   const saveTimer = useRef<NodeJS.Timeout | null>(null)
 
-  // Initialiser les paramètres de thème si absents
+  // Initialiser les paramètres de thème si absents — thème par défaut : Rose & Doré
   const [themeSettings, setThemeSettings] = useState<Record<string, any>>(initialData.themeSettings || {
-    primaryColor: '#000000',
-    secondaryColor: '#f3f4f6',
-    backgroundColor: '#ffffff',
-    textColor: '#111827',
-    fontFamily: 'Inter',
+    primaryColor: '#E8527A',
+    secondaryColor: '#FFF8F3',
+    backgroundColor: '#FFF8F3',
+    textColor: '#3A2A2E',
+    fontFamily: 'Plus Jakarta Sans',
+    // Nouvelles clés thème (rétrocompatibles — s'ajoutent sans casser l'existant)
+    textSoftColor: '#7A6469',
+    accentDeep: '#C23A5E',
+    gold: '#C9A24B',
+    border: '#F0D9D2',
+    surface: '#FFFFFF',
   })
 
   // Trouver le bloc sélectionné dans toutes les zones

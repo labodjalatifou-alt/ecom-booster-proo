@@ -395,6 +395,7 @@ export const SECTIONS_CATALOG: SectionCatalogItem[] = [
   // 📣 Marketing
   { type: 'announcement_bar', label: 'Bandeau annonce', icon: '📣', description: 'Texte défilant en haut de page', category: 'Marketing', defaultProps: DEFAULT_ANNOUNCEMENT_BAR_PROPS },
   { type: 'countdown', label: 'Compte à rebours', icon: '⏱️', description: 'Timer pour créer de l\'urgence', category: 'Marketing', defaultProps: DEFAULT_COUNTDOWN_PROPS },
+  { type: 'countdown_top_bar', label: 'Bandeau countdown', icon: '🔥', description: 'Bandeau compact en haut de page avec timer', category: 'Marketing', defaultProps: { target_date: new Date(Date.now() + 12 * 3600000).toISOString(), label: 'Offre', discount_text: '-39%', suffix: 'se termine dans', bg_color: '#3A2A2E', text_color: '#FFF8F3', accent_color: '#C9A24B' } },
   { type: 'stats', label: 'Statistiques', icon: '📊', description: 'Chiffres clés animés', category: 'Marketing', defaultProps: DEFAULT_STATS_PROPS },
   { type: 'popup', label: 'Pop-up promo', icon: '🎯', description: 'Fenêtre promotionnelle', category: 'Marketing', defaultProps: DEFAULT_POPUP_PROPS },
   // 🎨 Contenu
@@ -405,7 +406,6 @@ export const SECTIONS_CATALOG: SectionCatalogItem[] = [
   { type: 'video', label: 'Vidéo', icon: '🎬', description: 'YouTube, Vimeo ou MP4', category: 'Contenu', defaultProps: DEFAULT_VIDEO_PROPS },
   { type: 'gallery', label: 'Galerie photos', icon: '🖼️', description: 'Grille d\'images', category: 'Contenu', defaultProps: DEFAULT_GALLERY_PROPS },
   // 🛍️ Produits
-  { type: 'product', label: 'Fiche produit', icon: '📦', description: 'Affiche votre produit principal', category: 'Produits', defaultProps: DEFAULT_PRODUCT_PROPS },
   { type: 'product_grid', label: 'Grille produits', icon: '🛒', description: 'Collection de produits', category: 'Produits', defaultProps: DEFAULT_PRODUCT_GRID_PROPS },
   { type: 'order_form', label: 'Formulaire commande', icon: '📋', description: 'Formulaire de commande personnalisable', category: 'Produits', defaultProps: DEFAULT_ORDER_FORM_PROPS },
   // ⭐ Social Proof

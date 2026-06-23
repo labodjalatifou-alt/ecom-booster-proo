@@ -1,16 +1,14 @@
 'use client'
 
-export default function PrixRender({ settings, product }: { settings: any; product: any }) {
+export default function PrixRender({ settings, product }: { settings: any; product?: any }) {
   const s = settings || {}
-  const price = s.price || (product?.price ? `${parseInt(product.price).toLocaleString('fr-FR')} FCFA` : '15 000 FCFA')
-  const comparePrice = s.compare_at_price || (product?.compare_price ? `${parseInt(product.compare_price).toLocaleString('fr-FR')} FCFA` : null)
-  const showBadge = s.show_badge !== false && comparePrice
-  const badgeBg = s.badge_bg || '#fee2e2'
-  const badgeColor = s.badge_color || '#ef4444'
+  const price = s.price || (product?.price ? `${Number(product.price).toLocaleString('fr-FR')} ${product?.currency || 'FCFA'}` : '15 000 FCFA')
+  const rawCompare = s.compare_at_price || product?.compare_price
+  const comparePrice = rawCompare ? `${Number(rawCompare).toLocaleString('fr-FR')} ${product?.currency || 'FCFA'}` : null
 
   return (
-    <div className="flex items-center gap-3 mb-4 flex-wrap">
-      <span className="text-2xl font-black" style={{ color: s.price_color || '#111827' }}>
+    <div className="flex items-center gap-3 mb-2 flex-wrap">
+      <span className="text-3xl font-extrabold" style={{ fontFamily: s.price_font || 'inherit', color: s.price_color || '#111827' }}>
         {price}
       </span>
       {comparePrice && (
@@ -18,12 +16,12 @@ export default function PrixRender({ settings, product }: { settings: any; produ
           {comparePrice}
         </span>
       )}
-      {showBadge && (
+      {s.show_badge !== false && comparePrice && (
         <span
-          className="text-xs font-bold px-2.5 py-1 rounded-full"
-          style={{ backgroundColor: badgeBg, color: badgeColor }}
+          className="text-xs font-bold px-3 py-1 rounded-full"
+          style={{ backgroundColor: s.badge_bg || '#E8527A', color: s.badge_text_color || '#ffffff' }}
         >
-          {s.badge_text || '-50%'}
+          {s.badge_text || 'Promo'}
         </span>
       )}
     </div>

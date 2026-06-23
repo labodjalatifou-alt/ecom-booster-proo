@@ -5,6 +5,7 @@ import { Eye, EyeOff, MoreVertical, GripVertical, Plus, Trash2, Edit3, X, Palett
 import type { EditorData, EditorBlock } from './Editor'
 import ColorField from './fields/ColorField'
 import SelectField from './fields/SelectField'
+import { STORE_THEMES } from '@/lib/store-builder/themes'
 
 interface SidebarLeftProps {
   data: EditorData
@@ -52,6 +53,24 @@ const CATALOG_CATEGORIES = [
       { type: 'video', title: 'Vidéo', defaultSettings: { title: "Voyez-le en action", url: "", bg_color: "#000000" } },
       { type: 'text_block', title: 'Bloc texte', defaultSettings: { content: "Votre texte ici...", text_align: "center", bg_color: "#ffffff", text_color: "#111827" } },
       { type: 'spacer', title: 'Espaceur', defaultSettings: { height: 48, bg_color: "transparent" } }
+    ]
+  },
+  {
+    title: '⏰ Bandeau Countdown',
+    items: [
+      {
+        type: 'countdown_top_bar',
+        title: 'Bandeau compte à rebours',
+        defaultSettings: {
+          target_date: new Date(Date.now() + 12 * 3600000).toISOString(),
+          label: 'Offre',
+          discount_text: '-39%',
+          suffix: 'se termine dans',
+          bg_color: '#3A2A2E',
+          text_color: '#FFF8F3',
+          accent_color: '#C9A24B',
+        }
+      }
     ]
   }
 ]
@@ -228,19 +247,61 @@ export default function SidebarLeft({
           </>
         ) : (
           <div className="flex-1 overflow-y-auto p-5 custom-scrollbar bg-gray-50/30">
+            {/* ── Sélecteur de thème ── */}
+            <h3 className="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wide">Thème prédéfini</h3>
+            <div className="flex gap-2 mb-5 flex-wrap">
+              {STORE_THEMES.map((theme) => {
+                const isActive = themeSettings.primaryColor === theme.colors.accent
+                return (
+                  <button
+                    key={theme.id}
+                    title={theme.name}
+                    onClick={() => onUpdateThemeSettings({
+                      ...themeSettings,
+                      primaryColor: theme.colors.accent,
+                      secondaryColor: theme.colors.bg,
+                      backgroundColor: theme.colors.bg,
+                      textColor: theme.colors.text,
+                      textSoftColor: theme.colors.text_soft,
+                      accentDeep: theme.colors.accent_deep,
+                      gold: theme.colors.gold,
+                      border: theme.colors.border,
+                      surface: theme.colors.surface,
+                    })}
+                    className={`flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all ${
+                      isActive ? 'border-current shadow-md' : 'border-transparent hover:border-gray-200'
+                    }`}
+                    style={{ borderColor: isActive ? theme.colors.accent : undefined }}
+                  >
+                    <span
+                      className="w-8 h-8 rounded-full shadow-sm border-2 border-white"
+                      style={{ backgroundColor: theme.preview_color }}
+                    />
+                    <span className="text-[10px] text-gray-600 font-medium leading-tight text-center max-w-[52px]">{theme.name}</span>
+                  </button>
+                )
+              })}
+            </div>
+
+            <div className="h-px w-full bg-gray-200 mb-5" />
+
             <h3 className="text-xs font-semibold text-gray-400 mb-4 uppercase tracking-wide">Couleurs Globales</h3>
             <ColorField label="Couleur Principale" value={themeSettings.primaryColor} onChange={v => updateTheme('primaryColor', v)} />
             <ColorField label="Couleur Secondaire" value={themeSettings.secondaryColor} onChange={v => updateTheme('secondaryColor', v)} />
             <ColorField label="Arrière-plan" value={themeSettings.backgroundColor} onChange={v => updateTheme('backgroundColor', v)} />
             <ColorField label="Texte Principal" value={themeSettings.textColor} onChange={v => updateTheme('textColor', v)} />
+            <ColorField label="Texte Doux" value={themeSettings.textSoftColor || '#7A6469'} onChange={v => updateTheme('textSoftColor', v)} />
+            <ColorField label="Accent Profond" value={themeSettings.accentDeep || '#C23A5E'} onChange={v => updateTheme('accentDeep', v)} />
+            <ColorField label="Or / Accent 2" value={themeSettings.gold || '#C9A24B'} onChange={v => updateTheme('gold', v)} />
+            <ColorField label="Bordure" value={themeSettings.border || '#F0D9D2'} onChange={v => updateTheme('border', v)} />
             
-            <div className="h-px w-full bg-gray-200 my-6"></div>
+            <div className="h-px w-full bg-gray-200 my-6" />
             
             <h3 className="text-xs font-semibold text-gray-400 mb-4 uppercase tracking-wide">Typographie</h3>
             <SelectField 
               label="Police Principale" 
               value={themeSettings.fontFamily} 
-              options={['Inter', 'Roboto', 'Playfair Display', 'Montserrat', 'Poppins']} 
+              options={['Plus Jakarta Sans', 'Inter', 'Roboto', 'Playfair Display', 'Montserrat', 'Poppins', 'Fraunces']} 
               onChange={v => updateTheme('fontFamily', v)} 
             />
           </div>
