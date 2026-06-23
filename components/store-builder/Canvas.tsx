@@ -36,6 +36,7 @@ interface CanvasProps {
   onSelectBlock: (id: string) => void
   products?: any[]
   selectedProductId?: string | null
+  onProductChange?: (id: string) => void
   themeSettings?: Record<string, any>
 }
 
@@ -46,6 +47,7 @@ export default function Canvas({
   onSelectBlock,
   products,
   selectedProductId,
+  onProductChange,
   themeSettings,
 }: CanvasProps) {
   const product = selectedProductId
@@ -166,10 +168,17 @@ export default function Canvas({
           className="bg-white p-10 rounded-3xl shadow-sm text-center max-w-md w-full"
           onClick={(e) => e.stopPropagation()}
         >
-          <h2 className="text-xl font-bold text-gray-800 mb-2">Aucun produit</h2>
-          <p className="text-gray-500 text-sm">
-            Ajoutez un produit depuis la section Produits pour prévisualiser votre boutique.
+          <div className="text-5xl mb-4">📦</div>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">Aucun produit trouvé</h2>
+          <p className="text-gray-500 text-sm mb-6">
+            Créez d'abord un produit pour prévisualiser votre boutique.
           </p>
+          <a
+            href="/produits/nouveau"
+            className="inline-flex items-center gap-2 px-5 py-3 bg-indigo-600 text-white rounded-xl font-semibold text-sm hover:bg-indigo-700 transition"
+          >
+            + Créer un produit
+          </a>
         </div>
       </div>
     )
@@ -188,6 +197,38 @@ export default function Canvas({
         fontFamily: themeSettings?.fontFamily || 'Inter, sans-serif',
       } as React.CSSProperties}
     >
+      {/* Product selector bar */}
+      {products && products.length > 1 && onProductChange && (
+        <div
+          className="w-full max-w-[1400px] mb-3 flex items-center gap-3 bg-white rounded-2xl px-4 py-2.5 shadow-sm border border-gray-200"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <span className="text-xs font-semibold text-gray-500 whitespace-nowrap">Produit affiché :</span>
+          <div className="flex gap-2 overflow-x-auto pb-0.5 flex-1">
+            {products.map((p) => {
+              const isActive = (selectedProductId || products[0]?.id) === p.id
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => onProductChange(p.id)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex-shrink-0 ${
+                    isActive
+                      ? 'bg-indigo-600 text-white shadow'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {p.image_url || p.images?.[0] ? (
+                    <img src={p.image_url || p.images[0]} alt="" className="w-5 h-5 rounded object-cover flex-shrink-0" />
+                  ) : (
+                    <span>📦</span>
+                  )}
+                  <span className="max-w-[120px] truncate">{p.title || p.name}</span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
       <div
         className={`bg-white shadow-xl transition-all duration-300 relative overflow-hidden ${
           previewMode === 'mobile'

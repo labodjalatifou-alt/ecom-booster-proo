@@ -37,6 +37,9 @@ export default function Editor({ storeId, storeName, initialData, products }: Ed
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(true)
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(
+    products && products.length > 0 ? products[0].id : null
+  )
   const saveTimer = useRef<NodeJS.Timeout | null>(null)
 
   // Initialiser les paramètres de thème si absents — thème par défaut : Rose & Doré
@@ -173,6 +176,8 @@ export default function Editor({ storeId, storeName, initialData, products }: Ed
           previewMode={previewMode}
           onSelectBlock={setSelectedBlockId}
           products={products}
+          selectedProductId={selectedProductId}
+          onProductChange={setSelectedProductId}
           themeSettings={themeSettings}
         />
         {selectedBlockId && (

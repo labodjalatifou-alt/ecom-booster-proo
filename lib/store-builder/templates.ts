@@ -32,69 +32,70 @@ export const STORE_TEMPLATES: StoreTemplate[] = [
     category: 'mono-product',
     colors: {
       ...DEFAULT_COLORS,
-      primary: '#6d388b', // Couleur Shrine par défaut
-      accent: '#dd1d1d',
+      primary: '#C23A5E',
+      accent: '#E8527A',
     },
     fonts: {
       heading: 'Inter',
       body: 'Inter',
     },
     sections: [
-      createSection('announcement_bar', {
-        text: "LIVRAISON GRATUITE AUJOURD'HUI SEULEMENT ⚡",
-        bg_color: '#000000',
-        text_color: '#ffffff',
+      createSection('countdown_top_bar', {
+        label: 'Offre',
+        discount_text: '-39%',
+        suffix: 'se termine dans',
+        bg_color: '#3A2A2E',
       }),
-      createSection('product', {
-        show_urgency: true,
-        urgency_text: '🔥 Plus que 3 articles en stock !',
-        show_stock_counter: true,
-        cta_text: 'AJOUTER AU PANIER',
-        cta_color: '#dd1d1d',
+      createSection('Titre', {}),
+      createSection('Note de produit', { rating: 5, reviews_count: '128 avis' }),
+      createSection('Prix', { show_badge: true, badge_text: 'Promo' }),
+      createSection('stock_urgency', {
+        message: 'Il ne reste que 6 articles en stock',
+        show_sold_count: true,
+        sold_text: '32 vendus aujourd\'hui',
       }),
+      createSection('OrderForm', {
+        title: 'Finaliser ma commande',
+        btn_text: 'COMMANDER MAINTENANT',
+        btn_color: '#C23A5E',
+        shake_animation: true,
+      }),
+      createSection('Description', {}),
       createSection('icon_grid', {
         title: 'Pourquoi nous choisir ?',
         items: [
           { id: '1', icon: '🚚', title: 'Livraison Rapide', description: 'Chez vous en 48h' },
-          { id: '2', icon: '🔒', title: 'Paiement Sécurisé', description: 'Visa, Mastercard, PayPal' },
+          { id: '2', icon: '🔒', title: 'Paiement Sécurisé', description: 'À la livraison' },
           { id: '3', icon: '⭐', title: 'Qualité Premium', description: 'Matériaux certifiés' },
           { id: '4', icon: '↩️', title: 'Retours Faciles', description: "30 jours pour changer d'avis" },
         ]
       }),
-      createSection('video', {
-        title: 'Voyez-le en action',
-        subtitle: 'Une démonstration vaut mille mots.',
+      createSection('before_after', {
+        title: 'Le résultat parle de lui-même',
       }),
-      createSection('comparison_table', {
-        title: 'Pourquoi sommes-nous différents ?',
-        us_name: 'Notre Produit',
-        them_name: 'Les Autres',
-        features: [
-          { id: '1', name: 'Matériaux durables', us: true, them: false },
-          { id: '2', name: 'Garantie à vie', us: true, them: false },
-          { id: '3', name: 'Design ergonomique', us: true, them: true },
-        ]
-      }),
-      createSection('testimonials', {
-        title: "Ils l'ont adopté",
-        subtitle: 'Des milliers de clients satisfaits.',
+      createSection('testimonials_floating', {
+        title: 'Elles nous font confiance',
         items: [
           { id: '1', name: 'Sophie L.', rating: 5, text: 'Produit incroyable, il a changé mon quotidien !' },
           { id: '2', name: 'Marc D.', rating: 5, text: 'La qualité est au rendez-vous. Je recommande.' },
           { id: '3', name: 'Julie M.', rating: 4, text: 'Très satisfaite de mon achat, livraison rapide.' },
         ]
       }),
+      createSection('comparison_table', {
+        title: 'Pourquoi sommes-nous différents ?',
+        our_label: 'Nous',
+        competitor_label: 'Les Autres',
+        rows: [
+          { feature: 'Qualité premium', us: true, them: false },
+          { feature: 'Paiement à la livraison', us: true, them: false },
+          { feature: 'Livraison rapide', us: true, them: true },
+        ]
+      }),
       createSection('faq', {
         title: 'Questions Fréquentes',
       }),
-      createSection('order_form', {
-        title: 'Finaliser ma commande',
-        subtitle: 'Entrez vos informations pour recevoir votre produit.',
-        submit_text: 'COMMANDER MAINTENANT',
-        submit_color: '#dd1d1d',
-      }),
       createSection('footer', {
-        text: '© 2024 Votre Marque. Tous droits réservés.',
+        copyright: '© 2026 Votre Marque. Tous droits réservés.',
       }),
     ],
   },

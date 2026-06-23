@@ -1,77 +1,73 @@
-import React from 'react';
-import SectionRenderer from '@/components/store-builder/SectionRenderer';
-import { Store } from '@/lib/store-builder/types';
+import { createClient } from '@/lib/supabase/server'
+import { notFound } from 'next/navigation'
+import PublicCanvas from '@/components/store-builder/PublicCanvas'
 
-// Mock function - in production, fetch from Supabase
-async function getStoreBySlug(slug: string): Promise<Store | null> {
-  // Simulating DB delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  if (slug === 'demo') {
-    return {
-      id: 'store-1',
-      name: 'Boutique de Démo',
-      slug: 'demo',
-      status: 'published',
-      created_at: new Date().toISOString(),
-      theme: {
-        colors: { primary: '#008060', secondary: '#ffffff', accent: '#ff0000', text: '#333333', background: '#f9fafb' },
-        typography: { headingFont: 'Inter', bodyFont: 'Inter' },
-        spacing: { padding: 16 },
-        buttons: { borderRadius: 8, style: 'solid' }
-      },
-      pages: {
-        'home': {
-          header: [{ id: 'h1', type: 'AnnouncementBar', title: 'Barre d\'annonce', hidden: false, settings: {} }],
-          template: [
-            { id: 's1', type: 'Hero', title: 'Hero', hidden: false, settings: { title: 'Bienvenue sur notre boutique publique !', overlayOpacity: 50 } },
-            { id: 's2', type: 'Benefits', title: 'Avantages', hidden: false, settings: {} },
-            { id: 's3', type: 'OrderForm', title: 'Commande', hidden: false, settings: {} },
-          ],
-          footer: [{ id: 'f1', type: 'Footer', title: 'Footer', hidden: false, settings: {} }]
-        }
-      }
-    };
-  }
-  return null;
+interface PageProps {
+  params: Promise<{ slug: string }>
 }
 
-export default async function PublicStorePage({ params }: { params: { slug: string } }) {
-  const store = await getStoreBySlug(params.slug);
+export default async function StorePage({ params }: PageProps) {
+  const { slug } = await params
+  const supabase = createClient()
 
-  if (!store) {
-    return (
-      <div className="w-full min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">404</h1>
-          <p className="text-gray-500">Boutique introuvable.</p>
-        </div>
-      </div>
-    );
+  // Fetch store by slug
+  const { data: store, error: storeError } = await supabase
+    .from('stores')
+    .select('id, name, slug, status')
+    .eq('slug', slug)
+    .single()
+
+  if (storeError || !store) {
+    notFound()
   }
 
-  const page = store.pages['home']; // Force home for now
+  // Fetch store home page
+  const { data: storePage } = await supabase
+    .from('store_pages')
+    .select('builder_json, title')
+    .eq('store_id', store.id)
+    .eq('slug', 'home')
+    .single()
+
+  // Fetch products for this store
+  const { data: products } = await supabase
+    .from('products')
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  const builderJson = storePage?.builder_json
+
+  if (!builderJson) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'sans-serif', background: '#FFF8F3' }}>
+        <div style={{ textAlign: 'center', padding: '2rem' }}>
+          <h1 style={{ fontSize: '2rem', marginBottom: '1rem', fontFamily: 'Fraunces, serif' }}>{store.name}</h1>
+          <p style={{ color: '#7A6469' }}>Cette boutique est en cours de construction.</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="w-full min-h-screen flex flex-col font-sans" style={{ backgroundColor: store.theme.colors.background }}>
-      
-      {/* Header */}
-      {page.header.map(section => !section.hidden && (
-        <SectionRenderer key={section.id} type={section.type} settings={section.settings} />
-      ))}
+    <PublicCanvas
+      builderJson={builderJson}
+      products={products || []}
+      storeName={store.name}
+    />
+  )
+}
 
-      {/* Main Content */}
-      <main className="flex-1 w-full flex flex-col">
-        {page.template.map(section => !section.hidden && (
-          <SectionRenderer key={section.id} type={section.type} settings={section.settings} />
-        ))}
-      </main>
+export async function generateMetadata({ params }: PageProps) {
+  const { slug } = await params
+  const supabase = createClient()
 
-      {/* Footer */}
-      {page.footer.map(section => !section.hidden && (
-        <SectionRenderer key={section.id} type={section.type} settings={section.settings} />
-      ))}
+  const { data: store } = await supabase
+    .from('stores')
+    .select('name')
+    .eq('slug', slug)
+    .single()
 
-    </div>
-  );
+  return {
+    title: store?.name || slug,
+  }
 }
