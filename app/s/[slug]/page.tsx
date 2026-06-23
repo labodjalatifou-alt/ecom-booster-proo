@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
-import PublicCanvas from '@/components/store-builder/PublicCanvas'
+import LandingPage from '@/components/store-builder/LandingPage'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -10,49 +10,33 @@ export default async function StorePage({ params }: PageProps) {
   const { slug } = await params
   const supabase = createClient()
 
-  // Fetch store by slug
-  const { data: store, error: storeError } = await supabase
+  const { data: store, error } = await supabase
     .from('stores')
-    .select('id, name, slug, status')
+    .select('id, name, slug, status, store_settings(*)')
     .eq('slug', slug)
     .single()
 
-  if (storeError || !store) {
-    notFound()
-  }
+  if (error || !store) notFound()
 
-  // Fetch store home page
-  const { data: storePage } = await supabase
-    .from('store_pages')
-    .select('builder_json, title')
-    .eq('store_id', store.id)
-    .eq('slug', 'home')
-    .single()
-
-  // Fetch products for this store
   const { data: products } = await supabase
     .from('products')
     .select('*')
+    .eq('status', 'active')
     .order('created_at', { ascending: false })
+    .limit(1)
 
-  const builderJson = storePage?.builder_json
+  const product = products?.[0] || null
 
-  if (!builderJson) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'sans-serif', background: '#FFF8F3' }}>
-        <div style={{ textAlign: 'center', padding: '2rem' }}>
-          <h1 style={{ fontSize: '2rem', marginBottom: '1rem', fontFamily: 'Fraunces, serif' }}>{store.name}</h1>
-          <p style={{ color: '#7A6469' }}>Cette boutique est en cours de construction.</p>
-        </div>
-      </div>
-    )
-  }
+  // Store settings (couleurs, logo, etc.)
+  const settings = Array.isArray(store.store_settings)
+    ? store.store_settings[0]
+    : store.store_settings
 
   return (
-    <PublicCanvas
-      builderJson={builderJson}
-      products={products || []}
-      storeName={store.name}
+    <LandingPage
+      store={store}
+      product={product}
+      settings={settings || {}}
     />
   )
 }
@@ -67,7 +51,5 @@ export async function generateMetadata({ params }: PageProps) {
     .eq('slug', slug)
     .single()
 
-  return {
-    title: store?.name || slug,
-  }
+  return { title: store?.name || slug }
 }
