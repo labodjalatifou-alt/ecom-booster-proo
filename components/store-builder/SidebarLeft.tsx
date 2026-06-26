@@ -20,6 +20,7 @@ interface SidebarLeftProps {
   onReorder: (fromIndex: number, toIndex: number) => void
   themeSettings: Record<string, any>
   onUpdateThemeSettings: (settings: Record<string, any>) => void
+  onClose?: () => void
 }
 
 const CATALOG_CATEGORIES = [
@@ -93,7 +94,8 @@ export default function SidebarLeft({
   onAddBlock,
   onReorder,
   themeSettings,
-  onUpdateThemeSettings
+  onUpdateThemeSettings,
+  onClose
 }: SidebarLeftProps) {
   const [showCatalog, setShowCatalog] = useState(false)
   const [contextMenuBlock, setContextMenuBlock] = useState<{ id: string, type: 'header' | 'template' | 'footer' } | null>(null)

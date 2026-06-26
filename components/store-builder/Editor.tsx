@@ -196,7 +196,7 @@ export default function Editor({ storeId, storeName, storeSlug, storeStatus = 'd
       />
       <div className="flex flex-1 min-h-0 overflow-hidden relative">
 
-        {/* ── SIDEBAR GAUCHE ── Desktop: fixe | Mobile: drawer overlay ── */}
+        {/* ── SIDEBAR GAUCHE ── Desktop: fixe | Mobile: drawer overlay animé ── */}
         {/* Desktop (md+) */}
         <div className="hidden md:block flex-shrink-0">
           <SidebarLeft
@@ -211,13 +211,23 @@ export default function Editor({ storeId, storeName, storeSlug, storeStatus = 'd
             onReorder={reorderBlocks}
             themeSettings={themeSettings}
             onUpdateThemeSettings={setThemeSettings}
+            onClose={undefined}
           />
         </div>
-        {/* Mobile: overlay drawer */}
+        {/* Mobile: overlay drawer (slide-in gauche avec backdrop fade) */}
         {sidebarOpen && (
           <>
-            <div className="fixed inset-0 z-40 bg-black/40 md:hidden" onClick={() => setSidebarOpen(false)} />
-            <div className="fixed inset-y-0 left-0 z-50 w-[300px] md:hidden">
+            <div
+              className="fixed inset-0 z-40 bg-black/40 md:hidden transition-opacity duration-300"
+              onClick={() => setSidebarOpen(false)}
+            />
+            <div className="fixed inset-y-0 left-0 z-50 w-[300px] md:hidden animate-drawer-left">
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="absolute top-3 right-3 z-10 w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center text-gray-500 transition-colors"
+              >
+                <X size={16} />
+              </button>
               <SidebarLeft
                 data={data}
                 selectedBlockId={selectedBlockId}
@@ -230,6 +240,7 @@ export default function Editor({ storeId, storeName, storeSlug, storeStatus = 'd
                 onReorder={reorderBlocks}
                 themeSettings={themeSettings}
                 onUpdateThemeSettings={setThemeSettings}
+                onClose={() => setSidebarOpen(false)}
               />
             </div>
           </>
@@ -247,26 +258,30 @@ export default function Editor({ storeId, storeName, storeSlug, storeStatus = 'd
           themeSettings={themeSettings}
         />
 
-        {/* ── PANNEAU PROPRIÉTÉS ── Desktop: fixe | Mobile: drawer overlay ── */}
+        {/* ── PANNEAU PROPRIÉTÉS ── Desktop large: fixe | sinon: drawer overlay animé ── */}
         {selectedBlockId && (
           <>
-            {/* Desktop (lg+) */}
-            <div className="hidden lg:block flex-shrink-0">
+            {/* Desktop large (xl+) : assez d'espace pour 3 colonnes */}
+            <div className="hidden xl:block flex-shrink-0">
               <PropertiesPanel
                 block={selectedBlock}
                 onUpdateSettings={updateBlockSettings}
                 onDelete={deleteBlock}
               />
             </div>
-            {/* Mobile/tablet: overlay drawer */}
+            {/* Mobile/tablet/desktop-petit: overlay drawer (sous xl) slide-in droite */}
             {propsPanelOpen && (
               <>
-                <div className="fixed inset-0 z-40 bg-black/40 lg:hidden" onClick={() => setPropsPanelOpen(false)} />
-                <div className="fixed inset-y-0 right-0 z-50 w-[300px] lg:hidden">
+                <div
+                  className="fixed inset-0 z-40 bg-black/40 xl:hidden transition-opacity duration-300"
+                  onClick={() => setPropsPanelOpen(false)}
+                />
+                <div className="fixed inset-y-0 right-0 z-50 w-[300px] xl:hidden animate-drawer-right">
                   <PropertiesPanel
                     block={selectedBlock}
                     onUpdateSettings={updateBlockSettings}
                     onDelete={deleteBlock}
+                    onClose={() => setPropsPanelOpen(false)}
                   />
                 </div>
               </>
@@ -275,12 +290,12 @@ export default function Editor({ storeId, storeName, storeSlug, storeStatus = 'd
         )}
       </div>
 
-      {/* ── BOUTONS FLOTTANTS MOBILE ── pour ouvrir sidebar / propriétés ── */}
-      <div className="md:hidden fixed bottom-4 right-4 z-30 flex flex-col gap-2">
+      {/* ── BOUTONS FLOTTANTS ── pour ouvrir sidebar (mobile) / propriétés (sous xl) ── */}
+      <div className="fixed bottom-4 right-4 z-30 flex flex-col gap-2">
         {selectedBlock && (
           <button
             onClick={() => setPropsPanelOpen(!propsPanelOpen)}
-            className="w-12 h-12 bg-white rounded-full shadow-lg border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors"
+            className="xl:hidden w-12 h-12 bg-white rounded-full shadow-lg border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors"
             title="Propriétés"
           >
             <Settings2 size={20} />
@@ -288,7 +303,7 @@ export default function Editor({ storeId, storeName, storeSlug, storeStatus = 'd
         )}
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="w-12 h-12 bg-white rounded-full shadow-lg border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors"
+          className="md:hidden w-12 h-12 bg-white rounded-full shadow-lg border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors"
           title="Sections"
         >
           <PanelLeft size={20} />

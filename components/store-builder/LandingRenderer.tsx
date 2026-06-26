@@ -126,7 +126,8 @@ export default function LandingRenderer({
       <div
         className="landing-card"
         style={{
-          maxWidth: 960,
+          maxWidth: 1100,
+          width: '100%',
           margin: '0 auto',
           minHeight: '100vh',
           background: cardBg,
@@ -140,8 +141,10 @@ export default function LandingRenderer({
           <div key={block.id}>{renderBlock(block, product, storeId)}</div>
         ))}
 
-        {/* ── CORPS : flux vertical ── Largeur contenu ~480px centrée dans la carte. */}
-        <main style={{ maxWidth: 540, margin: '0 auto', background: cardBg, paddingBottom: showFloating ? 90 : 24 }}>
+        {/* ── CORPS : flux vertical ──
+            Largeur contenu responsive : ~720px sur desktop (comme Deal224),
+            pleine largeur sur mobile. Centrée dans la carte. */}
+        <main style={{ maxWidth: 720, width: '100%', margin: '0 auto', background: cardBg, paddingBottom: showFloating ? 90 : 24 }}>
           {template.map((block) => (
             <div key={block.id}>{renderBlock(block, product, storeId)}</div>
           ))}
@@ -172,7 +175,7 @@ export default function LandingRenderer({
             style={{
               display: 'block',
               width: '100%',
-              maxWidth: 540,
+              maxWidth: 720,
               margin: '0 auto',
               padding: '16px',
               background: accent,

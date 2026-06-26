@@ -68,6 +68,18 @@ body {
 /* Prevent full-width tables from stretching modal */
 table { min-width: max-content; }
 
+/* ── Store Builder Drawer Animations ── */
+@keyframes drawer-slide-left {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+@keyframes drawer-slide-right {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+.animate-drawer-left  { animation: drawer-slide-left  0.3s cubic-bezier(0.32, 0.72, 0, 1) both; }
+.animate-drawer-right { animation: drawer-slide-right 0.3s cubic-bezier(0.32, 0.72, 0, 1) both; }
+
 /* Facebook Ads Preview iframe container */
 .preview-container iframe {
   width: 100% !important;

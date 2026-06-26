@@ -146,11 +146,11 @@ export default function Canvas({
             </div>
           </div>
         ) : (
-          // ── CADRE DESKTOP (large) ── Le main est centré (largeur téléphone)
-          // comme Deal224 : tout le contenu reste centré et propre même sur grand écran.
+          // ── CADRE DESKTOP (large) ── Le main est centré (largeur contenu ~720px)
+          // pour matcher la page publique (WYSIWYG). La carte fait max 1100px.
           <div className="w-full max-w-[1100px] rounded-2xl overflow-hidden shadow-2xl border border-gray-200" style={{ background: bg }}>
             {data.header.map((block) => renderWrapped(block))}
-            <main style={{ maxWidth: 480, margin: '0 auto', background: bg }}>
+            <main style={{ maxWidth: 720, width: '100%', margin: '0 auto', background: bg }}>
               {data.template.map((block) => renderWrapped(block))}
             </main>
             {data.footer.map((block) => renderWrapped(block))}

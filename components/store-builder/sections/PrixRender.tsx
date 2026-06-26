@@ -10,12 +10,12 @@ export default function PrixRender({ settings, product }: { settings: any; produ
       ? Math.round((1 - Number(product.price) / Number(rawCompare)) * 100)
       : null
 
-  const priceSize = s.price_font_size ? `${s.price_font_size}px` : '24px'
-  const compareSize = s.compare_font_size ? `${s.compare_font_size}px` : '14px'
+  const priceSize = s.price_font_size ? `${s.price_font_size}px` : '28px'
+  const compareSize = s.compare_font_size ? `${s.compare_font_size}px` : '15px'
 
   return (
-    <div className="px-4 py-2 flex items-center gap-2.5 flex-wrap">
-      <span className="font-black" style={{ fontFamily: s.price_font || 'inherit', color: s.price_color || '#111827', fontSize: priceSize, fontWeight: s.price_weight || 800 }}>
+    <div className="px-5 py-3 flex items-center gap-2.5 flex-wrap">
+      <span className="font-black" style={{ fontFamily: s.price_font || 'inherit', color: s.price_color || '#111827', fontSize: priceSize, fontWeight: s.price_weight || 900 }}>
         {price}
       </span>
       {comparePrice && (

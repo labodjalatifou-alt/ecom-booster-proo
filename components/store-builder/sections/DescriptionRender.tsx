@@ -13,9 +13,9 @@ export default function DescriptionRender({ settings, product }: { settings: any
   }
 
   return (
-    <div className="px-4 py-6">
+    <div className="px-5 py-6">
       <div
-        className="prose prose-sm max-w-none leading-relaxed [&_img]:rounded-2xl [&_img]:my-4 [&_img]:shadow-sm [&_p]:mb-4 [&_h1]:font-black [&_h1]:text-lg [&_h2]:font-bold [&_h2]:text-base [&_h3]:font-bold [&_h3]:text-sm [&_h1]:mb-3 [&_h2]:mb-3 [&_h3]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:mb-1"
+        className="prose prose-sm max-w-none leading-relaxed text-[15px] [&_img]:rounded-2xl [&_img]:my-4 [&_img]:shadow-sm [&_p]:mb-4 [&_h1]:font-black [&_h1]:text-lg [&_h2]:font-bold [&_h2]:text-base [&_h3]:font-bold [&_h3]:text-sm [&_h1]:mb-3 [&_h2]:mb-3 [&_h3]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:mb-1"
         style={{ color: s.text_color || '#4b5563' }}
         dangerouslySetInnerHTML={{ __html: content }}
       />
