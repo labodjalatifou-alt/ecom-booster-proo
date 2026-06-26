@@ -11,23 +11,25 @@ export default function BenefitsRender({ settings }: { settings: any }) {
 
   return (
     <div 
-      className="w-full py-16 px-4"
+      className="w-full py-10 px-4"
       style={{ backgroundColor: s.bg_color || 'var(--color-bg)' }}
     >
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-md mx-auto">
         {s.title && (
-          <h2 className="text-2xl md:text-3xl font-black text-center mb-12 tracking-tight" style={{ color: 'var(--color-text)' }}>
+          <h2 className="text-xl font-black text-center mb-8 tracking-tight" style={{ color: 'var(--color-text)' }}>
             {s.title}
           </h2>
         )}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {items.map((item: any) => (
-            <div key={item.id} className="flex flex-col items-center text-center p-4">
-              <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center text-3xl mb-4 shadow-sm border border-gray-100 transition-transform hover:-translate-y-1">
+            <div key={item.id} className="flex items-center gap-3 p-3 rounded-xl" style={{ backgroundColor: 'rgba(255,255,255,0.6)' }}>
+              <div className="w-12 h-12 flex-shrink-0 bg-gray-50 rounded-xl flex items-center justify-center text-2xl shadow-sm border border-gray-100">
                 {item.icon}
               </div>
-              <h3 className="font-bold text-gray-900 mb-2">{item.title}</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">{item.text}</p>
+              <div className="min-w-0">
+                <h3 className="font-bold text-gray-900 text-sm leading-tight">{item.title}</h3>
+                <p className="text-xs text-gray-500 leading-snug mt-0.5">{item.text}</p>
+              </div>
             </div>
           ))}
         </div>

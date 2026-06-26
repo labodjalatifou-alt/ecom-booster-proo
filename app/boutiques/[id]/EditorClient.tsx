@@ -14,14 +14,20 @@ const Editor = dynamic(() => import('@/components/store-builder/Editor'), {
 
 interface EditorClientProps {
     storeId: string
+    storeName?: string
+    storeSlug?: string
+    storeStatus?: string
     initialData: any
     products?: any[]
 }
 
-export default function EditorClient({ storeId, initialData, products }: EditorClientProps) {
+export default function EditorClient({ storeId, storeName, storeSlug, storeStatus, initialData, products }: EditorClientProps) {
     return (
         <Editor
             storeId={storeId}
+            storeName={storeName}
+            storeSlug={storeSlug}
+            storeStatus={storeStatus}
             initialData={initialData}
             products={products}
         />

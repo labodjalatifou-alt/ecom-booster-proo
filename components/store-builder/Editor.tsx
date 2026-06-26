@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { X, PanelLeft, Settings2 } from 'lucide-react'
 import Toolbar from './Toolbar'
 import SidebarLeft from './SidebarLeft'
 import Canvas from './Canvas'
@@ -20,36 +21,43 @@ export interface EditorData {
   template: EditorBlock[]
   footer: EditorBlock[]
   themeSettings?: Record<string, any>
+  selectedProductId?: string | null
 }
 
 interface EditorProps {
   storeId: string
   storeName?: string
+  storeSlug?: string
+  storeStatus?: string
   initialData: EditorData
   products?: any[]
 }
 
-export default function Editor({ storeId, storeName, initialData, products }: EditorProps) {
+export default function Editor({ storeId, storeName, storeSlug, storeStatus = 'draft', initialData, products }: EditorProps) {
   const supabase = createClient()
   const [data, setData] = useState<EditorData>(initialData)
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'sections' | 'theme_settings'>('sections')
-  const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop')
+  const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('mobile')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(true)
+  const [status, setStatus] = useState(storeStatus)
   const [selectedProductId, setSelectedProductId] = useState<string | null>(
-    products && products.length > 0 ? products[0].id : null
+    initialData?.selectedProductId || (products && products.length > 0 ? products[0].id : null)
   )
   const saveTimer = useRef<NodeJS.Timeout | null>(null)
 
-  // Initialiser les paramètres de thème si absents — thème par défaut : Rose & Doré
+  // ── Mobile drawer state ──
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [propsPanelOpen, setPropsPanelOpen] = useState(false)
+
+  // Initialiser les paramètres de thème si absents
   const [themeSettings, setThemeSettings] = useState<Record<string, any>>(initialData.themeSettings || {
     primaryColor: '#E8527A',
     secondaryColor: '#FFF8F3',
     backgroundColor: '#FFF8F3',
     textColor: '#3A2A2E',
     fontFamily: 'Plus Jakarta Sans',
-    // Nouvelles clés thème (rétrocompatibles — s'ajoutent sans casser l'existant)
     textSoftColor: '#7A6469',
     accentDeep: '#C23A5E',
     gold: '#C9A24B',
@@ -61,6 +69,11 @@ export default function Editor({ storeId, storeName, initialData, products }: Ed
   const allBlocks = [...data.header, ...data.template, ...data.footer]
   const selectedBlock = allBlocks.find(b => b.id === selectedBlockId) || null
 
+  // Quand un bloc est sélectionné, ouvrir le panneau propriétés sur mobile
+  useEffect(() => {
+    if (selectedBlockId) setPropsPanelOpen(true)
+  }, [selectedBlockId])
+
   // Marquer comme non sauvegardé à chaque changement
   useEffect(() => {
     setSaved(false)
@@ -69,12 +82,12 @@ export default function Editor({ storeId, storeName, initialData, products }: Ed
       handleSave()
     }, 30000)
     return () => { if (saveTimer.current) clearTimeout(saveTimer.current) }
-  }, [data])
+  }, [data, themeSettings, selectedProductId])
 
   // Sauvegarder dans Supabase
   async function handleSave() {
     setSaving(true)
-    const dataToSave = { ...data, themeSettings }
+    const dataToSave = { ...data, themeSettings, selectedProductId }
     await supabase
       .from('store_pages')
       .update({ builder_json: dataToSave, updated_at: new Date().toISOString() })
@@ -83,6 +96,25 @@ export default function Editor({ storeId, storeName, initialData, products }: Ed
     setSaving(false)
     setSaved(true)
   }
+
+  // Publier / mettre en pause la boutique → met à jour stores.status
+  // et store_pages.is_published. Sauvegarde aussi le builder au passage.
+  const handlePublish = useCallback(async (nextStatus: 'published' | 'paused') => {
+    // 1) Sauvegarder le builder d'abord (pour ne pas perdre les modifs en cours)
+    setSaving(true)
+    const dataToSave = { ...data, themeSettings, selectedProductId }
+    await supabase
+      .from('store_pages')
+      .update({ builder_json: dataToSave, is_published: nextStatus === 'published', updated_at: new Date().toISOString() })
+      .eq('store_id', storeId)
+      .eq('slug', 'home')
+    setSaving(false)
+
+    // 2) Mettre à jour le statut de la boutique
+    await supabase.from('stores').update({ status: nextStatus }).eq('id', storeId)
+    setStatus(nextStatus)
+    setSaved(true)
+  }, [data, themeSettings, selectedProductId, storeId, supabase])
 
   // Mettre à jour les settings d'un bloc
   const updateBlockSettings = useCallback((blockId: string, newSettings: Record<string, any>) => {
@@ -117,6 +149,7 @@ export default function Editor({ storeId, storeName, initialData, products }: Ed
       template: prev.template.filter(b => b.id !== blockId),
     }))
     setSelectedBlockId(null)
+    setPropsPanelOpen(false)
   }, [])
 
   // Ajouter un bloc au template
@@ -135,9 +168,11 @@ export default function Editor({ storeId, storeName, initialData, products }: Ed
     setSelectedBlockId(newBlock.id)
   }, [])
 
-  // Réordonner les blocs du template
+  // Réordonner les blocs du template (avec garde-fou contre les index hors limites)
   const reorderBlocks = useCallback((fromIndex: number, toIndex: number) => {
     setData(prev => {
+      const len = prev.template.length
+      if (toIndex < 0 || toIndex >= len || fromIndex < 0 || fromIndex >= len) return prev
       const newTemplate = [...prev.template]
       const [moved] = newTemplate.splice(fromIndex, 1)
       newTemplate.splice(toIndex, 0, moved)
@@ -150,26 +185,57 @@ export default function Editor({ storeId, storeName, initialData, products }: Ed
       <Toolbar
         storeName={storeName || 'Ma Boutique'}
         storeId={storeId}
+        storeSlug={storeSlug}
+        storeStatus={status}
         previewMode={previewMode}
         onPreviewModeChange={setPreviewMode}
         onSave={handleSave}
         saving={saving}
         saved={saved}
+        onPublish={handlePublish}
       />
-      <div className="flex flex-1 overflow-hidden">
-        <SidebarLeft
-          data={data}
-          selectedBlockId={selectedBlockId}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          onSelectBlock={setSelectedBlockId}
-          onToggleVisibility={toggleBlockVisibility}
-          onDeleteBlock={deleteBlock}
-          onAddBlock={addBlock}
-          onReorder={reorderBlocks}
-          themeSettings={themeSettings}
-          onUpdateThemeSettings={setThemeSettings}
-        />
+      <div className="flex flex-1 min-h-0 overflow-hidden relative">
+
+        {/* ── SIDEBAR GAUCHE ── Desktop: fixe | Mobile: drawer overlay ── */}
+        {/* Desktop (md+) */}
+        <div className="hidden md:block flex-shrink-0">
+          <SidebarLeft
+            data={data}
+            selectedBlockId={selectedBlockId}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            onSelectBlock={(id) => { setSelectedBlockId(id); setSidebarOpen(false) }}
+            onToggleVisibility={toggleBlockVisibility}
+            onDeleteBlock={deleteBlock}
+            onAddBlock={addBlock}
+            onReorder={reorderBlocks}
+            themeSettings={themeSettings}
+            onUpdateThemeSettings={setThemeSettings}
+          />
+        </div>
+        {/* Mobile: overlay drawer */}
+        {sidebarOpen && (
+          <>
+            <div className="fixed inset-0 z-40 bg-black/40 md:hidden" onClick={() => setSidebarOpen(false)} />
+            <div className="fixed inset-y-0 left-0 z-50 w-[300px] md:hidden">
+              <SidebarLeft
+                data={data}
+                selectedBlockId={selectedBlockId}
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
+                onSelectBlock={(id) => { setSelectedBlockId(id); setSidebarOpen(false) }}
+                onToggleVisibility={toggleBlockVisibility}
+                onDeleteBlock={deleteBlock}
+                onAddBlock={addBlock}
+                onReorder={reorderBlocks}
+                themeSettings={themeSettings}
+                onUpdateThemeSettings={setThemeSettings}
+              />
+            </div>
+          </>
+        )}
+
+        {/* ── CANVAS (centre) ── */}
         <Canvas
           data={data}
           selectedBlockId={selectedBlockId}
@@ -180,13 +246,53 @@ export default function Editor({ storeId, storeName, initialData, products }: Ed
           onProductChange={setSelectedProductId}
           themeSettings={themeSettings}
         />
+
+        {/* ── PANNEAU PROPRIÉTÉS ── Desktop: fixe | Mobile: drawer overlay ── */}
         {selectedBlockId && (
-          <PropertiesPanel
-            block={selectedBlock}
-            onUpdateSettings={updateBlockSettings}
-            onDelete={deleteBlock}
-          />
+          <>
+            {/* Desktop (lg+) */}
+            <div className="hidden lg:block flex-shrink-0">
+              <PropertiesPanel
+                block={selectedBlock}
+                onUpdateSettings={updateBlockSettings}
+                onDelete={deleteBlock}
+              />
+            </div>
+            {/* Mobile/tablet: overlay drawer */}
+            {propsPanelOpen && (
+              <>
+                <div className="fixed inset-0 z-40 bg-black/40 lg:hidden" onClick={() => setPropsPanelOpen(false)} />
+                <div className="fixed inset-y-0 right-0 z-50 w-[300px] lg:hidden">
+                  <PropertiesPanel
+                    block={selectedBlock}
+                    onUpdateSettings={updateBlockSettings}
+                    onDelete={deleteBlock}
+                  />
+                </div>
+              </>
+            )}
+          </>
         )}
+      </div>
+
+      {/* ── BOUTONS FLOTTANTS MOBILE ── pour ouvrir sidebar / propriétés ── */}
+      <div className="md:hidden fixed bottom-4 right-4 z-30 flex flex-col gap-2">
+        {selectedBlock && (
+          <button
+            onClick={() => setPropsPanelOpen(!propsPanelOpen)}
+            className="w-12 h-12 bg-white rounded-full shadow-lg border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors"
+            title="Propriétés"
+          >
+            <Settings2 size={20} />
+          </button>
+        )}
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="w-12 h-12 bg-white rounded-full shadow-lg border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors"
+          title="Sections"
+        >
+          <PanelLeft size={20} />
+        </button>
       </div>
     </div>
   )

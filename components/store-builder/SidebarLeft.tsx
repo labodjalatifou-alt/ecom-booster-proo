@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Eye, EyeOff, MoreVertical, GripVertical, Plus, Trash2, Edit3, X, Palette, LayoutTemplate } from 'lucide-react'
+import { Eye, EyeOff, MoreVertical, Plus, Trash2, Edit3, X, Palette, LayoutTemplate, ChevronUp, ChevronDown, GripVertical } from 'lucide-react'
+import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd'
 import type { EditorData, EditorBlock } from './Editor'
 import ColorField from './fields/ColorField'
 import SelectField from './fields/SelectField'
@@ -22,6 +23,12 @@ interface SidebarLeftProps {
 }
 
 const CATALOG_CATEGORIES = [
+  {
+    title: '🖼️ Produit',
+    items: [
+      { type: 'Galerie', title: 'Galerie d\'images', defaultSettings: {} },
+    ]
+  },
   {
     title: '⏱️ Urgence & Marketing',
     items: [
@@ -104,15 +111,28 @@ export default function SidebarLeft({
         }`}
         onClick={() => onSelectBlock(block.id)}
       >
-        <div className="flex items-center gap-2 overflow-hidden">
-          {type === 'template' && (
-            <button className="text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing p-0.5"
-              onClick={(e) => { e.stopPropagation(); /* Implementing actual drag/drop is complex here, we'll assume a basic layout */ }}
-            >
-              <GripVertical size={14} />
-            </button>
+        <div className="flex items-center gap-1 overflow-hidden">
+          {type === 'template' && index !== undefined && (
+            <div className="flex flex-col flex-shrink-0">
+              <button
+                className="text-gray-300 hover:text-blue-600 disabled:opacity-20 disabled:hover:text-gray-300 p-0 leading-none"
+                disabled={index === 0}
+                onClick={(e) => { e.stopPropagation(); onReorder(index, index - 1) }}
+                title="Monter"
+              >
+                <ChevronUp size={15} />
+              </button>
+              <button
+                className="text-gray-300 hover:text-blue-600 disabled:opacity-20 disabled:hover:text-gray-300 p-0 leading-none"
+                disabled={index === (data.template.length - 1)}
+                onClick={(e) => { e.stopPropagation(); onReorder(index, index + 1) }}
+                title="Descendre"
+              >
+                <ChevronDown size={15} />
+              </button>
+            </div>
           )}
-          
+
           <button 
             className={`text-gray-400 hover:text-gray-700 p-1 ${block.hidden ? 'text-gray-300' : ''}`}
             onClick={(e) => { e.stopPropagation(); onToggleVisibility(block.id) }}
@@ -213,14 +233,44 @@ export default function SidebarLeft({
           </div>
         </div>
 
-        {/* TEMPLATE */}
+        {/* TEMPLATE — Glisser-déposer réel */}
         <div className="mb-6">
-          <h3 className="text-xs font-semibold text-gray-400 mb-2 px-2 uppercase tracking-wide">Modèle</h3>
-          <div>
-            {data.template.map((block, index) => (
-              <BlockItem key={block.id} block={block} type="template" index={index} />
-            ))}
-          </div>
+          <h3 className="text-xs font-semibold text-gray-400 mb-2 px-2 uppercase tracking-wide flex items-center gap-1.5">
+            <GripVertical size={12} /> Modèle (glisser pour réordonner)
+          </h3>
+          <DragDropContext onDragEnd={(result: DropResult) => {
+            if (!result.destination || result.destination.index === result.source.index) return
+            onReorder(result.source.index, result.destination.index)
+          }}>
+            <Droppable droppableId="template-list">
+              {(provided) => (
+                <div ref={provided.innerRef} {...provided.droppableProps}>
+                  {data.template.map((block, index) => (
+                    <Draggable key={block.id} draggableId={block.id} index={index}>
+                      {(drag, snap) => (
+                        <div
+                          ref={drag.innerRef}
+                          {...drag.draggableProps}
+                          style={{
+                            ...drag.draggableProps.style,
+                            marginBottom: 4,
+                            boxShadow: snap.isDragging ? '0 8px 20px rgba(0,0,0,.15)' : 'none',
+                            borderRadius: 6,
+                          }}
+                        >
+                          {/* Poignée de glissement sur tout le BlockItem */}
+                          <div {...drag.dragHandleProps} className="block">
+                            <BlockItem block={block} type="template" index={index} />
+                          </div>
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
         </div>
 
         {/* FOOTER */}

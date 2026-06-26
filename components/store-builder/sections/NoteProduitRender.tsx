@@ -7,8 +7,8 @@ export default function NoteProduitRender({ settings }: { settings: any }) {
   const starColor = s.star_color || '#facc15'
 
   return (
-    <div className="flex items-center gap-2 mb-3">
-      <div className="flex">
+    <div className="flex items-center gap-2 px-4 py-1.5">
+      <div className="flex gap-0.5">
         {Array.from({ length: 5 }).map((_, i) => (
           <svg
             key={i}
@@ -26,6 +26,7 @@ export default function NoteProduitRender({ settings }: { settings: any }) {
       <span className="text-sm font-medium" style={{ color: s.text_color || '#6b7280' }}>
         {s.reviews_count || '128 avis'}
       </span>
+      <span className="text-sm text-green-600 font-semibold">· Achat vérifié</span>
     </div>
   )
 }

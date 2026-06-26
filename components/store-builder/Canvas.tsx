@@ -2,32 +2,7 @@
 
 import React from 'react'
 import type { EditorData, EditorBlock } from './Editor'
-import AnnouncementBarRender from './sections/AnnouncementBarRender'
-import HeaderRender from './sections/HeaderRender'
-import MediasRender from './sections/MediasRender'
-import CountdownRender from './sections/CountdownRender'
-import TestimonialsRender from './sections/TestimonialsRender'
-import TestimonialsFloatingRender from './sections/TestimonialsFloatingRender'
-import BenefitsRender from './sections/BenefitsRender'
-import BeforeAfterRender from './sections/BeforeAfterRender'
-import ComparisonRender from './sections/ComparisonRender'
-import StatsRender from './sections/StatsRender'
-import FaqRender from './sections/FaqRender'
-import GuaranteesRender from './sections/GuaranteesRender'
-import TrustBarRender from './sections/TrustBarRender'
-import StockUrgencyRender from './sections/StockUrgencyRender'
-import MarqueeRender from './sections/MarqueeRender'
-import ImageTextRender from './sections/ImageTextRender'
-import VideoRender from './sections/VideoRender'
-import FooterRender from './sections/FooterRender'
-import TextBlockRender from './sections/TextBlockRender'
-import TitreRender from './sections/TitreRender'
-import NoteProduitRender from './sections/NoteProduitRender'
-import PrixRender from './sections/PrixRender'
-import DescriptionRender from './sections/DescriptionRender'
-import OrderFormRender from './sections/OrderFormRender'
-import ProductSectionRender from './sections/ProductSectionRender'
-import CountdownTopBarRender from './sections/CountdownTopBarRender'
+import { renderBlock } from '@/lib/store-builder/renderBlock'
 
 interface CanvasProps {
   data: EditorData
@@ -54,15 +29,16 @@ export default function Canvas({
     ? products?.find((p) => p.id === selectedProductId) || products?.[0]
     : products?.[0] || null
 
+  // Wrapper d'édition : sélection + label au survol, cliquable.
   const BlockWrapper = ({ block, children }: { block: EditorBlock; children: React.ReactNode }) => {
     if (block.hidden) return null
     const isSelected = selectedBlockId === block.id
     return (
       <div
-        className={`relative group cursor-pointer transition-shadow ${
+        className={`relative group cursor-pointer transition-all ${
           isSelected
-            ? 'ring-2 ring-indigo-500 ring-offset-2 ring-offset-white'
-            : 'hover:outline hover:outline-2 hover:outline-dashed hover:outline-indigo-300 hover:outline-offset-2'
+            ? 'outline outline-2 outline-indigo-500 outline-offset-[-2px]'
+            : 'hover:outline hover:outline-1 hover:outline-indigo-300 hover:outline-offset-[-1px]'
         }`}
         onClick={(e) => {
           e.stopPropagation()
@@ -70,7 +46,7 @@ export default function Canvas({
         }}
       >
         <div
-          className={`absolute -top-6 left-0 bg-indigo-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-t-md z-50 transition-opacity ${
+          className={`absolute top-0 left-0 bg-indigo-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-br-md z-50 transition-opacity ${
             isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
           }`}
         >
@@ -81,102 +57,20 @@ export default function Canvas({
     )
   }
 
-  const renderBlockContent = (block: EditorBlock) => {
-    switch (block.type) {
-      case 'AnnouncementBar':
-      case 'announcement_bar':
-        return <AnnouncementBarRender settings={block.settings} />
-      case 'Header':
-      case 'header':
-        return <HeaderRender settings={block.settings} />
-      case 'countdown':
-        return <CountdownRender settings={block.settings} />
-      case 'testimonials':
-        return <TestimonialsRender settings={block.settings} />
-      case 'testimonials_floating':
-        return <TestimonialsFloatingRender settings={block.settings} />
-      case 'benefits':
-      case 'icon_grid':
-        return <BenefitsRender settings={block.settings} />
-      case 'before_after':
-        return <BeforeAfterRender settings={block.settings} />
-      case 'comparison':
-      case 'comparison_table':
-        return <ComparisonRender settings={block.settings} />
-      case 'stats':
-        return <StatsRender settings={block.settings} />
-      case 'faq':
-        return <FaqRender settings={block.settings} />
-      case 'guarantees':
-        return <GuaranteesRender settings={block.settings} />
-      case 'trust_bar':
-        return <TrustBarRender settings={block.settings} />
-      case 'stock_urgency':
-        return <StockUrgencyRender settings={block.settings} />
-      case 'marquee':
-        return <MarqueeRender settings={block.settings} />
-      case 'image_text':
-      case 'image_with_text':
-        return <ImageTextRender settings={block.settings} />
-      case 'video':
-        return <VideoRender settings={block.settings} />
-      case 'text_block':
-        return <TextBlockRender settings={block.settings} />
-      case 'spacer':
-        return <div style={{ height: block.settings?.height || 48 }} />
-      case 'Footer':
-      case 'footer':
-        return <FooterRender settings={block.settings} />
-
-      // Product info blocks
-      case 'Titre':
-        return <TitreRender settings={block.settings} product={product} />
-      case 'Note de produit':
-        return <NoteProduitRender settings={block.settings} />
-      case 'Prix':
-        return <PrixRender settings={block.settings} product={product} />
-      case 'Description':
-        return <DescriptionRender settings={block.settings} product={product} />
-      case 'OrderForm':
-      case 'order_form':
-        return <OrderFormRender settings={block.settings} />
-
-      case 'countdown_top_bar':
-        return <CountdownTopBarRender settings={block.settings} />
-
-      default:
-        return (
-          <div className="p-8 my-4 bg-indigo-50 text-indigo-500 rounded-3xl border-2 border-dashed border-indigo-200 flex flex-col items-center justify-center text-center">
-            <span className="font-bold mb-1">{block.type}</span>
-            <span className="text-sm opacity-80">Section en construction</span>
-          </div>
-        )
-    }
-  }
-
-  const PRODUCT_BLOCK_TYPES = ['Titre', 'Note de produit', 'Prix', 'Description']
-  const productBlocks = data.template.filter((b) => PRODUCT_BLOCK_TYPES.includes(b.type))
-  const sectionBlocks = data.template.filter((b) => !PRODUCT_BLOCK_TYPES.includes(b.type))
+  const renderWrapped = (block: EditorBlock) => (
+    <BlockWrapper key={block.id} block={block}>
+      {renderBlock(block, product)}
+    </BlockWrapper>
+  )
 
   if (!product) {
     return (
-      <div
-        className="flex-1 bg-[#eceef1] flex items-center justify-center p-8 relative"
-        onClick={() => onSelectBlock('')}
-      >
-        <div
-          className="bg-white p-10 rounded-3xl shadow-sm text-center max-w-md w-full"
-          onClick={(e) => e.stopPropagation()}
-        >
+      <div className="flex-1 min-h-0 min-w-0 bg-[#eceef1] flex items-center justify-center p-8" onClick={() => onSelectBlock('')}>
+        <div className="bg-white p-10 rounded-3xl shadow-sm text-center max-w-md w-full" onClick={(e) => e.stopPropagation()}>
           <div className="text-5xl mb-4">📦</div>
           <h2 className="text-xl font-bold text-gray-800 mb-2">Aucun produit trouvé</h2>
-          <p className="text-gray-500 text-sm mb-6">
-            Créez d'abord un produit pour prévisualiser votre boutique.
-          </p>
-          <a
-            href="/produits/nouveau"
-            className="inline-flex items-center gap-2 px-5 py-3 bg-indigo-600 text-white rounded-xl font-semibold text-sm hover:bg-indigo-700 transition"
-          >
+          <p className="text-gray-500 text-sm mb-6">Créez d'abord un produit pour prévisualiser votre boutique.</p>
+          <a href="/produits/ajouter" className="inline-flex items-center gap-2 px-5 py-3 bg-indigo-600 text-white rounded-xl font-semibold text-sm hover:bg-indigo-700 transition">
             + Créer un produit
           </a>
         </div>
@@ -184,107 +78,92 @@ export default function Canvas({
     )
   }
 
+  const accent = themeSettings?.primaryColor || '#6366f1'
+  const bg = themeSettings?.backgroundColor || '#ffffff'
+  const text = themeSettings?.textColor || '#111827'
+
   return (
     <div
-      className="flex-1 bg-[#eceef1] overflow-y-auto p-4 flex flex-col items-center custom-scrollbar relative"
+      className="flex-1 min-h-0 min-w-0 bg-[#e9ebef] overflow-y-auto overflow-x-hidden"
       onClick={() => onSelectBlock('')}
       style={{
-        // Allow theme settings to propagate via CSS vars
-        '--color-primary': themeSettings?.primaryColor || '#6366f1',
+        '--color-primary': accent,
         '--color-secondary': themeSettings?.secondaryColor || '#f3f4f6',
-        '--color-bg': themeSettings?.backgroundColor || '#ffffff',
-        '--color-text': themeSettings?.textColor || '#111827',
+        '--color-bg': bg,
+        '--color-text': text,
         fontFamily: themeSettings?.fontFamily || 'Inter, sans-serif',
       } as React.CSSProperties}
     >
-      {/* Product selector bar */}
-      {products && products.length > 1 && onProductChange && (
-        <div
-          className="w-full max-w-[1400px] mb-3 flex items-center gap-3 bg-white rounded-2xl px-4 py-2.5 shadow-sm border border-gray-200"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <span className="text-xs font-semibold text-gray-500 whitespace-nowrap">Produit affiché :</span>
-          <div className="flex gap-2 overflow-x-auto pb-0.5 flex-1">
-            {products.map((p) => {
-              const isActive = (selectedProductId || products[0]?.id) === p.id
-              return (
-                <button
-                  key={p.id}
-                  onClick={() => onProductChange(p.id)}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex-shrink-0 ${
-                    isActive
-                      ? 'bg-indigo-600 text-white shadow'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  {p.image_url || p.images?.[0] ? (
-                    <img src={p.image_url || p.images[0]} alt="" className="w-5 h-5 rounded object-cover flex-shrink-0" />
-                  ) : (
-                    <span>📦</span>
-                  )}
-                  <span className="max-w-[120px] truncate">{p.title || p.name}</span>
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      )}
-      <div
-        className={`bg-white shadow-xl transition-all duration-300 relative overflow-hidden ${
-          previewMode === 'mobile'
-            ? 'w-[390px] rounded-[2.5rem] border-[8px] border-gray-900 my-4'
-            : 'w-full max-w-[1400px] min-h-full rounded-2xl'
-        }`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* HEADER */}
-        {data.header.map((block) => (
-          <BlockWrapper key={block.id} block={block}>
-            {renderBlockContent(block)}
-          </BlockWrapper>
-        ))}
-
-        {/* BODY */}
-        <div className="max-w-6xl mx-auto px-4 md:px-6 py-8 md:py-12">
-          {/* Main 2-col product layout */}
-          <div className="flex flex-col md:flex-row gap-8 lg:gap-16 mb-16">
-            <div className="w-full md:w-1/2 flex-shrink-0">
-              <MediasRender
-                settings={{
-                  images: product?.images && product.images.length > 0
-                    ? product.images
-                    : product?.image_url
-                    ? [product.image_url]
-                    : [],
-                }}
-              />
-            </div>
-            <div className="w-full md:w-1/2 flex flex-col">
-              {productBlocks.map((block) => (
-                <BlockWrapper key={block.id} block={block}>
-                  {renderBlockContent(block)}
-                </BlockWrapper>
-              ))}
+      {/* Barre d'outils canvas : sélecteur de produit */}
+      <div className="sticky top-0 z-20 bg-[#e9ebef]/90 backdrop-blur px-4 py-3 border-b border-gray-200/60 flex justify-center">
+        {products && products.length > 0 && onProductChange && (
+          <div
+            className="flex items-center gap-3 bg-white rounded-xl px-4 py-2 shadow-sm border border-gray-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span className="text-xs font-semibold text-gray-500 whitespace-nowrap">Produit affiché :</span>
+            <div className="relative">
+              <select
+                value={selectedProductId || products[0]?.id || ''}
+                onChange={(e) => onProductChange(e.target.value)}
+                className="appearance-none bg-gray-50 border border-gray-200 text-gray-800 text-sm font-semibold rounded-lg pl-3 pr-8 py-1.5 outline-none hover:bg-gray-100 cursor-pointer focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all"
+              >
+                {products.map((p: any) => (
+                  <option key={p.id} value={p.id}>
+                    {p.title || p.name || 'Produit sans titre'}
+                  </option>
+                ))}
+              </select>
+              <svg className="w-4 h-4 text-gray-500 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
             </div>
           </div>
-
-          {/* Additional sections */}
-          <div className="flex flex-col gap-10 md:gap-14">
-            {sectionBlocks.map((block) => (
-              <BlockWrapper key={block.id} block={block}>
-                {renderBlockContent(block)}
-              </BlockWrapper>
-            ))}
-          </div>
-        </div>
-
-        {/* FOOTER */}
-        {data.footer.map((block) => (
-          <BlockWrapper key={block.id} block={block}>
-            {renderBlockContent(block)}
-          </BlockWrapper>
-        ))}
+        )}
       </div>
+
+      {/* ZONE D'APERÇU — grand et centré */}
+      <div className="flex justify-center px-4 py-8" onClick={(e) => e.stopPropagation()}>
+        {previewMode === 'mobile' ? (
+          // ── CADRE MOBILE (grand, bordure fine) ──
+          <div className="relative" style={{ width: 460 }}>
+            {/* Encoche */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-5 bg-gray-900 rounded-b-2xl z-30" />
+            <div className="rounded-[2.2rem] border-[6px] border-gray-800 bg-gray-800 shadow-2xl overflow-hidden">
+              {/* Barre d'état — hérite du fond */}
+              <div style={{ background: bg, color: text }} className="flex items-center justify-between px-6 pt-2 pb-1 text-[11px] font-semibold">
+                <span>9:41</span>
+                <span className="flex items-center gap-1"><span>📶</span><span>🔋</span></span>
+              </div>
+              {/* Contenu de la landing */}
+              <div style={{ background: bg }} className="overflow-hidden">
+                {data.header.map((block) => renderWrapped(block))}
+                <main style={{ background: bg }}>
+                  {data.template.map((block) => renderWrapped(block))}
+                </main>
+                {data.footer.map((block) => renderWrapped(block))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          // ── CADRE DESKTOP (large) ── Le main est centré (largeur téléphone)
+          // comme Deal224 : tout le contenu reste centré et propre même sur grand écran.
+          <div className="w-full max-w-[1100px] rounded-2xl overflow-hidden shadow-2xl border border-gray-200" style={{ background: bg }}>
+            {data.header.map((block) => renderWrapped(block))}
+            <main style={{ maxWidth: 480, margin: '0 auto', background: bg }}>
+              {data.template.map((block) => renderWrapped(block))}
+            </main>
+            {data.footer.map((block) => renderWrapped(block))}
+          </div>
+        )}
+      </div>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        .overflow-y-auto::-webkit-scrollbar { width: 10px; }
+        .overflow-y-auto::-webkit-scrollbar-track { background: transparent; }
+        .overflow-y-auto::-webkit-scrollbar-thumb { background: #c5c8cf; border-radius: 10px; border: 2px solid #e9ebef; }
+        .overflow-y-auto::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+      `}} />
     </div>
   )
 }

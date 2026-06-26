@@ -40,7 +40,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete }: P
         return (
           <>
             <TextField label="Texte de l'annonce" value={s.text} onChange={v => update('text', v)} />
-            <SliderField label="Vitesse (px/s)" value={s.speed || 30} onChange={v => update('speed', v)} min={10} max={200} />
+            <SliderField label="Vitesse (s — grand = lent)" value={s.speed ?? 18} onChange={v => update('speed', v)} min={5} max={60} />
             <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
             <ColorField label="Couleur texte" value={s.text_color} onChange={v => update('text_color', v)} />
             <ToggleField label="Bouton fermer" value={s.show_close ?? s.close_button} onChange={v => update('show_close', v)} />
@@ -62,7 +62,8 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete }: P
         return (
           <>
             <TextareaField label="Titre du produit" value={s.text} onChange={v => update('text', v)} />
-            <SelectField label="Taille" value={s.size_key || 'md'} options={['sm', 'md', 'lg']} onChange={v => update('size_key', v)} />
+            <SliderField label="Taille police (px)" value={s.font_size ?? 22} onChange={v => update('font_size', v)} min={12} max={60} />
+            <SliderField label="Épaisseur (400=fin, 900=gras)" value={s.font_weight ?? 800} onChange={v => update('font_weight', v)} min={400} max={900} step={100} />
             <SelectField label="Alignement" value={s.text_align || 'left'} options={['left', 'center', 'right']} onChange={v => update('text_align', v)} />
             <ColorField label="Couleur" value={s.color} onChange={v => update('color', v)} />
           </>
@@ -81,13 +82,14 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete }: P
         return (
           <>
             <TextField label="Prix principal (ex: 15000 FCFA)" value={s.price} onChange={v => update('price', v)} />
+            <SliderField label="Taille prix principal (px)" value={s.price_font_size ?? 24} onChange={v => update('price_font_size', v)} min={14} max={48} />
             <TextField label="Prix barré (ex: 30000 FCFA)" value={s.compare_at_price} onChange={v => update('compare_at_price', v)} />
             <ColorField label="Couleur prix" value={s.price_color} onChange={v => update('price_color', v)} />
             <ColorField label="Couleur prix barré" value={s.compare_color} onChange={v => update('compare_color', v)} />
             <ToggleField label="Afficher badge promo" value={s.show_badge !== false} onChange={v => update('show_badge', v)} />
             <TextField label="Texte badge (ex: -50%)" value={s.badge_text} onChange={v => update('badge_text', v)} />
             <ColorField label="Couleur fond badge" value={s.badge_bg} onChange={v => update('badge_bg', v)} />
-            <ColorField label="Couleur texte badge" value={s.badge_color} onChange={v => update('badge_color', v)} />
+            <ColorField label="Couleur texte badge" value={s.badge_text_color} onChange={v => update('badge_text_color', v)} />
           </>
         )
       case "Boutons d'achat":
@@ -143,16 +145,16 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete }: P
         return (
           <>
             <TextField label="Titre section" value={s.title} onChange={v => update('title', v)} />
-            <SelectField label="Mise en page" value={s.layout || 'grid'} options={['grid', 'carousel', 'masonry']} onChange={v => update('layout', v)} />
             <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
             <ItemsListField
               label="Avis clients" value={s.items} onChange={v => update('items', v)}
               itemSchema={[
                 { type: 'text', id: 'name', label: 'Nom' },
-                { type: 'text', id: 'location', label: 'Localisation' },
+                { type: 'text', id: 'location', label: 'Pays / Ville' },
                 { type: 'textarea', id: 'text', label: 'Avis' },
                 { type: 'slider', id: 'rating', label: 'Note', min: 1, max: 5 },
-                { type: 'image', id: 'image', label: 'Photo' },
+                { type: 'image', id: 'image', label: 'Photo de profil' },
+                { type: 'image', id: 'product_image', label: 'Photo du produit reçu' },
                 { type: 'toggle', id: 'verified', label: 'Vérifié' }
               ]}
             />
@@ -250,7 +252,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete }: P
         return (
           <>
             <TextField label="Texte" value={s.text} onChange={v => update('text', v)} />
-            <SliderField label="Vitesse" value={s.speed} onChange={v => update('speed', v)} min={10} max={100} />
+            <SliderField label="Vitesse (s — grand = lent)" value={s.speed ?? 20} onChange={v => update('speed', v)} min={5} max={60} />
             <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
             <ColorField label="Couleur texte" value={s.text_color} onChange={v => update('text_color', v)} />
           </>
@@ -284,14 +286,42 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete }: P
           </>
         )
       case 'order_form':
+      case 'OrderForm':
         return (
           <>
-            <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
+            <TextField label="Titre du formulaire" value={s.title} onChange={v => update('title', v)} />
             <TextField label="Texte bouton" value={s.submit_text || s.btn_text} onChange={v => update('btn_text', v)} />
             <ColorField label="Couleur bouton" value={s.submit_color || s.btn_color} onChange={v => update('btn_color', v)} />
-            <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
-            <ToggleField label="Afficher quantité" value={s.show_quantity} onChange={v => update('show_quantity', v)} />
+            <ColorField label="Couleur fond carte" value={s.bg_color} onChange={v => update('bg_color', v)} />
+            <ColorField label="Couleur bordure" value={s.border_color} onChange={v => update('border_color', v)} />
+            <ColorField label="Couleur titre" value={s.title_color} onChange={v => update('title_color', v)} />
+            <ToggleField label="Animation secousse (bouton)" value={s.shake_animation !== false} onChange={v => update('shake_animation', v)} />
           </>
+        )
+      case 'countdown_top_bar':
+        return (
+          <>
+            <TextField label="Label (ex: Offre)" value={s.label} onChange={v => update('label', v)} />
+            <TextField label="Texte réduction (ex: -50%)" value={s.discount_text} onChange={v => update('discount_text', v)} />
+            <TextField label="Suffixe (ex: se termine dans)" value={s.suffix} onChange={v => update('suffix', v)} />
+            <div className="mb-4">
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Date cible</label>
+              <input type="datetime-local" value={s.target_date ? s.target_date.slice(0, 16) : ''} onChange={e => update('target_date', new Date(e.target.value).toISOString())} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400" />
+            </div>
+            <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+            <ColorField label="Couleur texte" value={s.text_color} onChange={v => update('text_color', v)} />
+            <ColorField label="Couleur accent (réduction)" value={s.accent_color} onChange={v => update('accent_color', v)} />
+          </>
+        )
+      case 'Galerie':
+      case 'medias':
+      case 'gallery':
+        return (
+          <div className="text-sm text-gray-500 bg-blue-50 border border-blue-100 rounded-lg p-4 leading-relaxed">
+            🖼️ La galerie affiche automatiquement les images du produit sélectionné.
+            <br /><br />
+            Pour la modifier, changez les images depuis la fiche produit. Vous pouvez glisser cette section où vous voulez dans la page.
+          </div>
         )
       case 'spacer':
         return (

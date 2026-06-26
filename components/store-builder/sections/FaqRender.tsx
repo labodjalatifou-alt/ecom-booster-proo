@@ -14,40 +14,40 @@ export default function FaqRender({ settings }: { settings: any }) {
 
   return (
     <div 
-      className="w-full py-16 px-4"
+      className="w-full py-8 px-4"
       style={{ backgroundColor: s.bg_color || 'var(--color-bg)' }}
     >
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-md mx-auto">
         {s.title && (
-          <h2 className="text-2xl md:text-3xl font-black text-center mb-10 tracking-tight" style={{ color: 'var(--color-text)' }}>
+          <h2 className="text-xl font-black text-center mb-5 tracking-tight" style={{ color: 'var(--color-text)' }}>
             {s.title}
           </h2>
         )}
 
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2.5">
           {items.map((item: any) => {
             const isOpen = openId === item.id
             return (
               <div 
                 key={item.id} 
-                className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300"
+                className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300"
               >
                 <button 
                   onClick={() => setOpenId(isOpen ? null : item.id)}
-                  className="w-full px-6 py-5 flex items-center justify-between text-left focus:outline-none"
+                  className="w-full px-4 py-3.5 flex items-center justify-between text-left focus:outline-none"
                 >
-                  <span className={`font-bold text-lg ${isOpen ? 'text-blue-600' : 'text-gray-900'}`}>
+                  <span className={`font-bold text-sm ${isOpen ? 'text-blue-600' : 'text-gray-900'}`}>
                     {item.question}
                   </span>
-                  <div className={`flex-shrink-0 ml-4 w-8 h-8 rounded-full flex items-center justify-center transition-colors ${isOpen ? 'bg-blue-50 text-blue-600' : 'bg-gray-50 text-gray-400'}`}>
-                    {isOpen ? <Minus size={18} /> : <Plus size={18} />}
+                  <div className={`flex-shrink-0 ml-3 w-6 h-6 rounded-full flex items-center justify-center transition-colors ${isOpen ? 'bg-blue-50 text-blue-600' : 'bg-gray-50 text-gray-400'}`}>
+                    {isOpen ? <Minus size={14} /> : <Plus size={14} />}
                   </div>
                 </button>
                 <div 
                   className="overflow-hidden transition-all duration-300 ease-in-out"
                   style={{ maxHeight: isOpen ? '500px' : '0', opacity: isOpen ? 1 : 0 }}
                 >
-                  <div className="px-6 pb-6 pt-0 text-gray-600 leading-relaxed">
+                  <div className="px-4 pb-4 pt-0 text-gray-600 text-sm leading-relaxed">
                     {item.answer}
                   </div>
                 </div>

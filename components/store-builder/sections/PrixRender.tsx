@@ -5,23 +5,30 @@ export default function PrixRender({ settings, product }: { settings: any; produ
   const price = s.price || (product?.price ? `${Number(product.price).toLocaleString('fr-FR')} ${product?.currency || 'FCFA'}` : '15 000 FCFA')
   const rawCompare = s.compare_at_price || product?.compare_price
   const comparePrice = rawCompare ? `${Number(rawCompare).toLocaleString('fr-FR')} ${product?.currency || 'FCFA'}` : null
+  const discountPct =
+    rawCompare && product?.price && Number(rawCompare) > Number(product.price)
+      ? Math.round((1 - Number(product.price) / Number(rawCompare)) * 100)
+      : null
+
+  const priceSize = s.price_font_size ? `${s.price_font_size}px` : '24px'
+  const compareSize = s.compare_font_size ? `${s.compare_font_size}px` : '14px'
 
   return (
-    <div className="flex items-center gap-3 mb-2 flex-wrap">
-      <span className="text-3xl font-extrabold" style={{ fontFamily: s.price_font || 'inherit', color: s.price_color || '#111827' }}>
+    <div className="px-4 py-2 flex items-center gap-2.5 flex-wrap">
+      <span className="font-black" style={{ fontFamily: s.price_font || 'inherit', color: s.price_color || '#111827', fontSize: priceSize, fontWeight: s.price_weight || 800 }}>
         {price}
       </span>
       {comparePrice && (
-        <span className="text-lg line-through" style={{ color: s.compare_color || '#9ca3af' }}>
+        <span className="line-through" style={{ color: s.compare_color || '#9ca3af', fontSize: compareSize }}>
           {comparePrice}
         </span>
       )}
       {s.show_badge !== false && comparePrice && (
         <span
-          className="text-xs font-bold px-3 py-1 rounded-full"
-          style={{ backgroundColor: s.badge_bg || '#E8527A', color: s.badge_text_color || '#ffffff' }}
+          className="text-[11px] font-black px-2.5 py-1 rounded-full"
+          style={{ backgroundColor: s.badge_bg || '#dc2626', color: s.badge_text_color || '#ffffff' }}
         >
-          {s.badge_text || 'Promo'}
+          {discountPct ? `-${discountPct}%` : (s.badge_text || 'Promo')}
         </span>
       )}
     </div>

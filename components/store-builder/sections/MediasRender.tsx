@@ -16,7 +16,7 @@ export default function MediasRender({ settings }: { settings: any }) {
   }
 
   return (
-    <div className="flex flex-col gap-4 sticky top-24">
+    <div className="flex flex-col gap-3">
       {/* Image Principale */}
       <div className="w-full aspect-square bg-gray-50 rounded-2xl overflow-hidden shadow-sm border border-gray-100">
         <img 

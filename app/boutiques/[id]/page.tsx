@@ -31,6 +31,25 @@ export default async function StoreBuilderPage({ params }: { params: Promise<{ i
 
   let builderJson = storePage?.builder_json;
 
+  // ── Migrate old format { sections: [...] } → { header, template, footer } ──
+  if (builderJson && Array.isArray(builderJson.sections) && !builderJson.template) {
+    const migrated = {
+      header: [],
+      template: builderJson.sections.map((sec: any) => ({
+        id: sec.id || `${sec.type}-${Date.now()}`,
+        type: sec.type,
+        title: sec.type,
+        hidden: sec.visible === false,
+        settings: sec.props || sec.settings || {},
+      })),
+      footer: [],
+    }
+    builderJson = migrated
+    if (storePage) {
+      await supabase.from('store_pages').update({ builder_json: migrated }).eq('id', storePage.id)
+    }
+  }
+
   if (!builderJson || !builderJson.template || builderJson.template.length === 0) {
     const templateId = store.store_settings?.theme_id || 'shrine-mono-product';
     const template = STORE_TEMPLATES.find((t: any) => t.id === templateId) || STORE_TEMPLATES[0];
@@ -82,6 +101,9 @@ export default async function StoreBuilderPage({ params }: { params: Promise<{ i
   return (
     <EditorClient
       storeId={id}
+      storeName={store.name}
+      storeSlug={store.slug}
+      storeStatus={store.status}
       initialData={builderJson}
       products={products || []}
     />
