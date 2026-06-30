@@ -3,10 +3,44 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { X, PanelLeft, Settings2 } from 'lucide-react'
+import toast from 'react-hot-toast'
 import Toolbar from './Toolbar'
 import SidebarLeft from './SidebarLeft'
 import Canvas from './Canvas'
 import PropertiesPanel from './PropertiesPanel'
+import { ensureOrderFormSettings } from '@/lib/store-builder/form-presets'
+
+function hydrateEditorData(data: EditorData, products: any[] = [], productId: string | null): EditorData {
+  const product = products.find(p => p.id === productId) || products[0]
+  const unitPrice = product?.price ? Number(product.price) : 15000
+  const currency = product?.currency || 'FCFA'
+
+  const hydrateBlock = (block: EditorBlock): EditorBlock => {
+    if (block.type !== 'OrderForm' && block.type !== 'order_form') return block
+    return {
+      ...block,
+      settings: ensureOrderFormSettings(block.settings || {}, unitPrice, currency),
+    }
+  }
+
+  const header = [...(data.header || [])]
+  const hasHeader = header.some(b => b.type === 'Header' || b.type === 'header')
+  if (!hasHeader) {
+    header.unshift({
+      id: `h-header-${Date.now()}`,
+      type: 'Header',
+      title: 'En-tête',
+      hidden: false,
+      settings: { logo_position: 'center', show_cart: true, show_search: false },
+    })
+  }
+
+  return {
+    ...data,
+    header,
+    template: (data.template || []).map(hydrateBlock),
+  }
+}
 
 export interface EditorBlock {
   id: string
@@ -35,17 +69,19 @@ interface EditorProps {
 
 export default function Editor({ storeId, storeName, storeSlug, storeStatus = 'draft', initialData, products }: EditorProps) {
   const supabase = createClient()
-  const [data, setData] = useState<EditorData>(initialData)
+  const initialProductId = initialData?.selectedProductId || (products && products.length > 0 ? products[0].id : null)
+  const [data, setData] = useState<EditorData>(() => hydrateEditorData(initialData, products || [], initialProductId))
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'sections' | 'theme_settings'>('sections')
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('mobile')
+  const [themeFocusMode, setThemeFocusMode] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(true)
   const [status, setStatus] = useState(storeStatus)
-  const [selectedProductId, setSelectedProductId] = useState<string | null>(
-    initialData?.selectedProductId || (products && products.length > 0 ? products[0].id : null)
-  )
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(initialProductId)
   const saveTimer = useRef<NodeJS.Timeout | null>(null)
+  const brandingSaveTimer = useRef<NodeJS.Timeout | null>(null)
+  const isFirstRender = useRef(true)
 
   // ── Mobile drawer state ──
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -68,6 +104,7 @@ export default function Editor({ storeId, storeName, storeSlug, storeStatus = 'd
   // Trouver le bloc sélectionné dans toutes les zones
   const allBlocks = [...data.header, ...data.template, ...data.footer]
   const selectedBlock = allBlocks.find(b => b.id === selectedBlockId) || null
+  const selectedProduct = products?.find(p => p.id === selectedProductId) || products?.[0] || null
 
   // Quand un bloc est sélectionné, ouvrir le panneau propriétés sur mobile
   useEffect(() => {
@@ -84,37 +121,100 @@ export default function Editor({ storeId, storeName, storeSlug, storeStatus = 'd
     return () => { if (saveTimer.current) clearTimeout(saveTimer.current) }
   }, [data, themeSettings, selectedProductId])
 
+  // Sync logo thème → bloc Header (boutique publique)
+  useEffect(() => {
+    if (!themeSettings.logo_url?.trim()) return
+    setData(prev => ({
+      ...prev,
+      header: prev.header.map(b =>
+        (b.type === 'Header' || b.type === 'header')
+          ? {
+              ...b,
+              settings: {
+                ...b.settings,
+                logo_image: themeSettings.logo_url,
+                logo_height: themeSettings.logo_height ?? 40,
+              },
+            }
+          : b
+      ),
+    }))
+  }, [themeSettings.logo_url, themeSettings.logo_height])
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
+    }
+    if (brandingSaveTimer.current) clearTimeout(brandingSaveTimer.current)
+    brandingSaveTimer.current = setTimeout(() => {
+      handleSave()
+    }, 800)
+    return () => { if (brandingSaveTimer.current) clearTimeout(brandingSaveTimer.current) }
+  }, [themeSettings.logo_url, themeSettings.favicon_url])
+
   // Sauvegarder dans Supabase
   async function handleSave() {
     setSaving(true)
     const dataToSave = { ...data, themeSettings, selectedProductId }
-    await supabase
-      .from('store_pages')
-      .update({ builder_json: dataToSave, updated_at: new Date().toISOString() })
-      .eq('store_id', storeId)
-      .eq('slug', 'home')
-    setSaving(false)
-    setSaved(true)
+    
+    try {
+      const response = await fetch('/api/stores/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          storeId,
+          builderJson: dataToSave,
+        })
+      })
+
+      const result = await response.json()
+      if (!response.ok || result.error) {
+        throw new Error(result.error || 'Erreur inconnue')
+      }
+
+      setSaved(true)
+      toast.success('Boutique sauvegardée avec succès !')
+    } catch (err: any) {
+      console.error('[Editor Save Error]:', err)
+      toast.error(`Échec de la sauvegarde : ${err.message}`)
+    } finally {
+      setSaving(false)
+    }
   }
 
   // Publier / mettre en pause la boutique → met à jour stores.status
   // et store_pages.is_published. Sauvegarde aussi le builder au passage.
   const handlePublish = useCallback(async (nextStatus: 'published' | 'paused') => {
-    // 1) Sauvegarder le builder d'abord (pour ne pas perdre les modifs en cours)
     setSaving(true)
     const dataToSave = { ...data, themeSettings, selectedProductId }
-    await supabase
-      .from('store_pages')
-      .update({ builder_json: dataToSave, is_published: nextStatus === 'published', updated_at: new Date().toISOString() })
-      .eq('store_id', storeId)
-      .eq('slug', 'home')
-    setSaving(false)
+    
+    try {
+      const response = await fetch('/api/stores/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          storeId,
+          builderJson: dataToSave,
+          isPublished: nextStatus === 'published',
+          status: nextStatus,
+        })
+      })
 
-    // 2) Mettre à jour le statut de la boutique
-    await supabase.from('stores').update({ status: nextStatus }).eq('id', storeId)
-    setStatus(nextStatus)
-    setSaved(true)
-  }, [data, themeSettings, selectedProductId, storeId, supabase])
+      const result = await response.json()
+      if (!response.ok || result.error) {
+        throw new Error(result.error || 'Erreur inconnue')
+      }
+
+      setStatus(nextStatus)
+      setSaved(true)
+      toast.success(nextStatus === 'published' ? 'Félicitations ! Votre boutique est en ligne.' : 'Boutique mise en pause.')
+    } catch (err: any) {
+      console.error('[Editor Publish Error]:', err)
+      toast.error(`Échec de la publication : ${err.message}`)
+    } finally {
+      setSaving(false)
+    }
+  }, [data, themeSettings, selectedProductId, storeId])
 
   // Mettre à jour les settings d'un bloc
   const updateBlockSettings = useCallback((blockId: string, newSettings: Record<string, any>) => {
@@ -196,24 +296,51 @@ export default function Editor({ storeId, storeName, storeSlug, storeStatus = 'd
       />
       <div className="flex flex-1 min-h-0 overflow-hidden relative">
 
-        {/* ── SIDEBAR GAUCHE ── Desktop: fixe | Mobile: drawer overlay animé ── */}
-        {/* Desktop (md+) */}
-        <div className="hidden md:block flex-shrink-0">
-          <SidebarLeft
-            data={data}
-            selectedBlockId={selectedBlockId}
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            onSelectBlock={(id) => { setSelectedBlockId(id); setSidebarOpen(false) }}
-            onToggleVisibility={toggleBlockVisibility}
-            onDeleteBlock={deleteBlock}
-            onAddBlock={addBlock}
-            onReorder={reorderBlocks}
-            themeSettings={themeSettings}
-            onUpdateThemeSettings={setThemeSettings}
-            onClose={undefined}
-          />
-        </div>
+        {/* ── SIDEBAR GAUCHE ── masquée en mode "Personnaliser le thème" (style Shopify) ── */}
+        {!themeFocusMode && (
+          <div className="hidden md:block flex-shrink-0">
+            <SidebarLeft
+              data={data}
+              selectedBlockId={selectedBlockId}
+              activeTab={activeTab}
+              onTabChange={(tab) => {
+                setActiveTab(tab)
+                if (tab === 'theme_settings') setThemeFocusMode(true)
+              }}
+              onSelectBlock={(id) => { setSelectedBlockId(id); setSidebarOpen(false) }}
+              onToggleVisibility={toggleBlockVisibility}
+              onDeleteBlock={deleteBlock}
+              onAddBlock={addBlock}
+              onReorder={reorderBlocks}
+              themeSettings={themeSettings}
+              onUpdateThemeSettings={setThemeSettings}
+              onClose={undefined}
+            />
+          </div>
+        )}
+        {/* Mode thème plein écran : panneau thème flottant à gauche */}
+        {themeFocusMode && (
+          <div className="hidden md:block flex-shrink-0 w-[320px] animate-drawer-left">
+            <SidebarLeft
+              data={data}
+              selectedBlockId={selectedBlockId}
+              activeTab="theme_settings"
+              onTabChange={(tab) => {
+                setActiveTab(tab)
+                if (tab === 'sections') setThemeFocusMode(false)
+              }}
+              onSelectBlock={(id) => { setSelectedBlockId(id); setSidebarOpen(false) }}
+              onToggleVisibility={toggleBlockVisibility}
+              onDeleteBlock={deleteBlock}
+              onAddBlock={addBlock}
+              onReorder={reorderBlocks}
+              themeSettings={themeSettings}
+              onUpdateThemeSettings={setThemeSettings}
+              onClose={() => { setThemeFocusMode(false); setActiveTab('sections') }}
+              themeFocusMode
+            />
+          </div>
+        )}
         {/* Mobile: overlay drawer (slide-in gauche avec backdrop fade) */}
         {sidebarOpen && (
           <>
@@ -267,6 +394,7 @@ export default function Editor({ storeId, storeName, storeSlug, storeStatus = 'd
                 block={selectedBlock}
                 onUpdateSettings={updateBlockSettings}
                 onDelete={deleteBlock}
+                selectedProduct={selectedProduct}
               />
             </div>
             {/* Mobile/tablet/desktop-petit: overlay drawer (sous xl) slide-in droite */}
@@ -282,6 +410,7 @@ export default function Editor({ storeId, storeName, storeSlug, storeStatus = 'd
                     onUpdateSettings={updateBlockSettings}
                     onDelete={deleteBlock}
                     onClose={() => setPropsPanelOpen(false)}
+                    selectedProduct={selectedProduct}
                   />
                 </div>
               </>
