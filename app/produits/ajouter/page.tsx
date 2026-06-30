@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useRef, useCallback, useEffect } from 'react'
+import React, { useState, useRef, useCallback, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd'
@@ -76,7 +76,7 @@ const INITIAL: FormData = {
   seoTitre: '', seoDescription: '', seoUrl: '',
 }
 
-export default function BoutiqueEnLignePage() {
+function AddProductForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const productId = searchParams.get('id')
