@@ -5,12 +5,17 @@ import { supabase } from '@/lib/supabase';
 import { useAppSounds } from '@/lib/hooks/useAppSounds';
 import toast from 'react-hot-toast';
 import { useStore } from './StoreProvider';
+import { usePathname } from 'next/navigation';
 
 export default function RealtimeNotifications() {
   const { playSound } = useAppSounds();
   const { selectedStore } = useStore();
+  const pathname = usePathname();
+  const isPublicRoute = pathname?.startsWith('/s/') || pathname?.startsWith('/terms') || pathname?.startsWith('/privacy');
 
   useEffect(() => {
+    if (isPublicRoute) return;
+
     console.log('[Realtime] Initializing global listener with sounds...');
     
     const channel = supabase
@@ -35,8 +40,8 @@ export default function RealtimeNotifications() {
 
           // NOUVELLE COMMANDE (INSERT)
           if (payload.eventType === 'INSERT') {
-            playSound('order'); // Son Shopify
-            toast.success("Nouvelle commande Shopify !", { 
+            playSound('order'); // Son de clochette
+            toast.success("Nouvelle commande !", { 
               icon: '💰',
               duration: 6000,
               style: {

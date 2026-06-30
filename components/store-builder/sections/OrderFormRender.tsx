@@ -129,17 +129,41 @@ export default function OrderFormRender({ settings, product, storeId }: OrderFor
   }
 
   if (sent) {
+    const productImage = product?.image_url || product?.images?.[0] || 'https://placehold.co/100x100/e2e8f0/64748b?text=Produit'
+    
     return (
       <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 order-confetti-wrap" style={{ background: 'rgba(0,0,0,.6)', backdropFilter: 'blur(4px)' }}
         onClick={() => { setSent(false); setName(''); setPhone(''); setCity(''); setEmail('') }}>
-        <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 text-center anim-pop" onClick={e => e.stopPropagation()}
+        <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 text-center anim-pop" onClick={e => e.stopPropagation()}
           style={{ border: `3px solid ${colors.btn}33` }}>
-          <div className="w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: `${colors.btn}18` }}>
-            <Sparkles size={40} style={{ color: colors.btn }} />
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: `${colors.btn}18` }}>
+            <Sparkles size={32} style={{ color: colors.btn }} />
           </div>
-          <h3 className="text-xl font-black mb-2" style={{ color: colors.title }}>Commande confirmée ! 🎉</h3>
-          <p className="text-sm mb-6" style={{ color: colors.subtitle }}>Merci <b>{name}</b> ! Notre équipe vous appelle au <b>{phone}</b>.</p>
-          <button onClick={() => setSent(false)} className="w-full py-3.5 rounded-2xl font-black text-white" style={{ background: colors.btn }}>Fermer</button>
+          <h3 className="text-2xl font-black mb-1" style={{ color: colors.title }}>Merci pour votre commande ! 🎉</h3>
+          <p className="text-sm mb-6" style={{ color: colors.subtitle }}>Votre commande a été enregistrée avec succès.</p>
+
+          <div className="bg-gray-50 rounded-2xl p-4 mb-6 text-left border border-gray-100 shadow-sm">
+            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Récapitulatif de commande</h4>
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-xl overflow-hidden bg-white border border-gray-100 flex-shrink-0">
+                <img src={productImage} alt={product?.title || 'Produit'} className="w-full h-full object-cover" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-gray-800 text-sm line-clamp-2">{product?.title || 'Votre produit'}</p>
+                <p className="text-xs text-gray-500 mt-0.5">Quantité : {finalQty}</p>
+                <p className="font-black text-[15px] mt-1" style={{ color: colors.btn }}>
+                  {total.toLocaleString('fr-FR')} {currency}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-blue-50 text-blue-800 rounded-xl p-3 mb-6 text-sm flex items-start gap-3 text-left">
+             <span className="text-lg">📞</span> 
+             <p><b>{name}</b>, notre équipe va vous appeler très bientôt au <b>{phone}</b> pour confirmer la livraison. Restez joignable !</p>
+          </div>
+
+          <button onClick={() => setSent(false)} className="w-full py-3.5 rounded-2xl font-black text-white text-[15px] shadow-lg transition-transform active:scale-95" style={{ background: `linear-gradient(135deg, ${colors.btn} 0%, ${colors.accent} 100%)` }}>Fermer</button>
         </div>
       </div>
     )
