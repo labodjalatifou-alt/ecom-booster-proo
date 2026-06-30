@@ -68,6 +68,17 @@ export default function LandingRenderer({
   const styles = getLandingPageStyles(theme)
   const cardBg = normalizeHexColor(theme.surface, '#ffffff')
 
+  // Couleur du bouton = btn_color du formulaire de commande, sinon couleur principale du thème
+  const orderFormBlock = [...header, ...template, ...footer].find(
+    (b: any) => b.type === 'OrderForm' || b.type === 'order_form'
+  )
+  const ctaColor = orderFormBlock?.settings?.btn_color
+    ? normalizeHexColor(orderFormBlock.settings.btn_color, accent)
+    : accent
+  const ctaAccent = orderFormBlock?.settings?.accent_color
+    ? normalizeHexColor(orderFormBlock.settings.accent_color, ctaColor)
+    : ctaColor
+
   return (
     <div style={{ ...styles.outer, ...styles.cssVars, minHeight: '100vh' }} className="landing-root">
       <StoreFavicon url={theme.favicon_url || theme.favicon} />
@@ -147,7 +158,7 @@ export default function LandingRenderer({
               maxWidth: 720,
               margin: '0 auto',
               padding: '16px',
-              background: accent,
+              background: `linear-gradient(135deg, ${ctaColor} 0%, ${ctaAccent} 100%)`,
               color: '#fff',
               textAlign: 'center',
               borderRadius: 14,
@@ -155,6 +166,7 @@ export default function LandingRenderer({
               fontSize: 16,
               textDecoration: 'none',
               letterSpacing: '0.02em',
+              boxShadow: `0 8px 24px ${ctaColor}55`,
             }}
           >
             🛒 COMMANDER MAINTENANT

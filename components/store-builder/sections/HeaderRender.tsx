@@ -7,11 +7,12 @@ export default function HeaderRender({ settings }: { settings: any }) {
   
   return (
     <header 
-      className="sticky top-0 z-40 w-full border-b shadow-sm transition-all duration-300"
+      className="sticky top-0 z-40 w-full border-b shadow-sm transition-all duration-300 overflow-hidden"
       style={{ 
         backgroundColor: s.bg_color || 'var(--color-bg)', 
         color: s.text_color || 'var(--color-text)',
-        borderColor: s.bg_color ? 'rgba(0,0,0,0.05)' : 'var(--color-secondary)'
+        borderColor: s.bg_color ? 'rgba(0,0,0,0.05)' : 'var(--color-secondary)',
+        minHeight: s.logo_height ? `calc(${s.logo_height}px + 32px)` : undefined,
       }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -30,9 +31,14 @@ export default function HeaderRender({ settings }: { settings: any }) {
           </div>
 
           {/* Logo */}
-          <div className="flex-shrink-0 flex items-center justify-center">
+          <div className="flex-shrink-0 flex items-center justify-center py-2">
             {s.logo_image ? (
-              <img src={s.logo_image} alt="Logo" className="h-8 md:h-10 w-auto object-contain" />
+              <img
+                src={s.logo_image}
+                alt="Logo"
+                style={{ height: s.logo_height ?? 40, maxHeight: '100%', width: 'auto' }}
+                className="object-contain block"
+              />
             ) : (
               <span className="text-xl md:text-2xl font-black tracking-tight" style={{ fontFamily: 'var(--font-heading, inherit)' }}>
                 {s.logo_text || 'MA BOUTIQUE'}
