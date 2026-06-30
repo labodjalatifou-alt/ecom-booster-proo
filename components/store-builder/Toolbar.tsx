@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Monitor, Smartphone, Save, Rocket, Check, Copy, ExternalLink, Globe } from 'lucide-react'
+import { Browser } from '@capacitor/browser'
 
 interface ToolbarProps {
   storeName: string
@@ -55,6 +56,15 @@ export default function Toolbar({
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {}
+  }
+
+  const handleOpenStore = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    try {
+      await Browser.open({ url: shareUrl })
+    } catch (err) {
+      window.open(shareUrl, '_blank')
+    }
   }
 
   return (
@@ -183,6 +193,7 @@ export default function Toolbar({
             <div className="flex gap-2">
               <a
                 href={shareUrl}
+                onClick={handleOpenStore}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700 transition-colors"
