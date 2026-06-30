@@ -1,25 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
+import { ShieldCheck, Truck, Sparkles } from 'lucide-react'
+import { ensureOrderFormSettings, calcBundleTotal } from '@/lib/store-builder/form-presets'
+import BundleOffers from '@/components/store-builder/sections/BundleOffers'
 
-/** Styles de formulaires disponibles */
-const FORM_STYLES = [
-  { id: 'classic', label: 'Classique', desc: 'Fond blanc, bordure discrète, look standard' },
-  { id: 'modern', label: 'Moderne', desc: 'Fond sombre, inputs arrondis, accents colorés' },
-  { id: 'minimal', label: 'Minimal', desc: 'Sans bordure, lignes fines, look épuré' },
-  { id: 'glowing', label: 'Lumineux', desc: 'Bouton lumineux, ombres néon, premium' },
-] as const
-
-/** Animations de bouton disponibles */
 const BTN_ANIMATIONS = [
-  { id: 'shake', label: 'Secousse', desc: 'Bouton tremble pour attirer l\'attention' },
-  { id: 'pulse', label: 'Pulsation', desc: 'Bouton pulse doucement en continu' },
-  { id: 'bounce', label: 'Rebond', desc: 'Bouton rebondit subtilement' },
-  { id: 'none', label: 'Aucune', desc: 'Pas d\'animation' },
+  { id: 'shake', label: 'Secousse' },
+  { id: 'pulse', label: 'Pulsation' },
+  { id: 'bounce', label: 'Rebond' },
+  { id: 'glow', label: 'Lueur' },
+  { id: 'none', label: 'Aucune' },
 ] as const
 
-type FormStyle = 'classic' | 'modern' | 'minimal' | 'glowing'
-type BtnAnimation = 'shake' | 'pulse' | 'bounce' | 'none'
+type BtnAnimation = typeof BTN_ANIMATIONS[number]['id']
 
 interface OrderFormRenderProps {
   settings: any
@@ -32,19 +26,63 @@ export default function OrderFormRender({ settings, product, storeId }: OrderFor
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [city, setCity] = useState('')
-  const [qty, setQty] = useState(1)
+  const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  const price = product?.price ? Number(product.price) : 0
+  const unitPrice = product?.price ? Number(product.price) : 0
   const currency = product?.currency || 'FCFA'
-  const total = price * qty
 
-  const btnColor = s.btn_color || '#C23A5E'
-  const titleColor = s.title_color || '#111827'
-  const labelColor = s.label_color || '#6b7280'
-  const formStyle: FormStyle = s.form_style || 'classic'
-  const btnAnimation: BtnAnimation = s.btn_animation || 'shake'
+  const formSettings = useMemo(
+    () => ensureOrderFormSettings(s, unitPrice || 15000, currency),
+    [s, unitPrice, currency],
+  )
+
+  const bundlesEnabled = formSettings.bundles_enabled !== false && unitPrice > 0
+  const bundles = formSettings.bundles || []
+  const visibleBundles = bundles.filter((b: any) => !b.hidden)
+  const defaultBundle = visibleBundles.find((b: any) => b.popular) || visibleBundles[0]
+  const [selectedBundleId, setSelectedBundleId] = useState(defaultBundle?.id || 'b1')
+
+  useEffect(() => {
+    if (defaultBundle?.id) setSelectedBundleId(defaultBundle.id)
+  }, [defaultBundle?.id])
+
+  const selectedBundle = visibleBundles.find((b: any) => b.id === selectedBundleId) || visibleBundles[0]
+  const [manualQty, setManualQty] = useState(1)
+  const finalQty = bundlesEnabled ? (selectedBundle?.qty || 1) : manualQty
+  const total = bundlesEnabled && selectedBundle
+    ? calcBundleTotal(unitPrice, finalQty, selectedBundle)
+    : unitPrice * finalQty
+
+  const btnAnimation: BtnAnimation = formSettings.btn_animation || 'pulse'
+  const borderR = formSettings.border_radius ?? 20
+
+  const colors = useMemo(() => ({
+    bg: formSettings.bg_color || '#ffffff',
+    border: formSettings.border_color || '#fce7f3',
+    title: formSettings.title_color || '#1f2937',
+    subtitle: formSettings.subtitle_color || '#6b7280',
+    label: formSettings.label_color || '#374151',
+    btn: formSettings.btn_color || '#E8527A',
+    btnText: formSettings.btn_text_color || '#ffffff',
+    inputBg: formSettings.input_bg || '#fafafa',
+    inputBorder: formSettings.input_border || '#e5e7eb',
+    inputFocus: formSettings.input_focus_border || formSettings.btn_color || '#E8527A',
+    bundleSelectedBg: formSettings.bundle_selected_bg || '#FFF0F5',
+    bundleSelectedBorder: formSettings.bundle_selected_border || formSettings.btn_color || '#E8527A',
+    bundleBg: formSettings.bundle_bg || '#ffffff',
+    bundleBorder: formSettings.bundle_border || '#f3f4f6',
+    bundleBadgeBg: formSettings.bundle_badge_bg || formSettings.btn_color || '#E8527A',
+    bundleBadgeText: formSettings.bundle_badge_text || '#ffffff',
+    accent: formSettings.accent_color || formSettings.btn_color || '#E8527A',
+  }), [formSettings])
+
+  const btnLabel = loading
+    ? '⏳ Envoi en cours...'
+    : unitPrice > 0
+      ? `${formSettings.btn_text || '🛒 COMMANDER'} — ${total.toLocaleString('fr-FR')} ${currency}`
+      : (formSettings.btn_text || '🛒 COMMANDER MAINTENANT')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -58,272 +96,186 @@ export default function OrderFormRender({ settings, product, storeId }: OrderFor
           customer_name: name,
           phone,
           city,
+          email: email || null,
           product: product?.title || null,
-          price: price,
+          price: unitPrice,
           total,
-          quantity: qty,
+          quantity: finalQty,
           currency,
           store_id: storeId || s.store_id || null,
         }),
       })
+
       const data = await res.json()
-      if (!res.ok || data.error) {
-        console.error('Erreur commande:', data.error)
+      
+      if (!res.ok) {
+        throw new Error(data.error || 'Impossible d\'enregistrer votre commande.')
       }
+
       setSent(true)
-    } catch (err) {
-      console.error('Erreur réseau commande:', err)
-      setSent(true)
+      if (typeof window !== 'undefined' && (window as any).fbq) {
+        ;(window as any).fbq('track', 'Purchase', { value: total, currency })
+      }
+    } catch (err: any) {
+      console.error('[Order Submit Error]:', err)
+      alert(`Désolé, une erreur est survenue lors de l'enregistrement de votre commande : ${err.message}`)
     } finally {
       setLoading(false)
     }
   }
 
-  // ── Styles d'inputs par variante ──
-  const inputStyles: Record<FormStyle, string> = {
-    classic:
-      'w-full px-4 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl outline-none transition-all placeholder-gray-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100',
-    modern:
-      'w-full px-4 py-3.5 text-sm bg-gray-800 border border-gray-700 rounded-2xl outline-none transition-all placeholder-gray-500 text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30',
-    minimal:
-      'w-full px-1 py-3 text-sm bg-transparent border-b-2 border-gray-200 rounded-none outline-none transition-all placeholder-gray-300 focus:border-indigo-400',
-    glowing:
-      'w-full px-4 py-3.5 text-sm bg-gray-50 border border-gray-200 rounded-2xl outline-none transition-all placeholder-gray-400 focus:border-transparent focus:ring-2 focus:shadow-lg',
-  }
-
-  // ── Style de carte par variante ──
-  const cardStyles: Record<FormStyle, React.CSSProperties> = {
-    classic: { backgroundColor: s.bg_color || '#ffffff', borderColor: s.border_color || '#f0f0f0' },
-    modern: { backgroundColor: '#1f2937', borderColor: '#374151', borderWidth: 1 },
-    minimal: { backgroundColor: 'transparent', borderWidth: 0 },
-    glowing: { backgroundColor: s.bg_color || '#ffffff', borderColor: s.border_color || '#e5e7eb', borderWidth: 1 },
-  }
-
-  // ── Animation CSS du bouton ──
   const btnAnimClass: Record<BtnAnimation, string> = {
-    shake: 'animate-btn-shake',
-    pulse: 'animate-btn-pulse',
-    bounce: 'animate-btn-bounce',
-    none: '',
+    shake: 'anim-shake', pulse: 'anim-pulse', bounce: 'anim-bounce', glow: 'anim-glow', none: '',
   }
 
-  const inputBase = inputStyles[formStyle]
-
-  // ── Overlay de succès (partagé entre toutes les variantes) ──
   if (sent) {
-    const confetti = ['#fbbf24', '#10b981', '#3b82f6', '#ec4899', '#8b5cf6', '#ef4444']
     return (
-      <div
-        className="fixed inset-0 z-[200] flex items-center justify-center p-4"
-        style={{ background: 'rgba(0,0,0,.55)', backdropFilter: 'blur(3px)' }}
-        onClick={() => { setSent(false); setName(''); setPhone(''); setCity(''); setQty(1) }}
-      >
-        <style>{`
-          @keyframes orderPop {
-            0% { transform: scale(.7) translateY(20px); opacity: 0; }
-            55% { transform: scale(1.04) translateY(0); opacity: 1; }
-            100% { transform: scale(1); }
-          }
-          @keyframes orderCheck {
-            0% { transform: scale(0); }
-            60% { transform: scale(1.2); }
-            100% { transform: scale(1); }
-          }
-          @keyframes confettiBurst {
-            0% { transform: translate(0,0) rotate(0); opacity: 1; }
-            100% { transform: translate(var(--x), var(--y)) rotate(540deg); opacity: 0; }
-          }
-        `}</style>
-        <div
-          className="landing-pop bg-white rounded-3xl shadow-2xl max-w-sm w-full p-7 text-center relative overflow-hidden"
-          style={{ animation: 'orderPop .5s cubic-bezier(.2,.8,.2,1) both' }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {confetti.map((c, i) => {
-            const angle = (i / confetti.length) * Math.PI * 2
-            const dist = 90 + Math.random() * 50
-            return (
-              <span
-                key={i}
-                style={{
-                  position: 'absolute',
-                  top: 70,
-                  left: '50%',
-                  width: 9,
-                  height: 9,
-                  background: c,
-                  borderRadius: 2,
-                  '--x': `${Math.cos(angle) * dist}px`,
-                  '--y': `${Math.sin(angle) * dist}px`,
-                  animation: `confettiBurst 1.1s ease-out forwards`,
-                  animationDelay: `${0.15 + i * 0.04}s`,
-                } as React.CSSProperties}
-              />
-            )
-          })}
-
-          <div
-            className="w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center"
-            style={{ background: '#dcfce7', animation: 'orderCheck .6s cubic-bezier(.2,.8,.2,1) both' }}
-          >
-            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 6L9 17l-5-5" />
-            </svg>
+      <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 order-confetti-wrap" style={{ background: 'rgba(0,0,0,.6)', backdropFilter: 'blur(4px)' }}
+        onClick={() => { setSent(false); setName(''); setPhone(''); setCity(''); setEmail('') }}>
+        <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 text-center anim-pop" onClick={e => e.stopPropagation()}
+          style={{ border: `3px solid ${colors.btn}33` }}>
+          <div className="w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: `${colors.btn}18` }}>
+            <Sparkles size={40} style={{ color: colors.btn }} />
           </div>
-
-          <h3 className="text-xl font-black text-gray-900 mb-1">Commande confirmée ! 🎉</h3>
-          <p className="text-sm text-gray-500 leading-relaxed mb-5">
-            Merci <b className="text-gray-800">{name}</b> ! 🙌<br />
-            Votre commande a bien été reçue. Notre équipe va vous appeler au
-            <br /><b className="text-gray-800">{phone}</b> pour confirmer la livraison à <b className="text-gray-800">{city}</b>.
-          </p>
-
-          <div className="bg-gray-50 rounded-2xl p-3 mb-5">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">📞 Confirmation sous</span>
-              <span className="font-bold text-gray-900">15-30 min</span>
-            </div>
-            <div className="flex items-center justify-between text-sm mt-1.5">
-              <span className="text-gray-500">🚚 Paiement</span>
-              <span className="font-bold text-green-600">À la livraison</span>
-            </div>
-          </div>
-
-          <button
-            onClick={() => { setSent(false); setName(''); setPhone(''); setCity(''); setQty(1) }}
-            className="w-full py-3 rounded-2xl text-white font-bold text-sm transition hover:brightness-110 active:scale-[.98]"
-            style={{ backgroundColor: btnColor }}
-          >
-            Fermer
-          </button>
+          <h3 className="text-xl font-black mb-2" style={{ color: colors.title }}>Commande confirmée ! 🎉</h3>
+          <p className="text-sm mb-6" style={{ color: colors.subtitle }}>Merci <b>{name}</b> ! Notre équipe vous appelle au <b>{phone}</b>.</p>
+          <button onClick={() => setSent(false)} className="w-full py-3.5 rounded-2xl font-black text-white" style={{ background: colors.btn }}>Fermer</button>
         </div>
       </div>
     )
   }
 
-  // ── Labels adaptés à la variante ──
-  const isDark = formStyle === 'modern'
-
   return (
     <div className="w-full px-4 py-8" id="order-form">
       <div
-        className={`max-w-md mx-auto p-5 rounded-2xl shadow-sm ${formStyle === 'minimal' ? '' : 'border'}`}
-        style={cardStyles[formStyle]}
+        className="max-w-md mx-auto overflow-hidden shadow-xl order-form-card"
+        style={{
+          background: `linear-gradient(180deg, ${colors.bg} 0%, ${colors.bg} 100%)`,
+          borderRadius: borderR,
+          border: `2px solid ${colors.border}`,
+          boxShadow: `0 20px 50px ${colors.btn}12, 0 4px 16px rgba(0,0,0,0.06)`,
+        }}
       >
-        <h3 className="text-lg font-black mb-1" style={{ color: isDark ? '#ffffff' : titleColor }}>
-          {s.title || '📦 Passer ma commande'}
-        </h3>
-        <p className="text-xs mb-4" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
-          Remplissez le formulaire — on vous appelle pour confirmer.
-        </p>
+        {/* Bandeau coloré en-tête */}
+        <div className="px-5 py-4" style={{ background: `linear-gradient(135deg, ${colors.btn} 0%, ${colors.accent} 100%)` }}>
+          <h3 className="font-black text-white text-lg leading-tight">
+            {formSettings.title || '📦 Finaliser ma commande'}
+          </h3>
+          {formSettings.show_subtitle !== false && formSettings.subtitle && (
+            <p className="text-white/85 text-xs mt-1">{formSettings.subtitle}</p>
+          )}
+        </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <div>
-            <label className="block text-xs font-bold mb-1" style={{ color: isDark ? '#d1d5db' : labelColor }}>Nom complet *</label>
-            <input
-              type="text"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder="Ex: Amadou Diallo"
-              required
-              className={inputBase}
+        <div className="p-5">
+          {bundlesEnabled && visibleBundles.length > 0 && (
+            <BundleOffers
+              bundles={visibleBundles}
+              selectedId={selectedBundleId}
+              onSelect={setSelectedBundleId}
+              unitPrice={unitPrice}
+              currency={currency}
+              productImage={product?.image_url || product?.images?.[0]}
+              colors={{
+                selectedBg: colors.bundleSelectedBg,
+                selectedBorder: colors.bundleSelectedBorder,
+                bg: colors.bundleBg,
+                border: colors.bundleBorder,
+                badgeBg: colors.bundleBadgeBg,
+                badgeText: colors.bundleBadgeText,
+                title: colors.title,
+                subtitle: colors.subtitle,
+                price: colors.btn,
+                savings: colors.bundleSelectedBorder,
+                accent: colors.accent,
+              }}
+              borderWidth={formSettings.bundle_border_width ?? 2}
+              borderRadius={formSettings.bundle_border_radius ?? 14}
+              borderStyle={formSettings.bundle_border_style || 'solid'}
+              selectedBorderWidth={formSettings.bundle_selected_border_width ?? 3}
+              layout={formSettings.bundle_layout || 'deals'}
             />
-          </div>
-          <div>
-            <label className="block text-xs font-bold mb-1" style={{ color: isDark ? '#d1d5db' : labelColor }}>Téléphone *</label>
-            <input
-              type="tel"
-              value={phone}
-              onChange={e => setPhone(e.target.value)}
-              placeholder="Ex: 620 00 00 00"
-              required
-              className={inputBase}
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-bold mb-1" style={{ color: isDark ? '#d1d5db' : labelColor }}>Ville / Quartier *</label>
-            <input
-              type="text"
-              value={city}
-              onChange={e => setCity(e.target.value)}
-              placeholder="Ex: Conakry, Matam"
-              required
-              className={inputBase}
-            />
-          </div>
-
-          {price > 0 && (
-            <div>
-              <label className="block text-xs font-bold mb-1" style={{ color: isDark ? '#d1d5db' : labelColor }}>Quantité</label>
-              <div className="flex items-center justify-between gap-3">
-                <div className={`flex items-center overflow-hidden ${formStyle === 'minimal' ? 'border-b-2' : 'border rounded-xl'}`} style={{ borderColor: isDark ? '#4b5563' : '#e5e7eb' }}>
-                  <button type="button" onClick={() => setQty(q => Math.max(1, q - 1))} className={`w-10 h-10 text-xl font-bold transition ${isDark ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-50 hover:bg-gray-100'}`}>−</button>
-                  <span className={`w-10 text-center font-bold ${isDark ? 'text-white' : ''}`}>{qty}</span>
-                  <button type="button" onClick={() => setQty(q => q + 1)} className={`w-10 h-10 text-xl font-bold transition ${isDark ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-50 hover:bg-gray-100'}`}>+</button>
-                </div>
-                <div className="text-right">
-                  <div className={`text-[10px] uppercase font-bold ${isDark ? 'text-gray-400' : 'text-gray-400'}`}>Total</div>
-                  <div className="font-black text-base" style={{ color: formStyle === 'modern' ? '#60a5fa' : btnColor }}>
-                    {total.toLocaleString('fr-FR')} {currency}
-                  </div>
-                </div>
-              </div>
-            </div>
           )}
 
-          {/* ── Bouton submit avec animation sélectionnée ── */}
-          <button
-            type="submit"
-            disabled={loading}
-            className={`w-full py-4 rounded-2xl text-white font-black text-base shadow-lg transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-60 ${btnAnimClass[btnAnimation]}`}
-            style={{
-              backgroundColor: loading ? '#9ca3af' : btnColor,
-              ...(formStyle === 'glowing' && !loading
-                ? { boxShadow: `0 0 20px ${btnColor}44, 0 4px 20px ${btnColor}33` }
-                : {}),
-            }}
-          >
-            {loading ? '⏳ Envoi...' : (s.btn_text || '🛒 COMMANDER MAINTENANT')}
-          </button>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
+            {[
+              { key: 'name', show: formSettings.show_name !== false, label: 'Nom complet *', val: name, set: setName, type: 'text', ph: 'Ex: Amadou Diallo', req: true },
+              { key: 'phone', show: formSettings.show_phone !== false, label: 'Téléphone *', val: phone, set: setPhone, type: 'tel', ph: 'Ex: 620 00 00 00', req: true },
+              { key: 'city', show: formSettings.show_city !== false, label: 'Ville / Quartier *', val: city, set: setCity, type: 'text', ph: 'Ex: Conakry, Matam', req: true },
+              { key: 'email', show: !!formSettings.show_email, label: 'Email', val: email, set: setEmail, type: 'email', ph: 'email@exemple.com', req: false },
+            ].filter(f => f.show).map(f => (
+              <div key={f.key} className="order-field">
+                <label className="block text-xs font-black mb-1.5 uppercase tracking-wide" style={{ color: colors.label }}>{f.label}</label>
+                <input
+                  type={f.type}
+                  value={f.val}
+                  onChange={e => f.set(e.target.value)}
+                  required={f.req}
+                  placeholder={f.ph}
+                  className="w-full px-4 py-3.5 text-sm font-medium outline-none transition-all rounded-xl order-input"
+                  style={{ backgroundColor: colors.inputBg, border: `2px solid ${colors.inputBorder}`, color: colors.title }}
+                />
+              </div>
+            ))}
 
-          <p className={`text-[11px] text-center ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-            🔒 Paiement à la livraison · Vos données sont sécurisées
-          </p>
-        </form>
+            {!bundlesEnabled && unitPrice > 0 && formSettings.show_qty_picker !== false && (
+              <div className="flex items-center justify-between py-1">
+                <span className="text-xs font-black uppercase" style={{ color: colors.label }}>Quantité</span>
+                <div className="flex items-center rounded-xl overflow-hidden border-2" style={{ borderColor: colors.inputBorder }}>
+                  <button type="button" onClick={() => setManualQty(q => Math.max(1, q - 1))} className="w-11 h-11 font-black text-lg hover:bg-black/5">−</button>
+                  <span className="w-10 text-center font-black">{manualQty}</span>
+                  <button type="button" onClick={() => setManualQty(q => q + 1)} className="w-11 h-11 font-black text-lg hover:bg-black/5">+</button>
+                </div>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className={`w-full py-4 font-black text-[15px] shadow-lg transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-60 mt-1 ${btnAnimClass[btnAnimation]}`}
+              style={{
+                background: `linear-gradient(135deg, ${colors.btn} 0%, ${colors.accent} 100%)`,
+                color: colors.btnText,
+                borderRadius: formSettings.btn_radius ?? 16,
+                boxShadow: `0 8px 24px ${colors.btn}45`,
+              }}
+            >
+              {btnLabel}
+            </button>
+
+            {formSettings.show_footer_text !== false && (
+              <div className="flex items-center justify-center gap-4 pt-1 flex-wrap">
+                <span className="text-[10px] font-bold flex items-center gap-1" style={{ color: colors.subtitle }}>
+                  <ShieldCheck size={12} /> Paiement à la livraison
+                </span>
+                <span className="text-[10px] font-bold flex items-center gap-1" style={{ color: colors.subtitle }}>
+                  <Truck size={12} /> Livraison rapide
+                </span>
+              </div>
+            )}
+            {formSettings.footer_text && (
+              <p className="text-[10px] text-center" style={{ color: colors.subtitle }}>{formSettings.footer_text}</p>
+            )}
+          </form>
+        </div>
       </div>
 
-      {/* ── Animations CSS (injectées une seule fois) ── */}
       <style>{`
-        @keyframes btnShake {
-          0%, 88%, 100% { transform: translateX(0) scale(1); }
-          89% { transform: translateX(-3px) scale(1.01); }
-          90.5% { transform: translateX(3px) scale(1.01); }
-          92% { transform: translateX(-3px) scale(1.01); }
-          93.5% { transform: translateX(3px) scale(1.01); }
-          95% { transform: translateX(-2px) scale(1.01); }
-          96.5% { transform: translateX(2px) scale(1.01); }
-          98% { transform: translateX(0) scale(1.01); }
-        }
-        .animate-btn-shake { animation: btnShake 4.5s ease-in-out infinite; }
-
-        @keyframes btnPulse {
-          0%, 100% { transform: scale(1); box-shadow: 0 4px 20px rgba(0,0,0,.18); }
-          50% { transform: scale(1.03); box-shadow: 0 8px 30px rgba(0,0,0,.28); }
-        }
-        .animate-btn-pulse { animation: btnPulse 2.5s ease-in-out infinite; }
-
-        @keyframes btnBounce {
-          0%, 80%, 100% { transform: translateY(0); }
-          85% { transform: translateY(-4px); }
-          90% { transform: translateY(0); }
-          95% { transform: translateY(-2px); }
-        }
-        .animate-btn-bounce { animation: btnBounce 2s ease-in-out infinite; }
+        .order-input:focus { border-color: ${colors.inputFocus} !important; box-shadow: 0 0 0 3px ${colors.inputFocus}22; }
+        @keyframes animShake { 0%,88%,100%{transform:translateX(0)} 89%,93%{transform:translateX(-4px)} 90%,94%{transform:translateX(4px)} }
+        @keyframes animPulse { 0%,100%{transform:scale(1);box-shadow:0 8px 24px ${colors.btn}45} 50%{transform:scale(1.02);box-shadow:0 12px 32px ${colors.btn}55} }
+        @keyframes animBounce { 0%,80%,100%{transform:translateY(0)} 85%{transform:translateY(-5px)} }
+        @keyframes animGlow { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.12)} }
+        @keyframes animPop { 0%{transform:scale(.85);opacity:0} 100%{transform:scale(1);opacity:1} }
+        .anim-shake{animation:animShake 4s ease-in-out infinite}
+        .anim-pulse{animation:animPulse 2.2s ease-in-out infinite}
+        .anim-bounce{animation:animBounce 2s ease-in-out infinite}
+        .anim-glow{animation:animGlow 2s ease-in-out infinite}
+        .anim-pop{animation:animPop .35s cubic-bezier(.2,.8,.2,1) both}
+        .order-form-card { animation: animPop .5s ease both; }
       `}</style>
     </div>
   )
 }
 
-// Export pour le PropertiesPanel
-export { FORM_STYLES, BTN_ANIMATIONS }
-export type { FormStyle, BtnAnimation }
+export { BTN_ANIMATIONS }
+export type { BtnAnimation }
