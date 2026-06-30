@@ -1005,4 +1005,10 @@ function TabBtn({ label, active, onClick }: { label: string; active: boolean; on
   )
 }
 
-
+export default function BoutiqueEnLignePage() {
+  return (
+    <Suspense fallback={<div className="h-screen flex items-center justify-center bg-[#f1f1f1] dark:bg-slate-950"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></div>}>
+      <AddProductForm />
+    </Suspense>
+  )
+}
