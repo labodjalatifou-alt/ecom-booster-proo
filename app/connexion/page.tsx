@@ -45,6 +45,7 @@ export default function ConnexionPage() {
     <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-md bg-white border border-slate-200 rounded-3xl shadow-xl p-8">
         <div className="mb-8 text-center">
+          <img src="/logo.png" alt="Ecom Booster Pro" className="w-16 h-16 mx-auto mb-4 object-contain" />
           <h1 className="text-3xl font-black text-slate-900">Connexion</h1>
           <p className="text-sm text-slate-500 mt-2">Entrez vos identifiants pour accéder à votre espace.</p>
         </div>

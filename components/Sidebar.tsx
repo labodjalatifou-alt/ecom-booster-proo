@@ -117,10 +117,8 @@ export default function Sidebar() {
         {/* Logo */}
         <div className="h-20 flex items-center justify-between px-8 border-b-2 border-slate-50 dark:border-slate-800">
           <div className="flex items-center gap-3 text-primary-600 dark:text-primary-500 font-black text-2xl tracking-tighter">
-            <div className="w-9 h-9 bg-primary-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary-500/20">
-              <ShoppingCart className="w-5 h-5" />
-            </div>
-            <span>EcomDash</span>
+            <img src="/logo.png" alt="Ecom Booster Pro" className="w-9 h-9 object-contain" />
+            <span>EcomBooster</span>
           </div>
           <button onClick={() => setIsOpen(false)} className="md:hidden p-2 text-slate-400 hover:text-slate-600 transition-colors">
             <X className="w-6 h-6" />
