@@ -27,20 +27,23 @@ export async function POST(request: Request) {
     const currency = body.currency || 'FCFA'
     const product = body.product || 'Produit'
 
+    const qty = body.quantity || 1
+    const productName = qty > 1 ? `${qty}x ${product}` : product
+
     const { data: order, error } = await supabase
       .from('orders')
       .insert({
         customer: customerName,
         phone,
         city,
-        product,
+        product: productName,
         price: total,
-        quantity: body.quantity || 1,
         currency,
         store_id: storeId,
         status: 'A Confirmer',
         address: body.address || null,
         country: body.country || null,
+        note: `Quantité : ${qty}`
       })
       .select('id')
       .single()
