@@ -2,6 +2,10 @@
 
 import React from 'react'
 import { renderBlock } from '@/lib/store-builder/renderBlock'
+import { getLandingPageStyles, hexToRgba, normalizeHexColor } from '@/lib/store-builder/landing-theme'
+import StoreFavicon from '@/components/store-builder/StoreFavicon'
+import StoreTracking from '@/components/store-builder/StoreTracking'
+import ThemeLogoBar from '@/components/store-builder/sections/ThemeLogoBar'
 
 export interface LandingTheme {
   primaryColor?: string
@@ -12,6 +16,9 @@ export interface LandingTheme {
   fontFamily?: string
   border?: string
   surface?: string
+  favicon_url?: string
+  logo_url?: string
+  logo_height?: number
 }
 
 interface LandingRendererProps {
@@ -23,7 +30,8 @@ interface LandingRendererProps {
   storeName?: string
   /** ID de la boutique (pour les commandes, page publique) */
   storeId?: string | null
-  /** Afficher le CTA flottant + WhatsApp (page publique uniquement, pas l'éditeur) */
+  /** Meta Pixel ID (Facebook) */
+  metaPixelId?: string | null
   showFloating?: boolean
   /** Numéro WhatsApp */
   whatsappNumber?: string
@@ -45,6 +53,7 @@ export default function LandingRenderer({
   product,
   storeName,
   storeId,
+  metaPixelId,
   showFloating = false,
   whatsappNumber,
 }: LandingRendererProps) {
@@ -53,47 +62,16 @@ export default function LandingRenderer({
   const header: any[] = builderJson?.header || []
   const template: any[] = builderJson?.template || []
   const footer: any[] = builderJson?.footer || []
+  const hasHeaderBlock = header.some(b => b.type === 'Header' || b.type === 'header')
 
-  const accent = theme.primaryColor || '#ea580c'
-  const bgColor = theme.backgroundColor || '#f9fafb'
-
-  // Injecte les variables CSS + la police pour que les sections utilisant
-  // var(--color-primary) etc. héritent du thème. La couleur de fond est appliquée
-  // au conteneur principal afin que TOUTE la page reflète le thème choisi.
-  const containerStyle: React.CSSProperties = {
-    fontFamily: theme.fontFamily
-      ? `'${theme.fontFamily}', 'Inter', sans-serif`
-      : "'Inter', sans-serif",
-    background: bgColor,
-    color: theme.textColor || '#111827',
-    minHeight: '100vh',
-    '--color-primary': accent,
-    '--color-secondary': theme.secondaryColor || '#f3f4f6',
-    '--color-bg': bgColor,
-    '--color-text': theme.textColor || '#111827',
-    '--color-text-soft': theme.textSoftColor || '#6b7280',
-    '--color-border': theme.border || '#e5e7eb',
-  } as React.CSSProperties
-
-  // Le dégradé du CTA flottant doit s'adapter au fond (clair/sombre).
-  // Convertit un hex (#rrggbb) en composantes rgba.
-  const hexToRgba = (hex: string, alpha: number) => {
-    const h = hex.replace('#', '')
-    const full = h.length === 3 ? h.split('').map(c => c + c).join('') : h
-    const r = parseInt(full.slice(0, 2), 16)
-    const g = parseInt(full.slice(2, 4), 16)
-    const b = parseInt(full.slice(4, 6), 16)
-    return `rgba(${r},${g},${b},${alpha})`
-  }
-  const fadeToColor = hexToRgba(bgColor.startsWith('#') ? bgColor : '#f9fafb', 1)
-  const fadeFromColor = hexToRgba(bgColor.startsWith('#') ? bgColor : '#f9fafb', 0)
-
-  // La couleur de la "carte" posée sur le fond. Par défaut un blanc cassé qui se
-  // détache du fond, sauf si le fond est sombre → on garde la couleur de surface.
-  const cardBg = theme.surface || '#ffffff'
+  const accent = normalizeHexColor(theme.primaryColor, '#ea580c')
+  const styles = getLandingPageStyles(theme)
+  const cardBg = normalizeHexColor(theme.surface, '#ffffff')
 
   return (
-    <div style={containerStyle} className="landing-root">
+    <div style={{ ...styles.outer, ...styles.cssVars, minHeight: '100vh' }} className="landing-root">
+      <StoreFavicon url={theme.favicon_url || theme.favicon} />
+      <StoreTracking pixelId={metaPixelId || theme.meta_pixel_id} />
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Montserrat:wght@400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap');
         .landing-root * { box-sizing: border-box; }
@@ -123,36 +101,27 @@ export default function LandingRenderer({
       {/* ── CARTE CENTRÉE (la "feuille" posée sur le fond) ──
           Large sur desktop (max ~960px), pleine largeur sur mobile.
           Ombre + bordure discrète pour l'effet Deal224. */}
-      <div
-        className="landing-card"
-        style={{
-          maxWidth: 1100,
-          width: '100%',
-          margin: '0 auto',
-          minHeight: '100vh',
-          background: cardBg,
-          boxShadow: '0 0 60px rgba(0,0,0,.08)',
-          borderLeft: '1px solid rgba(0,0,0,.05)',
-          borderRight: '1px solid rgba(0,0,0,.05)',
-        }}
-      >
-        {/* ── EN-TÊTE ── */}
+      <div className="landing-card" style={{ ...styles.card, paddingBottom: showFloating ? `calc(${styles.card?.paddingBottom || '0px'} + 90px)` : styles.card?.paddingBottom }}>
+        {!hasHeaderBlock && theme.logo_url?.trim() && (
+          <ThemeLogoBar
+            logoUrl={theme.logo_url}
+            logoHeight={theme.logo_height}
+            storeName={storeName}
+            bgColor={theme.surface}
+          />
+        )}
         {header.map((block) => (
-          <div key={block.id}>{renderBlock(block, product, storeId)}</div>
+          <div key={block.id}>{renderBlock(block, product, storeId, theme)}</div>
         ))}
 
-        {/* ── CORPS : flux vertical ──
-            Largeur contenu responsive : ~720px sur desktop (comme Deal224),
-            pleine largeur sur mobile. Centrée dans la carte. */}
-        <main style={{ maxWidth: 720, width: '100%', margin: '0 auto', background: cardBg, paddingBottom: showFloating ? 90 : 24 }}>
+        <main style={{ maxWidth: 720, width: '100%', margin: '0 auto', background: cardBg, paddingBottom: 24 }}>
           {template.map((block) => (
-            <div key={block.id}>{renderBlock(block, product, storeId)}</div>
+            <div key={block.id}>{renderBlock(block, product, storeId, theme)}</div>
           ))}
         </main>
 
-        {/* ── PIED DE PAGE ── */}
         {footer.map((block) => (
-          <div key={block.id}>{renderBlock(block, product, storeId)}</div>
+          <div key={block.id}>{renderBlock(block, product, storeId, theme)}</div>
         ))}
       </div>
 
@@ -166,7 +135,7 @@ export default function LandingRenderer({
             right: 0,
             zIndex: 50,
             padding: '14px 16px 18px',
-            background: `linear-gradient(to top, ${hexToRgba(cardBg.startsWith('#') ? cardBg : '#ffffff', 1)} 55%, ${hexToRgba(cardBg.startsWith('#') ? cardBg : '#ffffff', 0)})`,
+            background: `linear-gradient(to top, ${hexToRgba(cardBg, 1)} 55%, ${hexToRgba(cardBg, 0)})`,
           }}
         >
           <a
@@ -194,9 +163,9 @@ export default function LandingRenderer({
       )}
 
       {/* ── BOUTON WHATSAPP ── */}
-      {showFloating && whatsappNumber && (
+      {showFloating && theme.show_whatsapp !== false && (whatsappNumber || theme.whatsapp_number) && (
         <a
-          href={`https://wa.me/${whatsappNumber.replace(/\D/g, '')}`}
+          href={`https://wa.me/${(whatsappNumber || theme.whatsapp_number).replace(/\D/g, '')}`}
           target="_blank"
           rel="noopener noreferrer"
           style={{

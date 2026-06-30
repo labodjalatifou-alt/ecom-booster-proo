@@ -6,6 +6,9 @@ import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-p
 import type { EditorData, EditorBlock } from './Editor'
 import ColorField from './fields/ColorField'
 import SelectField from './fields/SelectField'
+import SliderField from './fields/SliderField'
+import ImageUploadField from './fields/ImageUploadField'
+import TextField from './fields/TextField'
 import { STORE_THEMES } from '@/lib/store-builder/themes'
 
 interface SidebarLeftProps {
@@ -21,6 +24,8 @@ interface SidebarLeftProps {
   themeSettings: Record<string, any>
   onUpdateThemeSettings: (settings: Record<string, any>) => void
   onClose?: () => void
+  /** Mode Shopify : panneau thème seul, bouton retour */
+  themeFocusMode?: boolean
 }
 
 const CATALOG_CATEGORIES = [
@@ -95,7 +100,8 @@ export default function SidebarLeft({
   onReorder,
   themeSettings,
   onUpdateThemeSettings,
-  onClose
+  onClose,
+  themeFocusMode = false,
 }: SidebarLeftProps) {
   const [showCatalog, setShowCatalog] = useState(false)
   const [contextMenuBlock, setContextMenuBlock] = useState<{ id: string, type: 'header' | 'template' | 'footer' } | null>(null)
@@ -195,33 +201,42 @@ export default function SidebarLeft({
   }
 
   return (
-    <div className="flex h-full border-r border-gray-200">
-      {/* Icon Tab Bar */}
-      <div className="w-[60px] bg-gray-50 flex flex-col items-center py-4 border-r border-gray-100 shrink-0">
-        <button 
-          onClick={() => onTabChange('sections')}
-          className={`p-3 rounded-xl mb-2 transition-all ${activeTab === 'sections' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'}`}
-          title="Sections"
-        >
-          <LayoutTemplate size={20} />
-        </button>
-        <button 
-          onClick={() => onTabChange('theme_settings')}
-          className={`p-3 rounded-xl transition-all ${activeTab === 'theme_settings' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'}`}
-          title="Paramètres du thème"
-        >
-          <Palette size={20} />
-        </button>
-      </div>
+    <div className={`flex h-full ${themeFocusMode ? 'w-[320px]' : 'w-[300px]'} flex-shrink-0 border-r border-gray-200 bg-white overflow-hidden`}>
+      <div className="flex flex-col h-full w-full min-w-0 relative">
+        {/* Onglets en haut — un seul panneau, plus de double sidebar */}
+        {!themeFocusMode && (
+          <div className="flex border-b border-gray-100 shrink-0">
+            <button
+              onClick={() => onTabChange('sections')}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-bold transition-colors ${
+                activeTab === 'sections' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50' : 'text-gray-400 hover:text-gray-600'
+              }`}
+            >
+              <LayoutTemplate size={15} /> Sections
+            </button>
+            <button
+              onClick={() => onTabChange('theme_settings')}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-bold transition-colors ${
+                activeTab === 'theme_settings' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50' : 'text-gray-400 hover:text-gray-600'
+              }`}
+            >
+              <Palette size={15} /> Thème
+            </button>
+          </div>
+        )}
 
-      <div className="w-[260px] bg-white flex flex-col flex-shrink-0 relative">
-        <div className="p-4 border-b border-gray-100">
-          <h2 className="font-bold text-sm uppercase tracking-wide text-gray-800">
-            {activeTab === 'sections' ? 'Structure du site' : 'Paramètres du thème'}
+        <div className="p-3 border-b border-gray-100 flex items-center justify-between gap-2 shrink-0">
+          <h2 className="font-bold text-xs uppercase tracking-wide text-gray-800 truncate">
+            {themeFocusMode ? 'Personnaliser le thème' : activeTab === 'sections' ? 'Structure du site' : 'Couleurs & style'}
           </h2>
+          {themeFocusMode && onClose && (
+            <button onClick={onClose} className="text-xs font-semibold text-blue-600 hover:text-blue-800 whitespace-nowrap px-2 py-1 rounded-lg hover:bg-blue-50">
+              ← Retour
+            </button>
+          )}
         </div>
 
-        {activeTab === 'sections' ? (
+        {activeTab === 'sections' && !themeFocusMode ? (
           <>
             <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
         
@@ -346,6 +361,42 @@ export default function SidebarLeft({
             <ColorField label="Accent Profond" value={themeSettings.accentDeep || '#C23A5E'} onChange={v => updateTheme('accentDeep', v)} />
             <ColorField label="Or / Accent 2" value={themeSettings.gold || '#C9A24B'} onChange={v => updateTheme('gold', v)} />
             <ColorField label="Bordure" value={themeSettings.border || '#F0D9D2'} onChange={v => updateTheme('border', v)} />
+            <ColorField label="Couleur des titres" value={themeSettings.headingColor || themeSettings.textColor} onChange={v => updateTheme('headingColor', v)} />
+            <ColorField label="Couleur des prix" value={themeSettings.priceColor || themeSettings.primaryColor} onChange={v => updateTheme('priceColor', v)} />
+            <ColorField label="Fond des sections" value={themeSettings.sectionBg || themeSettings.backgroundColor} onChange={v => updateTheme('sectionBg', v)} />
+
+            <div className="h-px w-full bg-gray-200 my-5" />
+            <h3 className="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wide">📄 Grande feuille (fond page)</h3>
+            <p className="text-[11px] text-gray-400 mb-3 leading-relaxed">La couleur autour de la boutique — l&apos;arrière-plan extérieur.</p>
+            <ColorField label="Arrière-plan extérieur" value={themeSettings.backgroundColor} onChange={v => updateTheme('backgroundColor', v)} />
+
+            <div className="h-px w-full bg-gray-200 my-5" />
+            <h3 className="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wide">📋 Petite feuille (carte centrale)</h3>
+            <p className="text-[11px] text-gray-400 mb-3 leading-relaxed">La feuille blanche au centre où se trouve tout le contenu.</p>
+            <ColorField label="Fond carte" value={themeSettings.surface || '#FFFFFF'} onChange={v => updateTheme('surface', v)} />
+            <ColorField label="Couleur bordure carte" value={themeSettings.cardBorderColor || themeSettings.border} onChange={v => updateTheme('cardBorderColor', v)} />
+            <SelectField label="Style bordure carte" value={themeSettings.cardBorderStyle || 'solid'} options={['solid', 'dashed', 'dotted', 'double']} onChange={v => updateTheme('cardBorderStyle', v)} />
+            <SliderField label="Épaisseur bordure (px)" value={themeSettings.cardBorderWidth ?? 1} onChange={v => updateTheme('cardBorderWidth', v)} min={0} max={8} />
+            <SliderField label="Arrondi carte (px)" value={themeSettings.cardBorderRadius ?? 0} onChange={v => updateTheme('cardBorderRadius', v)} min={0} max={32} />
+            <SliderField label="Largeur max carte (px)" value={themeSettings.cardMaxWidth ?? 1100} onChange={v => updateTheme('cardMaxWidth', v)} min={600} max={1400} />
+
+            <div className="h-px w-full bg-gray-200 my-5" />
+            <h3 className="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wide">🏷️ Logo & Favicon</h3>
+            <ImageUploadField label="Logo boutique" value={themeSettings.logo_url} onChange={v => updateTheme('logo_url', v)} />
+            <SliderField label="Hauteur logo (px)" value={themeSettings.logo_height ?? 40} onChange={v => updateTheme('logo_height', v)} min={24} max={80} />
+            <ImageUploadField label="Favicon (onglet navigateur)" value={themeSettings.favicon_url} onChange={v => updateTheme('favicon_url', v)} />
+            <p className="text-[10px] text-gray-400 mb-4">Sauvegarde automatique après upload. Ouvre la boutique en navigation privée pour voir le favicon.</p>
+
+            <div className="h-px w-full bg-gray-200 my-5" />
+            <h3 className="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wide">📊 Facebook Pixel</h3>
+            <TextField label="Pixel ID Meta" value={themeSettings.meta_pixel_id || ''} onChange={v => updateTheme('meta_pixel_id', v)} />
+            <p className="text-[10px] text-gray-400 mb-4">Traque PageView, Lead et achats sur la boutique publique.</p>
+
+            <div className="h-px w-full bg-gray-200 my-5" />
+            <h3 className="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wide">💬 Bouton WhatsApp</h3>
+            <TextField label="Numéro WhatsApp" value={themeSettings.whatsapp_number || ''} onChange={v => updateTheme('whatsapp_number', v)} />
+            <p className="text-[10px] text-gray-400 mb-2">Ex: +2250102030405</p>
+            <SelectField label="Afficher le bouton ?" value={themeSettings.show_whatsapp !== false ? 'Oui' : 'Non'} options={['Oui', 'Non']} onChange={v => updateTheme('show_whatsapp', v === 'Oui')} />
             
             <div className="h-px w-full bg-gray-200 my-6" />
             
@@ -359,38 +410,42 @@ export default function SidebarLeft({
           </div>
         )}
 
-      {/* CATALOG SLIDE PANEL */}
-      <div className={`absolute top-0 bottom-0 left-0 w-full bg-white z-30 transition-transform duration-300 flex flex-col ${showCatalog ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-white shadow-sm z-10">
-          <h2 className="font-bold text-sm text-gray-800">Catalogue</h2>
-          <button onClick={() => setShowCatalog(false)} className="p-1 hover:bg-gray-100 rounded-md text-gray-500">
-            <X size={18} />
-          </button>
-        </div>
-        
-        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-gray-50/50">
-          {CATALOG_CATEGORIES.map((category, idx) => (
-            <div key={idx} className="mb-6">
-              <h3 className="text-xs font-bold text-gray-500 mb-3 uppercase tracking-wide">{category.title}</h3>
-              <div className="grid grid-cols-1 gap-2">
-                {category.items.map((item, itemIdx) => (
-                  <button
-                    key={itemIdx}
-                    onClick={() => {
-                      onAddBlock(item.type, item.title, item.defaultSettings)
-                      setShowCatalog(false)
-                    }}
-                    className="w-full text-left p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:border-blue-400 hover:shadow transition-all group"
-                  >
-                    <span className="text-sm font-medium text-gray-700 group-hover:text-blue-700 block mb-0.5">{item.title}</span>
-                    <span className="text-xs text-gray-400 block truncate">Type: {item.type}</span>
-                  </button>
-                ))}
-              </div>
+      {/* CATALOG — overlay plein panneau, caché proprement */}
+      {showCatalog && (
+        <>
+          <div className="absolute inset-0 bg-black/20 z-20" onClick={() => setShowCatalog(false)} />
+          <div className="absolute inset-0 bg-white z-30 flex flex-col animate-drawer-left">
+            <div className="p-4 border-b border-gray-100 flex items-center justify-between shrink-0">
+              <h2 className="font-bold text-sm text-gray-800">Catalogue de sections</h2>
+              <button onClick={() => setShowCatalog(false)} className="p-1 hover:bg-gray-100 rounded-md text-gray-500">
+                <X size={18} />
+              </button>
             </div>
-          ))}
-        </div>
-      </div>
+            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-gray-50/50 min-h-0">
+              {CATALOG_CATEGORIES.map((category, idx) => (
+                <div key={idx} className="mb-6">
+                  <h3 className="text-xs font-bold text-gray-500 mb-3 uppercase tracking-wide">{category.title}</h3>
+                  <div className="grid grid-cols-1 gap-2">
+                    {category.items.map((item, itemIdx) => (
+                      <button
+                        key={itemIdx}
+                        onClick={() => {
+                          onAddBlock(item.type, item.title, item.defaultSettings)
+                          setShowCatalog(false)
+                        }}
+                        className="w-full text-left p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:border-blue-400 hover:shadow transition-all group"
+                      >
+                        <span className="text-sm font-medium text-gray-700 group-hover:text-blue-700 block mb-0.5">{item.title}</span>
+                        <span className="text-xs text-gray-400 block truncate">{item.type}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
       </div>
     </div>
   )
