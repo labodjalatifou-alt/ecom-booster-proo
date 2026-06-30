@@ -17,8 +17,12 @@ export interface LandingTheme {
   border?: string
   surface?: string
   favicon_url?: string
+  favicon?: string
   logo_url?: string
   logo_height?: number
+  meta_pixel_id?: string
+  show_whatsapp?: boolean
+  whatsapp_number?: string
 }
 
 interface LandingRendererProps {
@@ -177,7 +181,7 @@ export default function LandingRenderer({
       {/* ── BOUTON WHATSAPP ── */}
       {showFloating && theme.show_whatsapp !== false && (whatsappNumber || theme.whatsapp_number) && (
         <a
-          href={`https://wa.me/${(whatsappNumber || theme.whatsapp_number).replace(/\D/g, '')}`}
+          href={`https://wa.me/${(whatsappNumber || theme.whatsapp_number || '').replace(/\D/g, '')}`}
           target="_blank"
           rel="noopener noreferrer"
           style={{

@@ -27,7 +27,7 @@ export default function StockUrgencyRender({ settings }: { settings: any }) {
 
   useEffect(() => {
     const id = setInterval(() => {
-      setStock(prev => {
+      setStock((prev: number) => {
         const others = pool.filter(n => n !== prev)
         const next = others[Math.floor(Math.random() * others.length)] ?? prev
         return next
