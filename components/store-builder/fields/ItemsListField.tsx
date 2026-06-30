@@ -50,7 +50,17 @@ export default function ItemsListField({ label, value = [], onChange, itemSchema
   }
 
   const handleUpdateItem = (id: string, fieldId: string, newValue: any) => {
-    onChange(items.map(item => item.id === id ? { ...item, [fieldId]: newValue } : item))
+    let updated = items.map(item => {
+      if (item.id !== id) return item
+      const patch: Record<string, any> = { [fieldId]: newValue }
+      if (fieldId === 'discount_pct' && Number(newValue) > 0) patch.discount_fixed = 0
+      if (fieldId === 'discount_fixed' && Number(newValue) > 0) patch.discount_pct = 0
+      return { ...item, ...patch }
+    })
+    if (fieldId === 'popular' && newValue === true) {
+      updated = updated.map(item => (item.id === id ? item : { ...item, popular: false }))
+    }
+    onChange(updated)
   }
 
   const moveItem = (index: number, direction: 'up' | 'down', e: React.MouseEvent) => {

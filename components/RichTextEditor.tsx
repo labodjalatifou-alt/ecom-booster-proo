@@ -24,12 +24,18 @@ interface RichTextEditorProps {
   content?: string
   onChange?: (html: string) => void
   placeholder?: string
+  /** Garde la barre d'outils visible pendant le défilement */
+  stickyToolbar?: boolean
+  /** Décalage depuis le haut (ex: 52 si barre de page sticky au-dessus) */
+  stickyTop?: number
 }
 
 export default function RichTextEditor({
   content = '',
   onChange,
   placeholder = 'Décrivez votre produit...',
+  stickyToolbar = true,
+  stickyTop = 0,
 }: RichTextEditorProps) {
   const colorInputRef = useRef<HTMLInputElement>(null)
   const imageInputRef = useRef<HTMLInputElement>(null)
@@ -148,8 +154,13 @@ export default function RichTextEditor({
   return (
     <div className="border border-gray-200 dark:border-slate-600 rounded-xl overflow-hidden bg-white dark:bg-slate-900 shadow-sm">
 
-      {/* ─── Toolbar ─── */}
-      <div className="flex flex-wrap items-center gap-0.5 px-2 py-1.5 border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800">
+      {/* ─── Toolbar (sticky) ─── */}
+      <div
+        className={`flex flex-wrap items-center gap-0.5 px-2 py-1.5 border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 ${
+          stickyToolbar ? 'sticky z-30 shadow-sm' : ''
+        }`}
+        style={stickyToolbar ? { top: stickyTop } : undefined}
+      >
 
         {/* Bloc : Format de texte */}
         <select

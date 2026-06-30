@@ -1,15 +1,31 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 
 export default function CountdownTopBarRender({ settings }: { settings: any }) {
   const s = settings || {}
+  const durationMs = useMemo(() => {
+    const h = Number(s.duration_hours ?? 12)
+    const m = Number(s.duration_minutes ?? 0)
+    return (h * 3600 + m * 60) * 1000 || 43200000
+  }, [s.duration_hours, s.duration_minutes])
+
   const [time, setTime] = useState({ h: 0, m: 0, s: 0 })
 
   useEffect(() => {
+    const key = `countdown-top-${s.id || 'bar'}-${durationMs}`
+    let end = Number(sessionStorage.getItem(key))
+    if (!end || end <= Date.now()) {
+      end = Date.now() + durationMs
+      sessionStorage.setItem(key, String(end))
+    }
     const tick = () => {
-      const target = new Date(s.target_date || Date.now() + 12 * 3600000).getTime()
-      const diff = Math.max(0, target - Date.now())
+      let diff = end - Date.now()
+      if (diff <= 0) {
+        end = Date.now() + durationMs
+        sessionStorage.setItem(key, String(end))
+        diff = durationMs
+      }
       setTime({
         h: Math.floor(diff / 3600000),
         m: Math.floor((diff / 60000) % 60),
@@ -19,7 +35,7 @@ export default function CountdownTopBarRender({ settings }: { settings: any }) {
     tick()
     const id = setInterval(tick, 1000)
     return () => clearInterval(id)
-  }, [s.target_date])
+  }, [durationMs, s.id])
 
   return (
     <div className="w-full py-3 px-4" style={{ backgroundColor: s.bg_color || '#3A2A2E' }}>
@@ -37,8 +53,8 @@ export default function CountdownTopBarRender({ settings }: { settings: any }) {
           ].map(([val, unit], i) => (
             <div
               key={i}
-              className="rounded-xl px-3 py-1.5 font-bold text-sm"
-              style={{ backgroundColor: 'rgba(255,255,255,0.1)', color: '#ffffff' }}
+              className="rounded-xl px-3 py-1.5 font-bold text-sm min-w-[44px] text-center"
+              style={{ backgroundColor: 'rgba(255,255,255,0.12)', color: '#ffffff' }}
             >
               {String(val).padStart(2, '0')}{unit}
             </div>

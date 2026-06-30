@@ -61,12 +61,18 @@ export default async function StorePage({ params }: PageProps) {
   const whatsappNumber =
     settings?.whatsapp_number || builderJson?.themeSettings?.whatsapp_number || null
 
+  const themeSettings = builderJson?.themeSettings || {}
+  const pixels = settings?.pixels as { meta?: string } | undefined
+  const metaPixelId = themeSettings.meta_pixel_id || pixels?.meta || null
+  const faviconUrl = themeSettings.favicon_url || themeSettings.favicon || null
+
   return (
     <LandingRenderer
-      builderJson={builderJson || {}}
+      builderJson={builderJson ? { ...builderJson, themeSettings: { ...themeSettings, favicon_url: faviconUrl } } : {}}
       product={product}
       storeName={store.name}
       storeId={store.id}
+      metaPixelId={metaPixelId}
       showFloating
       whatsappNumber={whatsappNumber}
     />
@@ -79,9 +85,33 @@ export async function generateMetadata({ params }: PageProps) {
 
   const { data: store } = await supabase
     .from('stores')
-    .select('name')
+    .select('id, name')
     .eq('slug', slug)
     .single()
 
-  return { title: store?.name || slug }
+  if (!store) return { title: slug }
+
+  const { data: storePage } = await supabase
+    .from('store_pages')
+    .select('builder_json')
+    .eq('store_id', store.id)
+    .eq('slug', 'home')
+    .maybeSingle()
+
+  const theme = storePage?.builder_json?.themeSettings || {}
+  const favicon = (theme.favicon_url || theme.favicon) as string | undefined
+  const faviconUrl = favicon?.trim()
+    ? (favicon.startsWith('http') ? favicon : `${process.env.NEXT_PUBLIC_SITE_URL || ''}${favicon}`)
+    : undefined
+
+  return {
+    title: store.name || slug,
+    icons: faviconUrl
+      ? {
+          icon: [{ url: faviconUrl, type: 'image/png' }],
+          shortcut: [{ url: faviconUrl }],
+          apple: [{ url: faviconUrl }],
+        }
+      : undefined,
+  }
 }

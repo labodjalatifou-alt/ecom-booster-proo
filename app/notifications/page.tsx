@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Bell, CheckCheck, Package, Truck, DollarSign, ShoppingCart, Loader2, Inbox } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
@@ -25,6 +26,7 @@ function timeAgo(dateStr: string): string {
 }
 
 export default function NotificationsPage() {
+  const router = useRouter();
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -61,6 +63,15 @@ export default function NotificationsPage() {
     });
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     toast.success('Toutes les notifications marquées comme lues');
+  };
+
+  const handleClick = async (n: any) => {
+    if (!n.read) await markRead(n.id);
+    if (n.type === 'ORDER_CREATED') {
+      router.push(n.target_role === 'CLOSER' ? '/interface-closer' : '/commandes');
+    } else if (n.order_id) {
+      router.push('/commandes');
+    }
   };
 
   const markRead = async (id: string) => {
@@ -116,7 +127,7 @@ export default function NotificationsPage() {
             return (
               <div
                 key={n.id}
-                onClick={() => !n.read && markRead(n.id)}
+                onClick={() => handleClick(n)}
                 className={`flex items-start gap-4 p-5 rounded-2xl border-2 transition-all cursor-pointer ${
                   n.read
                     ? 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 opacity-60'

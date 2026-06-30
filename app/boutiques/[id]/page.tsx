@@ -58,6 +58,13 @@ export default async function StoreBuilderPage({ params }: { params: Promise<{ i
       header: [
         {
           id: `h-${Date.now()}`,
+          type: 'Header',
+          title: 'En-tête',
+          hidden: false,
+          settings: { logo_position: 'center', show_cart: true, show_search: false },
+        },
+        {
+          id: `h-ann-${Date.now()}`,
           type: 'AnnouncementBar',
           title: "Barre d'annonce",
           hidden: false,

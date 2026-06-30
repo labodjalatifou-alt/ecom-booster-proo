@@ -9,16 +9,22 @@ import SliderField from './fields/SliderField'
 import SelectField from './fields/SelectField'
 import ImageUploadField from './fields/ImageUploadField'
 import ItemsListField, { FieldSchema } from './fields/ItemsListField'
+import dynamic from 'next/dynamic'
 import type { EditorBlock } from './Editor'
+import { FORM_COLOR_PRESETS, buildDefaultBundles, ensureOrderFormSettings } from '@/lib/store-builder/form-presets'
+import { TESTIMONIAL_ANIMATIONS } from '@/lib/store-builder/form-presets'
+
+const RichTextEditor = dynamic(() => import('@/components/RichTextEditor'), { ssr: false })
 
 interface PropertiesPanelProps {
   block: EditorBlock | null
   onUpdateSettings: (blockId: string, settings: Record<string, any>) => void
   onDelete: (blockId: string) => void
   onClose?: () => void
+  selectedProduct?: { price?: number | string; currency?: string; title?: string; description?: string } | null
 }
 
-export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onClose }: PropertiesPanelProps) {
+export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onClose, selectedProduct }: PropertiesPanelProps) {
   if (!block) {
     return (
       <div className="w-[300px] h-full bg-white border-l border-gray-200 flex flex-col items-center justify-center p-6 text-center text-gray-400 flex-shrink-0">
@@ -51,7 +57,9 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
       case 'header':
         return (
           <>
+            <ImageUploadField label="Logo (image)" value={s.logo_image} onChange={v => update('logo_image', v)} />
             <TextField label="Nom / Logo texte" value={s.logo_text} onChange={v => update('logo_text', v)} />
+            <SliderField label="Hauteur logo (px)" value={s.logo_height ?? 40} onChange={v => update('logo_height', v)} min={24} max={80} />
             <SelectField label="Position logo" value={s.logo_position || 'center'} options={['left', 'center', 'right']} onChange={v => update('logo_position', v)} />
             <ToggleField label="Afficher recherche" value={s.show_search} onChange={v => update('show_search', v)} />
             <ToggleField label="Afficher panier" value={s.show_cart} onChange={v => update('show_cart', v)} />
@@ -62,8 +70,15 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
       case 'Titre':
         return (
           <>
-            <TextareaField label="Titre du produit" value={s.text} onChange={v => update('text', v)} />
-            <SliderField label="Taille police (px)" value={s.font_size ?? 26} onChange={v => update('font_size', v)} min={14} max={64} />
+            <div className="text-xs bg-blue-50 text-blue-700 border border-blue-100 rounded-lg p-3 mb-4 leading-relaxed">
+              Le titre affiché vient de la fiche produit si le champ ci-dessous est vide. Taille et style s&apos;appliquent immédiatement dans l&apos;aperçu.
+            </div>
+            <TextareaField
+              label="Titre du produit"
+              value={s.text ?? selectedProduct?.title ?? ''}
+              onChange={v => update('text', v)}
+            />
+            <SliderField label="Taille police (px)" value={s.font_size ?? 28} onChange={v => update('font_size', v)} min={16} max={64} />
             <SliderField label="Épaisseur (400=fin, 900=gras)" value={s.font_weight ?? 800} onChange={v => update('font_weight', v)} min={400} max={900} step={100} />
             <SelectField label="Alignement" value={s.text_align || 'left'} options={['left', 'center', 'right']} onChange={v => update('text_align', v)} />
             <ColorField label="Couleur" value={s.color} onChange={v => update('color', v)} />
@@ -107,7 +122,21 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
       case 'Description':
         return (
           <>
-            <TextareaField label="Contenu description" value={s.content} onChange={v => update('content', v)} rows={6} />
+            <div className="text-xs bg-blue-50 text-blue-700 border border-blue-100 rounded-lg p-3 mb-4 leading-relaxed">
+              La fiche produit est la source principale. Titres H1/H2, gras et alignements sont identiques sur la boutique. La barre d&apos;outils reste visible en défilant.
+            </div>
+            <SelectField label="Alignement global" value={s.text_align || 'left'} options={['left', 'center', 'right']} onChange={v => update('text_align', v)} />
+            <div className="mb-4">
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Description (fiche produit)</label>
+              <RichTextEditor
+                content={selectedProduct?.description || s.content || ''}
+                onChange={v => update('content', v)}
+                placeholder="Éditez depuis Produits → Ajouter un produit..."
+                stickyToolbar
+                stickyTop={0}
+              />
+              <p className="text-[10px] text-gray-400 mt-2">Pour une synchro parfaite, enregistrez aussi depuis la fiche produit.</p>
+            </div>
             <ColorField label="Couleur texte" value={s.text_color} onChange={v => update('text_color', v)} />
           </>
         )
@@ -131,14 +160,13 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
         return (
           <>
             <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
-            <div className="mb-4">
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Date cible</label>
-              <input type="datetime-local" value={s.target_date ? s.target_date.slice(0, 16) : ''} onChange={e => update('target_date', new Date(e.target.value).toISOString())} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400" />
-            </div>
+            <SliderField label="Durée — heures" value={s.duration_hours ?? 2} onChange={v => update('duration_hours', v)} min={0} max={48} />
+            <SliderField label="Durée — minutes" value={s.duration_minutes ?? 0} onChange={v => update('duration_minutes', v)} min={0} max={59} />
+            <p className="text-[10px] text-gray-400 mb-3">Pas de calendrier : le compte à rebours repart à chaque visite selon la durée définie.</p>
             <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
             <ColorField label="Couleur texte" value={s.text_color} onChange={v => update('text_color', v)} />
-            <ColorField label="Couleur accent (chiffres)" value={s.accent_color} onChange={v => update('accent_color', v)} />
-            <SelectField label="À expiration" value={s.on_expire || 'message'} options={['reset', 'hide', 'message']} onChange={v => update('on_expire', v)} />
+            <ColorField label="Couleur chiffres" value={s.accent_color} onChange={v => update('accent_color', v)} />
+            <SelectField label="À expiration" value={s.on_expire || 'reset'} options={['reset', 'hide', 'message']} onChange={v => update('on_expire', v)} />
             <TextField label="Message d'expiration" value={s.expire_message} onChange={v => update('expire_message', v)} />
           </>
         )
@@ -259,13 +287,17 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
           </>
         )
       case 'image_text':
+      case 'image_with_text':
         return (
           <>
             <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
             <TextareaField label="Texte" value={s.text} onChange={v => update('text', v)} />
             <ImageUploadField label="Image" value={s.image_url} onChange={v => update('image_url', v)} />
             <SelectField label="Position image" value={s.image_position || 'left'} options={['left', 'right']} onChange={v => update('image_position', v)} />
-            <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+            <SliderField label="Arrondi image (px)" value={s.image_radius ?? 16} onChange={v => update('image_radius', v)} min={0} max={32} />
+            <ColorField label="Couleur fond section" value={s.bg_color} onChange={v => update('bg_color', v)} />
+            <ColorField label="Couleur titre" value={s.title_color} onChange={v => update('title_color', v)} />
+            <ColorField label="Couleur texte" value={s.text_color} onChange={v => update('text_color', v)} />
           </>
         )
       case 'video':
@@ -287,29 +319,141 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
           </>
         )
       case 'order_form':
-      case 'OrderForm':
+      case 'OrderForm': {
+        const unitPrice = selectedProduct?.price ? Number(selectedProduct.price) : 15000
+        const currency = selectedProduct?.currency || 'FCFA'
+        const bundleDefaults = buildDefaultBundles(unitPrice, currency)
+        const displayBundles = s.bundles?.length ? s.bundles : bundleDefaults
+
         return (
           <>
-            <TextField label="Titre du formulaire" value={s.title} onChange={v => update('title', v)} />
-            <TextField label="Texte bouton" value={s.submit_text || s.btn_text} onChange={v => update('btn_text', v)} />
-            <SelectField label="Style du formulaire" value={s.form_style || 'classic'} options={['classic', 'modern', 'minimal', 'glowing']} onChange={v => update('form_style', v)} />
-            <SelectField label="Animation bouton" value={s.btn_animation || 'shake'} options={['shake', 'pulse', 'bounce', 'none']} onChange={v => update('btn_animation', v)} />
-            <ColorField label="Couleur bouton" value={s.submit_color || s.btn_color} onChange={v => update('btn_color', v)} />
-            <ColorField label="Couleur fond carte" value={s.bg_color} onChange={v => update('bg_color', v)} />
+            <h4 className="text-xs font-bold text-gray-400 uppercase mb-3">Palette rapide</h4>
+            <div className="flex flex-wrap gap-2 mb-4">
+              {FORM_COLOR_PRESETS.map(preset => (
+                <button
+                  key={preset.id}
+                  title={preset.name}
+                  onClick={() => onUpdateSettings(block!.id, {
+                    ...s,
+                    bg_color: preset.bg_color,
+                    border_color: preset.border_color,
+                    title_color: preset.title_color,
+                    subtitle_color: preset.subtitle_color,
+                    label_color: preset.label_color,
+                    btn_color: preset.btn_color,
+                    input_bg: preset.input_bg,
+                    input_border: preset.input_border,
+                    bundle_selected_bg: preset.bundle_selected_bg,
+                    bundle_selected_border: preset.bundle_selected_border,
+                    bundle_bg: preset.bundle_bg,
+                    bundle_border: preset.bundle_border,
+                    bundle_badge_bg: preset.bundle_badge_bg,
+                    bundle_badge_text: preset.bundle_badge_text,
+                  })}
+                  className="flex flex-col items-center gap-1 p-1.5 rounded-lg border border-gray-200 hover:border-blue-400 transition-colors"
+                >
+                  <span className="w-7 h-7 rounded-full border-2 border-white shadow" style={{ background: preset.btn_color }} />
+                  <span className="text-[9px] text-gray-500">{preset.name}</span>
+                </button>
+              ))}
+            </div>
+
+            <h4 className="text-xs font-bold text-gray-400 uppercase mb-3 mt-2">Textes</h4>
+            <TextField label="Titre (en-tête)" value={s.title} onChange={v => update('title', v)} />
+            <TextField label="Sous-titre" value={s.subtitle} onChange={v => update('subtitle', v)} />
+            <TextField label="Texte bouton" value={s.btn_text} onChange={v => update('btn_text', v)} />
+            <TextField label="Texte pied de formulaire" value={s.footer_text} onChange={v => update('footer_text', v)} />
+            <SliderField label="Taille titre (px)" value={s.title_size ?? 18} onChange={v => update('title_size', v)} min={14} max={32} />
+
+            <h4 className="text-xs font-bold text-gray-400 uppercase mb-3 mt-4">Style & bordures</h4>
+            <SelectField label="Style du formulaire" value={s.form_style || 'classic'} options={['classic', 'modern', 'minimal', 'glowing', 'outlined']} onChange={v => update('form_style', v)} />
+            <SelectField label="Style bordure" value={s.border_style || 'solid'} options={['solid', 'dashed', 'dotted', 'double']} onChange={v => update('border_style', v)} />
+            <SliderField label="Épaisseur bordure (px)" value={s.border_width ?? 1} onChange={v => update('border_width', v)} min={0} max={6} />
+            <SliderField label="Arrondi bordure (px)" value={s.border_radius ?? 16} onChange={v => update('border_radius', v)} min={0} max={32} />
+            <SliderField label="Arrondi bouton (px)" value={s.btn_radius ?? 16} onChange={v => update('btn_radius', v)} min={0} max={32} />
+            <SelectField label="Animation bouton" value={s.btn_animation || 'pulse'} options={['shake', 'pulse', 'bounce', 'glow', 'none']} onChange={v => update('btn_animation', v)} />
+
+            <h4 className="text-xs font-bold text-gray-400 uppercase mb-3 mt-4">Couleurs formulaire</h4>
+            <ColorField label="Fond carte" value={s.bg_color} onChange={v => update('bg_color', v)} />
             <ColorField label="Couleur bordure" value={s.border_color} onChange={v => update('border_color', v)} />
             <ColorField label="Couleur titre" value={s.title_color} onChange={v => update('title_color', v)} />
+            <ColorField label="Couleur sous-titre" value={s.subtitle_color} onChange={v => update('subtitle_color', v)} />
+            <ColorField label="Couleur labels" value={s.label_color} onChange={v => update('label_color', v)} />
+            <ColorField label="Couleur bouton" value={s.btn_color} onChange={v => update('btn_color', v)} />
+            <ColorField label="Fond inputs" value={s.input_bg} onChange={v => update('input_bg', v)} />
+            <ColorField label="Bordure inputs" value={s.input_border} onChange={v => update('input_border', v)} />
+
+            <h4 className="text-xs font-bold text-gray-400 uppercase mb-3 mt-4">Bundles (offres quantité)</h4>
+            <ToggleField label="Masquer les bundles" value={s.bundles_enabled === false} onChange={v => update('bundles_enabled', !v)} />
+            <p className="text-[10px] text-gray-400 mb-2 -mt-2">
+              3 offres pré-remplies par défaut. Supprime, modifie ou masque celles que tu veux — le formulaire reste seul si tout est masqué.
+            </p>
+            {!s.bundles?.length && (
+              <button
+                type="button"
+                onClick={() => onUpdateSettings(block!.id, ensureOrderFormSettings(s, unitPrice, currency))}
+                className="w-full mb-3 py-2 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200"
+              >
+                Charger les 3 offres template
+              </button>
+            )}
+            <div className="mb-4">
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Style affichage</label>
+              <select
+                value={s.bundle_layout || 'deals'}
+                onChange={e => update('bundle_layout', e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400 bg-white"
+              >
+                <option value="deals">Cartes premium (type Releasit)</option>
+                <option value="columns">Colonnes quantité</option>
+                <option value="list">Liste compacte</option>
+              </select>
+            </div>
+
+            <SelectField label="Bordure bundle" value={s.bundle_border_style || 'solid'} options={['solid', 'dashed', 'dotted', 'double']} onChange={v => update('bundle_border_style', v)} />
+            <SliderField label="Épaisseur bordure bundle" value={s.bundle_border_width ?? 1} onChange={v => update('bundle_border_width', v)} min={1} max={6} />
+            <SliderField label="Épaisseur bordure sélectionnée" value={s.bundle_selected_border_width ?? 2} onChange={v => update('bundle_selected_border_width', v)} min={1} max={6} />
+            <SliderField label="Arrondi bundle (px)" value={s.bundle_border_radius ?? 12} onChange={v => update('bundle_border_radius', v)} min={0} max={24} />
+            <ColorField label="Fond offre sélectionnée" value={s.bundle_selected_bg} onChange={v => update('bundle_selected_bg', v)} />
+            <ColorField label="Bordure offre sélectionnée" value={s.bundle_selected_border} onChange={v => update('bundle_selected_border', v)} />
+            <ColorField label="Fond offre non sélectionnée" value={s.bundle_bg} onChange={v => update('bundle_bg', v)} />
+            <ColorField label="Bordure offre" value={s.bundle_border} onChange={v => update('bundle_border', v)} />
+            <ColorField label="Badge promo — fond" value={s.bundle_badge_bg} onChange={v => update('bundle_badge_bg', v)} />
+            <ColorField label="Badge promo — texte" value={s.bundle_badge_text} onChange={v => update('bundle_badge_text', v)} />
+            <ItemsListField
+              label="Offres quantité"
+              value={displayBundles}
+              onChange={v => update('bundles', v)}
+              itemSchema={[
+                { type: 'toggle', id: 'hidden', label: 'Masquer cette offre' },
+                { type: 'text', id: 'label', label: 'Titre (ex: 2 articles)' },
+                { type: 'text', id: 'sublabel', label: 'Sous-texte promo' },
+                { type: 'text', id: 'badge', label: 'Badge (ex: POPULAIRE)' },
+                { type: 'text', id: 'free_gift', label: 'Cadeau offert (texte)' },
+                { type: 'slider', id: 'qty', label: 'Quantité', min: 1, max: 10 },
+                { type: 'slider', id: 'discount_pct', label: 'Réduction %', min: 0, max: 50 },
+                { type: 'text', id: 'discount_fixed', label: 'OU réduction fixe (FCFA)' },
+                { type: 'image', id: 'image', label: 'Image produit (optionnel)' },
+                { type: 'toggle', id: 'popular', label: 'Sélectionné par défaut' },
+              ] as FieldSchema[]}
+            />
+
+            <h4 className="text-xs font-bold text-gray-400 uppercase mb-3 mt-4">Champs du formulaire</h4>
+            <ToggleField label="Afficher champ Nom" value={s.show_name !== false} onChange={v => update('show_name', v)} />
+            <ToggleField label="Afficher champ Téléphone" value={s.show_phone !== false} onChange={v => update('show_phone', v)} />
+            <ToggleField label="Afficher champ Ville" value={s.show_city !== false} onChange={v => update('show_city', v)} />
+            <ToggleField label="Afficher champ Email" value={!!s.show_email} onChange={v => update('show_email', v)} />
           </>
         )
+      }
       case 'countdown_top_bar':
         return (
           <>
             <TextField label="Label (ex: Offre)" value={s.label} onChange={v => update('label', v)} />
             <TextField label="Texte réduction (ex: -50%)" value={s.discount_text} onChange={v => update('discount_text', v)} />
             <TextField label="Suffixe (ex: se termine dans)" value={s.suffix} onChange={v => update('suffix', v)} />
-            <div className="mb-4">
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Date cible</label>
-              <input type="datetime-local" value={s.target_date ? s.target_date.slice(0, 16) : ''} onChange={e => update('target_date', new Date(e.target.value).toISOString())} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400" />
-            </div>
+            <SliderField label="Durée — heures" value={s.duration_hours ?? 12} onChange={v => update('duration_hours', v)} min={0} max={48} />
+            <SliderField label="Durée — minutes" value={s.duration_minutes ?? 0} onChange={v => update('duration_minutes', v)} min={0} max={59} />
             <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
             <ColorField label="Couleur texte" value={s.text_color} onChange={v => update('text_color', v)} />
             <ColorField label="Couleur accent (réduction)" value={s.accent_color} onChange={v => update('accent_color', v)} />
@@ -346,16 +490,23 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
         return (
           <>
             <TextField label="Titre section" value={s.title} onChange={v => update('title', v)} />
-            <SliderField label="Vitesse animation (s)" value={s.animation_time || 30} onChange={v => update('animation_time', v)} min={10} max={60} />
+            <SelectField label="Animation" value={s.animation || 'float'} options={TESTIMONIAL_ANIMATIONS.map(a => a.id)} onChange={v => update('animation', v)} />
             <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
-            <ColorField label="Couleur accent (badge note)" value={s.accent_color} onChange={v => update('accent_color', v)} />
+            <ColorField label="Couleur titre" value={s.title_color} onChange={v => update('title_color', v)} />
+            <ColorField label="Couleur accent (étoiles / badge)" value={s.accent_color} onChange={v => update('accent_color', v)} />
+            <ColorField label="Couleur ombre" value={s.shadow_color} onChange={v => update('shadow_color', v)} />
             <ItemsListField
-              label="Témoignages" value={s.items} onChange={v => update('items', v)}
+              label="Témoignages"
+              value={s.items}
+              onChange={v => update('items', v)}
               itemSchema={[
                 { type: 'text', id: 'name', label: 'Nom' },
+                { type: 'text', id: 'location', label: 'Ville / Pays' },
                 { type: 'textarea', id: 'text', label: 'Avis' },
                 { type: 'slider', id: 'rating', label: 'Note', min: 1, max: 5 },
-                { type: 'image', id: 'image', label: 'Photo' }
+                { type: 'image', id: 'image', label: 'Photo de profil' },
+                { type: 'image', id: 'product_image', label: 'Photo du produit reçu' },
+                { type: 'toggle', id: 'verified', label: 'Achat vérifié' },
               ] as FieldSchema[]}
             />
           </>
@@ -380,13 +531,16 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
       case 'stock_urgency':
         return (
           <>
-            <TextField label="Message" value={s.message} onChange={v => update('message', v)} />
-            <SliderField label="Stock restant" value={s.stock_left ?? 7} onChange={v => update('stock_left', v)} min={1} max={50} />
-            <SliderField label="Stock total (pour la barre)" value={s.stock_total ?? 20} onChange={v => update('stock_total', v)} min={1} max={100} />
+            <TextField label="Message ({'{stock}'} = chiffre dynamique)" value={s.message} onChange={v => update('message', v)} />
+            <SliderField label="Stock de départ" value={s.stock_left ?? 7} onChange={v => update('stock_left', v)} min={1} max={50} />
+            <SliderField label="Stock minimum (variation)" value={s.stock_min ?? 3} onChange={v => update('stock_min', v)} min={1} max={40} />
+            <SliderField label="Stock maximum (variation)" value={s.stock_max ?? 12} onChange={v => update('stock_max', v)} min={2} max={60} />
+            <SliderField label="Changement toutes les (sec)" value={s.tick_interval ?? 8} onChange={v => update('tick_interval', v)} min={3} max={30} />
+            <SliderField label="Stock total (barre %)" value={s.stock_total ?? 30} onChange={v => update('stock_total', v)} min={5} max={100} />
             <ColorField label="Couleur barre" value={s.bar_color} onChange={v => update('bar_color', v)} />
             <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
-            <ToggleField label="Afficher ventes du jour" value={s.show_sold_count} onChange={v => update('show_sold_count', v)} />
-            <TextField label="Texte ventes (ex: 38 vendus aujourd'hui)" value={s.sold_text} onChange={v => update('sold_text', v)} />
+            <ToggleField label="Afficher ventes du jour" value={s.show_sold_count !== false} onChange={v => update('show_sold_count', v)} />
+            <TextField label="Texte ventes" value={s.sold_text} onChange={v => update('sold_text', v)} />
           </>
         )
       default:

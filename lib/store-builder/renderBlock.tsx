@@ -24,6 +24,7 @@ import PrixRender from '@/components/store-builder/sections/PrixRender'
 import DescriptionRender from '@/components/store-builder/sections/DescriptionRender'
 import OrderFormRender from '@/components/store-builder/sections/OrderFormRender'
 import CountdownTopBarRender from '@/components/store-builder/sections/CountdownTopBarRender'
+import { mergeHeaderTheme } from '@/lib/store-builder/landing-theme'
 
 // Les blocks de type "produit" — affichent des données du produit sélectionné.
 // Traités comme des sections normales dans le flux vertical (linéaire).
@@ -37,7 +38,7 @@ export const PRODUCT_BLOCK_TYPES = ['Titre', 'Note de produit', 'Prix', 'Descrip
  * @param product Le produit sélectionné pour la landing (ou null)
  * @param storeId L'id de la boutique (passé au formulaire de commande, page publique)
  */
-export function renderBlock(block: any, product: any, storeId?: string | null): React.ReactNode {
+export function renderBlock(block: any, product: any, storeId?: string | null, themeSettings?: Record<string, any>): React.ReactNode {
   if (block.hidden) return null
   const s = block.settings || {}
   const settings = { ...s }
@@ -49,7 +50,7 @@ export function renderBlock(block: any, product: any, storeId?: string | null): 
       return <AnnouncementBarRender settings={settings} />
     case 'Header':
     case 'header':
-      return <HeaderRender settings={settings} />
+      return <HeaderRender settings={mergeHeaderTheme(settings, themeSettings)} />
     case 'Footer':
     case 'footer':
       return <FooterRender settings={settings} />

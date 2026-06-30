@@ -15,7 +15,7 @@ export default function PrixRender({ settings, product }: { settings: any; produ
 
   return (
     <div className="px-5 py-3 flex items-center gap-2.5 flex-wrap">
-      <span className="font-black" style={{ fontFamily: s.price_font || 'inherit', color: s.price_color || '#111827', fontSize: priceSize, fontWeight: s.price_weight || 900 }}>
+      <span className="font-black" style={{ fontFamily: s.price_font || 'inherit', color: s.price_color || 'var(--color-price, var(--color-primary, #111827))', fontSize: priceSize, fontWeight: s.price_weight || 900 }}>
         {price}
       </span>
       {comparePrice && (

@@ -323,45 +323,45 @@ export default function BoutiqueEnLignePage() {
     : null
 
   return (
-    <div className="min-h-screen bg-[#f1f1f1] dark:bg-slate-950 pb-20">
+    <div className="h-screen flex flex-col overflow-hidden bg-[#f1f1f1] dark:bg-slate-950">
 
-      {/* ─── Top Bar (always visible) ─── */}
-      <div className="sticky top-0 z-20 bg-[#1a1a1a] text-white flex items-center gap-3 px-5 py-3 shadow-xl">
+      {/* Barre fixe : navigation + enregistrement toujours visible */}
+      <div className="shrink-0 z-50 bg-[#1a1a1a] text-white flex items-center gap-3 px-5 py-3 shadow-xl">
         <button onClick={() => router.back()} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors">
           <ArrowLeft className="w-4 h-4" />
         </button>
-        <div className="flex items-center gap-2 text-sm text-gray-400">
-          <span className="hover:text-white cursor-pointer transition-colors">Produits</span>
-          <span className="text-gray-600">/</span>
-          <span className="text-white font-medium">
+        <div className="flex items-center gap-2 text-sm text-gray-400 min-w-0 flex-1">
+          <span className="hover:text-white cursor-pointer transition-colors shrink-0">Produits</span>
+          <span className="text-gray-600 shrink-0">/</span>
+          <span className="text-white font-medium truncate">
             {form.titre.trim() ? form.titre : 'Produit non enregistré'}
           </span>
         </div>
-        {/* Save bar only when there are unsaved changes */}
-        {hasChanges && (
-          <div className="ml-auto flex items-center gap-2 animate-in fade-in slide-in-from-right-4 duration-200">
+        <div className="ml-auto flex items-center gap-2 shrink-0">
+          {hasChanges && (
             <button
               onClick={handleDiscard}
-              className="px-4 py-1.5 text-sm font-medium text-gray-300 hover:text-white border border-gray-600 hover:border-gray-400 rounded-lg transition-all"
+              className="px-3 py-1.5 text-sm font-medium text-gray-300 hover:text-white border border-gray-600 hover:border-gray-400 rounded-lg transition-all"
             >
               Annuler
             </button>
-            <button
-              onClick={handleSave}
-              disabled={saving || !form.titre.trim()}
-              className="flex items-center gap-2 px-5 py-1.5 text-sm font-medium bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-all shadow-lg shadow-emerald-900/30"
-            >
-              {saving ? (
-                <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Enregistrement...</>
-              ) : (
-                <><Save className="w-3.5 h-3.5" /> Enregistrer</>
-              )}
-            </button>
-          </div>
-        )}
+          )}
+          <button
+            onClick={handleSave}
+            disabled={saving || !form.titre.trim()}
+            className="flex items-center gap-2 px-5 py-1.5 text-sm font-medium bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-all shadow-lg shadow-emerald-900/30"
+          >
+            {saving ? (
+              <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Enregistrement...</>
+            ) : (
+              <><Save className="w-3.5 h-3.5" /> Enregistrer</>
+            )}
+          </button>
+        </div>
       </div>
 
-      {/* ─── Page Title ─── */}
+      {/* Contenu défilant — la barre d'outils RichText reste sticky dans l'éditeur */}
+      <div className="flex-1 overflow-y-auto pb-20">
       <div className="max-w-6xl mx-auto px-5 pt-7 pb-3">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
           <span className="text-gray-400 text-base font-normal cursor-pointer hover:text-indigo-500 transition-colors" onClick={() => router.back()}>Produits</span>
@@ -396,6 +396,8 @@ export default function BoutiqueEnLignePage() {
                   content={form.description}
                   onChange={html => set({ description: html })}
                   placeholder="Décrivez votre produit en détail..."
+                  stickyToolbar
+                  stickyTop={0}
                 />
               </div>
             </div>
@@ -926,6 +928,7 @@ export default function BoutiqueEnLignePage() {
           </Card>
 
         </div>
+      </div>
       </div>
 
       {/* ─── Bottom floating save bar (mobile) — same logic ─── */}

@@ -280,7 +280,13 @@ export async function POST(request: Request) {
               title: 'Finaliser ma commande',
               btn_text: '🛒 COMMANDER MAINTENANT',
               btn_color: theme.default_colors.primary,
-              shake_animation: true,
+              bundles_enabled: true,
+              bundle_layout: 'premium',
+              bundles: [
+                { id: 'b1', qty: 1, label: '1 article', sublabel: 'Prix standard', badge: '', discount_pct: 0, discount_fixed: 0, popular: false, hidden: false },
+                { id: 'b2', qty: 2, label: '2 articles', sublabel: 'Économisez 15%', badge: '🔥 LE PLUS POPULAIRE', discount_pct: 15, discount_fixed: 0, popular: true, hidden: false },
+                { id: 'b3', qty: 3, label: '3 articles', sublabel: 'Meilleure offre — 25% OFF', badge: '⭐ MEILLEURE OFFRE', discount_pct: 25, discount_fixed: 0, popular: false, hidden: false },
+              ],
             },
           },
           {
