@@ -84,105 +84,67 @@ export default function AnalysesPage() {
 
 
       const PROMPT_SCORE = {
-        system: `Tu es un analyste e-commerce senior spécialisé dans les marchés africains COD (Cash On Delivery).
-Tu connais parfaitement les habitudes d'achat en Guinée, Sénégal, Côte d'Ivoire, Togo, Mali, Cameroun.
-IMPORTANT : Les données fiables sont rares en Afrique. Tu dois RAISONNER par étapes, en t'appuyant sur des heuristiques de marchés analogues (Maghreb COD, Asie du Sud-Est COD, marchés émergents similaires) et sur ta connaissance du comportement consommateur africain.
-Réponds UNIQUEMENT en JSON valide. Pas de markdown, pas de backticks.`,
-        user: `Analyse ce produit pour le marché e-commerce africain COD. Raisonne étape par étape.
+        system: `Analyste e-commerce expert Afrique COD. SOIS CONCIS ET RAPIDE. Réponds UNIQUEMENT en JSON valide.`,
+        user: `Analyse court: "${productName}", Achat: ${costPrice} ${currency}, Catégorie: ${categorie}, Pays: ${pays}.
 
-Produit: "${productName}"
-Prix d'achat: ${costPrice} ${currency}
-Description: ${productDesc || 'Non fournie'}
-Catégorie: ${categorie}
-Pays cible: ${pays}
-
-MÉTHODOLOGIE — Avant de générer le JSON, raisonne mentalement :
-1. Ce produit répond-il à un besoin réel et urgent dans ce pays spécifique ?
-2. Y a-t-il des équivalents qui fonctionnent dans des marchés COD analogues (Maroc, Tunisie, Vietnam) ? Quels prix pratiquent-ils ?
-3. Quelle marge brute est réaliste après coût d'achat + livraison (~2000-5000 GNF) + pub Facebook (~3000-8000 GNF par commande) ?
-4. L'audience est-elle facilement identifiable et adressable sur Facebook/TikTok ?
-5. La démonstration visuelle du produit est-elle convaincante pour un acheteur COD méfiant ?
-
-Sur la base de ce raisonnement, réponds avec ce JSON exact:
+JSON attendu :
 {
   "score": 78,
-  "score_label": "Bon potentiel",
+  "score_label": "Bon",
   "score_color": "green",
   "prix_min": 120000,
   "prix_max": 180000,
   "prix_recommande": 149000,
   "marge_estimee": "65%",
-  "raisonnement_prix": "Explication en 2 phrases du raisonnement pour arriver à ces prix (analogie marché, élasticité prix, pouvoir d'achat local)",
+  "raisonnement_prix": "1 phrase courte explicative.",
   "criteres": [
-    {"nom": "Popularité en Afrique", "score": 82, "commentaire": "Très demandé en Guinée et Sénégal"},
-    {"nom": "Facilité de marketing", "score": 88, "commentaire": "Visuel fort, démonstration facile"},
-    {"nom": "Prix adapté au marché", "score": 72, "commentaire": "Dans la fourchette acceptable"},
-    {"nom": "Niveau de concurrence", "score": 65, "commentaire": "Quelques vendeurs actifs"},
-    {"nom": "Clarté du bénéfice", "score": 90, "commentaire": "Résultat visible rapidement"},
-    {"nom": "Tendance actuelle", "score": 75, "commentaire": "En croissance sur TikTok Afrique"},
-    {"nom": "Confiance à l'achat", "score": 70, "commentaire": "Paiement à la livraison rassure"}
+    {"nom": "Popularité", "score": 82, "commentaire": "Court"},
+    {"nom": "Marketing", "score": 88, "commentaire": "Court"},
+    {"nom": "Prix", "score": 72, "commentaire": "Court"},
+    {"nom": "Concurrence", "score": 65, "commentaire": "Court"},
+    {"nom": "Bénéfice", "score": 90, "commentaire": "Court"},
+    {"nom": "Confiance COD", "score": 70, "commentaire": "Court"}
   ],
-  "analyse_marketing": "Analyse de 3-4 phrases sur le potentiel concret du produit pour ce marché, basée sur des heuristiques réelles.",
-  "recommandations": [
-    "Recommandation actionnable 1 avec exemple concret",
-    "Recommandation actionnable 2",
-    "Recommandation actionnable 3"
-  ]
+  "analyse_marketing": "2 phrases max.",
+  "recommandations": ["Reco 1", "Reco 2", "Reco 3"]
 }`
       };
 
       const PROMPT_AVATAR = {
-        system: `Tu es un expert de classe mondiale en psychologie du consommateur africain, neuromarketing COD et comportement d'achat en ligne.
-Tu connais les biais cognitifs, les déclencheurs émotionnels, les dynamiques sociales (tontines, pression des pairs, statut) et les mécanismes de décision d'achat en Afrique francophone.
-Réponds UNIQUEMENT en JSON valide. Aucun texte avant ou après.`,
-        user: `Crée un avatar client ULTRA-DÉTAILLÉ et psychologiquement précis pour ce produit.
-
-Produit: "${productName}"
-Catégorie: ${categorie}
-Pays cible: ${pays}
-
-TU DOIS ALLER BIEN AU-DELÀ DE LA DÉMOGRAPHIE. Fournis :
-- Le comportement d'achat CONCRET (pas juste "achète en ligne")
-- Les déclencheurs PSYCHOLOGIQUES réels (neuromarketing : FOMO, statut social, appartenance tribale, sécurité, réciprocité)
-- Le VRAI monologue intérieur au moment de l'achat
-- Les objections avec CE QU'ELLE DIT et CE QU'ELLE PENSE VRAIMENT (ces deux choses diffèrent)
-- Son PARCOURS DÉCISIONNEL de la découverte à la commande
-
-JSON exact à retourner (NE CHANGE PAS LES CLÉS) :
+        system: `Expert neuromarketing Afrique COD. Sois RAPIDE et CONCIS. JSON valide uniquement.`,
+        user: `Avatar pour "${productName}" en ${pays}. Remplis ce JSON :
 {
   "prenom": "Aminata",
   "sexe": "Femme",
   "age": "28-38 ans",
-  "ville": "Conakry, Guinée",
-  "profession": "Commerçante / Fonctionnaire",
-  "revenu_mensuel": "500 000 - 1 500 000 GNF",
-  "situation_familiale": "Mariée, 2 enfants",
-  "interets": ["Intérêt profond 1 (valeur/passion spécifique)", "Intérêt profond 2 (appartenance communautaire)", "Intérêt profond 3 (aspiration précise)"],
-  "plateformes": ["Facebook", "WhatsApp", "TikTok"],
-  "heure_active": "19h - 22h",
-  "probleme_principal": "Le problème concret et douloureux que ce produit résout dans sa vie quotidienne",
-  "desir_profond": "Ce qu'elle veut VRAIMENT au fond d'elle (pas juste le bénéfice produit, mais le désir humain profond)",
-  "peur_principale": "Sa peur la plus viscérale avant d'acheter en ligne en Afrique (arnaque, jugement des proches, argent gaspillé...)",
+  "ville": "Conakry",
+  "profession": "Commerçante",
+  "revenu_mensuel": "500k-1M",
+  "situation_familiale": "Mariée",
+  "interets": ["Intérêt 1", "Intérêt 2"],
+  "plateformes": ["Facebook", "TikTok"],
+  "heure_active": "20h",
+  "probleme_principal": "Court (1 phrase)",
+  "desir_profond": "Court (1 phrase)",
+  "peur_principale": "Peur arnaque/etc",
   "declencheurs_psychologiques": [
-    {"type": "FOMO", "description": "Comment le FOMO s'applique à elle pour ce produit"},
-    {"type": "Statut social", "description": "Comment ce produit affecte son statut dans son cercle social africain"},
-    {"type": "Appartenance", "description": "À quelle communauté ce produit lui permet d'appartenir"}
+    {"type": "FOMO", "description": "Très court"},
+    {"type": "Statut", "description": "Très court"}
   ],
   "comportement_achat": {
-    "moment_decouverte": "Où et quand elle découvre le produit (scroll Facebook 20h, WhatsApp groupe...)",
-    "action_avant_achat": "Ce qu'elle fait avant de commander (cherche avis amies, screenshote, demande au mari...)",
-    "temps_decision": "Combien de temps entre la découverte et la commande en moyenne",
-    "canal_achat": "Comment elle commande (WhatsApp direct, formulaire, appel...)"
+    "moment_decouverte": "1 phrase",
+    "action_avant_achat": "1 phrase",
+    "temps_decision": "1 phrase",
+    "canal_achat": "1 phrase"
   },
   "objections": [
-    {"objection": "Ce qu'elle dit", "vrai_blocage": "Ce qu'elle pense vraiment", "reponse_ideale": "Comment lever ce blocage"},
-    {"objection": "C'est trop cher", "vrai_blocage": "Je ne suis pas sûre que ça marche vraiment", "reponse_ideale": "Garantie de remboursement + témoignage similaire"},
-    {"objection": "Je vais réfléchir", "vrai_blocage": "Je veux en parler à quelqu'un avant", "reponse_ideale": "Offre limitée + suggestion d'en parler à une amie qui a déjà acheté"}
+    {"objection": "Dit X", "vrai_blocage": "Pense Y", "reponse_ideale": "Réponse"},
+    {"objection": "Dit A", "vrai_blocage": "Pense B", "reponse_ideale": "Réponse"}
   ],
-  "declencheur_achat": "Le déclencheur final concret qui la fait passer à l'action (une amie qui l'a aussi, une promotion flash, la peur de rater...)",
-  "mots_cles_resonance": ["mot1", "mot2", "mot3", "mot4", "mot5"],
-  "citation_type": "Une phrase qu'elle dirait EXACTEMENT dans ses propres mots sur ce produit, avec son ton africain authentique",
-  "phrase_declenchante": "La phrase publicitaire parfaite qui la ferait stopper son scroll et commander"
+  "declencheur_achat": "1 phrase",
+  "mots_cles_resonance": ["mot1", "mot2", "mot3"],
+  "citation_type": "Citation courte",
+  "phrase_declenchante": "Accroche courte"
 }`
       };
 
@@ -202,146 +164,83 @@ JSON exact à retourner (NE CHANGE PAS LES CLÉS) :
       const paysAvatar = avatarData.ville;
 
       const PROMPT_PUBS = {
-        system: `Tu es David Ogilvy + Eugene Schwartz + un vendeur de marché africain.
-Tu écris des publicités Facebook qui font VENDRE en Afrique francophone.
-Tu connais les codes culturels, les expressions locales, les émotions qui déclenchent l'achat.
-Règle absolue: chaque pub doit donner envie de commander MAINTENANT.`,
-        user: `Écris 3 publicités Facebook DISTINCTES pour ce produit.
+        system: `Copywriter Facebook Ads Afrique. SOIS BREF. JSON valide unique.`,
+        user: `3 pubs pour "${productName}" à ${prixRecommande} ${currency}.
+Problème: ${problemeAvatar}
 
-Produit: "${productName}"
-Prix: ${prixRecommande} ${currency}  
-Marché: ${pays}
-Avatar: ${prenomAvatar}, ${ageAvatar}, ${professionAvatar}
-Problème résolu: ${problemeAvatar}
-
-RÈGLES STRICTES DE STRUCTURE POUR CHAQUE PUBLICITÉ:
-1. HOOK / TITRE: Un titre accrocheur ou le nom du produit avec des EMOJIS très vivants et captivants (une seule phrase d'accroche choc, pas de texte d'explication ici).
-2. EXPLANATION: Une très courte phrase d'introduction ou de transition (1 ligne maximum).
-3. POINTS CLÉS (BENEFITS): Exactement 3 à 4 puces (bullet points) courtes, percutantes et concises (pas trop longues !), commençant chacune par un emoji pertinent (ex: 🚚, ✅, 💰, 🔥, etc.).
-4. CTA: Un appel à l'action complet et direct qui mentionne le prix (${prixRecommande} ${currency}), le "Paiement à la livraison" et la livraison rapide.
-
-LES 3 ANGLES:
-- Pub 1: Angle DOULEUR (commence par le problème principal, aggrave l'inconfort, puis montre le produit comme la solution miracle)
-- Pub 2: Angle PREUVE SOCIALE (commence par la recommandation chaleureuse d'un client satisfait, met en avant le nombre de clients heureux et les résultats visibles)
-- Pub 3: Angle URGENCE & RARETÉ (met en avant une offre temporaire, des stocks limités en Afrique, le prix promotionnel et la fin imminente de l'offre)
-
-FORMAT DE RÉPONSE:
-Tu dois répondre UNIQUEMENT avec un bloc de code JSON valide (sans aucun autre texte de blabla avant ou après) contenant un tableau de 3 objets JSON respectant exactement cette structure:
+JSON attendu :
 [
   {
-    "angle": "Angle Douleur",
-    "hook": "Le titre accrocheur avec emojis",
-    "explanation": "La phrase courte d'introduction",
-    "benefits": [
-      "Emoji + Premier bénéfice ultra-court et punchy",
-      "Emoji + Deuxième bénéfice ultra-court et punchy",
-      "Emoji + Troisième bénéfice ultra-court et punchy",
-      "Emoji + Quatrième bénéfice ultra-court (optionnel, max 4)"
-    ],
-    "cta": "Appel à l'action complet avec prix, livraison et paiement à la livraison"
+    "angle": "Douleur",
+    "hook": "Titre accrocheur 1 ligne emojis",
+    "explanation": "1 ligne intro",
+    "benefits": ["✅ Atout 1 court", "🔥 Atout 2 court", "🚚 Atout 3 court"],
+    "cta": "Action + Prix + Livraison"
   },
   {
-    "angle": "Angle Preuve Sociale",
-    "hook": "Le titre accrocheur avec emojis",
-    "explanation": "La phrase courte d'introduction",
-    "benefits": [
-      "Emoji + Premier bénéfice ultra-court et punchy",
-      "Emoji + Deuxième bénéfice ultra-court et punchy",
-      "Emoji + Troisième bénéfice ultra-court et punchy",
-      "Emoji + Quatrième bénéfice ultra-court (optionnel, max 4)"
-    ],
-    "cta": "Appel à l'action complet avec prix, livraison et paiement à la livraison"
+    "angle": "Preuve Sociale",
+    "hook": "Titre accrocheur 1 ligne emojis",
+    "explanation": "1 ligne intro",
+    "benefits": ["✅ Atout 1 court", "🔥 Atout 2 court", "🚚 Atout 3 court"],
+    "cta": "Action + Prix + Livraison"
   },
   {
-    "angle": "Angle Urgence & Rareté",
-    "hook": "Le titre accrocheur avec emojis",
-    "explanation": "La phrase courte d'introduction",
-    "benefits": [
-      "Emoji + Premier bénéfice ultra-court et punchy",
-      "Emoji + Deuxième bénéfice ultra-court et punchy",
-      "Emoji + Troisième bénéfice ultra-court et punchy",
-      "Emoji + Quatrième bénéfice ultra-court (optionnel, max 4)"
-    ],
-    "cta": "Appel à l'action complet avec prix, livraison et paiement à la livraison"
+    "angle": "Urgence",
+    "hook": "Titre accrocheur 1 ligne emojis",
+    "explanation": "1 ligne intro",
+    "benefits": ["✅ Atout 1 court", "🔥 Atout 2 court", "🚚 Atout 3 court"],
+    "cta": "Action + Prix + Livraison"
   }
 ]`
       };
 
       const PROMPT_SHOPIFY = {
-        system: `Tu es un copywriter expert en neuromarketing qui vend en Afrique francophone.
-Tu utilises les 6 principes de Cialdini. Tes titres font maximum 5 mots.
-Chaque paragraphe = exactement 3 phrases qui font ressentir, désirer, agir.`,
-        user: `Crée la fiche produit Shopify pour "${productName}" à ${prixRecommande} ${currency} en ${pays}.
+        system: `Copywriter e-commerce Afrique. Très concis.`,
+        user: `Fiche Shopify pour "${productName}" à ${prixRecommande} ${currency}.
 
-FORMAT STRICT — respecte à la lettre:
-
-TITRE_1: [5 mots max, SEO + émotion]
-TITRE_2: [5 mots max, bénéfice transformateur]  
-TITRE_3: [5 mots max, preuve sociale chiffrée]
-
-ACCROCHE_1: [1 phrase - question ou affirmation choc]
-ACCROCHE_2: [1 phrase - la transformation promise]
-ACCROCHE_3: [1 phrase - garantie rassurante]
-
-§1_TITRE: [3-5 mots - Principe: DOULEUR]
-§1_TEXTE: [Phrase 1 décrit la douleur.] [Phrase 2 aggrave.] [Phrase 3 annonce la solution.]
-
-§2_TITRE: [3-5 mots - Principe: AUTORITÉ]
-§2_TEXTE: [Phrase 1 crédibilité.] [Phrase 2 chiffre ou expertise.] [Phrase 3 confiance.]
-
-§3_TITRE: [3-5 mots - Principe: PREUVE SOCIALE]
-§3_TEXTE: [Phrase 1 nombre de clientes.] [Phrase 2 témoignage type.] [Phrase 3 communauté.]
-
-§4_TITRE: [3-5 mots - Principe: BÉNÉFICES]
-§4_TEXTE: [Phrase 1 résultat principal.] [Phrase 2 résultat secondaire.] [Phrase 3 vie transformée.]
-
-§5_TITRE: [3-5 mots - Principe: URGENCE]
-§5_TEXTE: [Phrase 1 stock limité.] [Phrase 2 conséquence de ne pas acheter.] [Phrase 3 agis maintenant.]
-
-§6_TITRE: [3-5 mots - Principe: RÉASSURANCE]
-§6_TEXTE: [Phrase 1 paiement à la livraison.] [Phrase 2 livraison rapide.] [Phrase 3 satisfaction garantie.]
-
-BULLET_1: [caractéristique en 6 mots max]
-BULLET_2: [caractéristique en 6 mots max]
-BULLET_3: [caractéristique en 6 mots max]
-BULLET_4: [caractéristique en 6 mots max]
-BULLET_5: [caractéristique en 6 mots max]`
+FORMAT ATTENDU EXACTEMENT COMME SUIT :
+TITRE_1: [Titre court 1]
+TITRE_2: [Titre court 2]
+TITRE_3: [Titre court 3]
+ACCROCHE_1: [Phrase courte]
+ACCROCHE_2: [Phrase courte]
+ACCROCHE_3: [Phrase courte]
+§1_TITRE: Douleur
+§1_TEXTE: [2 phrases]
+§2_TITRE: Autorité
+§2_TEXTE: [2 phrases]
+§3_TITRE: Preuve Sociale
+§3_TEXTE: [2 phrases]
+§4_TITRE: Bénéfices
+§4_TEXTE: [2 phrases]
+§5_TITRE: Urgence
+§5_TEXTE: [2 phrases]
+§6_TITRE: Réassurance
+§6_TEXTE: [2 phrases]
+BULLET_1: [Puce 1]
+BULLET_2: [Puce 2]
+BULLET_3: [Puce 3]
+BULLET_4: [Puce 4]
+BULLET_5: [Puce 5]`
       };
 
       const PROMPT_VOIXOFF = {
-        system: `Tu es expert en scripts publicitaires vidéo pour TikTok et Facebook Ads, marché africain francophone.
-RÈGLES ABSOLUES:
-1. Texte continu lu au micro — AUCUN label interne.
-2. JAMAIS de prénoms ou personnages inventés.
-3. Adresse directement le spectateur (vous/tu).
-4. Chaque script = 4 étapes OBLIGATOIRES : Accroche/Problème viscéral → Solution (le produit) → Comment ça fonctionne → CTA.
-5. Chaque script : STRICTEMENT 65 à 100 mots (25-40 secondes à débit oral normal).
-COMPTE LES MOTS avant de livrer.`,
-        user: `Crée 3 scripts voix off pour "${productName}" à ${prixRecommande} ${currency} — marché ${pays}.
+        system: `Scripteur TikTok Ads Afrique. Très direct, sans fioritures.`,
+        user: `3 scripts voix off pour "${productName}" à ${prixRecommande} ${currency}.
+Chaque script DOIT faire ~40-60 mots (max 30 secondes).
 
-STRUCTURE OBLIGATOIRE POUR CHAQUE SCRIPT :
-- ÉTAPE 1 ACCROCHE/PROBLÈME : Commence en appuyant là où ça fait vraiment mal (douleur viscérale, peur, honte, frustration quotidienne).
-- ÉTAPE 2 SOLUTION : Présente "${productName}" comme LA réponse concrète.
-- ÉTAPE 3 FONCTIONNEMENT : 1-2 phrases sur comment ça marche ou les bénéfices clés.
-- ÉTAPE 4 CTA : Variante de "Cliquez sur le bouton en bas, remplissez le formulaire et commandez le vôtre maintenant."
+FORMAT STRICT :
+═══ SCRIPT 1 — Angle : Douleur ═══
+[Texte: Problème → Solution → Fonctionnement → CTA]
+⏱ 50 mots
 
-3 ANGLES DISTINCTS :
-- Script 1 — Douleur Émotionnelle : frustration intérieure, insécurité, honte ressentie
-- Script 2 — Inconfort Quotidien : problème concret du quotidien, temps/argent perdu
-- Script 3 — Aspiration & Transformation : projection vers la vie désirée, le produit comme pont
+═══ SCRIPT 2 — Angle : Quotidien ═══
+[Texte: Problème → Solution → Fonctionnement → CTA]
+⏱ 50 mots
 
-FORMAT EXACT (respecte les séparateurs) :
-═══ SCRIPT 1 — Angle : Douleur Émotionnelle ═══
-[Texte continu 65-100 mots]
-⏱ [N] mots | ~[X] secondes
-
-═══ SCRIPT 2 — Angle : Inconfort Quotidien ═══
-[Texte continu 65-100 mots]
-⏱ [N] mots | ~[X] secondes
-
-═══ SCRIPT 3 — Angle : Aspiration & Transformation ═══
-[Texte continu 65-100 mots]
-⏱ [N] mots | ~[X] secondes`
+═══ SCRIPT 3 — Angle : Aspiration ═══
+[Texte: Problème → Solution → Fonctionnement → CTA]
+⏱ 50 mots`
       };
 
       toast.loading("📱 Génération des publicités, fiche Shopify et scripts...", { id: 'analyze' });
