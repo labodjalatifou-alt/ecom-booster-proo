@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Bot, Sparkles, Loader2, Zap, Globe, DollarSign, User, Megaphone, Mic, CheckCircle2, ArrowRight, Plus, Minus, X, ImageIcon, Link as LinkIcon, FileText, ChevronRight } from 'lucide-react';
+import { Bot, Sparkles, Loader2, Zap, Globe, DollarSign, User, Megaphone, Mic, CheckCircle2, ArrowRight, Plus, Minus, X, ImageIcon, Link as LinkIcon, FileText, ChevronRight, Brain, ShieldCheck } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
@@ -62,10 +62,11 @@ export default function AnalysesPage() {
       };
 
       const PROMPT_SCORE = {
-        system: `Tu es un analyste e-commerce expert du marché africain COD (Cash On Delivery). 
-Tu connais parfaitement les habitudes d'achat en Guinée, Sénégal, Côte d'Ivoire, Togo, Mali.
-Réponds UNIQUEMENT en JSON valide. Pas de markdown, pas de backticks, pas d'explication.`,
-        user: `Analyse ce produit pour le marché e-commerce africain COD.
+        system: `Tu es un analyste e-commerce senior spécialisé dans les marchés africains COD (Cash On Delivery).
+Tu connais parfaitement les habitudes d'achat en Guinée, Sénégal, Côte d'Ivoire, Togo, Mali, Cameroun.
+IMPORTANT : Les données fiables sont rares en Afrique. Tu dois RAISONNER par étapes, en t'appuyant sur des heuristiques de marchés analogues (Maghreb COD, Asie du Sud-Est COD, marchés émergents similaires) et sur ta connaissance du comportement consommateur africain.
+Réponds UNIQUEMENT en JSON valide. Pas de markdown, pas de backticks.`,
+        user: `Analyse ce produit pour le marché e-commerce africain COD. Raisonne étape par étape.
 
 Produit: "${productName}"
 Prix d'achat: ${costPrice} ${currency}
@@ -73,7 +74,14 @@ Description: ${productDesc || 'Non fournie'}
 Catégorie: ${categorie}
 Pays cible: ${pays}
 
-Réponds avec ce JSON exact:
+MÉTHODOLOGIE — Avant de générer le JSON, raisonne mentalement :
+1. Ce produit répond-il à un besoin réel et urgent dans ce pays spécifique ?
+2. Y a-t-il des équivalents qui fonctionnent dans des marchés COD analogues (Maroc, Tunisie, Vietnam) ? Quels prix pratiquent-ils ?
+3. Quelle marge brute est réaliste après coût d'achat + livraison (~2000-5000 GNF) + pub Facebook (~3000-8000 GNF par commande) ?
+4. L'audience est-elle facilement identifiable et adressable sur Facebook/TikTok ?
+5. La démonstration visuelle du produit est-elle convaincante pour un acheteur COD méfiant ?
+
+Sur la base de ce raisonnement, réponds avec ce JSON exact:
 {
   "score": 78,
   "score_label": "Bon potentiel",
@@ -82,6 +90,7 @@ Réponds avec ce JSON exact:
   "prix_max": 180000,
   "prix_recommande": 149000,
   "marge_estimee": "65%",
+  "raisonnement_prix": "Explication en 2 phrases du raisonnement pour arriver à ces prix (analogie marché, élasticité prix, pouvoir d'achat local)",
   "criteres": [
     {"nom": "Popularité en Afrique", "score": 82, "commentaire": "Très demandé en Guinée et Sénégal"},
     {"nom": "Facilité de marketing", "score": 88, "commentaire": "Visuel fort, démonstration facile"},
@@ -91,28 +100,33 @@ Réponds avec ce JSON exact:
     {"nom": "Tendance actuelle", "score": 75, "commentaire": "En croissance sur TikTok Afrique"},
     {"nom": "Confiance à l'achat", "score": 70, "commentaire": "Paiement à la livraison rassure"}
   ],
-  "analyse_marketing": "Texte d'analyse de 3-4 phrases sur le potentiel du produit pour ce marché spécifique.",
+  "analyse_marketing": "Analyse de 3-4 phrases sur le potentiel concret du produit pour ce marché, basée sur des heuristiques réelles.",
   "recommandations": [
-    "Recommandation concrète 1 pour maximiser les ventes",
-    "Recommandation concrète 2",
-    "Recommandation concrète 3"
+    "Recommandation actionnable 1 avec exemple concret",
+    "Recommandation actionnable 2",
+    "Recommandation actionnable 3"
   ]
 }`
       };
 
       const PROMPT_AVATAR = {
-        system: `Tu es un expert en psychologie du consommateur africain et en marketing COD.
+        system: `Tu es un expert de classe mondiale en psychologie du consommateur africain, neuromarketing COD et comportement d'achat en ligne.
+Tu connais les biais cognitifs, les déclencheurs émotionnels, les dynamiques sociales (tontines, pression des pairs, statut) et les mécanismes de décision d'achat en Afrique francophone.
 Réponds UNIQUEMENT en JSON valide. Aucun texte avant ou après.`,
-        user: `Crée l'avatar client idéal pour ce produit.
+        user: `Crée un avatar client ULTRA-DÉTAILLÉ et psychologiquement précis pour ce produit.
 
 Produit: "${productName}"
 Catégorie: ${categorie}
+Pays cible: ${pays}
 
-RÈGLE IMPORTANTE POUR LES INTÉRÊTS:
-Ne donne PAS d'intérêts génériques comme "Nouveautés" ou "Shopping en ligne". 
-Définis des "interets" PROFONDS : ce que la personne aime vraiment passionnément, ce qu'elle ressent au fond d'elle, ses valeurs, ou les communautés sociales spécifiques auxquelles elle s'identifie.
+TU DOIS ALLER BIEN AU-DELÀ DE LA DÉMOGRAPHIE. Fournis :
+- Le comportement d'achat CONCRET (pas juste "achète en ligne")
+- Les déclencheurs PSYCHOLOGIQUES réels (neuromarketing : FOMO, statut social, appartenance tribale, sécurité, réciprocité)
+- Le VRAI monologue intérieur au moment de l'achat
+- Les objections avec CE QU'ELLE DIT et CE QU'ELLE PENSE VRAIMENT (ces deux choses diffèrent)
+- Son PARCOURS DÉCISIONNEL de la découverte à la commande
 
-JSON exact à retourner:
+JSON exact à retourner (NE CHANGE PAS LES CLÉS) :
 {
   "prenom": "Aminata",
   "sexe": "Femme",
@@ -121,21 +135,37 @@ JSON exact à retourner:
   "profession": "Commerçante / Fonctionnaire",
   "revenu_mensuel": "500 000 - 1 500 000 GNF",
   "situation_familiale": "Mariée, 2 enfants",
-  "interets": ["Amour de l'élégance affirmée", "Forte implication dans les tontines locales", "Besoin viscéral de sécurité familiale"],
+  "interets": ["Intérêt profond 1 (valeur/passion spécifique)", "Intérêt profond 2 (appartenance communautaire)", "Intérêt profond 3 (aspiration précise)"],
   "plateformes": ["Facebook", "WhatsApp", "TikTok"],
   "heure_active": "19h - 22h",
-  "probleme_principal": "Description du problème que ce produit résout pour elle",
-  "desir_profond": "Ce qu'elle veut vraiment obtenir avec ce produit",
-  "peur_principale": "Sa plus grande crainte avant d'acheter (arnaque, qualité...)",
-  "objection_prix": "Ce qu'elle dit quand le prix lui semble élevé",
-  "declencheur_achat": "Ce qui la fait passer à l'action et commander",
+  "probleme_principal": "Le problème concret et douloureux que ce produit résout dans sa vie quotidienne",
+  "desir_profond": "Ce qu'elle veut VRAIMENT au fond d'elle (pas juste le bénéfice produit, mais le désir humain profond)",
+  "peur_principale": "Sa peur la plus viscérale avant d'acheter en ligne en Afrique (arnaque, jugement des proches, argent gaspillé...)",
+  "declencheurs_psychologiques": [
+    {"type": "FOMO", "description": "Comment le FOMO s'applique à elle pour ce produit"},
+    {"type": "Statut social", "description": "Comment ce produit affecte son statut dans son cercle social africain"},
+    {"type": "Appartenance", "description": "À quelle communauté ce produit lui permet d'appartenir"}
+  ],
+  "comportement_achat": {
+    "moment_decouverte": "Où et quand elle découvre le produit (scroll Facebook 20h, WhatsApp groupe...)",
+    "action_avant_achat": "Ce qu'elle fait avant de commander (cherche avis amies, screenshote, demande au mari...)",
+    "temps_decision": "Combien de temps entre la découverte et la commande en moyenne",
+    "canal_achat": "Comment elle commande (WhatsApp direct, formulaire, appel...)"
+  },
+  "objections": [
+    {"objection": "Ce qu'elle dit", "vrai_blocage": "Ce qu'elle pense vraiment", "reponse_ideale": "Comment lever ce blocage"},
+    {"objection": "C'est trop cher", "vrai_blocage": "Je ne suis pas sûre que ça marche vraiment", "reponse_ideale": "Garantie de remboursement + témoignage similaire"},
+    {"objection": "Je vais réfléchir", "vrai_blocage": "Je veux en parler à quelqu'un avant", "reponse_ideale": "Offre limitée + suggestion d'en parler à une amie qui a déjà acheté"}
+  ],
+  "declencheur_achat": "Le déclencheur final concret qui la fait passer à l'action (une amie qui l'a aussi, une promotion flash, la peur de rater...)",
   "mots_cles_resonance": ["mot1", "mot2", "mot3", "mot4", "mot5"],
-  "citation_type": "Une phrase qu'elle dirait exactement sur ce produit dans ses propres mots"
+  "citation_type": "Une phrase qu'elle dirait EXACTEMENT dans ses propres mots sur ce produit, avec son ton africain authentique",
+  "phrase_declenchante": "La phrase publicitaire parfaite qui la ferait stopper son scroll et commander"
 }`
       };
 
       // ÉTAPE 1: Score + Avatar en parallèle
-      toast.loading("Génération du score et profil...", { id: 'analyze' });
+      toast.loading("🔍 Analyse du marché africain en cours...", { id: 'analyze' });
       const [scoreData, avatarData] = await Promise.all([
         callClaude(PROMPT_SCORE, { parseJSON: true }),
         callClaude(PROMPT_AVATAR, { parseJSON: true })
@@ -257,37 +287,42 @@ BULLET_5: [caractéristique en 6 mots max]`
       };
 
       const PROMPT_VOIXOFF = {
-        system: `Tu es expert en scripts publicitaires vidéo pour TikTok, Facebook Reels, YouTube Shorts.
-Tu travailles pour le marché africain francophone.
-RÈGLES ABSOLUES: 
-1. Le script s'écrit comme on le LIT au micro — texte continu, pas de labels.
-2. Il ne faut JAMAIS utiliser de prénoms ou noms de personnages (PAS de "Voici Marc" ou "Sophie avait un problème"). Interdiction totale d'inventer des personnages.
-3. Tu dois adresser directement le spectateur ("Vous en avez marre de...", "Découvrez comment...").
-4. STRUCTURE EXCLUSIVE : Tous les scripts doivent suivre strictement la structure PROBLÈME -> AGGRAVATION -> SOLUTION. Aucun storytelling centré sur un personnage inventé.
-COMPTE LES MOTS avant de livrer. Respecte les durées demandées.`,
+        system: `Tu es expert en scripts publicitaires vidéo pour TikTok et Facebook Ads, marché africain francophone.
+RÈGLES ABSOLUES:
+1. Texte continu lu au micro — AUCUN label interne.
+2. JAMAIS de prénoms ou personnages inventés.
+3. Adresse directement le spectateur (vous/tu).
+4. Chaque script = 4 étapes OBLIGATOIRES : Accroche/Problème viscéral → Solution (le produit) → Comment ça fonctionne → CTA.
+5. Chaque script : STRICTEMENT 65 à 100 mots (25-40 secondes à débit oral normal).
+COMPTE LES MOTS avant de livrer.`,
         user: `Crée 3 scripts voix off pour "${productName}" à ${prixRecommande} ${currency} — marché ${pays}.
 
-CONTRAINTES STRICTES:
-Tous les scripts doivent utiliser EXCLUSIVEMENT la structure PROBLÈME / SOLUTION.
-- Script 1: 45-55 mots (20-25 secondes) — Format court direct
-- Script 2: 70-85 mots (30-35 secondes) — Format moyen explicatif
-- Script 3: 100-115 mots (42-48 secondes) — Format long détaillé avec garantie
+STRUCTURE OBLIGATOIRE POUR CHAQUE SCRIPT :
+- ÉTAPE 1 ACCROCHE/PROBLÈME : Commence en appuyant là où ça fait vraiment mal (douleur viscérale, peur, honte, frustration quotidienne).
+- ÉTAPE 2 SOLUTION : Présente "${productName}" comme LA réponse concrète.
+- ÉTAPE 3 FONCTIONNEMENT : 1-2 phrases sur comment ça marche ou les bénéfices clés.
+- ÉTAPE 4 CTA : Variante de "Cliquez sur le bouton en bas, remplissez le formulaire et commandez le vôtre maintenant."
 
-FORMAT EXACT:
-═══ SCRIPT 1 — Problème/Solution Court | 20-25 sec ═══
-[Script complet lu au micro, sans interruption]
-Mots: [nombre] | Durée: [X secondes]
+3 ANGLES DISTINCTS :
+- Script 1 — Douleur Émotionnelle : frustration intérieure, insécurité, honte ressentie
+- Script 2 — Inconfort Quotidien : problème concret du quotidien, temps/argent perdu
+- Script 3 — Aspiration & Transformation : projection vers la vie désirée, le produit comme pont
 
-═══ SCRIPT 2 — Problème/Solution Moyen | 30-35 sec ═══
-[Script complet lu au micro, sans interruption]
-Mots: [nombre] | Durée: [X secondes]
+FORMAT EXACT (respecte les séparateurs) :
+═══ SCRIPT 1 — Angle : Douleur Émotionnelle ═══
+[Texte continu 65-100 mots]
+⏱ [N] mots | ~[X] secondes
 
-═══ SCRIPT 3 — Problème/Solution Long | 42-48 sec ═══
-[Script complet lu au micro, sans interruption]
-Mots: [nombre] | Durée: [X secondes]`
+═══ SCRIPT 2 — Angle : Inconfort Quotidien ═══
+[Texte continu 65-100 mots]
+⏱ [N] mots | ~[X] secondes
+
+═══ SCRIPT 3 — Angle : Aspiration & Transformation ═══
+[Texte continu 65-100 mots]
+⏱ [N] mots | ~[X] secondes`
       };
 
-      toast.loading("Génération du marketing (Pubs, Shopify, Scripts)...", { id: 'analyze' });
+      toast.loading("📱 Génération des publicités, fiche Shopify et scripts...", { id: 'analyze' });
       
       const [pubsText, shopifyText, voixOffText] = await Promise.all([
         callClaude(PROMPT_PUBS),
@@ -383,13 +418,15 @@ Mots: [nombre] | Durée: [X secondes]`
       const parsedVoixOff = parseVoixOff(voixOffText);
       const parsedShopify = parseShopify(shopifyText);
 
-      // Reconstruct combined result to match the expected format of the UI
       const result = {
         score: {
           total: scoreData.score,
           explication: scoreData.score_label,
+          raisonnement_prix: scoreData.raisonnement_prix || '',
+          prix_min: scoreData.prix_min,
+          prix_max: scoreData.prix_max,
+          marge_estimee: scoreData.marge_estimee,
           criteria: scoreData.criteres?.reduce((acc: any, curr: any) => {
-             // Map standard criteria back if needed, or use the exact names generated
              const key = curr.nom.replace(/[^a-zA-Z0-9]/g, '');
              acc[key] = { score: curr.score, justification: curr.commentaire };
              return acc;
@@ -401,14 +438,32 @@ Mots: [nombre] | Durée: [X secondes]`
         },
         price_recommendation: scoreData.prix_recommande,
         avatar: {
+          // Champs démographiques
           sexe: avatarData.sexe,
           age: avatarData.age,
-          interets: [avatarData.profession, avatarData.ville, avatarData.situation_familiale],
-          frustrations: [avatarData.probleme_principal],
-          peurs: [avatarData.peur_principale, avatarData.objection_prix],
-          desirs: [avatarData.desir_profond],
-          phrase_declenchante: avatarData.citation_type,
-          ...avatarData // Keep all other raw fields just in case
+          prenom: avatarData.prenom,
+          ville: avatarData.ville,
+          profession: avatarData.profession,
+          revenu_mensuel: avatarData.revenu_mensuel,
+          situation_familiale: avatarData.situation_familiale,
+          plateformes: avatarData.plateformes,
+          heure_active: avatarData.heure_active,
+          // Psychologie
+          interets: Array.isArray(avatarData.interets) ? avatarData.interets : [avatarData.profession, avatarData.ville, avatarData.situation_familiale].filter(Boolean),
+          frustrations: [avatarData.probleme_principal].filter(Boolean),
+          peurs: [avatarData.peur_principale].filter(Boolean),
+          desirs: [avatarData.desir_profond].filter(Boolean),
+          // Neuromarketing (nouveaux champs)
+          declencheurs_psychologiques: avatarData.declencheurs_psychologiques || [],
+          comportement_achat: avatarData.comportement_achat || {},
+          objections: avatarData.objections || [],
+          declencheur_achat: avatarData.declencheur_achat || '',
+          mots_cles_resonance: avatarData.mots_cles_resonance || [],
+          // Phrases clés
+          phrase_declenchante: avatarData.phrase_declenchante || avatarData.citation_type || '',
+          citation_type: avatarData.citation_type || '',
+          // Garde tous les champs bruts
+          ...avatarData
         },
         shopify_page: parsedShopify,
         facebook_ads: parsedPubs,
@@ -444,7 +499,7 @@ Mots: [nombre] | Durée: [X secondes]`
         localStorage.setItem('activeAnalysisId', savedData[0].id);
       }
 
-      toast.success('Analyse terminée !', { id: 'analyze' });
+      toast.success('✅ Analyse stratégique terminée !', { id: 'analyze' });
     } catch (err: any) {
       toast.error(sanitizeError(err), { id: 'analyze' });
     } finally {
@@ -454,62 +509,80 @@ Mots: [nombre] | Durée: [X secondes]`
 
   // --- RESULTS VIEW ---
   if (analysisResult) {
+    type ResultCard = { href: string; icon: React.ReactNode; iconBg: string; badge: string | null; badgeColor: string; badgeLabel: string; title: string; desc: string; cta: string; accent: string; };
+    const RESULT_CARDS: ResultCard[] = [
+      { href: '/score-et-prix', icon: <Zap className="w-6 h-6" />, iconBg: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600', badge: `${analysisResult.score?.total ?? analysisResult.score ?? 0}%`, badgeColor: 'text-amber-500', badgeLabel: 'Potentiel', title: 'Score & Rentabilité', desc: `Prix conseillé : ${analysisResult.price_recommendation ?? '-'}`, cta: 'Voir les chiffres', accent: 'hover:border-amber-400' },
+      { href: '/avatar', icon: <User className="w-6 h-6" />, iconBg: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600', badge: null, badgeColor: '', badgeLabel: '', title: 'Avatar Client', desc: 'Déclencheurs psychologiques, objections et parcours d\'achat.', cta: 'Voir le profil', accent: 'hover:border-blue-400' },
+      { href: '/page-shopify', icon: <Globe className="w-6 h-6" />, iconBg: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600', badge: null, badgeColor: '', badgeLabel: '', title: 'Page Shopify', desc: 'Fiche produit avec les 6 principes de Cialdini.', cta: 'Voir la fiche', accent: 'hover:border-emerald-400' },
+      { href: '/publicites', icon: <Megaphone className="w-6 h-6" />, iconBg: 'bg-rose-100 dark:bg-rose-900/30 text-rose-600', badge: '3', badgeColor: 'text-rose-500', badgeLabel: 'Pubs', title: 'Publicités Facebook', desc: 'Angles Douleur, Preuve Sociale & Urgence avec accroches choc.', cta: 'Voir les pubs', accent: 'hover:border-rose-400' },
+      { href: '/script-voix-off', icon: <Mic className="w-6 h-6" />, iconBg: 'bg-violet-100 dark:bg-violet-900/30 text-violet-600', badge: '3', badgeColor: 'text-violet-500', badgeLabel: 'Scripts', title: 'Scripts Voix Off', desc: '3 scripts 25-40s • Accroche → Solution → Fonctionnement → CTA.', cta: 'Voir les scripts', accent: 'hover:border-violet-400' },
+      { href: '/image-ia', icon: <ImageIcon className="w-6 h-6" />, iconBg: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600', badge: '7', badgeColor: 'text-indigo-500', badgeLabel: 'Visuels', title: 'Images Produit IA', desc: 'Studio, lifestyle, flat lay + avantages en overlay.', cta: 'Générer les images', accent: 'hover:border-indigo-400' },
+    ];
+
     return (
-      <div className="max-w-5xl mx-auto pb-20 px-4 animate-in fade-in zoom-in-95 duration-500">
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-5 py-2 bg-emerald-500/10 text-emerald-500 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 border border-emerald-500/20">
-            <CheckCircle2 className="w-4 h-4" /> Analyse Stratégique Prête
+      <div className="max-w-5xl mx-auto pb-20 px-4">
+
+        {/* Hero résultat — fade in */}
+        <div className="text-center mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700" style={{ animationFillMode: 'both' }}>
+          <div className="inline-flex items-center gap-2 px-5 py-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 border border-emerald-500/20 shadow-sm">
+            <CheckCircle2 className="w-4 h-4" /> Analyse Stratégique Complète
           </div>
-          <h2 className="text-3xl md:text-5xl font-black tracking-tighter mb-2">{productName}</h2>
-          <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.3em]">IA Engine Version 2.1</p>
+          <h2 className="text-3xl md:text-5xl font-black tracking-tighter mb-3 text-slate-800 dark:text-white">{productName}</h2>
+          <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.3em]">IA Neuromarketing — Marché Africain COD</p>
+
+          {/* Résumé score inline */}
+          <div className="mt-8 inline-flex items-center gap-6 px-8 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] shadow-xl divide-x divide-slate-200 dark:divide-slate-700">
+            <div className="text-center pr-6">
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Score</p>
+              <p className="text-3xl font-black text-amber-500">{analysisResult.score?.total ?? analysisResult.score ?? '-'}%</p>
+            </div>
+            <div className="text-center px-6">
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Prix Conseillé</p>
+              <p className="text-xl font-black text-primary-600">{analysisResult.price_recommendation ?? '-'}</p>
+            </div>
+            <div className="text-center pl-6">
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Décision</p>
+              <p className="text-sm font-black text-emerald-600">{analysisResult.launch_strategy?.should_launch ?? 'OK'}</p>
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          {/* Card 1 */}
-          <Link href="/score-et-prix" className="bg-white dark:bg-slate-900 p-8 rounded-[3rem] border-2 border-slate-100 dark:border-slate-800 hover:border-primary-500 transition-all group hover:-translate-y-2 shadow-sm">
-            <div className="flex justify-between items-start mb-6">
-              <div className="p-4 bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded-2xl group-hover:rotate-12 transition-transform">
-                <Zap className="w-6 h-6" />
+        {/* Cards staggerées */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-12">
+          {RESULT_CARDS.map((card, i) => (
+            <Link
+              key={card.href}
+              href={card.href}
+              className={`group relative bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm p-7 rounded-[2.5rem] border-2 border-slate-100 dark:border-slate-800 ${card.accent} transition-all duration-300 hover:-translate-y-2 hover:shadow-xl shadow-sm animate-in fade-in slide-in-from-bottom-4`}
+              style={{ animationDelay: `${i * 80}ms`, animationDuration: '500ms', animationFillMode: 'both' }}
+            >
+              <div className="absolute inset-0 rounded-[2.5rem] opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-white/60 to-transparent dark:from-slate-800/60 pointer-events-none" />
+              <div className="relative z-10">
+                <div className="flex justify-between items-start mb-5">
+                  <div className={`p-3.5 rounded-2xl group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300 ${card.iconBg}`}>
+                    {card.icon}
+                  </div>
+                  {card.badge && (
+                    <div className="text-right">
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">{card.badgeLabel}</span>
+                      <p className={`text-3xl font-black ${card.badgeColor}`}>{card.badge}</p>
+                    </div>
+                  )}
+                </div>
+                <h3 className="text-lg font-black mb-2 tracking-tight text-slate-800 dark:text-white group-hover:text-primary-600 transition-colors duration-300">{card.title}</h3>
+                <p className="text-xs text-slate-400 font-bold mb-5 leading-relaxed line-clamp-2">{card.desc}</p>
+                <div className="flex items-center gap-2 text-primary-600 text-[10px] font-black uppercase tracking-widest">
+                  {card.cta} <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                </div>
               </div>
-              <div className="text-right">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Gagnant ?</span>
-                <p className="text-3xl font-black text-amber-600">{analysisResult.score.total || analysisResult.score}%</p>
-              </div>
-            </div>
-            <h3 className="text-xl font-black mb-1 tracking-tight">Score & Rentabilité</h3>
-            <p className="text-xs text-slate-400 font-bold mb-6">Prix recommandé : <span className="text-primary-600">{analysisResult.price_recommendation}</span></p>
-            <div className="flex items-center gap-2 text-primary-600 text-[10px] font-black uppercase tracking-widest">Détails financiers <ArrowRight className="w-3 h-3" /></div>
-          </Link>
-
-          {/* Card 2 */}
-          <Link href="/avatar" className="bg-white dark:bg-slate-900 p-8 rounded-[3rem] border-2 border-slate-100 dark:border-slate-800 hover:border-primary-500 transition-all group hover:-translate-y-2 shadow-sm">
-            <div className="flex justify-between items-start mb-6">
-              <div className="p-4 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-2xl group-hover:rotate-12 transition-transform">
-                <User className="w-6 h-6" />
-              </div>
-            </div>
-            <h3 className="text-xl font-black mb-1 tracking-tight">Avatar Client</h3>
-            <p className="text-xs text-slate-400 font-bold mb-6 line-clamp-2">Comprenez qui achète et pourquoi.</p>
-            <div className="flex items-center gap-2 text-primary-600 text-[10px] font-black uppercase tracking-widest">Voir le profil <ArrowRight className="w-3 h-3" /></div>
-          </Link>
-
-          {/* Card 3 */}
-          <Link href="/page-shopify" className="bg-white dark:bg-slate-900 p-8 rounded-[3rem] border-2 border-slate-100 dark:border-slate-800 hover:border-primary-500 transition-all group hover:-translate-y-2 shadow-sm">
-            <div className="flex justify-between items-start mb-6">
-              <div className="p-4 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 rounded-2xl group-hover:rotate-12 transition-transform">
-                <Globe className="w-6 h-6" />
-              </div>
-            </div>
-            <h3 className="text-xl font-black mb-1 tracking-tight">Page Shopify</h3>
-            <p className="text-xs text-slate-400 font-bold mb-6 line-clamp-2">Générez votre fiche produit en 1 clic.</p>
-            <div className="flex items-center gap-2 text-primary-600 text-[10px] font-black uppercase tracking-widest">Accéder au builder <ArrowRight className="w-3 h-3" /></div>
-          </Link>
+            </Link>
+          ))}
         </div>
 
         <div className="flex justify-center">
           <button
             onClick={() => { setAnalysisResult(null); setProductName(''); setProductDesc(''); setSourceLink(''); setCostPrice(''); setImages([]); }}
-            className="px-10 py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl active:scale-95"
+            className="px-10 py-4 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-slate-700 transition-all shadow-sm active:scale-95"
           >
             ← Analyser un autre produit
           </button>

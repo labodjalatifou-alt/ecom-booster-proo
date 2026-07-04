@@ -188,11 +188,21 @@ export default function ImageGenerator() {
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-800 min-h-[600px]">
             <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest mb-6 flex items-center justify-between">
               <span>Résultats ({generatedImages.length}/7)</span>
-              {generatedImages.length === 7 && (
-                <span className="flex items-center gap-1 text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1 rounded-full font-bold text-xs">
-                  <CheckCircle2 className="w-3.5 h-3.5" />Terminé
-                </span>
-              )}
+              <div className="flex items-center gap-2">
+                {generatedImages.length === 7 && (
+                  <span className="flex items-center gap-1 text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1 rounded-full font-bold text-xs">
+                    <CheckCircle2 className="w-3.5 h-3.5" />Terminé
+                  </span>
+                )}
+                {generatedImages.length > 0 && (
+                  <button
+                    onClick={() => generatedImages.forEach((img, i) => setTimeout(() => window.open(img.url, '_blank'), i * 200))}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-sm hover:shadow-md active:scale-95"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Tout télécharger
+                  </button>
+                )}
+              </div>
             </h3>
 
             {generatedImages.length === 0 && !isGenerating ? (

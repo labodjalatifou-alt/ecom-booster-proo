@@ -3,6 +3,11 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 
+// Vercel coupe les requêtes à 60s — on timeout à 55s pour avoir le temps de renvoyer une erreur propre
+const CLAUDE_TIMEOUT_MS = 55_000
+
+export const maxDuration = 60 // Vercel Pro / Edge config
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
@@ -43,29 +48,52 @@ export async function POST(req: NextRequest) {
       requestBody.system = system
     }
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify(requestBody),
-    })
+    // Timeout explicite pour ne pas dépasser la limite Vercel
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), CLAUDE_TIMEOUT_MS)
+
+    let response: Response
+    try {
+      response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify(requestBody),
+        signal: controller.signal,
+      })
+    } catch (fetchErr: any) {
+      clearTimeout(timeoutId)
+      if (fetchErr.name === 'AbortError') {
+        console.error('Claude API timeout après', CLAUDE_TIMEOUT_MS, 'ms')
+        return NextResponse.json(
+          { error: 'Le modèle met trop de temps à répondre. Essayez avec un prompt plus court ou relancez.' },
+          { status: 504 }
+        )
+      }
+      throw fetchErr
+    }
+    clearTimeout(timeoutId)
 
     if (!response.ok) {
-      const error = await response.json()
-      console.error('Claude API error:', error)
-      
+      const error = await response.json().catch(() => ({ error: { message: 'Réponse non-JSON' } }))
+      console.error('Claude API error:', response.status, JSON.stringify(error))
+
       let errorMessage = error.error?.message || `Erreur API Claude: ${response.status}`
       if (response.status === 401) {
-        errorMessage = "La clé API Claude est invalide ou a été révoquée."
+        errorMessage = 'La clé API Claude est invalide ou a été révoquée. Vérifiez ANTHROPIC_API_KEY.'
+      } else if (response.status === 403) {
+        errorMessage = 'Accès refusé au modèle. Votre clé n\'a pas les droits pour claude-sonnet-4-5.'
       } else if (response.status === 404) {
-        errorMessage = "Votre clé API Claude n'a pas l'autorisation d'utiliser ce modèle (accès restreint ou crédits manquants)."
+        errorMessage = 'Modèle introuvable (claude-sonnet-4-5). Vérifiez les accès de votre compte Anthropic.'
       } else if (response.status === 429) {
-        errorMessage = "Le quota de l'API Claude est dépassé ou limite de requêtes atteinte."
+        errorMessage = 'Quota API Claude dépassé ou trop de requêtes simultanées. Patientez quelques secondes.'
+      } else if (response.status === 529) {
+        errorMessage = 'Anthropic est surchargé. Réessayez dans quelques instants.'
       } else if (response.status >= 500) {
-        errorMessage = "Erreur serveur chez Anthropic (Claude)."
+        errorMessage = 'Erreur interne chez Anthropic. Réessayez dans quelques instants.'
       }
 
       return NextResponse.json(
@@ -77,14 +105,37 @@ export async function POST(req: NextRequest) {
     const data = await response.json()
     let text = data.content?.[0]?.text || ''
 
-    // Le nouveau modèle enveloppe parfois la réponse dans des balises markdown ```json...```
-    // On les supprime pour garder la compatibilité avec le frontend
-    text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim()
+    // Nettoyage agressif — Claude peut envelopper sa réponse de plusieurs façons
+    text = cleanClaudeResponse(text)
 
     return NextResponse.json({ text, usage: data.usage })
 
   } catch (err: any) {
-    console.error('Claude route error:', err)
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    console.error('Claude route error:', err.message, err.stack)
+    return NextResponse.json({ error: err.message || 'Erreur serveur interne' }, { status: 500 })
   }
+}
+
+/**
+ * Nettoie la réponse Claude de tout wrapper parasite.
+ * Supprime : balises <thinking>, blocs ```json ... ```, texte avant/après le JSON.
+ */
+function cleanClaudeResponse(text: string): string {
+  // 1. Supprimer les balises <thinking>...</thinking> (extended thinking)
+  text = text.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '').trim()
+
+  // 2. Supprimer les blocs markdown ```json ... ``` ou ``` ... ```
+  text = text.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim()
+
+  // 3. Supprimer les préfixes textuels courants avant un JSON
+  text = text.replace(/^[^[{]*([{[])/, '$1').trim()
+
+  // 4. Supprimer les suffixes textuels après le JSON
+  // On cherche le dernier } ou ] et on coupe après
+  const lastBrace = Math.max(text.lastIndexOf('}'), text.lastIndexOf(']'))
+  if (lastBrace !== -1 && lastBrace < text.length - 1) {
+    text = text.substring(0, lastBrace + 1)
+  }
+
+  return text
 }

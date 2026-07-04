@@ -1,21 +1,63 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { Star, Zap, TrendingUp, Target, Loader2, CheckCircle2, Lightbulb, AlertTriangle, ShieldCheck } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
+import { Star, Zap, TrendingUp, Target, Loader2, CheckCircle2, Lightbulb, ShieldCheck, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { useStore } from '@/components/StoreProvider';
 
 const CRITERIA_LABELS: Record<string, { label: string; icon: string }> = {
-  problemSolving: { label: "Résolution Problème", icon: '🎯' },
-  wowEffect: { label: "Effet Wow", icon: '✨' },
-  localAvailability: { label: "Disponibilité locale", icon: '📍' },
-  shippingEase: { label: "Facilité Transport", icon: '📦' },
-  popularityInAfrica: { label: "Popularité Afrique", icon: '🌍' },
-  marketingEase: { label: "Facilité Marketing", icon: '📈' },
-  competition: { label: "Concurrence", icon: '🤝' },
-  targetAudience: { label: "Audience Cible", icon: '👥' },
+  PopularitenfAfrique: { label: "Popularité en Afrique", icon: '🌍' },
+  FacilitdemarkettingPub: { label: "Facilité Marketing", icon: '📈' },
+  PrixadaptaumarchPrix: { label: "Prix adapté au marché", icon: '💰' },
+  Niveaudeconcurrence: { label: "Concurrence", icon: '🤝' },
+  ClarTdubNFice: { label: "Clarté du bénéfice", icon: '🎯' },
+  Tendanceactuelle: { label: "Tendance actuelle", icon: '🔥' },
+  ConfianCelachat: { label: "Confiance à l'achat", icon: '🛡️' },
 };
+
+// Hook pour compteur animé
+function useAnimatedCounter(target: number, duration = 1500) {
+  const [count, setCount] = useState(0);
+  const frameRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (target === 0) return;
+    const start = Date.now();
+    const animate = () => {
+      const elapsed = Date.now() - start;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.round(eased * target));
+      if (progress < 1) {
+        frameRef.current = requestAnimationFrame(animate);
+      }
+    };
+    frameRef.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frameRef.current);
+  }, [target, duration]);
+
+  return count;
+}
+
+// Composant barre de score animée
+function AnimatedBar({ score, color }: { score: number; color: string }) {
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    const timer = setTimeout(() => setWidth(score), 100);
+    return () => clearTimeout(timer);
+  }, [score]);
+
+  return (
+    <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mb-6">
+      <div
+        className={`h-full rounded-full transition-all duration-1000 ease-out ${color}`}
+        style={{ width: `${width}%` }}
+      />
+    </div>
+  );
+}
 
 export default function ScorePage() {
   const { currency } = useStore();
@@ -64,8 +106,22 @@ export default function ScorePage() {
   const scoreCriteria = scoreDetails?.criteria || (typeof rawScore === 'object' ? rawScore?.criteria : null);
   const launchStrategy = latestProduct.launch_strategy;
 
+  // Données prix
+  const prixMin = scoreDetails?.prix_min;
+  const prixMax = scoreDetails?.prix_max;
+  const margeEstimee = scoreDetails?.marge_estimee;
+  const raisonnementPrix = scoreDetails?.raisonnement_prix;
+
+  const animatedScore = useAnimatedCounter(score, 1500);
+
   const scoreColor = score >= 80 ? 'text-emerald-500' : score >= 60 ? 'text-amber-500' : 'text-red-500';
   const strokeColor = score >= 80 ? '#10b981' : score >= 60 ? '#f59e0b' : '#ef4444';
+  const [ringWidth, setRingWidth] = useState(0);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setRingWidth(score), 200);
+    return () => clearTimeout(timer);
+  }, [score]);
 
   const getBarColor = (note: number) => {
     if (note >= 80) return 'bg-emerald-500';
@@ -75,9 +131,10 @@ export default function ScorePage() {
 
   return (
     <div className="max-w-6xl mx-auto pb-20 px-4 animate-in fade-in duration-700">
-      
+
       {/* HEADER SECTION: SCORE & PRICE */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+
         {/* Score Block */}
         <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-800/50 rounded-[3.5rem] p-10 shadow-2xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 blur-[100px] rounded-full -mr-32 -mt-32 pointer-events-none" />
@@ -86,7 +143,7 @@ export default function ScorePage() {
               <Star className="w-4 h-4 fill-current" />
               <span className="text-[10px] font-black uppercase tracking-[0.2em]">Score Stratégique</span>
             </div>
-            
+
             <h1 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-10 truncate max-w-full" title={latestProduct.product_name}>
               {latestProduct.product_name}
             </h1>
@@ -94,10 +151,17 @@ export default function ScorePage() {
             <div className="relative w-48 h-48 mb-8 group-hover:scale-105 transition-transform duration-500">
               <svg className="w-full h-full transform -rotate-90 drop-shadow-xl" viewBox="0 0 200 200">
                 <circle cx="100" cy="100" r="85" stroke="currentColor" strokeWidth="12" fill="transparent" className="text-slate-100 dark:text-slate-800/50" />
-                <circle cx="100" cy="100" r="85" stroke={strokeColor} strokeWidth="12" fill="transparent" strokeDasharray={534} strokeDashoffset={534 * (1 - score / 100)} strokeLinecap="round" className="transition-all duration-1000 ease-out" />
+                <circle
+                  cx="100" cy="100" r="85"
+                  stroke={strokeColor} strokeWidth="12" fill="transparent"
+                  strokeDasharray={534}
+                  strokeDashoffset={534 * (1 - ringWidth / 100)}
+                  strokeLinecap="round"
+                  className="transition-all duration-1500 ease-out"
+                />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className={`text-7xl font-black tracking-tighter ${scoreColor}`}>{score}</span>
+                <span className={`text-7xl font-black tracking-tighter ${scoreColor}`}>{animatedScore}</span>
                 <span className="text-xs font-black text-slate-400 tracking-widest uppercase">/100</span>
               </div>
             </div>
@@ -106,39 +170,61 @@ export default function ScorePage() {
               {scoreExplication || "Analyse en cours..."}
             </h2>
             <p className="text-xs font-bold text-slate-500 dark:text-slate-400 max-w-md leading-relaxed">
-              {score >= 80 ? 'Potentiel exceptionnel détecté sur le marché local.' : score >= 60 ? 'Marché en croissance mais une éducation de l\'audience est nécessaire.' : 'Prudence recommandée, le marché semble saturé ou la demande est faible.'}
+              {score >= 80 ? 'Potentiel exceptionnel détecté sur le marché local.' : score >= 60 ? "Marché en croissance mais une éducation de l'audience est nécessaire." : 'Prudence recommandée, le marché semble saturé ou la demande est faible.'}
             </p>
           </div>
         </div>
 
         {/* Pricing Block */}
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-6">
+
+          {/* Prix recommandé */}
           <div className="bg-gradient-to-br from-primary-600 to-indigo-700 text-white rounded-[3.5rem] p-10 shadow-2xl relative overflow-hidden flex-1 flex flex-col justify-center">
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 blur-[100px] rounded-full -mr-32 -mt-32 pointer-events-none" />
             <div className="relative z-10">
-              <div className="flex items-center gap-3 mb-8">
+              <div className="flex items-center gap-3 mb-6">
                 <div className="p-3 bg-white/20 backdrop-blur-md rounded-2xl">
                   <TrendingUp className="w-6 h-6 text-white" />
                 </div>
                 <span className="text-xs font-black uppercase tracking-[0.2em] text-white/80">Recommandation Prix</span>
               </div>
-              
-              <div className="mb-8">
+
+              <div className="mb-6">
                 <p className="text-[10px] font-black text-white/60 uppercase tracking-widest mb-2">Prix de vente conseillé</p>
                 <div className="text-5xl md:text-6xl font-black tracking-tighter leading-none">
                   {latestProduct.price_recommendation || `Non défini`}
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="px-6 py-5 bg-white/10 backdrop-blur-md border border-white/20 rounded-[2rem]">
-                  <p className="text-[10px] font-black uppercase text-white/60 tracking-widest mb-1">Marge Estimeé</p>
+              {/* Prix min/max */}
+              {(prixMin || prixMax) && (
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div className="px-5 py-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-[1.5rem]">
+                    <div className="flex items-center gap-1 mb-1">
+                      <ArrowDownRight className="w-3 h-3 text-emerald-300" />
+                      <p className="text-[9px] font-black uppercase text-white/60 tracking-widest">Prix min</p>
+                    </div>
+                    <p className="text-sm font-black text-white">{prixMin?.toLocaleString()} {currency}</p>
+                  </div>
+                  <div className="px-5 py-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-[1.5rem]">
+                    <div className="flex items-center gap-1 mb-1">
+                      <ArrowUpRight className="w-3 h-3 text-amber-300" />
+                      <p className="text-[9px] font-black uppercase text-white/60 tracking-widest">Prix max</p>
+                    </div>
+                    <p className="text-sm font-black text-white">{prixMax?.toLocaleString()} {currency}</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="px-5 py-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-[1.5rem]">
+                  <p className="text-[9px] font-black uppercase text-white/60 tracking-widest mb-1">Marge Estimée</p>
                   <p className="text-sm font-black text-white flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-emerald-400" /> Optimale
+                    <ShieldCheck className="w-4 h-4 text-emerald-400" /> {margeEstimee || 'Optimale'}
                   </p>
                 </div>
-                <div className="px-6 py-5 bg-white/10 backdrop-blur-md border border-white/20 rounded-[2rem]">
-                  <p className="text-[10px] font-black uppercase text-white/60 tracking-widest mb-1">Volume Prévu</p>
+                <div className="px-5 py-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-[1.5rem]">
+                  <p className="text-[9px] font-black uppercase text-white/60 tracking-widest mb-1">Volume Prévu</p>
                   <p className="text-sm font-black text-white flex items-center gap-2">
                     <Zap className="w-4 h-4 text-amber-400" /> Élevé
                   </p>
@@ -146,26 +232,51 @@ export default function ScorePage() {
               </div>
             </div>
           </div>
-          
-          {/* STRATEGIC LAUNCH BOX */}
-          {launchStrategy && (
-            <div className="bg-red-50 dark:bg-red-950/20 border-2 border-red-200 dark:border-red-500/20 rounded-[3rem] p-8 relative group transition-all">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2.5 bg-red-500 text-white rounded-2xl shadow-lg shadow-red-500/20">
-                  <Target className="w-5 h-5" />
-                </div>
-                <h3 className="text-sm font-black uppercase tracking-widest text-red-600 dark:text-red-500">Dois-je lancer ce produit ?</h3>
+
+          {/* Raisonnement prix */}
+          {raisonnementPrix && (
+            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-500/20 rounded-[2rem] p-6">
+              <div className="flex items-center gap-2 mb-2">
+                <Lightbulb className="w-4 h-4 text-blue-500" />
+                <p className="text-[10px] font-black uppercase tracking-widest text-blue-600">Raisonnement du prix</p>
               </div>
-              <p className="text-[13px] font-bold text-slate-700 dark:text-red-100/80 leading-relaxed pl-2">
-                {launchStrategy.strategy_text}
-              </p>
-              <div className="absolute top-6 right-8 px-4 py-1.5 bg-red-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-red-500/30">
-                {launchStrategy.should_launch || "Prudence"}
-              </div>
+              <p className="text-sm font-bold text-slate-700 dark:text-blue-100/80 leading-relaxed">{raisonnementPrix}</p>
             </div>
           )}
         </div>
       </div>
+
+      {/* STRATEGIC LAUNCH BOX */}
+      {launchStrategy && (
+        <div className="bg-red-50 dark:bg-red-950/20 border-2 border-red-200 dark:border-red-500/20 rounded-[3rem] p-8 relative mb-12 group transition-all">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2.5 bg-red-500 text-white rounded-2xl shadow-lg shadow-red-500/20">
+              <Target className="w-5 h-5" />
+            </div>
+            <h3 className="text-sm font-black uppercase tracking-widest text-red-600 dark:text-red-500">Dois-je lancer ce produit ?</h3>
+          </div>
+          <p className="text-[13px] font-bold text-slate-700 dark:text-red-100/80 leading-relaxed pl-2 pr-24">
+            {launchStrategy.strategy_text}
+          </p>
+          <div className="absolute top-6 right-8 px-4 py-1.5 bg-red-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-red-500/30">
+            {launchStrategy.should_launch || "Prudence"}
+          </div>
+          {/* Recommandations */}
+          {latestProduct.score_details?.recommandations && (
+            <div className="mt-6 pt-6 border-t border-red-200 dark:border-red-900/30">
+              <p className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-3">Recommandations</p>
+              <ul className="space-y-2">
+                {latestProduct.score_details.recommandations?.map?.((r: string, i: number) => (
+                  <li key={i} className="flex items-start gap-2 text-sm font-bold text-slate-700 dark:text-slate-300">
+                    <CheckCircle2 className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                    {r}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* CRITERIA GRID */}
       {scoreCriteria && (
@@ -174,40 +285,42 @@ export default function ScorePage() {
             <h3 className="text-xl font-black uppercase tracking-tight text-slate-800 dark:text-white">Détails du Score</h3>
             <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1"></div>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {Object.entries(scoreCriteria).map(([key, value]: [string, any]) => {
-              const meta = CRITERIA_LABELS[key] || { label: key, icon: '📊' };
+              // Try to find label by partial key match
+              const metaEntry = Object.entries(CRITERIA_LABELS).find(([k]) =>
+                key.toLowerCase().includes(k.toLowerCase().slice(0, 6)) ||
+                k.toLowerCase().includes(key.toLowerCase().slice(0, 6))
+              );
+              const meta = metaEntry ? metaEntry[1] : { label: key.replace(/([A-Z])/g, ' $1').trim(), icon: '📊' };
               const note = value?.score || value?.note || 0;
+
               return (
-                <div key={key} className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200/50 dark:border-slate-800/50 rounded-[2.5rem] p-8 flex flex-col items-center text-center shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 group min-h-[320px]">
-                  <div className="flex flex-col items-center justify-center mb-6 w-full">
+                <div key={key} className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200/50 dark:border-slate-800/50 rounded-[2.5rem] p-8 flex flex-col items-center text-center shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 group min-h-[300px]">
+                  <div className="flex flex-col items-center justify-center mb-4 w-full">
                     <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                       <span className="text-3xl opacity-90">{meta.icon}</span>
                     </div>
-                    <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-200 line-clamp-2 mb-4 leading-relaxed">
+                    <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-200 line-clamp-2 mb-3 leading-relaxed">
                       {meta.label}
                     </h4>
                     <span className={`text-sm font-black px-4 py-1.5 rounded-full ${note >= 80 ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' : note >= 60 ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'}`}>
                       {note}%
                     </span>
                   </div>
-                  
-                  <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mb-6">
-                    <div className={`h-full rounded-full transition-all duration-1000 ${getBarColor(note)}`} style={{ width: `${note}%` }} />
-                  </div>
 
-                  <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-5 leading-relaxed flex-1">
+                  <AnimatedBar score={note} color={getBarColor(note)} />
+
+                  <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 leading-relaxed flex-1">
                     {value.justification}
                   </p>
 
                   {value.tip && (
-                    <div className="mt-auto bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 rounded-2xl p-4 group-hover:border-amber-200 dark:group-hover:border-amber-900/50 transition-colors">
+                    <div className="mt-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 rounded-2xl p-4 group-hover:border-amber-200 dark:group-hover:border-amber-900/50 transition-colors">
                       <div className="flex items-start gap-2">
                         <Lightbulb className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
-                        <p className="text-[9px] font-bold text-slate-500 dark:text-slate-400 italic leading-relaxed">
-                          {value.tip}
-                        </p>
+                        <p className="text-[9px] font-bold text-slate-500 dark:text-slate-400 italic leading-relaxed">{value.tip}</p>
                       </div>
                     </div>
                   )}

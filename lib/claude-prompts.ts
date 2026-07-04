@@ -160,7 +160,7 @@ export function shopifyPageToHtml(parsed: ShopifyPageParsed): string {
 
 
 // ══════════════════════════════════════════════════════════════
-// 2. GÉNÉRATION SCRIPTS VOIX OFF
+// 2. GÉNÉRATION SCRIPTS VOIX OFF — Spec 25-40s, structure imposée
 // ══════════════════════════════════════════════════════════════
 
 export async function genererScriptsVoixOff(
@@ -177,42 +177,46 @@ export async function genererScriptsVoixOff(
 Crée EXACTEMENT 3 scripts voix off pour "${produit}" à ${prix} ${currency}.
 
 RÈGLES ABSOLUES :
-1. Chaque script suit OBLIGATOIREMENT le format Problème → Solution (et uniquement ce format).
-2. Chaque script est un texte continu lu au micro d'un seul trait. AUCUN label interne (pas de "Problème :", "Solution :", "CTA :", etc.).
-3. NE MENTIONNE JAMAIS de prénoms inventés.
-4. Chaque script doit contenir STRICTEMENT entre 55 et 110 mots. Pas moins. Pas plus.
-5. Compte les mots AVANT de valider chaque script.
+1. Chaque script dure entre 25 et 40 secondes à l'oral (environ 65 à 100 mots — débit naturel = ~2.5 mots/seconde).
+2. Chaque script suit OBLIGATOIREMENT cette structure en 4 étapes :
+   - ÉTAPE 1 — ACCROCHE / PROBLÈME : Commence fort en appuyant là où ça fait mal. La douleur doit être palpable, viscérale.
+   - ÉTAPE 2 — SOLUTION : Présente "${produit}" comme LA réponse concrète au problème.
+   - ÉTAPE 3 — COMMENT ÇA FONCTIONNE : 1-2 phrases sur le mécanisme ou les bénéfices clés.
+   - ÉTAPE 4 — CALL-TO-ACTION : Termine par une variante de "Cliquez sur le bouton en bas, remplissez le formulaire et commandez."
+3. Texte continu lu au micro — AUCUN label interne (pas de "Problème :", "Solution :", etc.).
+4. NE MENTIONNE JAMAIS de prénoms ou personnages inventés.
+5. Adresse directement le spectateur (vous/tu).
+6. Compte les mots AVANT de valider. Entre 65 et 100 mots strictement.
 
-STRUCTURE OBLIGATOIRE POUR CHAQUE SCRIPT :
-- Pose le problème clairement (douleur, inconfort, frustration du client cible)
-- Présente "${produit}" comme LA solution concrète
-- Donne 1-2 bénéfices directs
-- Termine par une variante de : "Cliquez sur le bouton en bas de la vidéo, remplissez le formulaire et commandez le vôtre"
+LES 3 ANGLES (un angle distinct par script) :
+- Script 1 — Angle DOULEUR ÉMOTIONNELLE : L'accroche insiste sur la frustration intérieure, la honte, l'insécurité que le client ressent.
+- Script 2 — Angle INCONFORT QUOTIDIEN : L'accroche décrit le problème concret du quotidien (temps perdu, argent gaspillé, inefficacité).
+- Script 3 — Angle ASPIRATION & TRANSFORMATION : L'accroche projette le client vers la vie qu'il veut avoir, puis montre le produit comme le pont.
 
-EXEMPLE DE TON ET STRUCTURE :
-"Arrêtez d'abîmer vos yeux avec les colles pour faux cils. Les yeux sont fragiles et méritent d'être protégés. Optez plutôt pour nos cils magnétiques, sans colle et sans risque. En moins de 5 minutes, vous obtenez un regard intense qui tient toute la journée. Ils sont réutilisables et vous font économiser sur le long terme. Cliquez sur le bouton en bas de la vidéo, remplissez le formulaire et commandez les vôtres maintenant."
+EXEMPLE DE STRUCTURE ET TON :
+"Vous en avez assez de vous regarder dans le miroir et de ne pas vous reconnaître ? ${produit} a été conçu exactement pour ça. En quelques minutes par jour, il agit en profondeur pour des résultats visibles dès la première semaine. Cliquez sur le bouton en bas de la vidéo, remplissez le formulaire et commandez le vôtre maintenant."
 
-Réponds UNIQUEMENT avec ce format exact, sans rien ajouter avant ou après :
+Réponds UNIQUEMENT avec ce format exact :
 
-═══ SCRIPT 1 — Problème-Solution ═══
-[Texte continu, 55-110 mots, angle : frustration principale]
-⏱ mots | durée estimée
+═══ SCRIPT 1 — Angle : Douleur Émotionnelle ═══
+[Texte continu 65-100 mots]
+⏱ [N] mots | ~[X] secondes
 
-═══ SCRIPT 2 — Problème-Solution ═══
-[Texte continu, 55-110 mots, angle : inconfort quotidien]
-⏱ mots | durée estimée
+═══ SCRIPT 2 — Angle : Inconfort Quotidien ═══
+[Texte continu 65-100 mots]
+⏱ [N] mots | ~[X] secondes
 
-═══ SCRIPT 3 — Problème-Solution ═══
-[Texte continu, 55-110 mots, angle : aspiration / bénéfice clé]
-⏱ mots | durée estimée
+═══ SCRIPT 3 — Angle : Aspiration & Transformation ═══
+[Texte continu 65-100 mots]
+⏱ [N] mots | ~[X] secondes
 
 Infos produit : ${description}
 Points forts : ${avantages}
 `
 
   return await callClaude(prompt, {
-    system: "Tu es un expert en scripts publicitaires pour l'Afrique francophone. RÈGLES STRICTES ET NON NÉGOCIABLES : 1. Génère EXACTEMENT 3 scripts. 2. Chaque script = format Problème-Solution UNIQUEMENT. 3. Chaque script = texte continu SANS labels internes. 4. PAS DE PRÉNOMS INVENTÉS. 5. Chaque script : STRICTEMENT entre 55 et 110 mots — compte les mots avant de valider. 6. Utilise le format de sortie exact avec ═══ SCRIPT N ═══.",
-    max_tokens: 1500,
+    system: "Tu es un expert en scripts publicitaires pour l'Afrique francophone. RÈGLES STRICTES ET NON NÉGOCIABLES : 1. Génère EXACTEMENT 3 scripts. 2. Chaque script = EXACTEMENT 4 étapes : Accroche/Problème → Solution → Fonctionnement → CTA. 3. Texte continu SANS labels internes. 4. PAS DE PRÉNOMS INVENTÉS. 5. Chaque script : STRICTEMENT entre 65 et 100 mots (25-40 secondes). Compte les mots avant de valider. 6. Utilise le format de sortie exact avec ═══ SCRIPT N ═══.",
+    max_tokens: 1800,
   })
 }
 
@@ -237,10 +241,9 @@ export function parseScriptsVoixOff(raw: string): VoixOffScript[] {
     const numero = parseInt(sections[i])
     const bloc = sections[i + 1] || ''
 
-    // Extraire la technique depuis le texte avant le bloc
-    // On va chercher dans le raw original
+    // Extraire la technique/angle depuis le raw original
     const rawTechniqueMatch = raw.match(
-      new RegExp(`SCRIPT\\s*${numero}[^═]*Technique\\s*:\\s*([^═\n]+)`)
+      new RegExp(`SCRIPT\\s*${numero}[^═]*Angle\\s*[:\\-]?\\s*([^═\n]+)`)
     )
     const technique = rawTechniqueMatch
       ? rawTechniqueMatch[1].trim()
