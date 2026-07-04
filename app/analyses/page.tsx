@@ -53,13 +53,35 @@ export default function AnalysesPage() {
         });
         const data = await res.json();
         if (data.error) throw new Error(data.error);
-        let text = data.text;
+        let text: string = data.text;
         if (options.parseJSON) {
-          const jsonMatch = text.match(/\{[\s\S]*\}/);
-          return JSON.parse(jsonMatch ? jsonMatch[0] : text);
+          // Stratégie 1 : parse direct (la route nettoie déjà)
+          try { return JSON.parse(text); } catch {}
+          // Stratégie 2 : retirer les blocs markdown ```json ... ```
+          const stripped = text.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
+          try { return JSON.parse(stripped); } catch {}
+          // Stratégie 3 : extraire le premier bloc JSON valide (objet {} ou tableau [])
+          const extractJSON = (s: string): any => {
+            for (let i = 0; i < s.length; i++) {
+              if (s[i] !== '{' && s[i] !== '[') continue;
+              const open = s[i] === '{' ? '{' : '[';
+              const close = open === '{' ? '}' : ']';
+              let depth = 0;
+              let j = i;
+              while (j < s.length) {
+                if (s[j] === open) depth++;
+                else if (s[j] === close) { depth--; if (depth === 0) break; }
+                j++;
+              }
+              try { return JSON.parse(s.slice(i, j + 1)); } catch {}
+            }
+            throw new Error('Aucun JSON valide trouvé dans la réponse Claude');
+          };
+          return extractJSON(stripped || text);
         }
         return text;
       };
+
 
       const PROMPT_SCORE = {
         system: `Tu es un analyste e-commerce senior spécialisé dans les marchés africains COD (Cash On Delivery).
@@ -332,25 +354,42 @@ FORMAT EXACT (respecte les séparateurs) :
 
       // Parseurs
       const parsePubs = (text: string) => {
-        try {
-          const jsonMatch = text.match(/\[\s*\{[\s\S]*\}\s*\]/);
-          if (jsonMatch) {
-            const parsed = JSON.parse(jsonMatch[0]);
-            if (Array.isArray(parsed)) {
-              return parsed.map((pub: any) => ({
-                angle: pub.angle || 'Publicité',
-                hook: pub.hook || '',
-                explanation: pub.explanation || '',
-                benefits: Array.isArray(pub.benefits) ? pub.benefits.slice(0, 4) : [],
-                cta: pub.cta || ''
-              }));
+        // Extracteur JSON robuste — supporte objets et tableaux imbriqués
+        const extractFirstJSON = (s: string): any => {
+          const clean = s.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
+          // Essai direct
+          try { return JSON.parse(clean); } catch {}
+          // Extraction par comptage de profondeur
+          for (let i = 0; i < clean.length; i++) {
+            if (clean[i] !== '[' && clean[i] !== '{') continue;
+            const open = clean[i]; const close = open === '[' ? ']' : '}';
+            let depth = 0; let j = i;
+            while (j < clean.length) {
+              if (clean[j] === open) depth++;
+              else if (clean[j] === close) { depth--; if (depth === 0) break; }
+              j++;
             }
+            try { return JSON.parse(clean.slice(i, j + 1)); } catch {}
+          }
+          return null;
+        };
+
+        try {
+          const parsed = extractFirstJSON(text);
+          if (Array.isArray(parsed)) {
+            return parsed.map((pub: any) => ({
+              angle: pub.angle || 'Publicité',
+              hook: pub.hook || '',
+              explanation: pub.explanation || '',
+              benefits: Array.isArray(pub.benefits) ? pub.benefits.slice(0, 4) : [],
+              cta: pub.cta || ''
+            }));
           }
         } catch (e) {
-          console.error("Error parsing generated pubs JSON, using fallback parsing", e);
+          console.error('parsePubs JSON error:', e);
         }
 
-        // Fallback: parse markdown/text representation if JSON fails
+        // Fallback texte brut
         const pubs: any[] = [];
         const parts = text.split(/---PUB\d+---/);
         parts.forEach(part => {
@@ -362,36 +401,44 @@ FORMAT EXACT (respecte les séparateurs) :
               .filter(l => l.startsWith('-') || l.startsWith('*') || l.startsWith('•') || l.startsWith('✔') || l.length > 5)
               .map(l => l.replace(/^[-*•✔]\s*/, ''));
             const cta = lines[lines.length - 1] || '';
-            pubs.push({
-              angle: 'Publicité',
-              hook,
-              explanation: '',
-              benefits: benefits.slice(0, 4),
-              cta
-            });
+            pubs.push({ angle: 'Publicité', hook, explanation: '', benefits: benefits.slice(0, 4), cta });
           }
         });
         return pubs;
       };
 
+
       const parseVoixOff = (text: string) => {
         const scripts: any[] = [];
-        const parts = text.split(/═{3,}[^═]+═{3,}/);
+        // Séparer sur les séparateurs ═══ SCRIPT N ... ═══
+        const separatorRegex = /═{3,}\s*(SCRIPT\s*\d+[^═]*?)═{3,}/g;
+        const angles: string[] = [];
+        let match;
+        while ((match = separatorRegex.exec(text)) !== null) {
+          angles.push(match[1].trim());
+        }
+        const parts = text.split(/═{3,}[^═]*═{3,}/);
+        let scriptIndex = 0;
         parts.forEach(part => {
           const clean = part.trim();
           if (clean.length > 30) {
             const lines = clean.split('\n').filter(l => l.trim());
-            const lastLine = lines[lines.length - 1];
-            const isMetadata = lastLine.toLowerCase().includes('mots:');
+            // La dernière ligne peut être ⏱ N mots | ~X secondes OU Mots: N | Durée: X
+            const lastLine = lines[lines.length - 1] || '';
+            const isMetadata = lastLine.includes('⏱') || lastLine.toLowerCase().includes('mots') || lastLine.toLowerCase().includes('durée');
+            const bodyLines = isMetadata ? lines.slice(0, -1) : lines;
             scripts.push({
-              text: isMetadata ? lines.slice(0,-1).join('\n') : lines.join('\n'),
-              angle: isMetadata ? lastLine : 'Script',
-              word_count: 0
+              text: bodyLines.join('\n').trim(),
+              angle: angles[scriptIndex] || `Script ${scriptIndex + 1}`,
+              metadata: isMetadata ? lastLine : '',
+              word_count: bodyLines.join(' ').split(/\s+/).filter(Boolean).length
             });
+            scriptIndex++;
           }
         });
         return scripts;
       };
+
 
       const parseShopify = (text: string) => {
         const get = (key: string) => {
