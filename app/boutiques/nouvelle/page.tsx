@@ -1,16 +1,20 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
-import { THEMES } from '@/lib/store-builder/defaults'
+import { getThemesForPicker } from '@/lib/store-builder/boutique-themes'
 import {
   ArrowLeft,
   ArrowRight,
   Check,
+  Package,
   Sparkles,
   Store,
 } from 'lucide-react'
+
+const THEMES = getThemesForPicker()
 
 function slugify(text: string) {
   return text
@@ -22,17 +26,43 @@ function slugify(text: string) {
     .slice(0, 50)
 }
 
+interface ProductRow {
+  id: string
+  product_name?: string
+  name?: string
+  price?: number
+  currency?: string
+  image_url?: string
+  images?: string[]
+}
+
 export default function NouvelleBoutiquePage() {
   const router = useRouter()
   const supabase = createClient()
 
-  const [step, setStep] = useState<1 | 2>(1)
+  const [step, setStep] = useState<1 | 2 | 3>(1)
   const [selectedTheme, setSelectedTheme] = useState(THEMES[0].id)
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null)
+  const [products, setProducts] = useState<ProductRow[]>([])
+  const [loadingProducts, setLoadingProducts] = useState(false)
   const [name, setName] = useState('')
   const [slug, setSlug] = useState('')
   const [slugEdited, setSlugEdited] = useState(false)
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (step !== 2) return
+    setLoadingProducts(true)
+    supabase
+      .from('products')
+      .select('id, product_name, name, price, currency, image_url, images')
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        setProducts((data as ProductRow[]) || [])
+        setLoadingProducts(false)
+      })
+  }, [step, supabase])
 
   function handleNameChange(val: string) {
     setName(val)
@@ -42,6 +72,14 @@ export default function NouvelleBoutiquePage() {
   function handleSlugChange(val: string) {
     setSlug(slugify(val))
     setSlugEdited(true)
+  }
+
+  function productLabel(p: ProductRow) {
+    return p.product_name || p.name || 'Produit sans nom'
+  }
+
+  function productImage(p: ProductRow) {
+    return p.image_url || p.images?.[0] || null
   }
 
   async function createStore() {
@@ -56,14 +94,15 @@ export default function NouvelleBoutiquePage() {
 
     const response = await fetch('/api/stores/create', {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify({
         name: name.trim(),
         slug: slug.trim(),
         theme_id: selectedTheme,
+        product_id: selectedProductId,
       }),
     })
 
@@ -78,12 +117,17 @@ export default function NouvelleBoutiquePage() {
     router.push(`/boutiques/${payload.data.id}`)
   }
 
+  const selectedThemeData = THEMES.find(t => t.id === selectedTheme)
+  const selectedProduct = products.find(p => p.id === selectedProductId)
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <div className="bg-white border-b border-gray-100 px-6 py-4 flex items-center gap-4">
         <button
-          onClick={() => step === 1 ? router.push('/boutiques') : setStep(1)}
+          onClick={() => {
+            if (step === 1) router.push('/boutiques')
+            else setStep((step - 1) as 1 | 2)
+          }}
           className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -93,23 +137,28 @@ export default function NouvelleBoutiquePage() {
           <h1 className="font-semibold text-gray-900">Nouvelle boutique</h1>
         </div>
 
-        {/* Steps indicator */}
         <div className="ml-auto flex items-center gap-2">
-          <div className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full ${step >= 1 ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-400'}`}>
-            <span>1</span>
-            <span>Thème</span>
-          </div>
-          <div className="w-6 h-px bg-gray-200" />
-          <div className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full ${step >= 2 ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-400'}`}>
-            <span>2</span>
-            <span>Infos</span>
-          </div>
+          {(['Thème', 'Produit', 'Infos'] as const).map((label, i) => {
+            const n = (i + 1) as 1 | 2 | 3
+            return (
+              <div key={label} className="flex items-center gap-2">
+                {i > 0 && <div className="w-4 h-px bg-gray-200 hidden sm:block" />}
+                <div
+                  className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full ${
+                    step >= n ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-400'
+                  }`}
+                >
+                  <span>{n}</span>
+                  <span className="hidden sm:inline">{label}</span>
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
 
       <div className="max-w-5xl mx-auto px-6 py-10">
-
-        {/* ÉTAPE 1 — Choix du thème */}
+        {/* ÉTAPE 1 — Thème */}
         {step === 1 && (
           <>
             <div className="text-center mb-10">
@@ -120,8 +169,8 @@ export default function NouvelleBoutiquePage() {
               <h2 className="text-3xl font-bold text-gray-900 mb-2">
                 Quel style pour votre boutique ?
               </h2>
-              <p className="text-gray-500 text-sm">
-                Vous pourrez personnaliser les couleurs et le contenu après. Choisissez la direction qui vous correspond.
+              <p className="text-gray-500 text-sm max-w-lg mx-auto">
+                Chaque thème inclut sections, couleurs et polices pré-configurées. Vous pourrez tout modifier ensuite.
               </p>
             </div>
 
@@ -129,6 +178,7 @@ export default function NouvelleBoutiquePage() {
               {THEMES.map(theme => (
                 <button
                   key={theme.id}
+                  type="button"
                   onClick={() => setSelectedTheme(theme.id)}
                   className={`relative text-left rounded-2xl border-2 overflow-hidden transition-all ${
                     selectedTheme === theme.id
@@ -136,63 +186,35 @@ export default function NouvelleBoutiquePage() {
                       : 'border-gray-100 hover:border-gray-200 bg-white'
                   }`}
                 >
-                  {/* Preview couleurs */}
-                  <div
-                    className="h-32 flex items-center justify-center relative"
-                    style={{ backgroundColor: theme.default_colors.bg }}
-                  >
-                    {/* Simulation mini boutique */}
-                    <div className="w-full px-6">
-                      <div
-                        className="h-3 rounded-full mb-2 w-3/4"
-                        style={{ backgroundColor: theme.default_colors.text, opacity: 0.15 }}
-                      />
-                      <div
-                        className="h-2 rounded-full mb-4 w-1/2"
-                        style={{ backgroundColor: theme.default_colors.text, opacity: 0.08 }}
-                      />
-                      <div
-                        className="h-8 rounded-xl w-1/3 flex items-center justify-center text-xs font-medium"
-                        style={{
-                          backgroundColor: theme.default_colors.primary,
-                          color: '#fff',
-                        }}
-                      >
-                        Commander
-                      </div>
-                    </div>
-
-                    {/* Badge sélectionné */}
+                  <div className="relative h-48 bg-gray-100">
+                    <Image
+                      src={theme.preview_image}
+                      alt={theme.name}
+                      fill
+                      className="object-cover object-top"
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                    />
                     {selectedTheme === theme.id && (
                       <div className="absolute top-3 right-3 w-7 h-7 bg-indigo-600 rounded-full flex items-center justify-center shadow-md">
                         <Check className="w-4 h-4 text-white" />
                       </div>
                     )}
-
-                    {/* Palette couleurs */}
-                    <div className="absolute bottom-3 right-3 flex gap-1.5">
-                      {[
-                        theme.default_colors.primary,
-                        theme.default_colors.accent,
-                        theme.default_colors.bgSection,
-                      ].map((color, i) => (
+                    <div className="absolute bottom-3 left-3 flex gap-1.5">
+                      {[theme.preview_color, theme.default_colors.accent, theme.default_colors.bg].map((color, i) => (
                         <div
                           key={i}
-                          className="w-4 h-4 rounded-full border border-white/50 shadow-sm"
+                          className="w-4 h-4 rounded-full border border-white/70 shadow-sm"
                           style={{ backgroundColor: color }}
                         />
                       ))}
                     </div>
                   </div>
 
-                  {/* Infos */}
                   <div className="p-4 bg-white">
-                    <div className="flex items-center justify-between mb-1">
-                      <h3 className="font-semibold text-gray-900">{theme.name}</h3>
-                    </div>
+                    <h3 className="font-semibold text-gray-900 mb-1">{theme.name}</h3>
                     <p className="text-xs text-gray-500 leading-relaxed">{theme.description}</p>
                     <div className="flex flex-wrap gap-1 mt-2">
-                      {theme.tags.map((tag: string) => (
+                      {theme.tags.map(tag => (
                         <span key={tag} className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded">
                           {tag}
                         </span>
@@ -205,6 +227,7 @@ export default function NouvelleBoutiquePage() {
 
             <div className="flex justify-center">
               <button
+                type="button"
                 onClick={() => setStep(2)}
                 className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-xl font-medium transition-colors shadow-sm"
               >
@@ -215,40 +238,142 @@ export default function NouvelleBoutiquePage() {
           </>
         )}
 
-        {/* ÉTAPE 2 — Infos de la boutique */}
+        {/* ÉTAPE 2 — Produit */}
         {step === 2 && (
           <>
             <div className="text-center mb-10">
+              <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-full text-sm font-medium mb-4">
+                <Package className="w-4 h-4" />
+                Produit principal
+              </div>
               <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                Nommez votre boutique
+                Pour quel produit créez-vous la boutique ?
               </h2>
               <p className="text-gray-500 text-sm">
-                Ces informations peuvent être modifiées plus tard depuis les paramètres.
+                Le thème <strong>{selectedThemeData?.name}</strong> sera pré-rempli avec les infos de ce produit.
               </p>
             </div>
 
-            <div className="max-w-lg mx-auto bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
-              {/* Thème sélectionné */}
-              <div className="flex items-center gap-3 p-3 bg-indigo-50 rounded-xl mb-6">
-                <div
-                  className="w-8 h-8 rounded-lg"
-                  style={{ backgroundColor: THEMES.find(t => t.id === selectedTheme)?.default_colors.primary }}
-                />
-                <div>
-                  <p className="text-xs text-indigo-500 font-medium">Thème sélectionné</p>
-                  <p className="text-sm font-semibold text-indigo-900">
-                    {THEMES.find(t => t.id === selectedTheme)?.name}
-                  </p>
-                </div>
+            {loadingProducts ? (
+              <p className="text-center text-gray-400 text-sm py-12">Chargement des produits…</p>
+            ) : products.length === 0 ? (
+              <div className="text-center py-12 bg-white rounded-2xl border border-gray-100">
+                <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-600 font-medium mb-1">Aucun produit disponible</p>
+                <p className="text-gray-400 text-sm mb-4">Ajoutez un produit d&apos;abord, ou continuez sans.</p>
                 <button
-                  onClick={() => setStep(1)}
-                  className="ml-auto text-xs text-indigo-500 hover:text-indigo-700 underline"
+                  type="button"
+                  onClick={() => router.push('/produits/ajouter')}
+                  className="text-indigo-600 text-sm font-medium hover:underline"
                 >
+                  Ajouter un produit →
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
+                {products.map(product => {
+                  const img = productImage(product)
+                  const selected = selectedProductId === product.id
+                  return (
+                    <button
+                      key={product.id}
+                      type="button"
+                      onClick={() => setSelectedProductId(product.id)}
+                      className={`text-left rounded-xl border-2 overflow-hidden transition-all bg-white ${
+                        selected ? 'border-indigo-500 shadow-md' : 'border-gray-100 hover:border-gray-200'
+                      }`}
+                    >
+                      <div className="h-32 bg-gray-50 flex items-center justify-center relative">
+                        {img ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={img} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <Package className="w-10 h-10 text-gray-300" />
+                        )}
+                        {selected && (
+                          <div className="absolute top-2 right-2 w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center">
+                            <Check className="w-3.5 h-3.5 text-white" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-3">
+                        <p className="font-medium text-gray-900 text-sm truncate">{productLabel(product)}</p>
+                        {product.price != null && (
+                          <p className="text-xs text-indigo-600 mt-0.5">
+                            {Number(product.price).toLocaleString('fr-FR')} {product.currency || 'FCFA'}
+                          </p>
+                        )}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+
+            <div className="flex justify-center gap-3">
+              {products.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => { setSelectedProductId(null); setStep(3) }}
+                  className="px-6 py-3 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50"
+                >
+                  Continuer sans produit
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setStep(3)}
+                disabled={products.length > 0 && !selectedProductId}
+                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-8 py-3 rounded-xl font-medium transition-colors shadow-sm"
+              >
+                Continuer
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* ÉTAPE 3 — Infos boutique */}
+        {step === 3 && (
+          <>
+            <div className="text-center mb-10">
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Nommez votre boutique</h2>
+              <p className="text-gray-500 text-sm">Ces informations peuvent être modifiées plus tard.</p>
+            </div>
+
+            <div className="max-w-lg mx-auto bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+              <div className="flex items-center gap-3 p-3 bg-indigo-50 rounded-xl mb-4">
+                <div
+                  className="w-8 h-8 rounded-lg shrink-0"
+                  style={{ backgroundColor: selectedThemeData?.preview_color }}
+                />
+                <div className="min-w-0">
+                  <p className="text-xs text-indigo-500 font-medium">Thème</p>
+                  <p className="text-sm font-semibold text-indigo-900 truncate">{selectedThemeData?.name}</p>
+                </div>
+                <button type="button" onClick={() => setStep(1)} className="ml-auto text-xs text-indigo-500 hover:underline shrink-0">
                   Changer
                 </button>
               </div>
 
-              {/* Nom */}
+              {selectedProduct && (
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl mb-6">
+                  {productImage(selectedProduct) ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={productImage(selectedProduct)!} alt="" className="w-10 h-10 rounded-lg object-cover" />
+                  ) : (
+                    <Package className="w-10 h-10 text-gray-300" />
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-xs text-gray-500 font-medium">Produit</p>
+                    <p className="text-sm font-semibold text-gray-900 truncate">{productLabel(selectedProduct)}</p>
+                  </div>
+                  <button type="button" onClick={() => setStep(2)} className="ml-auto text-xs text-indigo-500 hover:underline shrink-0">
+                    Changer
+                  </button>
+                </div>
+              )}
+
               <div className="mb-5">
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   Nom de la boutique <span className="text-red-500">*</span>
@@ -258,19 +383,16 @@ export default function NouvelleBoutiquePage() {
                   value={name}
                   onChange={e => handleNameChange(e.target.value)}
                   placeholder="Ex: Ma Boutique Beauté"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none text-gray-900 text-sm transition-all"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none text-gray-900 text-sm"
                 />
               </div>
 
-              {/* Slug */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   URL de la boutique <span className="text-red-500">*</span>
                 </label>
-                <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
-                  <span className="px-3 py-3 bg-gray-50 text-gray-400 text-sm border-r border-gray-200 whitespace-nowrap">
-                    /s/
-                  </span>
+                <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100">
+                  <span className="px-3 py-3 bg-gray-50 text-gray-400 text-sm border-r border-gray-200">/s/</span>
                   <input
                     type="text"
                     value={slug}
@@ -280,34 +402,32 @@ export default function NouvelleBoutiquePage() {
                   />
                 </div>
                 <p className="text-xs text-gray-400 mt-1">
-                  Votre boutique sera accessible sur : <span className="font-mono text-indigo-500">/s/{slug || 'ma-boutique'}</span>
+                  Accessible sur : <span className="font-mono text-indigo-500">/s/{slug || 'ma-boutique'}</span>
                 </p>
               </div>
 
-              {/* Erreur */}
               {error && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600">
-                  {error}
-                </div>
+                <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600">{error}</div>
               )}
 
-              {/* Actions */}
               <div className="flex gap-3">
                 <button
-                  onClick={() => setStep(1)}
-                  className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-colors"
+                  type="button"
+                  onClick={() => setStep(2)}
+                  className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50"
                 >
                   Retour
                 </button>
                 <button
+                  type="button"
                   onClick={createStore}
                   disabled={creating || !name.trim() || !slug.trim()}
-                  className="flex-2 flex-1 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-xl text-sm font-medium transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white py-3 rounded-xl text-sm font-medium"
                 >
                   {creating ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Création...
+                      Création…
                     </>
                   ) : (
                     <>
