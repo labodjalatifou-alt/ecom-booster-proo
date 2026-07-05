@@ -5,6 +5,8 @@ import type { EditorData, EditorBlock } from './Editor'
 import { renderBlock } from '@/lib/store-builder/renderBlock'
 import { getLandingPageStyles } from '@/lib/store-builder/landing-theme'
 import ThemeLogoBar from '@/components/store-builder/sections/ThemeLogoBar'
+import TemplateLayoutRenderer from '@/components/store-builder/TemplateLayoutRenderer'
+import { resolveLayout } from '@/lib/store-builder/layout-engine'
 
 interface CanvasProps {
   data: EditorData
@@ -34,6 +36,8 @@ export default function Canvas({
   const ts = themeSettings || {}
   const styles = getLandingPageStyles(ts)
   const cardBg = ts.surface || '#ffffff'
+  const layout = resolveLayout(ts)
+  const mainMaxWidth = layout === 'single-column' ? (ts.cardMaxWidth ?? 720) : '100%'
 
   const BlockWrapper = ({ block, children }: { block: EditorBlock; children: React.ReactNode }) => {
     if (block.hidden) return null
@@ -90,8 +94,16 @@ export default function Canvas({
           <ThemeLogoBar logoUrl={ts.logo_url} logoHeight={ts.logo_height} bgColor={ts.surface} />
         )}
         {data.header.map((block) => renderWrapped(block))}
-        <main style={{ maxWidth: 720, width: '100%', margin: '0 auto', background: cardBg }}>
-          {data.template.map((block) => renderWrapped(block))}
+        <main style={{ maxWidth: mainMaxWidth, width: '100%', margin: '0 auto', background: cardBg }}>
+          <TemplateLayoutRenderer
+            template={data.template}
+            themeSettings={ts}
+            product={product}
+            forceMobile={previewMode === 'mobile'}
+            wrapBlock={(block, node) => (
+              <BlockWrapper key={block.id} block={block}>{node}</BlockWrapper>
+            )}
+          />
         </main>
         {data.footer.map((block) => renderWrapped(block))}
       </div>

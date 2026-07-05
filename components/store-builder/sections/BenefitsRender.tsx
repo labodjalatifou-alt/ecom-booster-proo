@@ -9,27 +9,38 @@ export default function BenefitsRender({ settings }: { settings: any }) {
     { id: '4', icon: '↩️', title: 'Retours Faciles', text: 'Vous avez 30 jours pour changer d\'avis' },
   ]
 
+  const cols = s.columns || 2
+  const gridCols =
+    cols >= 4 ? 'grid-cols-2 md:grid-cols-4' :
+    cols === 3 ? 'grid-cols-1 sm:grid-cols-3' :
+    'grid-cols-2'
+
+  const containerClass = s.title ? 'max-w-6xl mx-auto' : 'max-w-6xl mx-auto'
+
   return (
     <div 
       className="w-full py-10 px-4"
       style={{ backgroundColor: s.bg_color || 'var(--color-bg)' }}
     >
-      <div className="max-w-md mx-auto">
+      <div className={containerClass}>
         {s.title && (
-          <h2 className="text-xl font-black text-center mb-8 tracking-tight" style={{ color: 'var(--color-text)' }}>
+          <h2
+            className="text-xl md:text-2xl font-black text-center mb-8 tracking-tight"
+            style={{ color: 'var(--color-text)', fontFamily: 'var(--font-heading, inherit)' }}
+          >
             {s.title}
           </h2>
         )}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className={`grid ${gridCols} gap-4 md:gap-6`}>
           {items.map((item: any) => (
-            <div key={item.id} className="flex items-center gap-3 p-3 rounded-xl" style={{ backgroundColor: 'rgba(255,255,255,0.6)' }}>
-              <div className="w-12 h-12 flex-shrink-0 bg-gray-50 rounded-xl flex items-center justify-center text-2xl shadow-sm border border-gray-100">
+            <div key={item.id} className="flex flex-col items-center text-center p-4 rounded-xl" style={{ backgroundColor: 'rgba(255,255,255,0.6)' }}>
+              <div className="w-14 h-14 flex-shrink-0 bg-gray-50 rounded-xl flex items-center justify-center text-2xl shadow-sm border border-gray-100 mb-3">
                 {item.icon}
               </div>
-              <div className="min-w-0">
-                <h3 className="font-bold text-gray-900 text-sm leading-tight">{item.title}</h3>
-                <p className="text-xs text-gray-500 leading-snug mt-0.5">{item.text}</p>
-              </div>
+              <h3 className="font-bold text-gray-900 text-sm leading-tight">{item.title}</h3>
+              {(item.text || item.description) && (
+                <p className="text-xs text-gray-500 leading-snug mt-1">{item.text || item.description}</p>
+              )}
             </div>
           ))}
         </div>

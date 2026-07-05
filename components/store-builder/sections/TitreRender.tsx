@@ -25,6 +25,7 @@ export default function TitreRender({ settings, product }: { settings: any; prod
           fontSize,
           fontWeight: s.font_weight || 800,
           lineHeight: 1.2,
+          fontFamily: 'var(--font-heading, inherit)',
         }}
       >
         {title}

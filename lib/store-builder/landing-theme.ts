@@ -54,6 +54,9 @@ export function getLandingPageStyles(theme: Record<string, any> = {}) {
       '--color-border': theme.border || '#e5e7eb',
       '--color-heading': theme.headingColor || theme.textColor || '#111827',
       '--color-price': theme.priceColor || theme.primaryColor || '#111827',
+      '--font-heading': theme.headingFont
+        ? `'${theme.headingFont}', Georgia, serif`
+        : 'inherit',
     } as CSSProperties,
   }
 }

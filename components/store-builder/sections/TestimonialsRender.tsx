@@ -14,27 +14,49 @@ export default function TestimonialsRender({ settings }: { settings: any }) {
     { id: '4', name: 'Karim B.', rating: 5, text: 'Rapport qualité-prix imbattable. Je recommande à 100%.', verified: true },
   ]
 
+  const isList = s.layout === 'list'
+  const isCompact = s.layout === 'grid' && items.length >= 4
+
   return (
     <div className="w-full py-8 px-4" style={{ backgroundColor: s.bg_color || 'var(--color-bg)' }}>
-      <div className="max-w-md mx-auto">
+      <div className={isList ? 'max-w-2xl mx-auto' : isCompact ? 'max-w-4xl mx-auto' : 'max-w-md mx-auto'}>
         {s.title && (
-          <h2 className="text-xl font-black text-center mb-1 tracking-tight" style={{ color: 'var(--color-text)' }}>
+          <h2
+            className="text-xl font-black text-center mb-1 tracking-tight"
+            style={{ color: 'var(--color-text)', fontFamily: 'var(--font-heading, inherit)' }}
+          >
             {s.title}
           </h2>
         )}
-        {/* Note globale */}
-        <div className="flex items-center justify-center gap-1.5 mb-6">
-          <div className="flex gap-0.5 text-yellow-400">
-            {Array.from({ length: 5 }).map((_, i) => <Star key={i} size={16} fill="currentColor" />)}
+        {!isList && (
+          <div className="flex items-center justify-center gap-1.5 mb-6">
+            <div className="flex gap-0.5 text-yellow-400">
+              {Array.from({ length: 5 }).map((_, i) => <Star key={i} size={16} fill="currentColor" />)}
+            </div>
+            <span className="text-sm font-bold text-gray-700">4.9/5</span>
+            <span className="text-xs text-gray-400">· {items.length * 40}+ avis vérifiés</span>
           </div>
-          <span className="text-sm font-bold text-gray-700">4.9/5</span>
-          <span className="text-xs text-gray-400">· {items.length * 40}+ avis vérifiés</span>
-        </div>
+        )}
 
-        {/* Grille 2 colonnes, look "feuilles" avec légères rotations */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className={isList ? 'flex flex-col gap-4' : 'grid grid-cols-2 gap-3'}>
           {items.map((item: any, i: number) => {
             const tilt = TILTS[i % TILTS.length]
+            if (isList) {
+              return (
+                <div key={item.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                  <div className="flex text-yellow-400 mb-2">
+                    {Array.from({ length: 5 }).map((_, j) => (
+                      <Star key={j} size={14} fill={j < (item.rating || 5) ? 'currentColor' : 'none'} className={j < (item.rating || 5) ? 'text-yellow-400' : 'text-gray-200'} />
+                    ))}
+                  </div>
+                  <p className="text-sm text-gray-600 leading-relaxed mb-3">"{item.text}"</p>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-gray-900 text-sm">{item.name}</span>
+                    {item.verified !== false && <BadgeCheck size={14} className="text-blue-500" />}
+                  </div>
+                </div>
+              )
+            }
             return (
               <div
                 key={item.id}

@@ -6,6 +6,8 @@ import { getLandingPageStyles, hexToRgba, normalizeHexColor } from '@/lib/store-
 import StoreFavicon from '@/components/store-builder/StoreFavicon'
 import StoreTracking from '@/components/store-builder/StoreTracking'
 import ThemeLogoBar from '@/components/store-builder/sections/ThemeLogoBar'
+import TemplateLayoutRenderer from '@/components/store-builder/TemplateLayoutRenderer'
+import { resolveLayout } from '@/lib/store-builder/layout-engine'
 
 export interface LandingTheme {
   primaryColor?: string
@@ -42,15 +44,8 @@ interface LandingRendererProps {
 }
 
 /**
- * LandingRenderer — moteur de rendu linéaire mobile-first (type Deal224).
- *
- * Une seule colonne centrée, flux vertical :
- *   en-tête → (toutes les sections du template dans l'ordre) → pied
- *
- * Tous les blocks — y compris galerie, titre, prix, formulaire — sont
- * traités comme des sections normales et rendus dans l'ordre du `template`.
- *
- * Partagé entre l'éditeur (Canvas preview) et la page publique (/s/[slug]) → WYSIWYG.
+ * LandingRenderer — rendu par layout de thème (single / hero-split / hero-triple).
+ * Partagé entre l'éditeur (Canvas) et la page publique (/s/[slug]) → WYSIWYG.
  */
 export default function LandingRenderer({
   builderJson,
@@ -71,6 +66,8 @@ export default function LandingRenderer({
   const accent = normalizeHexColor(theme.primaryColor, '#ea580c')
   const styles = getLandingPageStyles(theme)
   const cardBg = normalizeHexColor(theme.surface, '#ffffff')
+  const layout = resolveLayout(theme)
+  const mainMaxWidth = layout === 'single-column' ? (theme.cardMaxWidth ?? 720) : '100%'
 
   // Couleur du bouton = btn_color du formulaire de commande, sinon couleur principale du thème
   const orderFormBlock = [...header, ...template, ...footer].find(
@@ -129,10 +126,13 @@ export default function LandingRenderer({
           <div key={block.id}>{renderBlock(block, product, storeId, theme)}</div>
         ))}
 
-        <main style={{ maxWidth: 720, width: '100%', margin: '0 auto', background: cardBg, paddingBottom: 24 }}>
-          {template.map((block) => (
-            <div key={block.id}>{renderBlock(block, product, storeId, theme)}</div>
-          ))}
+        <main style={{ maxWidth: mainMaxWidth, width: '100%', margin: '0 auto', background: cardBg, paddingBottom: 24 }}>
+          <TemplateLayoutRenderer
+            template={template}
+            themeSettings={theme}
+            product={product}
+            storeId={storeId}
+          />
         </main>
 
         {footer.map((block) => (
