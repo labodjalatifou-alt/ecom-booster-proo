@@ -2,10 +2,10 @@
 
 export type LayoutMode = 'single-column' | 'hero-split' | 'hero-triple'
 
-const GALLERY = new Set(['Galerie', 'medias', 'gallery'])
-const FORM = new Set(['OrderForm', 'order_form'])
-const PRODUCT_INFO = new Set(['Titre', 'Note de produit', 'Prix'])
-const HERO_SIDEBAR = new Set(['trust_bar', 'stock_urgency'])
+const GALLERY_TYPES = new Set(['Galerie', 'medias', 'gallery'])
+const FORM_TYPES = new Set(['OrderForm', 'order_form'])
+const PRODUCT_INFO_TYPES = new Set(['Titre', 'Note de produit', 'Prix'])
+const HERO_SIDEBAR_TYPES = new Set(['trust_bar', 'stock_urgency'])
 
 export interface TemplateParts {
   gallery: any[]
@@ -17,27 +17,24 @@ export interface TemplateParts {
   rest: any[]
 }
 
-function pick(template: any[], types: Set<string>) {
+function pick(template: any[], types: Set<string>): any[] {
   return template.filter(b => types.has(b.type))
 }
 
-function pickFirst(template: any[], type: string) {
+function pickFirst(template: any[], type: string): any | null {
   return template.find(b => b.type === type) ?? null
 }
 
 /** Découpe le template en zones hero + reste selon le layout */
 export function partitionTemplate(template: any[], layout: LayoutMode): TemplateParts {
-  const gallery = pick(template, GALLERY)
-  const form = pick(template, FORM)
-  const productInfo = pick(template, PRODUCT_INFO)
-  const heroSidebar = pick(template, HERO_SIDEBAR)
+  const gallery     = pick(template, GALLERY_TYPES)
+  const form        = pick(template, FORM_TYPES)
+  const productInfo = pick(template, PRODUCT_INFO_TYPES)
+  const heroSidebar = pick(template, HERO_SIDEBAR_TYPES)
 
-  const usedIds = new Set<string>([
-    ...gallery,
-    ...form,
-    ...productInfo,
-    ...heroSidebar,
-  ].map(b => b.id))
+  // Construire l'ensemble des IDs déjà assignés à une zone hero
+  const heroBlocks = [...gallery, ...form, ...productInfo, ...heroSidebar]
+  const usedIds = new Set<string>(heroBlocks.map(b => b.id))
 
   const heroMarketing: any[] = []
   const heroBuyColumn: any[] = []
@@ -45,13 +42,13 @@ export function partitionTemplate(template: any[], layout: LayoutMode): Template
   if (layout === 'hero-triple') {
     const ba = pickFirst(template, 'before_after')
     const tb = pickFirst(template, 'text_block')
-    if (ba) { heroMarketing.push(ba); usedIds.add(ba.id) }
-    if (tb) { heroMarketing.push(tb); usedIds.add(tb.id) }
+    if (ba && !usedIds.has(ba.id)) { heroMarketing.push(ba); usedIds.add(ba.id) }
+    if (tb && !usedIds.has(tb.id)) { heroMarketing.push(tb); usedIds.add(tb.id) }
   }
 
   if (layout === 'hero-split') {
     const desc = pickFirst(template, 'Description')
-    if (desc) { heroBuyColumn.push(desc); usedIds.add(desc.id) }
+    if (desc && !usedIds.has(desc.id)) { heroBuyColumn.push(desc); usedIds.add(desc.id) }
   }
 
   const rest = template.filter(b => !usedIds.has(b.id))

@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import { STORE_TEMPLATES } from '@/lib/store-builder/templates';
+import { buildStorePage, getBoutiqueTheme, buildThemeSettings } from '@/lib/store-builder/boutique-themes';
 import EditorClient from './EditorClient';
 
 export default async function StoreBuilderPage({ params }: { params: Promise<{ id: string }> }) {
@@ -51,47 +51,10 @@ export default async function StoreBuilderPage({ params }: { params: Promise<{ i
   }
 
   if (!builderJson || !builderJson.template || builderJson.template.length === 0) {
-    const templateId = store.store_settings?.theme_id || 'shrine-mono-product';
-    const template = STORE_TEMPLATES.find((t: any) => t.id === templateId) || STORE_TEMPLATES[0];
-
-    builderJson = {
-      header: [
-        {
-          id: `h-${Date.now()}`,
-          type: 'Header',
-          title: 'En-tête',
-          hidden: false,
-          settings: { logo_position: 'center', show_cart: true, show_search: false },
-        },
-        {
-          id: `h-ann-${Date.now()}`,
-          type: 'AnnouncementBar',
-          title: "Barre d'annonce",
-          hidden: false,
-          settings: {
-            text: "Livraison gratuite à partir de 50 000 FCFA",
-            bg_color: "#1e1b4b",
-            text_color: "#ffffff"
-          }
-        }
-      ],
-      template: template.sections.map((sec: any) => ({
-        id: sec.id,
-        type: sec.type,
-        title: sec.type,
-        hidden: sec.hidden !== undefined ? sec.hidden : !sec.visible,
-        settings: sec.settings || sec.props || {}
-      })),
-      footer: [
-        {
-          id: `f-${Date.now()}`,
-          type: 'Footer',
-          title: 'Pied de page',
-          hidden: false,
-          settings: {}
-        }
-      ]
-    };
+    // Utiliser le système de thèmes boutique pour générer un builder_json complet avec layout
+    const themeId = store.store_settings?.theme_id || 'nature-vert';
+    const storeName = store.name || 'Ma Boutique';
+    builderJson = buildStorePage(themeId, storeName, null);
 
     if (storePage) {
       await supabase.from('store_pages').update({ builder_json: builderJson }).eq('id', storePage.id);
@@ -102,6 +65,31 @@ export default async function StoreBuilderPage({ params }: { params: Promise<{ i
         slug: 'home',
         builder_json: builderJson
       });
+    }
+  }
+
+  // ── Migration silencieuse : injecter themeSettings.layout si absent ──
+  // Les boutiques créées avant le commit a2fa66c n'ont pas ce champ.
+  // Sans lui, resolveLayout() retourne 'single-column' et le layout multi-colonnes ne s'active pas.
+  if (builderJson && builderJson.themeSettings && !builderJson.themeSettings.layout) {
+    const storeSettings = Array.isArray(store.store_settings)
+      ? store.store_settings[0]
+      : store.store_settings;
+    const themeId = storeSettings?.theme_id || 'nature-vert';
+    const theme = getBoutiqueTheme(themeId);
+    const canonical = buildThemeSettings(theme);
+
+    builderJson = {
+      ...builderJson,
+      themeSettings: {
+        ...canonical,          // valeurs de base du thème (layout inclus)
+        ...builderJson.themeSettings, // préserver les perso utilisateur (couleurs, logo…)
+        layout: builderJson.themeSettings.layout || canonical.layout, // forcer le layout
+      },
+    };
+    // Persister silencieusement
+    if (storePage?.id) {
+      await supabase.from('store_pages').update({ builder_json: builderJson }).eq('id', storePage.id);
     }
   }
 
