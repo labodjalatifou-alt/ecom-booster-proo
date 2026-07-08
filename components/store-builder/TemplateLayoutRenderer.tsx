@@ -3,6 +3,7 @@
 import React from 'react'
 import { renderBlock } from '@/lib/store-builder/renderBlock'
 import { partitionTemplate, resolveLayout } from '@/lib/store-builder/layout-engine'
+import RevealSection from '@/components/store-builder/RevealSection'
 
 const LAYOUT_CSS = `
   .landing-template { width: 100%; }
@@ -98,6 +99,8 @@ interface TemplateLayoutRendererProps {
   /** Éditeur en mode mobile */
   forceMobile?: boolean
   wrapBlock?: (block: any, node: React.ReactNode) => React.ReactNode
+  /** Active les animations de scroll (désactivé dans l'éditeur) */
+  enableReveal?: boolean
 }
 
 export default function TemplateLayoutRenderer({
@@ -107,18 +110,33 @@ export default function TemplateLayoutRenderer({
   storeId,
   forceMobile = false,
   wrapBlock,
+  enableReveal = false,
 }: TemplateLayoutRendererProps) {
   const layout = resolveLayout(themeSettings)
   const parts = partitionTemplate(template, layout)
 
-  const render = (block: any) => {
+  const render = (block: any, revealVariant?: 'fadeInUp' | 'fadeInLeft' | 'fadeInRight' | 'fadeIn' | 'zoomIn', revealDelay?: number) => {
     const node = renderBlock(block, product, storeId, themeSettings)
     if (!node) return null
     if (wrapBlock) return wrapBlock(block, node)
+    if (enableReveal && revealVariant) {
+      return (
+        <RevealSection key={block.id} variant={revealVariant} delay={revealDelay ?? 0}>
+          {node}
+        </RevealSection>
+      )
+    }
     return <div key={block.id}>{node}</div>
   }
 
-  const renderList = (blocks: any[]) => blocks.map(render).filter(Boolean)
+  const renderList = (blocks: any[]) => blocks.map(b => render(b)).filter(Boolean)
+
+  // Liste avec animations de scroll staggersées pour les sections sous le hero
+  const REVEAL_VARIANTS: Array<'fadeInUp' | 'fadeInLeft' | 'fadeInRight' | 'zoomIn' | 'fadeIn'> = [
+    'fadeInUp', 'fadeInLeft', 'fadeInRight', 'fadeInUp', 'zoomIn', 'fadeIn'
+  ]
+  const renderRevealList = (blocks: any[]) =>
+    blocks.map((b, i) => render(b, REVEAL_VARIANTS[i % REVEAL_VARIANTS.length], i * 80)).filter(Boolean)
 
   // Fonction pour trier un groupe de blocs selon leur ordre dans le template d'origine
   const sortByTemplateOrder = (blocks: any[]) => {
@@ -128,7 +146,7 @@ export default function TemplateLayoutRenderer({
   if (layout === 'single-column') {
     return (
       <>
-        <main className="landing-template landing-template--single">{renderList(template)}</main>
+        <main className="landing-template landing-template--single">{renderRevealList(template)}</main>
         <style>{LAYOUT_CSS}</style>
       </>
     )
@@ -148,7 +166,7 @@ export default function TemplateLayoutRenderer({
             </div>
           </div>
         </section>
-        <div className="landing-template-rest">{renderList(parts.rest)}</div>
+        <div className="landing-template-rest">{renderRevealList(parts.rest)}</div>
         <style>{LAYOUT_CSS}</style>
       </>
     )
@@ -173,7 +191,7 @@ export default function TemplateLayoutRenderer({
           </div>
         </div>
       </section>
-      <div className="landing-template-rest">{renderList(parts.rest)}</div>
+      <div className="landing-template-rest">{renderRevealList(parts.rest)}</div>
       <style>{LAYOUT_CSS}</style>
     </>
   )

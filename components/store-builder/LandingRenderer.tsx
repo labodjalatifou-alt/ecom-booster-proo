@@ -7,6 +7,7 @@ import StoreFavicon from '@/components/store-builder/StoreFavicon'
 import StoreTracking from '@/components/store-builder/StoreTracking'
 import ThemeLogoBar from '@/components/store-builder/sections/ThemeLogoBar'
 import TemplateLayoutRenderer from '@/components/store-builder/TemplateLayoutRenderer'
+import StickyOrderBar from '@/components/store-builder/sections/StickyOrderBar'
 import { resolveLayout } from '@/lib/store-builder/layout-engine'
 
 export interface LandingTheme {
@@ -75,6 +76,8 @@ export default function LandingRenderer({
   const cardBg = normalizeHexColor(theme.surface, '#ffffff')
   const layout = resolveLayout(theme)
   const mainMaxWidth = layout === 'single-column' ? (theme.cardMaxWidth ?? 720) : '100%'
+  // Enrichir le thème avec les flags de la page publique
+  const publicTheme = showFloating ? { ...theme, __enableTilt: true } : theme
 
   // Couleur du bouton = btn_color du formulaire de commande, sinon couleur principale du thème
   const orderFormBlock = [...header, ...template, ...footer].find(
@@ -130,59 +133,32 @@ export default function LandingRenderer({
           />
         )}
         {header.map((block) => (
-          <div key={block.id}>{renderBlock(block, product, storeId, theme)}</div>
+          <div key={block.id}>{renderBlock(block, product, storeId, publicTheme)}</div>
         ))}
 
         <main style={{ maxWidth: mainMaxWidth, width: '100%', margin: '0 auto', background: cardBg, paddingBottom: 24 }}>
           <TemplateLayoutRenderer
             template={template}
-            themeSettings={theme}
+            themeSettings={publicTheme}
             product={product}
             storeId={storeId}
+            enableReveal={showFloating}
           />
         </main>
 
         {footer.map((block) => (
-          <div key={block.id}>{renderBlock(block, product, storeId, theme)}</div>
+          <div key={block.id}>{renderBlock(block, product, storeId, publicTheme)}</div>
         ))}
       </div>
 
-      {/* ── CTA FLOTTANT (page publique) ── */}
+      {/* ── STICKY ORDER BAR PREMIUM (page publique) ── */}
       {showFloating && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            zIndex: 50,
-            padding: '14px 16px 18px',
-            background: `linear-gradient(to top, ${hexToRgba(cardBg, 1)} 55%, ${hexToRgba(cardBg, 0)})`,
-          }}
-        >
-          <a
-            href="#order-form"
-            className="landing-cta-pulse"
-            style={{
-              display: 'block',
-              width: '100%',
-              maxWidth: 720,
-              margin: '0 auto',
-              padding: '16px',
-              background: `linear-gradient(135deg, ${ctaColor} 0%, ${ctaAccent} 100%)`,
-              color: '#fff',
-              textAlign: 'center',
-              borderRadius: 14,
-              fontWeight: 800,
-              fontSize: 16,
-              textDecoration: 'none',
-              letterSpacing: '0.02em',
-              boxShadow: `0 8px 24px ${ctaColor}55`,
-            }}
-          >
-            🛒 COMMANDER MAINTENANT
-          </a>
-        </div>
+        <StickyOrderBar
+          product={product}
+          ctaColor={ctaColor}
+          ctaAccent={ctaAccent}
+          cardBg={cardBg}
+        />
       )}
 
       {/* ── BOUTON WHATSAPP ── */}

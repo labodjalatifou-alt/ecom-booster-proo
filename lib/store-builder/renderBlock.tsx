@@ -71,7 +71,7 @@ export function renderBlock(block: any, product: any, storeId?: string | null, t
         : product?.image_url
         ? [product.image_url]
         : []
-      return <MediasRender settings={{ images }} />
+      return <MediasRender settings={{ images }} enableTilt={!!themeSettings?.__enableTilt} />
     }
 
     // ── Marketing / urgence ──
