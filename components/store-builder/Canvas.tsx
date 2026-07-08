@@ -68,7 +68,7 @@ export default function Canvas({
 
   const renderWrapped = (block: EditorBlock) => (
     <BlockWrapper key={block.id} block={block}>
-      {renderBlock(block, product, undefined, ts)}
+      {renderBlock(block, product, undefined, ts, previewMode === 'mobile')}
     </BlockWrapper>
   )
 

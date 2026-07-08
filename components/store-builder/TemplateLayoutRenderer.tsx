@@ -116,7 +116,7 @@ export default function TemplateLayoutRenderer({
   const parts = partitionTemplate(template, layout)
 
   const render = (block: any, revealVariant?: 'fadeInUp' | 'fadeInLeft' | 'fadeInRight' | 'fadeIn' | 'zoomIn', revealDelay?: number) => {
-    const node = renderBlock(block, product, storeId, themeSettings)
+    const node = renderBlock(block, product, storeId, themeSettings, forceMobile)
     if (!node) return null
     if (wrapBlock) return wrapBlock(block, node)
     if (enableReveal && revealVariant) {

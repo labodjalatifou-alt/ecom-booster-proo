@@ -1,13 +1,15 @@
 'use client'
 
-export default function ImageTextRender({ settings }: { settings: any }) {
+export default function ImageTextRender({ settings, forceMobile }: { settings: any; forceMobile?: boolean }) {
   const s = settings || {}
   const isRight = s.image_position === 'right'
   const imgRadius = s.image_radius ?? 16
 
+  const isDesktop = !forceMobile
+
   return (
     <div className="w-full py-12 px-4" style={{ backgroundColor: s.bg_color || 'var(--color-bg)' }}>
-      <div className={`max-w-6xl mx-auto flex flex-col gap-8 items-center ${isRight ? 'md:flex-row-reverse' : 'md:flex-row'}`}>
+      <div className={`max-w-6xl mx-auto flex flex-col gap-8 items-center ${isDesktop ? (isRight ? 'md:flex-row-reverse' : 'md:flex-row') : ''}`}>
         <div className="w-full md:w-1/2">
           {s.image_url ? (
             <img
@@ -25,7 +27,7 @@ export default function ImageTextRender({ settings }: { settings: any }) {
             </div>
           )}
         </div>
-        <div className="w-full md:w-1/2 flex flex-col justify-center">
+        <div className={`w-full ${isDesktop ? 'md:w-1/2' : ''} flex flex-col justify-center`}>
           {s.title && (
             <h2 className="text-2xl md:text-3xl font-black mb-4 tracking-tight leading-tight" style={{ color: s.title_color || 'var(--color-heading, var(--color-text))', fontFamily: 'var(--font-heading, inherit)' }}>
               {s.title}

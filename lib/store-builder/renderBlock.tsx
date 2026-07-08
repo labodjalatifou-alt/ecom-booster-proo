@@ -43,7 +43,7 @@ export const PRODUCT_BLOCK_TYPES = ['Titre', 'Note de produit', 'Prix', 'Descrip
  * @param product Le produit sélectionné pour la landing (ou null)
  * @param storeId L'id de la boutique (passé au formulaire de commande, page publique)
  */
-export function renderBlock(block: any, product: any, storeId?: string | null, themeSettings?: Record<string, any>): React.ReactNode {
+export function renderBlock(block: any, product: any, storeId?: string | null, themeSettings?: Record<string, any>, forceMobile: boolean = false): React.ReactNode {
   if (block.hidden) return null
   const s = block.settings || {}
   const settings = { ...s }
@@ -84,27 +84,27 @@ export function renderBlock(block: any, product: any, storeId?: string | null, t
     case 'marquee':
       return <MarqueeRender settings={settings} />
     case 'stats':
-      return <StatsRender settings={settings} />
+      return <StatsRender settings={settings} forceMobile={forceMobile} />
 
     // ── Preuve sociale / confiance ──
     case 'testimonials':
-      return <TestimonialsRender settings={settings} />
+      return <TestimonialsRender settings={settings} forceMobile={forceMobile} />
     case 'testimonials_floating':
       return <TestimonialsFloatingRender settings={settings} />
     case 'before_after':
-      return <BeforeAfterRender settings={settings} />
+      return <BeforeAfterRender settings={settings} forceMobile={forceMobile} />
     case 'comparison':
     case 'comparison_table':
-      return <ComparisonRender settings={settings} />
+      return <ComparisonRender settings={settings} forceMobile={forceMobile} />
     case 'benefits':
     case 'icon_grid':
-      return <BenefitsRender settings={settings} />
+      return <BenefitsRender settings={settings} forceMobile={forceMobile} />
     case 'guarantees':
-      return <GuaranteesRender settings={settings} />
+      return <GuaranteesRender settings={settings} forceMobile={forceMobile} />
     case 'trust_bar':
       return <TrustBarRender settings={settings} />
     case 'faq':
-      return <FaqRender settings={settings} />
+      return <FaqRender settings={settings} forceMobile={forceMobile} />
     case 'circular_ingredients':
       return <CircularIngredientsRender settings={settings} />
     case 'expert_encart':

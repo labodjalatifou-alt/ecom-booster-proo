@@ -5,7 +5,7 @@ import { Star, BadgeCheck } from 'lucide-react'
 // "feuilles éparpillées sur une table" — discret, jamais cassé.
 const TILTS = [-1.5, 1.2, -0.8, 1.6, -1.1, 0.9, -1.3, 1.4]
 
-export default function TestimonialsRender({ settings }: { settings: any }) {
+export default function TestimonialsRender({ settings, forceMobile }: { settings: any; forceMobile?: boolean }) {
   const s = settings || {}
   const items = s.items || [
     { id: '1', name: 'Sophie L.', rating: 5, text: 'Produit incroyable, il a changé mon quotidien ! La livraison a été très rapide.', verified: true },
@@ -38,7 +38,7 @@ export default function TestimonialsRender({ settings }: { settings: any }) {
           </div>
         )}
 
-        <div className={isList ? 'flex flex-col gap-4' : 'grid grid-cols-1 md:grid-cols-2 gap-4'}>
+        <div className={isList ? 'flex flex-col gap-4' : `grid grid-cols-1 ${forceMobile ? '' : 'md:grid-cols-2'} gap-4`}>
           {items.map((item: any, i: number) => {
             const tilt = TILTS[i % TILTS.length]
             if (isList) {
