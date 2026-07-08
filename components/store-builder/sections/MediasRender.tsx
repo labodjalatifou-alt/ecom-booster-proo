@@ -127,7 +127,7 @@ export default function MediasRender({ settings, enableTilt = true }: MediasRend
                   ? 'ring-2 ring-offset-1 opacity-100'
                   : 'opacity-60 hover:opacity-90'
               }`}
-              style={active === idx ? { ringColor: 'var(--color-primary, #6366f1)' } : {}}
+              style={active === idx ? { '--tw-ring-color': 'var(--color-primary, #6366f1)' } as React.CSSProperties : {}}
             >
               <img src={img} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />
             </button>
