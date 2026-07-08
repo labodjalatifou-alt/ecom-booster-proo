@@ -1,5 +1,19 @@
 'use client'
 
+import { useState } from 'react'
+import dynamic from 'next/dynamic'
+
+const LottieIcon = dynamic(() => import('@/components/store-builder/LottieIcon'), { ssr: false })
+
+const EMOJI_TO_LOTTIE: Record<string, string> = {
+  '🚚': 'truck', '🚀': 'truck', '📦': 'truck',
+  '🔒': 'lock', '🛡️': 'shield', '✅': 'check',
+  '⭐': 'star', '🌟': 'star', '💎': 'star',
+  '💬': 'chat', '📞': 'chat',
+  '🎁': 'gift', '🎀': 'gift',
+  '↩️': 'shield', // Fallback for returns
+}
+
 export default function GuaranteesRender({ settings }: { settings: any }) {
   const s = settings || {}
   const items = s.items || [
@@ -9,6 +23,7 @@ export default function GuaranteesRender({ settings }: { settings: any }) {
     { id: '4', icon: '📞', title: 'Service Client 7j/7', text: 'Une équipe à votre écoute' },
   ]
 
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
   const iconOnly = s.style === 'icons' || items.every((i: any) => !i.text)
 
   return (
@@ -27,15 +42,30 @@ export default function GuaranteesRender({ settings }: { settings: any }) {
           </h2>
         )}
         <div className={`flex ${iconOnly ? 'flex-wrap justify-around' : 'flex-wrap justify-center'} gap-6 md:gap-10`}>
-          {items.map((item: any) => (
-            <div key={item.id} className={`flex flex-col items-center text-center ${iconOnly ? 'max-w-[140px]' : 'max-w-[200px]'}`}>
-              <div className={`${iconOnly ? 'text-2xl' : 'text-3xl'} mb-2`}>{item.icon}</div>
-              <h4 className={`font-bold text-sm ${iconOnly ? 'leading-tight' : 'mb-1'}`} style={{ color: s.icon_color === '#FFFFFF' ? '#fff' : undefined }}>
-                {item.title}
-              </h4>
-              {!iconOnly && item.text && <p className="text-xs opacity-70">{item.text}</p>}
-            </div>
-          ))}
+          {items.map((item: any) => {
+            const lottieKey = EMOJI_TO_LOTTIE[item.icon]
+            const isHovered = hoveredId === item.id
+            return (
+              <div 
+                key={item.id} 
+                className={`flex flex-col items-center text-center transition-transform hover:-translate-y-1 ${iconOnly ? 'max-w-[140px]' : 'max-w-[200px]'}`}
+                onMouseEnter={() => setHoveredId(item.id)}
+                onMouseLeave={() => setHoveredId(null)}
+              >
+                <div className={`${iconOnly ? 'w-10 h-10' : 'w-12 h-12'} mb-2 flex items-center justify-center overflow-hidden rounded-full`}>
+                  {lottieKey ? (
+                    <LottieIcon name={lottieKey} size={iconOnly ? 36 : 48} loop={isHovered} />
+                  ) : (
+                    <span className={iconOnly ? 'text-2xl' : 'text-3xl'}>{item.icon}</span>
+                  )}
+                </div>
+                <h4 className={`font-bold text-sm ${iconOnly ? 'leading-tight' : 'mb-1'}`} style={{ color: s.icon_color === '#FFFFFF' ? '#fff' : undefined }}>
+                  {item.title}
+                </h4>
+                {!iconOnly && item.text && <p className="text-xs opacity-70">{item.text}</p>}
+              </div>
+            )
+          })}
         </div>
       </div>
     </div>
