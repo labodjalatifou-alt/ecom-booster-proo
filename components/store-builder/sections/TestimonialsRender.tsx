@@ -38,7 +38,7 @@ export default function TestimonialsRender({ settings }: { settings: any }) {
           </div>
         )}
 
-        <div className={isList ? 'flex flex-col gap-4' : 'grid grid-cols-2 gap-3'}>
+        <div className={isList ? 'flex flex-col gap-4' : 'grid grid-cols-1 md:grid-cols-2 gap-4'}>
           {items.map((item: any, i: number) => {
             const tilt = TILTS[i % TILTS.length]
             if (isList) {
@@ -46,10 +46,10 @@ export default function TestimonialsRender({ settings }: { settings: any }) {
                 <div key={item.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
                   <div className="flex text-yellow-400 mb-2">
                     {Array.from({ length: 5 }).map((_, j) => (
-                      <Star key={j} size={14} fill={j < (item.rating || 5) ? 'currentColor' : 'none'} className={j < (item.rating || 5) ? 'text-yellow-400' : 'text-gray-200'} />
+                      <Star key={j} size={16} fill={j < (item.rating || 5) ? 'currentColor' : 'none'} className={j < (item.rating || 5) ? 'text-yellow-400' : 'text-gray-200'} />
                     ))}
                   </div>
-                  <p className="text-sm text-gray-600 leading-relaxed mb-3">"{item.text}"</p>
+                  <p className="text-[13px] md:text-sm text-gray-600 leading-relaxed mb-3">"{item.text}"</p>
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-gray-900 text-sm">{item.name}</span>
                     {item.verified !== false && <BadgeCheck size={14} className="text-blue-500" />}
@@ -69,36 +69,36 @@ export default function TestimonialsRender({ settings }: { settings: any }) {
                 {/* Photo produit + étoiles */}
                 <div className="flex items-center gap-2 mb-2">
                   {item.product_image ? (
-                    <img src={item.product_image} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                    <img src={item.product_image} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
                   ) : null}
                   <div className="flex text-yellow-400">
                     {Array.from({ length: 5 }).map((_, j) => (
-                      <Star key={j} size={11} fill={j < (item.rating || 5) ? 'currentColor' : 'none'} className={j < (item.rating || 5) ? 'text-yellow-400' : 'text-gray-200'} />
+                      <Star key={j} size={14} fill={j < (item.rating || 5) ? 'currentColor' : 'none'} className={j < (item.rating || 5) ? 'text-yellow-400' : 'text-gray-200'} />
                     ))}
                   </div>
                 </div>
 
                 {/* Texte de l'avis */}
-                <p className="text-[11px] text-gray-600 leading-snug mb-2.5 flex-1 line-clamp-4">
+                <p className="text-[13px] text-gray-600 leading-snug mb-3 flex-1 line-clamp-4">
                   "{item.text}"
                 </p>
 
                 {/* Auteur : photo + nom + pays */}
-                <div className="flex items-center gap-2 pt-2 border-t border-gray-50">
+                <div className="flex items-center gap-2 pt-2 border-t border-gray-50 mt-auto">
                   {item.image ? (
-                    <img src={item.image} alt={item.name} className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
+                    <img src={item.image} alt={item.name} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
                   ) : (
-                    <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center font-bold text-[10px] text-gray-400 flex-shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center font-bold text-xs text-gray-400 flex-shrink-0">
                       {item.name?.charAt(0) || 'U'}
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1">
-                      <span className="font-bold text-gray-900 text-[11px] truncate">{item.name}</span>
-                      {item.verified !== false && <BadgeCheck size={11} className="text-blue-500 flex-shrink-0" />}
+                      <span className="font-bold text-gray-900 text-xs truncate">{item.name}</span>
+                      {item.verified !== false && <BadgeCheck size={14} className="text-blue-500 flex-shrink-0" />}
                     </div>
                     {item.location && (
-                      <div className="text-[10px] text-gray-400 truncate flex items-center gap-0.5">
+                      <div className="text-[11px] text-gray-400 truncate flex items-center gap-0.5">
                         📍 {item.location}
                       </div>
                     )}

@@ -21,19 +21,19 @@ export default function BeforeAfterRender({ settings }: { settings: any }) {
 
   return (
     <div 
-      className="w-full py-16 px-4"
+      className="w-full py-8 md:py-16 px-4"
       style={{ backgroundColor: s.bg_color || 'var(--color-bg)' }}
     >
       <div className="max-w-4xl mx-auto">
         {s.title && (
-          <h2 className="text-3xl md:text-4xl font-black text-center mb-10 tracking-tight" style={{ color: 'var(--color-text)' }}>
+          <h2 className="text-2xl md:text-4xl font-black text-center mb-6 md:mb-10 tracking-tight" style={{ color: 'var(--color-text)' }}>
             {s.title}
           </h2>
         )}
 
         <div 
           ref={ref}
-          className="relative w-full aspect-video rounded-3xl overflow-hidden shadow-2xl cursor-ew-resize select-none touch-none"
+          className="relative w-full aspect-square md:aspect-video rounded-3xl overflow-hidden shadow-2xl cursor-ew-resize select-none touch-none"
           onMouseDown={() => setIsDragging(true)}
           onMouseUp={() => setIsDragging(false)}
           onMouseLeave={() => setIsDragging(false)}

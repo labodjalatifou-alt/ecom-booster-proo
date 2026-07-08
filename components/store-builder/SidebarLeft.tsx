@@ -10,6 +10,7 @@ import SliderField from './fields/SliderField'
 import ImageUploadField from './fields/ImageUploadField'
 import TextField from './fields/TextField'
 import { STORE_THEMES } from '@/lib/store-builder/themes'
+import { SECTIONS_CATALOG } from '@/lib/store-builder/defaults'
 
 interface SidebarLeftProps {
   data: EditorData
@@ -28,65 +29,23 @@ interface SidebarLeftProps {
   themeFocusMode?: boolean
 }
 
-const CATALOG_CATEGORIES = [
-  {
-    title: '🖼️ Produit',
-    items: [
-      { type: 'Galerie', title: 'Galerie d\'images', defaultSettings: {} },
-    ]
-  },
-  {
-    title: '⏱️ Urgence & Marketing',
-    items: [
-      { type: 'countdown', title: 'Compte à rebours', defaultSettings: { title: "Offre expire dans", target_date: new Date(Date.now() + 86400000).toISOString(), bg_color: "#1e1b4b", text_color: "#ffffff", accent_color: "#ef4444" } },
-      { type: 'marquee', title: 'Barre défilante', defaultSettings: { text: "⭐ Livraison gratuite ⭐", bg_color: "#000000", text_color: "#ffffff", speed: 30 } },
-      { type: 'stats', title: 'Statistiques', defaultSettings: { items: [{id:'1', number: 2000, suffix: '+', label: 'Clients satisfaits', icon: '😊'}, {id:'2', number: 98, suffix: '%', label: 'Satisfaction', icon: '⭐'}, {id:'3', number: 5, suffix: 'j', label: 'Délai livraison', icon: '🚚'}], bg_color: "#ffffff" } }
-    ]
-  },
-  {
-    title: '⭐ Preuve sociale',
-    items: [
-      { type: 'testimonials', title: 'Avis clients', defaultSettings: { title: "Ce que disent nos clients", items: [{id:'1', name:'Sophie L.', rating:5, text:'Produit incroyable !', location:'Paris', verified:true}, {id:'2', name:'Marc D.', rating:5, text:'Qualité au rendez-vous.', location:'Lyon', verified:true}, {id:'3', name:'Julie M.', rating:4, text:'Très satisfaite !', location:'Marseille', verified:true}], layout: 'grid', bg_color: "#f9fafb" } },
-      { type: 'before_after', title: 'Avant / Après', defaultSettings: { title: "La différence", before_label: "Avant", after_label: "Après", before_image: "", after_image: "", bg_color: "#ffffff" } },
-      { type: 'comparison', title: 'Tableau comparatif', defaultSettings: { title: "Pourquoi nous ?", our_label: "Notre Produit", competitor_label: "Les Autres", rows: [{id:'1', feature:'Qualité Premium', us: true, them: false}, {id:'2', feature:'Garantie à vie', us: true, them: false}, {id:'3', feature:'Support 24/7', us: true, them: true}], bg_color: "#ffffff" } }
-    ]
-  },
-  {
-    title: '✅ Confiance',
-    items: [
-      { type: 'benefits', title: 'Avantages', defaultSettings: { title: "Pourquoi nous choisir ?", items: [{id:'1', icon:'🚚', title:'Livraison Rapide', text:'Chez vous en 48h'}, {id:'2', icon:'🔒', title:'Paiement Sécurisé', text:'100% sécurisé'}, {id:'3', icon:'⭐', title:'Qualité Garantie', text:'Satisfait ou remboursé'}, {id:'4', icon:'↩️', title:'Retours Faciles', text:'30 jours'}], bg_color: "#f9fafb" } },
-      { type: 'guarantees', title: 'Garanties', defaultSettings: { items: [{id:'1', icon:'🛡️', title:'Paiement Sécurisé', text:'Cryptage SSL'}, {id:'2', icon:'📦', title:'Livraison Garantie', text:'Suivi en temps réel'}, {id:'3', icon:'↩️', title:'Retour Gratuit', text:'Sous 30 jours'}, {id:'4', icon:'📞', title:'Support 7j/7', text:'Toujours disponible'}], bg_color: "#ffffff" } },
-      { type: 'faq', title: 'FAQ', defaultSettings: { title: "Questions fréquentes", items: [{id:'1', question:'Quel est le délai de livraison ?', answer:'2 à 5 jours ouvrables selon votre localisation.'}, {id:'2', question:'Comment passer une commande ?', answer:'Remplissez le formulaire et notre équipe vous contactera.'}, {id:'3', question:'Puis-je payer à la livraison ?', answer:'Oui, le paiement à la livraison est disponible.'}], bg_color: "#ffffff" } }
-    ]
-  },
-  {
-    title: '📝 Contenu',
-    items: [
-      { type: 'image_text', title: 'Image + Texte', defaultSettings: { title: "Notre Histoire", text: "Découvrez notre engagement...", image_url: "", image_position: "left", bg_color: "#ffffff" } },
-      { type: 'video', title: 'Vidéo', defaultSettings: { title: "Voyez-le en action", url: "", bg_color: "#000000" } },
-      { type: 'text_block', title: 'Bloc texte', defaultSettings: { content: "Votre texte ici...", text_align: "center", bg_color: "#ffffff", text_color: "#111827" } },
-      { type: 'spacer', title: 'Espaceur', defaultSettings: { height: 48, bg_color: "transparent" } }
-    ]
-  },
-  {
-    title: '⏰ Bandeau Countdown',
-    items: [
-      {
-        type: 'countdown_top_bar',
-        title: 'Bandeau compte à rebours',
-        defaultSettings: {
-          target_date: new Date(Date.now() + 12 * 3600000).toISOString(),
-          label: 'Offre',
-          discount_text: '-39%',
-          suffix: 'se termine dans',
-          bg_color: '#3A2A2E',
-          text_color: '#FFF8F3',
-          accent_color: '#C9A24B',
-        }
-      }
-    ]
+// Dynamic catalog from defaults
+const dynamicCatalog = SECTIONS_CATALOG.reduce((acc, item) => {
+  const cat = acc.find(c => c.title === item.category)
+  const mappedItem = {
+    type: item.type,
+    title: item.label,
+    icon: item.icon,
+    description: item.description,
+    defaultSettings: item.defaultProps || {}
   }
-]
+  if (cat) {
+    cat.items.push(mappedItem)
+  } else {
+    acc.push({ title: item.category, items: [mappedItem] })
+  }
+  return acc
+}, [] as { title: string, items: any[] }[])
 
 export default function SidebarLeft({
   data,
@@ -422,7 +381,7 @@ export default function SidebarLeft({
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-gray-50/50 min-h-0">
-              {CATALOG_CATEGORIES.map((category, idx) => (
+              {dynamicCatalog.map((category, idx) => (
                 <div key={idx} className="mb-6">
                   <h3 className="text-xs font-bold text-gray-500 mb-3 uppercase tracking-wide">{category.title}</h3>
                   <div className="grid grid-cols-1 gap-2">
@@ -435,8 +394,8 @@ export default function SidebarLeft({
                         }}
                         className="w-full text-left p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:border-blue-400 hover:shadow transition-all group"
                       >
-                        <span className="text-sm font-medium text-gray-700 group-hover:text-blue-700 block mb-0.5">{item.title}</span>
-                        <span className="text-xs text-gray-400 block truncate">{item.type}</span>
+                        <span className="text-sm font-medium text-gray-700 group-hover:text-blue-700 block mb-0.5">{item.icon} {item.title}</span>
+                        <span className="text-xs text-gray-400 block truncate">{item.description}</span>
                       </button>
                     ))}
                   </div>

@@ -13,7 +13,7 @@ export default function ImageTextRender({ settings }: { settings: any }) {
             <img
               src={s.image_url}
               alt={s.title || 'Image'}
-              className="w-full shadow-lg object-cover aspect-[4/3]"
+              className="w-full h-auto object-contain shadow-lg"
               style={{ borderRadius: imgRadius }}
             />
           ) : (
