@@ -543,6 +543,93 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
             <TextField label="Texte ventes" value={s.sold_text} onChange={v => update('sold_text', v)} />
           </>
         )
+      case 'circular_ingredients':
+        return (
+          <>
+            <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
+            <TextField label="Sous-titre" value={s.subtitle} onChange={v => update('subtitle', v)} />
+            <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+            <ItemsListField
+              label="Ingrédients" value={s.items} onChange={v => update('items', v)}
+              itemSchema={[
+                { type: 'text', id: 'title', label: 'Titre' },
+                { type: 'text', id: 'text', label: 'Texte descriptif' },
+                { type: 'image', id: 'image_url', label: 'Image' }
+              ] as FieldSchema[]}
+            />
+          </>
+        )
+      case 'expert_encart':
+        return (
+          <>
+            <TextField label="Titre section" value={s.title} onChange={v => update('title', v)} />
+            <TextField label="Nom de l'expert" value={s.name} onChange={v => update('name', v)} />
+            <TextField label="Rôle / Titre" value={s.role} onChange={v => update('role', v)} />
+            <TextareaField label="Citation / Avis" value={s.quote} onChange={v => update('quote', v)} />
+            <ImageUploadField label="Photo de l'expert" value={s.image_url} onChange={v => update('image_url', v)} />
+            <ImageUploadField label="Signature (image)" value={s.signature_url} onChange={v => update('signature_url', v)} />
+            <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+          </>
+        )
+      case 'upsell_carousel':
+        return (
+          <>
+            <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
+            <TextField label="Sous-titre" value={s.subtitle} onChange={v => update('subtitle', v)} />
+            <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+            <ColorField label="Couleur accentuation" value={s.accent_color} onChange={v => update('accent_color', v)} />
+            <ItemsListField
+              label="Produits Upsell" value={s.items} onChange={v => update('items', v)}
+              itemSchema={[
+                { type: 'text', id: 'title', label: 'Titre Produit' },
+                { type: 'text', id: 'price', label: 'Prix' },
+                { type: 'image', id: 'image_url', label: 'Image Produit' },
+                { type: 'text', id: 'link', label: 'Lien' }
+              ] as FieldSchema[]}
+            />
+          </>
+        )
+      case 'newsletter':
+        return (
+          <>
+            <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
+            <TextField label="Sous-titre" value={s.subtitle} onChange={v => update('subtitle', v)} />
+            <TextField label="Texte bouton" value={s.button_text} onChange={v => update('button_text', v)} />
+            <TextField label="Texte placeholder" value={s.placeholder} onChange={v => update('placeholder', v)} />
+            <SelectField label="Type" value={s.type || 'email'} options={['email', 'whatsapp']} onChange={v => update('type', v)} />
+            <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+          </>
+        )
+      case 'hero':
+        return (
+          <>
+            <TextField label="Titre" value={s.headline} onChange={v => update('headline', v)} />
+            <TextareaField label="Sous-titre" value={s.subheadline} onChange={v => update('subheadline', v)} />
+            <TextField label="Texte bouton 1" value={s.cta_text} onChange={v => update('cta_text', v)} />
+            <TextField label="Texte bouton 2" value={s.cta_text_2} onChange={v => update('cta_text_2', v)} />
+            <ImageUploadField label="Image de fond / principale" value={s.image_url} onChange={v => update('image_url', v)} />
+            <SelectField label="Position texte" value={s.text_align || 'left'} options={['left', 'center', 'right']} onChange={v => update('text_align', v)} />
+            <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+            <ColorField label="Couleur texte" value={s.text_color} onChange={v => update('text_color', v)} />
+          </>
+        )
+      case 'slideshow':
+        return (
+          <>
+            <ToggleField label="Défilement automatique" value={s.autoplay} onChange={v => update('autoplay', v)} />
+            <SliderField label="Hauteur (px)" value={s.height ?? 600} onChange={v => update('height', v)} min={300} max={1000} />
+            <ItemsListField
+              label="Slides" value={s.slides} onChange={v => update('slides', v)}
+              itemSchema={[
+                { type: 'text', id: 'title', label: 'Titre' },
+                { type: 'text', id: 'subtitle', label: 'Sous-titre' },
+                { type: 'text', id: 'cta_text', label: 'Bouton' },
+                { type: 'image', id: 'image_url', label: 'Image' },
+                { type: 'text', id: 'overlay_color', label: 'Couleur overlay (ex: rgba(0,0,0,0.4))' }
+              ] as FieldSchema[]}
+            />
+          </>
+        )
       default:
         return (
           <div className="text-sm text-gray-500">

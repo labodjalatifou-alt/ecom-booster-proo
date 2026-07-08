@@ -51,19 +51,29 @@ const LAYOUT_CSS = `
   }
   @media (min-width: 900px) {
     .landing-hero--triple .landing-hero-triple-desktop {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 300px minmax(0, 1fr);
-      gap: 20px;
-      align-items: start;
-      padding: 20px 24px 8px;
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 32px;
+      padding: 28px 32px 12px;
+    }
+    .landing-hero--triple .landing-hero-triple-gallery-col {
+      flex: 1 1 52%;
+      min-width: 0;
+      position: sticky;
+      top: 88px;
+    }
+    .landing-hero--triple .landing-hero-triple-right-col {
+      flex: 1 1 48%;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
     .landing-hero--triple .landing-hero-triple-mobile {
       display: none;
     }
-    .landing-hero--triple .landing-hero-triple-form-col {
-      position: sticky;
-      top: 88px;
-    }
+
   }
   .landing-hero--triple.force-mobile .landing-hero-triple-desktop {
     display: none !important;
@@ -158,9 +168,8 @@ export default function TemplateLayoutRenderer({
         {/* Desktop : galerie | form sticky | productInfo */}
         <div className="landing-hero-triple-desktop">
           <div className="landing-hero-triple-gallery-col">{renderList(parts.gallery)}</div>
-          <div className="landing-hero-triple-form-col">{renderList(parts.form)}</div>
-          <div className="landing-hero-triple-marketing-col">
-            {renderList(parts.productInfo)}
+          <div className="landing-hero-triple-right-col">
+            {renderList(sortByTemplateOrder([...parts.productInfo, ...parts.form]))}
           </div>
         </div>
       </section>
