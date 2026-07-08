@@ -173,7 +173,7 @@ export default function Editor({ storeId, storeName, storeSlug, storeStatus = 'd
       }
 
       setSaved(true)
-      toast.success('Boutique sauvegardée avec succès !')
+      toast.success('Page sauvegardée avec succès !')
     } catch (err: any) {
       console.error('[Editor Save Error]:', err)
       toast.error(`Échec de la sauvegarde : ${err.message}`)
@@ -184,7 +184,7 @@ export default function Editor({ storeId, storeName, storeSlug, storeStatus = 'd
 
   // Publier / mettre en pause la boutique → met à jour stores.status
   // et store_pages.is_published. Sauvegarde aussi le builder au passage.
-  const handlePublish = useCallback(async (nextStatus: 'published' | 'paused') => {
+  const handlePublish = useCallback(async (nextStatus: 'published' | 'paused' | 'draft') => {
     setSaving(true)
     const dataToSave = { ...data, themeSettings, selectedProductId }
     
@@ -207,10 +207,16 @@ export default function Editor({ storeId, storeName, storeSlug, storeStatus = 'd
 
       setStatus(nextStatus)
       setSaved(true)
-      toast.success(nextStatus === 'published' ? 'Félicitations ! Votre boutique est en ligne.' : 'Boutique mise en pause.')
+      if (nextStatus === 'published') {
+        toast.success('Page publiée avec succès !')
+      } else if (nextStatus === 'paused') {
+        toast.success('Page mise en pause !')
+      } else {
+        toast.success('Page dépubliée !')
+      }
     } catch (err: any) {
       console.error('[Editor Publish Error]:', err)
-      toast.error(`Échec de la publication : ${err.message}`)
+      toast.error(`Échec de l'action : ${err.message}`)
     } finally {
       setSaving(false)
     }

@@ -64,7 +64,7 @@ export default function BoutiquesPage() {
   }
 
   async function deleteStore(id: string) {
-    if (!confirm('Supprimer cette boutique ? Cette action est irréversible.')) return
+    if (!confirm('Supprimer cette page ? Cette action est irréversible.')) return
     setDeleting(id)
     await supabase.from('stores').delete().eq('id', id)
     setStores(prev => prev.filter(s => s.id !== id))
@@ -94,7 +94,7 @@ export default function BoutiquesPage() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-gray-500">Chargement des boutiques...</p>
+          <p className="text-sm text-gray-500">Chargement des pages...</p>
         </div>
       </div>
     )
@@ -107,10 +107,10 @@ export default function BoutiquesPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <Store className="w-7 h-7 text-indigo-600" />
-            Mes Boutiques
+            Mes Pages Produits
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            Créez et gérez vos boutiques en ligne
+            Créez et gérez vos pages produits en ligne
           </p>
         </div>
         <button
@@ -118,7 +118,7 @@ export default function BoutiquesPage() {
           className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition-colors shadow-sm"
         >
           <Plus className="w-4 h-4" />
-          Nouvelle boutique
+          Nouvelle page produit
         </button>
       </div>
 
@@ -129,17 +129,17 @@ export default function BoutiquesPage() {
             <ShoppingBag className="w-10 h-10 text-indigo-400" />
           </div>
           <h2 className="text-xl font-semibold text-gray-800 mb-2">
-            Aucune boutique pour l'instant
+            Aucune page pour l'instant
           </h2>
           <p className="text-gray-500 text-sm max-w-sm mb-6">
-            Créez votre première boutique en quelques clics. Choisissez un thème, ajoutez vos produits et publiez.
+            Créez votre première page produit en quelques clics. Choisissez un thème, ajoutez vos produits et publiez.
           </p>
           <button
             onClick={() => router.push('/boutiques/nouvelle')}
             className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-xl font-medium text-sm transition-colors"
           >
             <Plus className="w-4 h-4" />
-            Créer ma première boutique
+            Créer ma première page
           </button>
         </div>
       )}
@@ -196,7 +196,7 @@ export default function BoutiquesPage() {
                             onClick={() => { window.open(`/s/${store.slug}`, '_blank'); setOpenMenu(null) }}
                             className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
                           >
-                            <ExternalLink className="w-3.5 h-3.5" /> Voir la boutique
+                            <ExternalLink className="w-3.5 h-3.5" /> Voir la page
                           </button>
                           <button
                             onClick={() => { toggleStatus(store); setOpenMenu(null) }}
@@ -256,7 +256,7 @@ export default function BoutiquesPage() {
                       onClick={() => deleteStore(store.id)}
                       disabled={deleting === store.id}
                       className="flex-1 flex items-center justify-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-medium py-2 rounded-lg transition-colors"
-                      title="Supprimer la boutique"
+                      title="Supprimer la page"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -275,7 +275,7 @@ export default function BoutiquesPage() {
               <Plus className="w-6 h-6 text-gray-400 group-hover:text-indigo-500 transition-colors" />
             </div>
             <span className="text-sm font-medium text-gray-400 group-hover:text-indigo-600 transition-colors">
-              Nouvelle boutique
+              Nouvelle page
             </span>
           </button>
         </div>

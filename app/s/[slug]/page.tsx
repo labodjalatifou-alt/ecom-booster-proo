@@ -16,11 +16,19 @@ export default async function StorePage({ params }: PageProps) {
   // ── Boutique + ses paramètres ──
   const { data: store, error } = await supabase
     .from('stores')
-    .select('id, name, slug, status, store_settings(*)')
+    .select('id, name, slug, status, user_id, store_settings(*)')
     .eq('slug', slug)
     .single()
 
   if (error || !store) notFound()
+
+  // Blocage si non publié ET que l'utilisateur n'est pas le propriétaire (Aperçu)
+  if (store.status !== 'published') {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user || user.id !== store.user_id) {
+      notFound()
+    }
+  }
 
   const settings = Array.isArray(store.store_settings)
     ? store.store_settings[0]

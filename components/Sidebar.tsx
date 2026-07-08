@@ -74,10 +74,10 @@ const menuGroups = [
     ]
   },
   {
-    title: 'BOUTIQUE',
+    title: 'PAGES PRODUITS',
     items: [
       { name: 'Produits', icon: Tags, href: '/produits' },
-      { name: 'Mes Boutiques', icon: ShoppingBag, href: '/boutiques' },
+      { name: 'Mes Pages', icon: ShoppingBag, href: '/boutiques' },
     ]
   },
   {

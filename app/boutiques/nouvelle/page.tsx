@@ -83,7 +83,7 @@ export default function NouvelleBoutiquePage() {
   }
 
   async function createStore() {
-    if (!name.trim()) { setError('Le nom de la boutique est requis.'); return }
+    if (!name.trim()) { setError('Le nom de la page est requis.'); return }
     if (!slug.trim()) { setError('Le slug est requis.'); return }
 
     setCreating(true)
@@ -134,7 +134,7 @@ export default function NouvelleBoutiquePage() {
         </button>
         <div className="flex items-center gap-2">
           <Store className="w-5 h-5 text-indigo-600" />
-          <h1 className="font-semibold text-gray-900">Nouvelle boutique</h1>
+          <h1 className="font-semibold text-gray-900">Nouvelle page produit</h1>
         </div>
 
         <div className="ml-auto flex items-center gap-2">
@@ -167,7 +167,7 @@ export default function NouvelleBoutiquePage() {
                 Choisissez votre thème
               </div>
               <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                Quel style pour votre boutique ?
+                Quel style pour votre page produit ?
               </h2>
               <p className="text-gray-500 text-sm max-w-lg mx-auto">
                 Chaque thème inclut sections, couleurs et polices pré-configurées. Vous pourrez tout modifier ensuite.
@@ -247,7 +247,7 @@ export default function NouvelleBoutiquePage() {
                 Produit principal
               </div>
               <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                Pour quel produit créez-vous la boutique ?
+                Pour quel produit créez-vous la page ?
               </h2>
               <p className="text-gray-500 text-sm">
                 Le thème <strong>{selectedThemeData?.name}</strong> sera pré-rempli avec les infos de ce produit.
@@ -337,7 +337,7 @@ export default function NouvelleBoutiquePage() {
         {step === 3 && (
           <>
             <div className="text-center mb-10">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Nommez votre boutique</h2>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Nommez votre page produit</h2>
               <p className="text-gray-500 text-sm">Ces informations peuvent être modifiées plus tard.</p>
             </div>
 
@@ -376,20 +376,20 @@ export default function NouvelleBoutiquePage() {
 
               <div className="mb-5">
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Nom de la boutique <span className="text-red-500">*</span>
+                  Nom de la page <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={name}
                   onChange={e => handleNameChange(e.target.value)}
-                  placeholder="Ex: Ma Boutique Beauté"
+                  placeholder="Ex: Page Produit Beauté"
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none text-gray-900 text-sm"
                 />
               </div>
 
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  URL de la boutique <span className="text-red-500">*</span>
+                  URL de la page <span className="text-red-500">*</span>
                 </label>
                 <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100">
                   <span className="px-3 py-3 bg-gray-50 text-gray-400 text-sm border-r border-gray-200">/s/</span>
@@ -397,12 +397,12 @@ export default function NouvelleBoutiquePage() {
                     type="text"
                     value={slug}
                     onChange={e => handleSlugChange(e.target.value)}
-                    placeholder="ma-boutique"
+                    placeholder="ma-page-produit"
                     className="flex-1 px-3 py-3 outline-none text-gray-900 text-sm bg-white"
                   />
                 </div>
                 <p className="text-xs text-gray-400 mt-1">
-                  Accessible sur : <span className="font-mono text-indigo-500">/s/{slug || 'ma-boutique'}</span>
+                  Accessible sur : <span className="font-mono text-indigo-500">/s/{slug || 'ma-page-produit'}</span>
                 </p>
               </div>
 
@@ -432,7 +432,7 @@ export default function NouvelleBoutiquePage() {
                   ) : (
                     <>
                       <Sparkles className="w-4 h-4" />
-                      Créer la boutique
+                      Créer la page
                     </>
                   )}
                 </button>
