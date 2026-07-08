@@ -44,7 +44,7 @@ export default function UpsellCarouselRender({ settings = {}, products }: { sett
   return (
     <section
       className="landing-full-bleed overflow-hidden"
-      style={{ backgroundColor: bgColor, paddingTop: ptPx, paddingBottom: pbPx, paddingLeft: 20, paddingRight: 20 }}
+      style={{ backgroundColor: bgColor, paddingLeft: 20, paddingRight: 20 }}
     >
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
         <div className="text-center mb-8">

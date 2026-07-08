@@ -95,7 +95,7 @@ export default function LandingRenderer({
       <StoreFavicon url={theme.favicon_url || theme.favicon} />
       <StoreTracking pixelId={metaPixelId || theme.meta_pixel_id} />
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Montserrat:wght@400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800;900&family=Montserrat:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Roboto:wght@300;400;500;700&family=Bebas+Neue&display=swap');
         .landing-root * { box-sizing: border-box; }
         .landing-root img { max-width: 100%; display: block; }
         .landing-root body { overflow-x: hidden; }

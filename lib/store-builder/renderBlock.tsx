@@ -48,20 +48,25 @@ export function renderBlock(block: any, product: any, storeId?: string | null, t
   if (block.hidden) return null
   const s = block.settings || {}
   const settings = { ...s }
+  let content: React.ReactNode = null
 
   switch (block.type) {
     // ── En-tête / structure ──
     case 'AnnouncementBar':
     case 'announcement_bar':
-      return <AnnouncementBarRender settings={settings} />
+      content = <AnnouncementBarRender settings={settings} />
+      break
     case 'Header':
     case 'header':
-      return <HeaderRender settings={mergeHeaderTheme(settings, themeSettings)} />
+      content = <HeaderRender settings={mergeHeaderTheme(settings, themeSettings)} />
+      break
     case 'Footer':
     case 'footer':
-      return <FooterRender settings={settings} />
+      content = <FooterRender settings={settings} />
+      break
     case 'spacer':
-      return <SpacerRender settings={settings} />
+      content = <SpacerRender settings={settings} />
+      break
 
     // ── Galerie (déplaçable) ──
     case 'Galerie':
@@ -72,75 +77,124 @@ export function renderBlock(block: any, product: any, storeId?: string | null, t
         : product?.image_url
         ? [product.image_url]
         : []
-      return <MediasRender settings={{ images }} enableTilt={!!themeSettings?.__enableTilt} />
+      content = <MediasRender settings={{ images }} enableTilt={!!themeSettings?.__enableTilt} />
+      break
     }
 
     // ── Marketing / urgence ──
     case 'countdown_top_bar':
-      return <CountdownTopBarRender settings={settings} />
+      content = <CountdownTopBarRender settings={settings} />
+      break
     case 'countdown':
-      return <CountdownRender settings={settings} />
+      content = <CountdownRender settings={settings} />
+      break
     case 'stock_urgency':
-      return <StockUrgencyRender settings={settings} />
+      content = <StockUrgencyRender settings={settings} />
+      break
     case 'marquee':
-      return <MarqueeRender settings={settings} />
+      content = <MarqueeRender settings={settings} />
+      break
     case 'stats':
-      return <StatsRender settings={settings} />
+      content = <StatsRender settings={settings} />
+      break
 
     // ── Preuve sociale / confiance ──
     case 'testimonials':
-      return <TestimonialsRender settings={settings} />
+      content = <TestimonialsRender settings={settings} />
+      break
     case 'testimonials_floating':
-      return <TestimonialsFloatingRender settings={settings} />
+      content = <TestimonialsFloatingRender settings={settings} />
+      break
     case 'before_after':
-      return <BeforeAfterRender settings={settings} />
+      content = <BeforeAfterRender settings={settings} />
+      break
     case 'comparison':
     case 'comparison_table':
-      return <ComparisonRender settings={settings} />
+      content = <ComparisonRender settings={settings} />
+      break
     case 'benefits':
     case 'icon_grid':
-      return <BenefitsRender settings={settings} />
+      content = <BenefitsRender settings={settings} />
+      break
     case 'guarantees':
-      return <GuaranteesRender settings={settings} />
+      content = <GuaranteesRender settings={settings} />
+      break
     case 'trust_bar':
-      return <TrustBarRender settings={settings} />
+      content = <TrustBarRender settings={settings} />
+      break
     case 'faq':
-      return <FaqRender settings={settings} />
+      content = <FaqRender settings={settings} />
+      break
     case 'circular_ingredients':
-      return <CircularIngredientsRender settings={settings} />
+      content = <CircularIngredientsRender settings={settings} />
+      break
     case 'expert_encart':
-      return <ExpertEncartRender settings={settings} />
+      content = <ExpertEncartRender settings={settings} />
+      break
     case 'upsell_carousel':
-      return <UpsellCarouselRender settings={settings} products={allProducts} />
+      content = <UpsellCarouselRender settings={settings} products={allProducts} />
+      break
     case 'newsletter':
-      return <NewsletterRender settings={settings} />
+      content = <NewsletterRender settings={settings} />
+      break
     case 'popup':
     case 'Popup':
-      return <PopupRender settings={settings} />
+      content = <PopupRender settings={settings} />
+      break
 
     // ── Contenu ──
     case 'image_text':
     case 'image_with_text':
-      return <ImageTextRender settings={settings} />
+      content = <ImageTextRender settings={settings} />
+      break
     case 'video':
-      return <VideoRender settings={settings} />
+      content = <VideoRender settings={settings} />
+      break
     case 'text_block':
-      return <TextBlockRender settings={settings} />
+      content = <TextBlockRender settings={settings} />
+      break
 
     // ── Infos produit (linéaires) ──
     case 'Titre':
-      return <TitreRender settings={settings} product={product} />
+      content = <TitreRender settings={settings} product={product} />
+      break
     case 'Note de produit':
-      return <NoteProduitRender settings={settings} />
+      content = <NoteProduitRender settings={settings} />
+      break
     case 'Prix':
-      return <PrixRender settings={settings} product={product} />
+      content = <PrixRender settings={settings} product={product} />
+      break
     case 'Description':
-      return <DescriptionRender settings={settings} product={product} />
+      content = <DescriptionRender settings={settings} product={product} />
+      break
     case 'OrderForm':
     case 'order_form':
-      return <OrderFormRender settings={settings} product={product} storeId={storeId} />
-
+      content = <OrderFormRender settings={settings} product={product} storeId={storeId} />
+      break
     default:
-      return null
+      break
   }
+
+  if (!content) return null
+
+  // Structural blocks that should not have dynamic padding wrapper
+  const noPaddingWrapper = ['AnnouncementBar', 'announcement_bar', 'Header', 'header', 'Footer', 'footer', 'popup', 'Popup', 'spacer', 'countdown_top_bar']
+
+  if (noPaddingWrapper.includes(block.type)) {
+    return content
+  }
+
+  // Determine dynamic padding
+  const pt = settings.padding_top !== undefined ? `${settings.padding_top}px` : undefined
+  const pb = settings.padding_bottom !== undefined ? `${settings.padding_bottom}px` : undefined
+
+  if (pt === undefined && pb === undefined) {
+    return content
+  }
+
+  return (
+    <div style={{ paddingTop: pt, paddingBottom: pb, width: '100%' }}>
+      {content}
+    </div>
+  )
 }
