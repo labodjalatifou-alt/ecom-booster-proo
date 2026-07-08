@@ -169,7 +169,7 @@ export async function POST(request: Request) {
 
     if (settingsError) {
       await supabase.from('stores').delete().eq('id', store.id)
-      return NextResponse.json({ error: settingsError.message ?? 'Impossible de créer les paramètres de la boutique.' }, { status: 500 })
+      return NextResponse.json({ error: settingsError.message ?? "Impossible de créer les paramètres de la boutique." }, { status: 500 })
     }
 
     const { error: pageError } = await supabase.from('store_pages').insert({
@@ -183,7 +183,7 @@ export async function POST(request: Request) {
     if (pageError) {
       await supabase.from('store_settings').delete().eq('store_id', store.id)
       await supabase.from('stores').delete().eq('id', store.id)
-      return NextResponse.json({ error: pageError.message ?? 'Impossible de créer la page d'accueil.' }, { status: 500 })
+      return NextResponse.json({ error: pageError.message ?? "Impossible de créer la page d'accueil." }, { status: 500 })
     }
 
     return NextResponse.json({ data: store })
