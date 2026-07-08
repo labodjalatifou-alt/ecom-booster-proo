@@ -15,8 +15,8 @@ interface ToolbarProps {
   onSave: () => void
   saving: boolean
   saved: boolean
-  /** Appelé quand l'utilisateur clique sur Publier/Mettre en pause */
-  onPublish?: (nextStatus: 'published' | 'paused') => Promise<void> | void
+  /** Appelé quand l'utilisateur clique sur Publier/Mettre en pause / Dépublier */
+  onPublish?: (nextStatus: 'published' | 'paused' | 'draft') => Promise<void> | void
 }
 
 export default function Toolbar({
