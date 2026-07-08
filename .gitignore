@@ -42,3 +42,10 @@ next-env.d.ts
 
 # Windows reserved names (can't be deleted normally)
 nul
+
+# Captures d'écran et assets de référence (volumineuses, pas nécessaires en prod)
+/T/
+*.webp
+*.zip
+/shrine_theme_unzipped/
+/prototype.html
