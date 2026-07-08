@@ -58,7 +58,7 @@ export default function NouvelleBoutiquePage() {
       .from('products')
       .select('id, product_name, name, price, currency, image_url, images')
       .order('created_at', { ascending: false })
-      .then(({ data }) => {
+      .then(({ data }: { data: ProductRow[] | null }) => {
         setProducts((data as ProductRow[]) || [])
         setLoadingProducts(false)
       })

@@ -16,6 +16,7 @@ export interface LandingTheme {
   textColor?: string
   textSoftColor?: string
   fontFamily?: string
+  headingFont?: string
   border?: string
   surface?: string
   favicon_url?: string
@@ -25,6 +26,12 @@ export interface LandingTheme {
   meta_pixel_id?: string
   show_whatsapp?: boolean
   whatsapp_number?: string
+  cardMaxWidth?: number
+  layout?: string
+  headingColor?: string
+  priceColor?: string
+  accentDeep?: string
+  gold?: string
 }
 
 interface LandingRendererProps {
