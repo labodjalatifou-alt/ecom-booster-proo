@@ -136,7 +136,7 @@ export default function LandingRenderer({
           <div key={block.id}>{renderBlock(block, product, storeId, publicTheme)}</div>
         ))}
 
-        <main style={{ maxWidth: mainMaxWidth, width: '100%', margin: '0 auto', background: cardBg, paddingBottom: 24 }}>
+        <main className="@container" style={{ maxWidth: mainMaxWidth, width: '100%', margin: '0 auto', background: cardBg, paddingBottom: 24 }}>
           <TemplateLayoutRenderer
             template={template}
             themeSettings={publicTheme}

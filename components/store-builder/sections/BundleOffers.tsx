@@ -195,7 +195,7 @@ export default function BundleOffers({
   )
 
   const renderColumns = () => (
-    <div className={`grid gap-3 ${visible.length >= 3 ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-2'}`}>
+    <div className={`grid gap-3 ${visible.length >= 3 ? 'grid-cols-1 @sm:grid-cols-3' : 'grid-cols-2'}`}>
       {visible.map((bundle) => {
         const isSelected = selectedId === bundle.id
         const total = calcPrice(unitPrice, bundle.qty, bundle)

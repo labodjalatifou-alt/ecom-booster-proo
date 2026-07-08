@@ -15,8 +15,8 @@ export default function HeaderRender({ settings }: { settings: any }) {
         minHeight: s.logo_height ? `calc(${s.logo_height}px + 32px)` : undefined,
       }}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className={`flex items-center h-16 md:h-20 ${pos === 'center' ? 'justify-between' : 'justify-start gap-8'}`}>
+      <div className="max-w-7xl mx-auto px-4 @sm:px-6 @lg:px-8">
+        <div className={`flex items-center h-16 @md:h-20 ${pos === 'center' ? 'justify-between' : 'justify-start gap-8'}`}>
           
           {/* Menu Mobile */}
           <div className={`flex items-center ${pos === 'center' ? 'flex-1' : ''}`}>
@@ -24,7 +24,7 @@ export default function HeaderRender({ settings }: { settings: any }) {
               <Menu size={24} strokeWidth={1.5} />
             </button>
             {s.show_search && (
-              <button className="p-2 ml-2 hidden sm:block rounded-md hover:bg-black/5 transition-colors">
+              <button className="p-2 ml-2 hidden @sm:block rounded-md hover:bg-black/5 transition-colors">
                 <Search size={20} strokeWidth={1.5} />
               </button>
             )}
@@ -40,7 +40,7 @@ export default function HeaderRender({ settings }: { settings: any }) {
                 className="object-contain block"
               />
             ) : (
-              <span className="text-xl md:text-2xl font-black tracking-tight" style={{ fontFamily: 'var(--font-heading, inherit)' }}>
+              <span className="text-xl @md:text-2xl font-black tracking-tight" style={{ fontFamily: 'var(--font-heading, inherit)' }}>
                 {s.logo_text || 'MA BOUTIQUE'}
               </span>
             )}
@@ -49,7 +49,7 @@ export default function HeaderRender({ settings }: { settings: any }) {
           {/* Actions (Panier) */}
           <div className="flex items-center justify-end flex-1 gap-2">
             {s.show_search && (
-              <button className="p-2 sm:hidden rounded-md hover:bg-black/5 transition-colors">
+              <button className="p-2 @sm:hidden rounded-md hover:bg-black/5 transition-colors">
                 <Search size={20} strokeWidth={1.5} />
               </button>
             )}

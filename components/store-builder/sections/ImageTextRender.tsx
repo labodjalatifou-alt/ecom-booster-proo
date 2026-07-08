@@ -4,13 +4,17 @@ export default function ImageTextRender({ settings, forceMobile }: { settings: a
   const s = settings || {}
   const isRight = s.image_position === 'right'
   const imgRadius = s.image_radius ?? 16
-
   const isDesktop = !forceMobile
+  const ptPx = s.padding_top ?? 48
+  const pbPx = s.padding_bottom ?? 48
 
   return (
-    <div className="w-full py-12 px-4" style={{ backgroundColor: s.bg_color || 'var(--color-bg)' }}>
-      <div className={`max-w-6xl mx-auto flex flex-col gap-8 items-center ${isDesktop ? (isRight ? 'md:flex-row-reverse' : 'md:flex-row') : ''}`}>
-        <div className="w-full md:w-1/2">
+    <div
+      className="w-full px-4"
+      style={{ backgroundColor: s.bg_color || 'var(--color-bg)', paddingTop: ptPx, paddingBottom: pbPx }}
+    >
+      <div className={`max-w-6xl mx-auto flex flex-col gap-8 items-center ${isDesktop ? (isRight ? '@md:flex-row-reverse' : '@md:flex-row') : ''}`}>
+        <div className="w-full @md:w-1/2">
           {s.image_url ? (
             <img
               src={s.image_url}
@@ -27,9 +31,9 @@ export default function ImageTextRender({ settings, forceMobile }: { settings: a
             </div>
           )}
         </div>
-        <div className={`w-full ${isDesktop ? 'md:w-1/2' : ''} flex flex-col justify-center`}>
+        <div className={`w-full ${isDesktop ? '@md:w-1/2' : ''} flex flex-col justify-center`}>
           {s.title && (
-            <h2 className="text-2xl md:text-3xl font-black mb-4 tracking-tight leading-tight" style={{ color: s.title_color || 'var(--color-heading, var(--color-text))', fontFamily: 'var(--font-heading, inherit)' }}>
+            <h2 className="text-2xl @md:text-3xl font-black mb-4 tracking-tight leading-tight" style={{ color: s.title_color || 'var(--color-heading, var(--color-text))', fontFamily: 'var(--font-heading, inherit)' }}>
               {s.title}
             </h2>
           )}

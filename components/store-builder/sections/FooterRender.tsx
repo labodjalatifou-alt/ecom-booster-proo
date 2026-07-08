@@ -14,8 +14,8 @@ export default function FooterRender({ settings }: { settings: any }) {
           borderColor: s.bg_color ? 'rgba(0,0,0,0.05)' : 'var(--color-secondary)'
         }}
       >
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="text-center md:text-left">
+        <div className="max-w-7xl mx-auto flex flex-col @md:flex-row items-center justify-between gap-6">
+          <div className="text-center @md:text-left">
             <h3 className="font-black text-xl mb-2" style={{ fontFamily: 'var(--font-heading, inherit)' }}>
               {s.logo_text || 'MA BOUTIQUE'}
             </h3>
@@ -24,7 +24,7 @@ export default function FooterRender({ settings }: { settings: any }) {
             </p>
           </div>
           
-          <div className="flex flex-col items-center md:items-end gap-4">
+          <div className="flex flex-col items-center @md:items-end gap-4">
             <div className="flex gap-4 text-sm font-semibold opacity-80">
               <a href="#" className="hover:opacity-100 transition-opacity">Contact</a>
               <a href="#" className="hover:opacity-100 transition-opacity">Politique de retour</a>

@@ -15,15 +15,15 @@ export default function TestimonialsSection({ settings }: { settings: any }) {
   ];
 
   return (
-    <section className="w-full py-16 md:py-24 px-4 md:px-8" style={{ backgroundColor: bgColor }}>
+    <section className="w-full py-16 @md:py-24 px-4 @md:px-8" style={{ backgroundColor: bgColor }}>
       <div className="max-w-7xl mx-auto">
         
         <div className="text-center mb-16 max-w-3xl mx-auto">
-          <h2 className="text-3xl md:text-5xl font-black text-gray-900 tracking-tight mb-4">{title}</h2>
-          {subtitle && <p className="text-lg md:text-xl text-gray-500">{subtitle}</p>}
+          <h2 className="text-3xl @md:text-5xl font-black text-gray-900 tracking-tight mb-4">{title}</h2>
+          {subtitle && <p className="text-lg @md:text-xl text-gray-500">{subtitle}</p>}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+        <div className="grid grid-cols-1 @md:grid-cols-2 @lg:grid-cols-3 gap-6 @md:gap-8">
           {items.map((item: any, idx: number) => (
             <div key={idx} className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-full hover:shadow-md transition-shadow relative overflow-hidden">
               {/* Stars */}

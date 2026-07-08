@@ -8,29 +8,38 @@ export default function AnnouncementBarRender({ settings }: { settings: any }) {
 
   if (!isVisible) return null
 
-  // speed = durée (en secondes) d'un cycle complet de défilement.
-  // Grand = lent, petit = rapide. Plage conseillée : 5s (rapide) → 60s (très lent).
   const duration = s.speed ?? 18
-
-  const text = s.text || 'LIVRAISON GRATUITE AUJOURD\'HUI SEULEMENT ⚡'
+  const text = s.text || "LIVRAISON GRATUITE AUJOURD'HUI SEULEMENT ⚡"
+  const barHeight = s.bar_height ?? 42
+  const fontSize = s.font_size ?? 13
+  const fontWeight = s.font_weight ?? 700
 
   return (
     <div
       className="w-full relative overflow-hidden flex items-center shadow-sm"
-      style={{ backgroundColor: s.bg_color || 'var(--color-primary)', color: s.text_color || '#ffffff', minHeight: '42px' }}
+      style={{
+        backgroundColor: s.bg_color || 'var(--color-primary)',
+        color: s.text_color || '#ffffff',
+        minHeight: `${barHeight}px`,
+        height: `${barHeight}px`,
+      }}
     >
       <div
         className="flex whitespace-nowrap will-change-transform"
         style={{ animation: `marquee ${duration}s linear infinite` }}
       >
         {[...Array(6)].map((_, i) => (
-          <span key={i} className="mx-6 text-xs sm:text-sm font-bold tracking-widest uppercase flex items-center gap-2">
+          <span
+            key={i}
+            className="mx-6 flex items-center gap-2"
+            style={{ fontSize: `${fontSize}px`, fontWeight, letterSpacing: '0.08em', textTransform: 'uppercase' }}
+          >
             {text}
           </span>
         ))}
       </div>
 
-      {s.close_button && (
+      {(s.show_close || s.close_button) && (
         <button
           onClick={() => setIsVisible(false)}
           className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-black/10 transition-colors z-10"

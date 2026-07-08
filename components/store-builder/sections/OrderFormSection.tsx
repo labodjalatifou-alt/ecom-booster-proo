@@ -42,17 +42,17 @@ export default function OrderFormSection({ settings }: { settings: any }) {
   );
 
   return (
-    <section className="w-full py-12 md:py-20 px-4 md:px-8" style={{ backgroundColor: bgColor }}>
+    <section className="w-full py-12 @md:py-20 px-4 @md:px-8" style={{ backgroundColor: bgColor }}>
       <div className="max-w-6xl mx-auto flex flex-col items-center">
         
         {/* Header */}
         <div className="text-center mb-10 max-w-2xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight mb-3">{title}</h2>
+          <h2 className="text-3xl @md:text-4xl font-black text-gray-900 tracking-tight mb-3">{title}</h2>
           {subtitle && <p className="text-gray-600 text-lg">{subtitle}</p>}
         </div>
 
         {isSuccess ? (
-          <div className="bg-white p-8 md:p-12 rounded-2xl shadow-xl flex flex-col items-center text-center w-full max-w-2xl" style={{ borderRadius: `${borderRadius}px` }}>
+          <div className="bg-white p-8 @md:p-12 rounded-2xl shadow-xl flex flex-col items-center text-center w-full max-w-2xl" style={{ borderRadius: `${borderRadius}px` }}>
             <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6 animate-in zoom-in duration-500">
               <CheckCircle2 className="w-10 h-10" />
             </div>
@@ -66,15 +66,15 @@ export default function OrderFormSection({ settings }: { settings: any }) {
             </button>
           </div>
         ) : (
-          <div className={`w-full max-w-6xl ${layout === 'split' ? 'grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12' : 'max-w-3xl flex flex-col'}`}>
+          <div className={`w-full max-w-6xl ${layout === 'split' ? 'grid grid-cols-1 @lg:grid-cols-12 gap-8 @lg:gap-12' : 'max-w-3xl flex flex-col'}`}>
             
             {/* Formulaire */}
-            <form onSubmit={handleSubmit} className={`bg-white p-6 md:p-8 shadow-xl border border-gray-100 ${layout === 'split' ? 'lg:col-span-7' : 'w-full'}`} style={{ borderRadius: `${borderRadius}px` }}>
+            <form onSubmit={handleSubmit} className={`bg-white p-6 @md:p-8 shadow-xl border border-gray-100 ${layout === 'split' ? '@lg:col-span-7' : 'w-full'}`} style={{ borderRadius: `${borderRadius}px` }}>
               <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
                 <Truck className="w-5 h-5 text-gray-400" /> Adresse de livraison
               </h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+              <div className="grid grid-cols-1 @md:grid-cols-2 gap-x-4">
                 <FloatingInput label="Prénom" />
                 <FloatingInput label="Nom" />
               </div>
@@ -104,8 +104,8 @@ export default function OrderFormSection({ settings }: { settings: any }) {
 
             {/* Résumé (Optionnel selon layout) */}
             {layout === 'split' && (
-              <div className="lg:col-span-5 flex flex-col">
-                <div className="bg-gray-50 border border-gray-200 p-6 md:p-8 sticky top-24" style={{ borderRadius: `${borderRadius}px` }}>
+              <div className="@lg:col-span-5 flex flex-col">
+                <div className="bg-gray-50 border border-gray-200 p-6 @md:p-8 sticky top-24" style={{ borderRadius: `${borderRadius}px` }}>
                   <h3 className="text-lg font-bold text-gray-900 mb-6 border-b border-gray-200 pb-4">Résumé de la commande</h3>
                   
                   {/* Article factice */}

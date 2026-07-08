@@ -106,13 +106,13 @@ export default function TestimonialsFloatingRender({ settings }: { settings: any
   return (
     <div className="w-full py-12 px-4 overflow-hidden" style={{ backgroundColor: s.bg_color || '#fafafa' }}>
       {s.title && (
-        <h2 className="text-xl md:text-2xl font-extrabold text-center mb-10 px-4" style={{ color: s.title_color || '#111827' }}>
+        <h2 className="text-xl @md:text-2xl font-extrabold text-center mb-10 px-4" style={{ color: s.title_color || '#111827' }}>
           {s.title}
         </h2>
       )}
 
       {/* Desktop : 3 cartes éparpillées, positions différentes */}
-      <div className="hidden md:block relative max-w-4xl mx-auto" style={{ minHeight: 340 }}>
+      <div className="hidden @md:block relative max-w-4xl mx-auto" style={{ minHeight: 340 }}>
         {desktopItems.slice(0, 3).map((item: any, i: number) => {
           const layout = DESKTOP_LAYOUT[i % 3]
           return (
@@ -134,7 +134,7 @@ export default function TestimonialsFloatingRender({ settings }: { settings: any
       </div>
 
       {/* Mobile : colonne simple */}
-      <div className="md:hidden max-w-sm mx-auto flex flex-col gap-5">
+      <div className="@md:hidden max-w-sm mx-auto flex flex-col gap-5">
         {items.map((item: any, i: number) => (
           <TestimonialCard key={item.id || i} item={item} i={i} s={s} style={{ transform: `rotate(${TILTS[i % TILTS.length] * 0.6}deg)` }} />
         ))}

@@ -41,7 +41,7 @@ export default function GuaranteesRender({ settings }: { settings: any }) {
             {s.title}
           </h2>
         )}
-        <div className={`flex ${iconOnly ? 'flex-wrap justify-around' : 'flex-wrap justify-center'} gap-6 md:gap-10`}>
+        <div className={`flex ${iconOnly ? 'flex-wrap justify-around' : 'flex-wrap justify-center'} gap-6 @md:gap-10`}>
           {items.map((item: any) => {
             const lottieKey = EMOJI_TO_LOTTIE[item.icon]
             const isHovered = hoveredId === item.id

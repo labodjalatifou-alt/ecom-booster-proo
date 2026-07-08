@@ -11,7 +11,7 @@ export default function TitreRender({ settings, product }: { settings: any; prod
   if (s.font_size) {
     fontSize = `${s.font_size}px`
   } else {
-    const map: Record<string, string> = { sm: '20px', md: '26px', lg: '32px' }
+    const map: Record<string, string> = { @sm: '20px', @md: '26px', @lg: '32px' }
     fontSize = map[s.size_key || 'md'] || '28px'
   }
 

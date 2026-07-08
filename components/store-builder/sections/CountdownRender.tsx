@@ -59,12 +59,12 @@ export default function CountdownRender({ settings }: { settings: any }) {
   const Unit = ({ value, label }: { value: number; label: string }) => (
     <div className="flex flex-col items-center">
       <div
-        className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl font-black shadow-inner countdown-unit"
+        className="w-14 h-14 @sm:w-16 @sm:h-16 rounded-2xl flex items-center justify-center text-2xl @sm:text-3xl font-black shadow-inner countdown-unit"
         style={{ backgroundColor: s.accent_color ? `${s.accent_color}22` : 'rgba(0,0,0,0.08)', color: s.accent_color || 'var(--color-primary)' }}
       >
         {value.toString().padStart(2, '0')}
       </div>
-      <span className="text-[10px] sm:text-xs mt-2 uppercase font-bold tracking-wider opacity-80">{label}</span>
+      <span className="text-[10px] @sm:text-xs mt-2 uppercase font-bold tracking-wider opacity-80">{label}</span>
     </div>
   )
 
@@ -73,10 +73,10 @@ export default function CountdownRender({ settings }: { settings: any }) {
       className="w-full py-8 px-4 flex flex-col items-center justify-center gap-5 border-y border-black/5"
       style={{ backgroundColor: s.bg_color || 'var(--color-bg)', color: s.text_color || 'var(--color-text)' }}
     >
-      <h3 className="text-lg sm:text-xl font-black tracking-tight uppercase text-center max-w-2xl">
+      <h3 className="text-lg @sm:text-xl font-black tracking-tight uppercase text-center max-w-2xl">
         {s.title || '🔥 L\'OFFRE EXPIRE BIENTÔT'}
       </h3>
-      <div className="flex items-center gap-4 sm:gap-6">
+      <div className="flex items-center gap-4 @sm:gap-6">
         <Unit value={hours} label="Heures" />
         <span className="text-3xl font-black opacity-40 -mt-6">:</span>
         <Unit value={minutes} label="Minutes" />

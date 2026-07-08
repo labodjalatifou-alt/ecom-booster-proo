@@ -19,7 +19,7 @@ export default function VideoRender({ settings }: { settings: any }) {
     >
       <div className="max-w-4xl mx-auto flex flex-col items-center">
         {s.title && (
-          <h2 className="text-3xl md:text-4xl font-black text-center mb-8 tracking-tight" style={{ color: 'var(--color-text)' }}>
+          <h2 className="text-3xl @md:text-4xl font-black text-center mb-8 tracking-tight" style={{ color: 'var(--color-text)' }}>
             {s.title}
           </h2>
         )}

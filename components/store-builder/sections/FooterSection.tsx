@@ -8,11 +8,11 @@ export default function FooterSection({ settings }: { settings: any }) {
   const copyright = settings?.copyright || `© ${new Date().getFullYear()} MABOUTIQUE. Tous droits réservés.`;
   
   return (
-    <footer className="w-full pt-16 pb-8 px-4 md:px-8 border-t border-white/10" style={{ backgroundColor: bgColor, color: textColor }}>
+    <footer className="w-full pt-16 pb-8 px-4 @md:px-8 border-t border-white/10" style={{ backgroundColor: bgColor, color: textColor }}>
       <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+        <div className="grid grid-cols-1 @md:grid-cols-4 gap-12 mb-12">
           
-          <div className="md:col-span-2">
+          <div className="@md:col-span-2">
             <h3 className="text-2xl font-black tracking-tighter mb-4">{logoText}</h3>
             <p className="opacity-70 leading-relaxed max-w-sm">
               {description}
@@ -39,7 +39,7 @@ export default function FooterSection({ settings }: { settings: any }) {
 
         </div>
         
-        <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4 opacity-50 text-sm">
+        <div className="pt-8 border-t border-white/10 flex flex-col @md:flex-row items-center justify-between gap-4 opacity-50 text-sm">
           <p>{copyright}</p>
           <div className="flex gap-4">
             <span>Paiement à la livraison 100% sécurisé</span>

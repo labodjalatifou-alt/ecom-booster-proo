@@ -101,6 +101,8 @@ interface TemplateLayoutRendererProps {
   wrapBlock?: (block: any, node: React.ReactNode) => React.ReactNode
   /** Active les animations de scroll (désactivé dans l'éditeur) */
   enableReveal?: boolean
+  /** Tous les produits de la boutique (pour upsell / popup) */
+  allProducts?: any[]
 }
 
 export default function TemplateLayoutRenderer({
@@ -111,12 +113,13 @@ export default function TemplateLayoutRenderer({
   forceMobile = false,
   wrapBlock,
   enableReveal = false,
+  allProducts,
 }: TemplateLayoutRendererProps) {
   const layout = resolveLayout(themeSettings)
   const parts = partitionTemplate(template, layout)
 
   const render = (block: any, revealVariant?: 'fadeInUp' | 'fadeInLeft' | 'fadeInRight' | 'fadeIn' | 'zoomIn', revealDelay?: number) => {
-    const node = renderBlock(block, product, storeId, themeSettings, forceMobile)
+    const node = renderBlock(block, product, storeId, themeSettings, allProducts)
     if (!node) return null
     if (wrapBlock) return wrapBlock(block, node)
     if (enableReveal && revealVariant) {

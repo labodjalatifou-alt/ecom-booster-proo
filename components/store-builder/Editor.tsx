@@ -401,6 +401,7 @@ export default function Editor({ storeId, storeName, storeSlug, storeStatus = 'd
                 onUpdateSettings={updateBlockSettings}
                 onDelete={deleteBlock}
                 selectedProduct={selectedProduct}
+                products={products}
               />
             </div>
             {/* Mobile/tablet/desktop-petit: overlay drawer (sous xl) slide-in droite */}
@@ -417,6 +418,7 @@ export default function Editor({ storeId, storeName, storeSlug, storeStatus = 'd
                     onDelete={deleteBlock}
                     onClose={() => setPropsPanelOpen(false)}
                     selectedProduct={selectedProduct}
+                    products={products}
                   />
                 </div>
               </>

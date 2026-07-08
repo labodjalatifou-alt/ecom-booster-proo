@@ -27,8 +27,8 @@ export default function BenefitsRender({ settings }: { settings: any }) {
 
   const cols = s.columns || 2
   const gridCols =
-    cols >= 4 ? 'grid-cols-2 md:grid-cols-4' :
-    cols === 3 ? 'grid-cols-1 sm:grid-cols-3' :
+    cols >= 4 ? 'grid-cols-2 @md:grid-cols-4' :
+    cols === 3 ? 'grid-cols-1 @sm:grid-cols-3' :
     'grid-cols-2'
 
   return (
@@ -39,13 +39,13 @@ export default function BenefitsRender({ settings }: { settings: any }) {
       <div className="max-w-6xl mx-auto">
         {s.title && (
           <h2
-            className="text-xl md:text-2xl font-black text-center mb-8 tracking-tight"
+            className="text-xl @md:text-2xl font-black text-center mb-8 tracking-tight"
             style={{ color: 'var(--color-text)', fontFamily: 'var(--font-heading, inherit)' }}
           >
             {s.title}
           </h2>
         )}
-        <div className={`grid ${gridCols} gap-4 md:gap-6`}>
+        <div className={`grid ${gridCols} gap-4 @md:gap-6`}>
           {items.map((item: any) => {
             const lottieKey = EMOJI_TO_LOTTIE[item.icon]
             const isHovered = hoveredId === item.id

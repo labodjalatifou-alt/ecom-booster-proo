@@ -1,7 +1,7 @@
 'use client'
 import { Check, X } from 'lucide-react'
 
-export default function ComparisonRender({ settings, forceMobile }: { settings: any; forceMobile?: boolean }) {
+export default function ComparisonRender({ settings }: { settings: any }) {
   const s = settings || {}
   const rows = s.rows || [
     { id: '1', feature: 'Qualité Premium', us: true, them: false },
@@ -17,7 +17,7 @@ export default function ComparisonRender({ settings, forceMobile }: { settings: 
     >
       <div className="max-w-4xl mx-auto">
         {s.title && (
-          <h2 className="text-2xl md:text-3xl font-black text-center mb-10 tracking-tight" style={{ color: 'var(--color-text)' }}>
+          <h2 className="text-2xl @md:text-3xl font-black text-center mb-10 tracking-tight" style={{ color: 'var(--color-text)' }}>
             {s.title}
           </h2>
         )}
@@ -26,33 +26,33 @@ export default function ComparisonRender({ settings, forceMobile }: { settings: 
           <table className="w-full text-left border-collapse min-w-[340px]">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100">
-                <th className={`w-1/2 ${forceMobile ? 'p-3' : 'p-4 md:p-6'} font-semibold text-gray-500 uppercase tracking-wider text-xs`}>Fonctionnalité</th>
-                <th className={`w-1/4 ${forceMobile ? 'p-3' : 'p-4 md:p-6'} font-black text-center text-gray-900 border-l border-gray-100 bg-blue-50/50 leading-tight`}>{s.our_label || 'Nous'}</th>
-                <th className={`w-1/4 ${forceMobile ? 'p-3' : 'p-4 md:p-6'} font-bold text-center text-gray-500 border-l border-gray-100 leading-tight`}>{s.competitor_label || 'Les autres'}</th>
+                <th className="w-1/2 p-3 @md:p-6 font-semibold text-gray-500 uppercase tracking-wider text-xs">Fonctionnalité</th>
+                <th className="w-1/4 p-3 @md:p-6 font-black text-center text-gray-900 border-l border-gray-100 bg-blue-50/50 leading-tight">{s.our_label || 'Nous'}</th>
+                <th className="w-1/4 p-3 @md:p-6 font-bold text-center text-gray-500 border-l border-gray-100 leading-tight">{s.competitor_label || 'Les autres'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {rows.map((row: any, i: number) => (
                 <tr key={row.id ?? i} className="hover:bg-gray-50/50 transition-colors">
-                  <td className={`${forceMobile ? 'p-3' : 'p-4 md:p-6'} font-medium text-gray-800 text-sm`}>{row.feature}</td>
-                  <td className={`${forceMobile ? 'p-3' : 'p-4 md:p-6'} text-center border-l border-gray-100 bg-blue-50/30`}>
+                  <td className="p-3 @md:p-6 font-medium text-gray-800 text-sm @md:text-base">{row.feature}</td>
+                  <td className="p-3 @md:p-6 text-center border-l border-gray-100 bg-blue-50/30">
                     {row.us ? (
-                      <div className={`mx-auto ${forceMobile ? 'w-6 h-6' : 'w-8 h-8'} rounded-full bg-green-100 text-green-600 flex items-center justify-center`}>
+                      <div className="mx-auto w-6 h-6 @md:w-8 @md:h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
                         <Check size={18} strokeWidth={3} />
                       </div>
                     ) : (
-                      <div className="mx-auto w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center">
+                      <div className="mx-auto w-6 h-6 @md:w-8 @md:h-8 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center">
                         <X size={18} strokeWidth={3} />
                       </div>
                     )}
                   </td>
-                  <td className={`${forceMobile ? 'p-3' : 'p-4 md:p-6'} text-center border-l border-gray-100`}>
+                  <td className="p-3 @md:p-6 text-center border-l border-gray-100">
                     {row.them ? (
-                      <div className={`mx-auto ${forceMobile ? 'w-6 h-6' : 'w-8 h-8'} rounded-full bg-green-100 text-green-600 flex items-center justify-center opacity-50`}>
+                      <div className="mx-auto w-6 h-6 @md:w-8 @md:h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center opacity-50">
                         <Check size={18} strokeWidth={3} />
                       </div>
                     ) : (
-                      <div className={`mx-auto ${forceMobile ? 'w-6 h-6' : 'w-8 h-8'} rounded-full bg-gray-100 text-gray-400 flex items-center justify-center`}>
+                      <div className="mx-auto w-6 h-6 @md:w-8 @md:h-8 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center">
                         <X size={18} strokeWidth={3} />
                       </div>
                     )}

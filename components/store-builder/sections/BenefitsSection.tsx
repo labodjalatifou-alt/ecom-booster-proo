@@ -24,16 +24,16 @@ export default function BenefitsSection({ settings }: { settings: any }) {
   };
 
   return (
-    <section className="w-full py-16 md:py-24 px-4" style={{ backgroundColor: bgColor }}>
+    <section className="w-full py-16 @md:py-24 px-4" style={{ backgroundColor: bgColor }}>
       <div className="max-w-7xl mx-auto">
         
         {title && (
-          <h2 className="text-3xl md:text-4xl font-black text-center text-gray-900 tracking-tight mb-16">
+          <h2 className="text-3xl @md:text-4xl font-black text-center text-gray-900 tracking-tight mb-16">
             {title}
           </h2>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
+        <div className="grid grid-cols-1 @md:grid-cols-2 @lg:grid-cols-4 gap-8 @md:gap-12">
           {items.map((item: any, idx: number) => (
             <div key={idx} className="flex flex-col items-center text-center group">
               <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 shadow-sm">

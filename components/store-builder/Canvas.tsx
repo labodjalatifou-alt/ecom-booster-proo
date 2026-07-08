@@ -68,7 +68,7 @@ export default function Canvas({
 
   const renderWrapped = (block: EditorBlock) => (
     <BlockWrapper key={block.id} block={block}>
-      {renderBlock(block, product, undefined, ts, previewMode === 'mobile')}
+      {renderBlock(block, product, undefined, ts)}
     </BlockWrapper>
   )
 
@@ -100,6 +100,7 @@ export default function Canvas({
             themeSettings={ts}
             product={product}
             forceMobile={previewMode === 'mobile'}
+            allProducts={products}
             wrapBlock={(block, node) => (
               <BlockWrapper key={block.id} block={block}>{node}</BlockWrapper>
             )}
@@ -145,7 +146,7 @@ export default function Canvas({
       <div className="flex justify-center items-start px-4 py-6 min-h-0" onClick={(e) => e.stopPropagation()}>
         {previewMode === 'mobile' ? (
           <div
-            className="relative flex-shrink-0 mx-auto shadow-xl"
+            className="relative flex-shrink-0 mx-auto shadow-xl @container"
             style={{
               width: 393,
               height: 'min(852px, calc(100vh - 100px))',
@@ -158,7 +159,7 @@ export default function Canvas({
             <div className="h-full overflow-y-auto overflow-x-hidden">{landingPreview}</div>
           </div>
         ) : (
-          <div className="w-full max-w-[1100px]">{landingPreview}</div>
+          <div className="w-full max-w-[1100px] @container">{landingPreview}</div>
         )}
       </div>
     </div>

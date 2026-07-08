@@ -41,7 +41,7 @@ export default function HeroSection({ settings }: { settings: any }) {
       />
 
       {/* Content */}
-      <div className={`relative z-20 w-full max-w-5xl mx-auto px-6 md:px-12 py-16 flex flex-col ${alignClass} gap-6 ${animation === 'slideUp' ? 'animate-in slide-in-from-bottom-8 duration-1000' : 'animate-in fade-in duration-1000'}`}>
+      <div className={`relative z-20 w-full max-w-5xl mx-auto px-6 @md:px-12 py-16 flex flex-col ${alignClass} gap-6 ${animation === 'slideUp' ? 'animate-in slide-in-from-bottom-8 duration-1000' : 'animate-in fade-in duration-1000'}`}>
         
         {showBadge && badgeText && (
           <span 
@@ -52,12 +52,12 @@ export default function HeroSection({ settings }: { settings: any }) {
           </span>
         )}
 
-        <h1 className="text-4xl md:text-5xl lg:text-7xl font-black text-white leading-[1.1] tracking-tight drop-shadow-lg">
+        <h1 className="text-4xl @md:text-5xl @lg:text-7xl font-black text-white leading-[1.1] tracking-tight drop-shadow-lg">
           {title}
         </h1>
         
         {subtitle && (
-          <p className="text-lg md:text-xl text-white/90 max-w-2xl font-medium drop-shadow-md">
+          <p className="text-lg @md:text-xl text-white/90 max-w-2xl font-medium drop-shadow-md">
             {subtitle}
           </p>
         )}

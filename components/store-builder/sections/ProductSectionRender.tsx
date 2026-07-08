@@ -50,10 +50,10 @@ export default function ProductSectionRender({ product, settings }: ProductSecti
       )}
 
       {/* ── Main 2-col layout: stacked on mobile, side-by-side on md+ ── */}
-      <div className="flex flex-col md:flex-row gap-6 md:gap-10 px-4 md:px-8 py-6 md:py-10">
+      <div className="flex flex-col @md:flex-row gap-6 @md:gap-10 px-4 @md:px-8 py-6 @md:py-10">
 
         {/* ── LEFT: Image Gallery ── */}
-        <div className="w-full md:w-5/12 flex flex-col gap-3 md:sticky md:top-6 self-start">
+        <div className="w-full @md:w-5/12 flex flex-col gap-3 @md:sticky @md:top-6 self-start">
           {/* Main image */}
           <div className="relative w-full aspect-square bg-gray-50 rounded-2xl overflow-hidden border border-gray-100">
             {images.length > 0 ? (
@@ -98,7 +98,7 @@ export default function ProductSectionRender({ product, settings }: ProductSecti
                 <button
                   key={i}
                   onClick={() => setActiveImg(i)}
-                  className={`flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden border-2 transition-all ${
+                  className={`flex-shrink-0 w-16 h-16 @md:w-20 @md:h-20 rounded-xl overflow-hidden border-2 transition-all ${
                     activeImg === i ? 'opacity-100 scale-105' : 'border-transparent opacity-60 hover:opacity-90'
                   }`}
                   style={{ borderColor: activeImg === i ? ctaColor : 'transparent' }}
@@ -111,7 +111,7 @@ export default function ProductSectionRender({ product, settings }: ProductSecti
         </div>
 
         {/* ── RIGHT: Product Info ── */}
-        <div className="w-full md:w-7/12 flex flex-col gap-4">
+        <div className="w-full @md:w-7/12 flex flex-col gap-4">
 
           {/* Stars */}
           <div className="flex items-center gap-2">
@@ -122,11 +122,11 @@ export default function ProductSectionRender({ product, settings }: ProductSecti
           </div>
 
           {/* Title */}
-          <h1 className="text-xl md:text-2xl lg:text-3xl font-black leading-tight text-gray-900">{title}</h1>
+          <h1 className="text-xl @md:text-2xl @lg:text-3xl font-black leading-tight text-gray-900">{title}</h1>
 
           {/* Price */}
           <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-2xl md:text-3xl font-black text-gray-900">{price}</span>
+            <span className="text-2xl @md:text-3xl font-black text-gray-900">{price}</span>
             {comparePrice && (
               <span className="text-base text-gray-400 line-through font-medium">{comparePrice}</span>
             )}
@@ -179,7 +179,7 @@ export default function ProductSectionRender({ product, settings }: ProductSecti
           {/* Description (visible on desktop in right col) */}
           {description && (
             <div
-              className="hidden md:block prose prose-sm max-w-none text-gray-700 mt-2
+              className="hidden @md:block prose prose-sm max-w-none text-gray-700 mt-2
                 [&_h1]:text-xl [&_h1]:font-black [&_h1]:text-center [&_h1]:my-4
                 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-center [&_h2]:my-3
                 [&_h3]:text-base [&_h3]:font-bold [&_h3]:my-2
@@ -195,7 +195,7 @@ export default function ProductSectionRender({ product, settings }: ProductSecti
 
       {/* Description (full width below on mobile) */}
       {description && (
-        <div className="md:hidden px-4 pb-8">
+        <div className="@md:hidden px-4 pb-8">
           <div
             className="prose prose-sm max-w-none text-gray-700
               [&_h1]:text-xl [&_h1]:font-black [&_h1]:text-center [&_h1]:my-4

@@ -17,7 +17,7 @@ export default function TrustBarRender({ settings }: { settings: any }) {
       className="w-full py-3 px-4 border-b"
       style={{ backgroundColor: s.bg_color || '#ffffff', borderColor: s.border_color || '#e8e8e8' }}
     >
-      <div className="max-w-5xl mx-auto flex items-center justify-center gap-5 md:gap-7 flex-wrap">
+      <div className="max-w-5xl mx-auto flex items-center justify-center gap-5 @md:gap-7 flex-wrap">
         {s.show_score !== false && (
           <>
             <div className="flex items-center gap-2.5 flex-shrink-0">

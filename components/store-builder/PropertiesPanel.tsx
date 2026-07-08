@@ -22,9 +22,10 @@ interface PropertiesPanelProps {
   onDelete: (blockId: string) => void
   onClose?: () => void
   selectedProduct?: { price?: number | string; currency?: string; title?: string; description?: string } | null
+  products?: any[]
 }
 
-export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onClose, selectedProduct }: PropertiesPanelProps) {
+export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onClose, selectedProduct, products }: PropertiesPanelProps) {
   if (!block) {
     return (
       <div className="w-[300px] h-full bg-white border-l border-gray-200 flex flex-col items-center justify-center p-6 text-center text-gray-400 flex-shrink-0">
@@ -38,6 +39,15 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
 
   const s = block.settings || {}
   const update = (key: string, value: any) => onUpdateSettings(block.id, { [key]: value })
+
+  /** Padding section — ajouter en haut de chaque case */
+  const PaddingFields = () => (
+    <>
+      <h4 className="text-xs font-bold text-gray-400 uppercase mb-3 mt-4">Espacements</h4>
+      <SliderField label="Marge haute (px)" value={s.padding_top ?? 48} onChange={v => update('padding_top', v)} min={0} max={160} />
+      <SliderField label="Marge basse (px)" value={s.padding_bottom ?? 48} onChange={v => update('padding_bottom', v)} min={0} max={160} />
+    </>
+  )
 
   const renderFields = () => {
     switch (block.type) {
@@ -70,6 +80,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
       case 'Titre':
         return (
           <>
+            <PaddingFields />
             <div className="text-xs bg-blue-50 text-blue-700 border border-blue-100 rounded-lg p-3 mb-4 leading-relaxed">
               Le titre affiché vient de la fiche produit si le champ ci-dessous est vide. Taille et style s&apos;appliquent immédiatement dans l&apos;aperçu.
             </div>
@@ -87,6 +98,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
       case 'Note de produit':
         return (
           <>
+            <PaddingFields />
             <SliderField label="Note" value={s.rating ?? 5} onChange={v => update('rating', v)} min={1} max={5} />
             <TextField label="Nombre d'avis (ex: 128 avis)" value={s.reviews_count} onChange={v => update('reviews_count', v)} />
             <ColorField label="Couleur étoiles" value={s.star_color} onChange={v => update('star_color', v)} />
@@ -97,6 +109,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
       case 'Prix':
         return (
           <>
+            <PaddingFields />
             <TextField label="Prix principal (ex: 15000 FCFA)" value={s.price} onChange={v => update('price', v)} />
             <SliderField label="Taille prix principal (px)" value={s.price_font_size ?? 28} onChange={v => update('price_font_size', v)} min={16} max={56} />
             <TextField label="Prix barré (ex: 30000 FCFA)" value={s.compare_at_price} onChange={v => update('compare_at_price', v)} />
@@ -111,6 +124,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
       case "Boutons d'achat":
         return (
           <>
+            <PaddingFields />
             <TextField label="Texte bouton principal" value={s.btn_main_text} onChange={v => update('btn_main_text', v)} />
             <ColorField label="Couleur bouton principal" value={s.btn_main_color} onChange={v => update('btn_main_color', v)} />
             <ToggleField label="Afficher bouton secondaire" value={s.show_btn_sub} onChange={v => update('show_btn_sub', v)} />
@@ -122,6 +136,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
       case 'Description':
         return (
           <>
+            <PaddingFields />
             <div className="text-xs bg-blue-50 text-blue-700 border border-blue-100 rounded-lg p-3 mb-4 leading-relaxed">
               La fiche produit est la source principale. Titres H1/H2, gras et alignements sont identiques sur la boutique. La barre d&apos;outils reste visible en défilant.
             </div>
@@ -140,11 +155,11 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
             <ColorField label="Couleur texte" value={s.text_color} onChange={v => update('text_color', v)} />
           </>
         )
-      // Bloc générique hérité de l'ancien système — on lui donne des vrais champs en attendant la migration
       case 'product':
       case 'Product':
         return (
           <>
+            <PaddingFields />
             <div className="text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-lg p-3 mb-4">
               Ce bloc est un ancien format. Utilise plutôt les blocs séparés (Titre, Prix, Description...) pour plus de contrôle.
             </div>
@@ -159,6 +174,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
       case 'countdown':
         return (
           <>
+            <PaddingFields />
             <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
             <SliderField label="Durée — heures" value={s.duration_hours ?? 2} onChange={v => update('duration_hours', v)} min={0} max={48} />
             <SliderField label="Durée — minutes" value={s.duration_minutes ?? 0} onChange={v => update('duration_minutes', v)} min={0} max={59} />
@@ -173,6 +189,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
       case 'testimonials':
         return (
           <>
+            <PaddingFields />
             <TextField label="Titre section" value={s.title} onChange={v => update('title', v)} />
             <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
             <ItemsListField
@@ -193,6 +210,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
       case 'icon_grid':
         return (
           <>
+            <PaddingFields />
             <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
             <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
             <ColorField label="Couleur icônes" value={s.icon_color} onChange={v => update('icon_color', v)} />
@@ -210,6 +228,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
       case 'before_after':
         return (
           <>
+            <PaddingFields />
             <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
             <ImageUploadField label="Image Avant" value={s.before_image} onChange={v => update('before_image', v)} />
             <ImageUploadField label="Image Après" value={s.after_image} onChange={v => update('after_image', v)} />
@@ -221,6 +240,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
       case 'comparison_table':
         return (
           <>
+            <PaddingFields />
             <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
             <TextField label="Nom colonne Nous" value={s.our_label || s.us_name} onChange={v => update('our_label', v)} />
             <TextField label="Nom colonne Concurrent" value={s.competitor_label || s.them_name} onChange={v => update('competitor_label', v)} />
@@ -237,6 +257,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
       case 'stats':
         return (
           <>
+            <PaddingFields />
             <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
             <ItemsListField
               label="Stats" value={s.items} onChange={v => update('items', v)}
@@ -252,6 +273,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
       case 'faq':
         return (
           <>
+            <PaddingFields />
             <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
             <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
             <ItemsListField
@@ -266,6 +288,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
       case 'guarantees':
         return (
           <>
+            <PaddingFields />
             <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
             <ItemsListField
               label="Garanties" value={s.items} onChange={v => update('items', v)}
@@ -280,6 +303,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
       case 'marquee':
         return (
           <>
+            <PaddingFields />
             <TextField label="Texte" value={s.text} onChange={v => update('text', v)} />
             <SliderField label="Vitesse (s — grand = lent)" value={s.speed ?? 20} onChange={v => update('speed', v)} min={5} max={60} />
             <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
@@ -290,6 +314,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
       case 'image_with_text':
         return (
           <>
+            <PaddingFields />
             <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
             <TextareaField label="Texte" value={s.text} onChange={v => update('text', v)} />
             <ImageUploadField label="Image" value={s.image_url} onChange={v => update('image_url', v)} />
@@ -303,6 +328,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
       case 'video':
         return (
           <>
+            <PaddingFields />
             <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
             <TextField label="URL YouTube ou MP4" value={s.url} onChange={v => update('url', v)} />
             <ImageUploadField label="Image poster" value={s.poster_url || s.poster_image} onChange={v => update('poster_url', v)} />
@@ -312,6 +338,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
       case 'text_block':
         return (
           <>
+            <PaddingFields />
             <TextareaField label="Contenu" value={s.content} onChange={v => update('content', v)} rows={6} />
             <SelectField label="Alignement" value={s.text_align || 'center'} options={['left', 'center', 'right']} onChange={v => update('text_align', v)} />
             <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
@@ -327,6 +354,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
 
         return (
           <>
+            <PaddingFields />
             <h4 className="text-xs font-bold text-gray-400 uppercase mb-3">Palette rapide</h4>
             <div className="flex flex-wrap gap-2 mb-4">
               {FORM_COLOR_PRESETS.map(preset => (
@@ -446,6 +474,18 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
           </>
         )
       }
+      case 'popup':
+        return (
+          <>
+            <PaddingFields />
+            <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
+            <TextareaField label="Texte" value={s.text} onChange={v => update('text', v)} />
+            <TextField label="Texte bouton" value={s.btn_text} onChange={v => update('btn_text', v)} />
+            <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+            <ColorField label="Couleur bouton" value={s.btn_color} onChange={v => update('btn_color', v)} />
+            <SliderField label="Délai apparition (sec)" value={s.delay ?? 2} onChange={v => update('delay', v)} min={0} max={60} />
+          </>
+        )
       case 'countdown_top_bar':
         return (
           <>
@@ -489,6 +529,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
       case 'testimonials_floating':
         return (
           <>
+            <PaddingFields />
             <TextField label="Titre section" value={s.title} onChange={v => update('title', v)} />
             <SelectField label="Animation" value={s.animation || 'float'} options={TESTIMONIAL_ANIMATIONS.map(a => a.id)} onChange={v => update('animation', v)} />
             <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
@@ -514,6 +555,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
       case 'trust_bar':
         return (
           <>
+            <PaddingFields />
             <ToggleField label="Afficher la note" value={s.show_score !== false} onChange={v => update('show_score', v)} />
             <TextField label="Note (ex: 4.8)" value={s.score} onChange={v => update('score', v)} />
             <TextField label="Texte sous la note" value={s.score_label} onChange={v => update('score_label', v)} />
@@ -531,6 +573,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
       case 'stock_urgency':
         return (
           <>
+            <PaddingFields />
             <TextField label="Message ({'{stock}'} = chiffre dynamique)" value={s.message} onChange={v => update('message', v)} />
             <SliderField label="Stock de départ" value={s.stock_left ?? 7} onChange={v => update('stock_left', v)} min={1} max={50} />
             <SliderField label="Stock minimum (variation)" value={s.stock_min ?? 3} onChange={v => update('stock_min', v)} min={1} max={40} />
@@ -546,6 +589,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
       case 'circular_ingredients':
         return (
           <>
+            <PaddingFields />
             <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
             <TextField label="Sous-titre" value={s.subtitle} onChange={v => update('subtitle', v)} />
             <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
@@ -562,6 +606,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
       case 'expert_encart':
         return (
           <>
+            <PaddingFields />
             <TextField label="Titre section" value={s.title} onChange={v => update('title', v)} />
             <TextField label="Nom de l'expert" value={s.name} onChange={v => update('name', v)} />
             <TextField label="Rôle / Titre" value={s.role} onChange={v => update('role', v)} />
@@ -574,12 +619,51 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
       case 'upsell_carousel':
         return (
           <>
+            <PaddingFields />
             <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
             <TextField label="Sous-titre" value={s.subtitle} onChange={v => update('subtitle', v)} />
             <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
             <ColorField label="Couleur accentuation" value={s.accent_color} onChange={v => update('accent_color', v)} />
+            {products && products.length > 0 && (
+              <>
+                <h4 className="text-xs font-bold text-gray-400 uppercase mb-2 mt-4">Produits à afficher</h4>
+                <p className="text-[10px] text-gray-400 mb-3">Coche les produits à proposer en upsell depuis ta boutique.</p>
+                <div className="space-y-1.5 mb-4 max-h-52 overflow-y-auto pr-1">
+                  {products.map((p: any) => {
+                    const selIds: string[] = s.selected_product_ids || []
+                    const isSelected = selIds.includes(p.id)
+                    return (
+                      <label key={p.id} className={`flex items-center gap-2.5 p-2 rounded-lg border cursor-pointer transition-colors ${
+                        isSelected ? 'border-blue-400 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'
+                      }`}>
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={e => {
+                            const next = e.target.checked
+                              ? [...selIds, p.id]
+                              : selIds.filter((id: string) => id !== p.id)
+                            update('selected_product_ids', next)
+                          }}
+                          className="w-4 h-4 accent-blue-500 flex-shrink-0"
+                        />
+                        {(p.images?.[0] || p.image_url) && (
+                          <img src={p.images?.[0] || p.image_url} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />
+                        )}
+                        <div className="min-w-0">
+                          <div className="text-xs font-semibold text-gray-800 truncate">{p.title || p.name}</div>
+                          {p.price && <div className="text-[10px] text-gray-500">{p.price} {p.currency || 'FCFA'}</div>}
+                        </div>
+                      </label>
+                    )
+                  })}
+                </div>
+              </>
+            )}
             <ItemsListField
-              label="Produits Upsell" value={s.items} onChange={v => update('items', v)}
+              label="Produits manuels (si aucun coché)"
+              value={s.items}
+              onChange={v => update('items', v)}
               itemSchema={[
                 { type: 'text', id: 'title', label: 'Titre Produit' },
                 { type: 'text', id: 'price', label: 'Prix' },

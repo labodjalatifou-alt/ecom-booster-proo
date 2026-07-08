@@ -29,6 +29,7 @@ import ExpertEncartRender from '@/components/store-builder/sections/ExpertEncart
 import UpsellCarouselRender from '@/components/store-builder/sections/UpsellCarouselRender'
 import SpacerRender from '@/components/store-builder/sections/SpacerRender'
 import NewsletterRender from '@/components/store-builder/sections/NewsletterRender'
+import PopupRender from '@/components/store-builder/sections/PopupSection'
 import { mergeHeaderTheme } from '@/lib/store-builder/landing-theme'
 
 // Les blocks de type "produit" — affichent des données du produit sélectionné.
@@ -43,7 +44,7 @@ export const PRODUCT_BLOCK_TYPES = ['Titre', 'Note de produit', 'Prix', 'Descrip
  * @param product Le produit sélectionné pour la landing (ou null)
  * @param storeId L'id de la boutique (passé au formulaire de commande, page publique)
  */
-export function renderBlock(block: any, product: any, storeId?: string | null, themeSettings?: Record<string, any>, forceMobile: boolean = false): React.ReactNode {
+export function renderBlock(block: any, product: any, storeId?: string | null, themeSettings?: Record<string, any>, allProducts?: any[]): React.ReactNode {
   if (block.hidden) return null
   const s = block.settings || {}
   const settings = { ...s }
@@ -84,35 +85,38 @@ export function renderBlock(block: any, product: any, storeId?: string | null, t
     case 'marquee':
       return <MarqueeRender settings={settings} />
     case 'stats':
-      return <StatsRender settings={settings} forceMobile={forceMobile} />
+      return <StatsRender settings={settings} />
 
     // ── Preuve sociale / confiance ──
     case 'testimonials':
-      return <TestimonialsRender settings={settings} forceMobile={forceMobile} />
+      return <TestimonialsRender settings={settings} />
     case 'testimonials_floating':
       return <TestimonialsFloatingRender settings={settings} />
     case 'before_after':
-      return <BeforeAfterRender settings={settings} forceMobile={forceMobile} />
+      return <BeforeAfterRender settings={settings} />
     case 'comparison':
     case 'comparison_table':
-      return <ComparisonRender settings={settings} forceMobile={forceMobile} />
+      return <ComparisonRender settings={settings} />
     case 'benefits':
     case 'icon_grid':
-      return <BenefitsRender settings={settings} forceMobile={forceMobile} />
+      return <BenefitsRender settings={settings} />
     case 'guarantees':
-      return <GuaranteesRender settings={settings} forceMobile={forceMobile} />
+      return <GuaranteesRender settings={settings} />
     case 'trust_bar':
       return <TrustBarRender settings={settings} />
     case 'faq':
-      return <FaqRender settings={settings} forceMobile={forceMobile} />
+      return <FaqRender settings={settings} />
     case 'circular_ingredients':
       return <CircularIngredientsRender settings={settings} />
     case 'expert_encart':
       return <ExpertEncartRender settings={settings} />
     case 'upsell_carousel':
-      return <UpsellCarouselRender settings={settings} />
+      return <UpsellCarouselRender settings={settings} products={allProducts} />
     case 'newsletter':
       return <NewsletterRender settings={settings} />
+    case 'popup':
+    case 'Popup':
+      return <PopupRender settings={settings} />
 
     // ── Contenu ──
     case 'image_text':

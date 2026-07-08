@@ -15,7 +15,7 @@ export default function MarqueeRender({ settings }: { settings: any }) {
         style={{ animation: `marquee ${duration}s linear infinite` }}
       >
         {[...Array(6)].map((_, i) => (
-          <span key={i} className="mx-6 text-lg md:text-xl font-black tracking-widest uppercase flex items-center gap-4">
+          <span key={i} className="mx-6 text-lg @md:text-xl font-black tracking-widest uppercase flex items-center gap-4">
             {s.text || '✨ SOLDES D\'HIVER - JUSQU\'À 50% DE RÉDUCTION ✨'}
           </span>
         ))}
