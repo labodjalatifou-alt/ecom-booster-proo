@@ -256,6 +256,7 @@ export const DEFAULT_IMAGE_WITH_TEXT_PROPS: ImageWithTextProps = {
   text: 'Racontez votre histoire ici. Expliquez pourquoi votre produit est unique et pourquoi vos clients devraient vous faire confiance.',
   image_url: '',
   image_position: 'right',
+  image_fit: 'cover',
   cta_text: 'En savoir plus',
   cta_link: '#',
   bg_color: '#ffffff',
@@ -301,6 +302,7 @@ export const DEFAULT_NEWSLETTER_PROPS: NewsletterProps = {
   button_text: 'S\'inscrire',
   bg_color: '#6366f1',
   style: 'fullwidth',
+  theme: 'light',
   type: 'whatsapp',
 }
 
@@ -358,6 +360,40 @@ export const DEFAULT_SPACER_PROPS: SpacerProps = {
   bg_color: 'transparent',
   show_divider: false,
   divider_style: 'line',
+  pattern: 'none',
+}
+
+export const DEFAULT_CIRCULAR_INGREDIENTS_PROPS = {
+  title: 'Ingrédients 100% naturels',
+  subtitle: 'Ce qui rend notre formule unique',
+  items: [
+    { id: 'i1', title: 'Ingrédient 1', text: 'Propriété active principale', image_url: '' },
+    { id: 'i2', title: 'Ingrédient 2', text: 'Pour renforcer l\'efficacité', image_url: '' },
+    { id: 'i3', title: 'Ingrédient 3', text: 'Apporte douceur et soin', image_url: '' },
+  ],
+  bg_color: '#ffffff',
+}
+
+export const DEFAULT_EXPERT_ENCART_PROPS = {
+  title: 'Recommandé par les experts',
+  name: 'Dr. Jean Dupont',
+  role: 'Dermatologue certifié',
+  quote: "C'est la formule la plus avancée que j'ai pu analyser cette année. Les résultats cliniques sont impressionnants.",
+  image_url: '',
+  signature_url: '',
+  bg_color: '#f9fafb',
+}
+
+export const DEFAULT_UPSELL_CAROUSEL_PROPS = {
+  title: 'Complétez votre routine',
+  subtitle: 'Nos clients achètent souvent ces produits ensemble',
+  items: [
+    { id: 'u1', title: 'Produit Complémentaire 1', price: '15 000 FCFA', image_url: '', link: '#' },
+    { id: 'u2', title: 'Produit Complémentaire 2', price: '12 500 FCFA', image_url: '', link: '#' },
+    { id: 'u3', title: 'Accessoire Premium', price: '9 900 FCFA', image_url: '', link: '#' },
+  ],
+  bg_color: '#ffffff',
+  accent_color: '#6366f1',
 }
 
 export const DEFAULT_POPUP_PROPS: PopupProps = {
@@ -416,6 +452,8 @@ export const SECTIONS_CATALOG: SectionCatalogItem[] = [
   { type: 'before_after', label: 'Avant / Après', icon: '🔄', description: 'Comparaison avec slider interactif', category: 'Social Proof', defaultProps: DEFAULT_BEFORE_AFTER_PROPS },
   { type: 'comparison_table', label: 'Comparaison', icon: '📊', description: 'Nous vs concurrents', category: 'Social Proof', defaultProps: DEFAULT_COMPARISON_TABLE_PROPS },
   // ℹ️ Info
+  { type: 'circular_ingredients', label: 'Ingrédients', icon: '🍃', description: 'Grille d\'ingrédients circulaires', category: 'Info', defaultProps: DEFAULT_CIRCULAR_INGREDIENTS_PROPS },
+  { type: 'expert_encart', label: 'Encart Expert', icon: '⚕️', description: 'Recommandation médicale ou expert', category: 'Info', defaultProps: DEFAULT_EXPERT_ENCART_PROPS },
   { type: 'benefits', label: 'Avantages', icon: '✅', description: 'Points forts et bénéfices', category: 'Info', defaultProps: DEFAULT_BENEFITS_PROPS },
   { type: 'faq', label: 'FAQ', icon: '❓', description: 'Questions / réponses accordéon', category: 'Info', defaultProps: DEFAULT_FAQ_PROPS },
   { type: 'guarantees', label: 'Garanties', icon: '🛡️', description: 'Badges de confiance', category: 'Info', defaultProps: DEFAULT_GUARANTEES_PROPS },
@@ -423,6 +461,7 @@ export const SECTIONS_CATALOG: SectionCatalogItem[] = [
   { type: 'icon_grid', label: 'Grille d\'icônes', icon: '🔷', description: 'Services avec icônes', category: 'Info', defaultProps: DEFAULT_ICON_GRID_PROPS },
   { type: 'newsletter', label: 'Newsletter', icon: '📧', description: 'Inscription email ou WhatsApp', category: 'Info', defaultProps: DEFAULT_NEWSLETTER_PROPS },
   // 🏁 Structure
+  { type: 'upsell_carousel', label: 'Carrousel Upsell', icon: '🔄', description: 'Produits complémentaires', category: 'Produits', defaultProps: DEFAULT_UPSELL_CAROUSEL_PROPS },
   { type: 'marquee', label: 'Marquee défilant', icon: '🔁', description: 'Bandeau texte en boucle', category: 'Structure', defaultProps: DEFAULT_MARQUEE_PROPS },
   { type: 'spacer', label: 'Espaceur', icon: '⬜', description: 'Espace vide / séparateur', category: 'Structure', defaultProps: DEFAULT_SPACER_PROPS },
   { type: 'footer', label: 'Footer', icon: '🏁', description: 'Pied de page complet', category: 'Structure', defaultProps: DEFAULT_FOOTER_PROPS },

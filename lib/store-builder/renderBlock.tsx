@@ -24,6 +24,11 @@ import PrixRender from '@/components/store-builder/sections/PrixRender'
 import DescriptionRender from '@/components/store-builder/sections/DescriptionRender'
 import OrderFormRender from '@/components/store-builder/sections/OrderFormRender'
 import CountdownTopBarRender from '@/components/store-builder/sections/CountdownTopBarRender'
+import CircularIngredientsRender from '@/components/store-builder/sections/CircularIngredientsRender'
+import ExpertEncartRender from '@/components/store-builder/sections/ExpertEncartRender'
+import UpsellCarouselRender from '@/components/store-builder/sections/UpsellCarouselRender'
+import SpacerRender from '@/components/store-builder/sections/SpacerRender'
+import NewsletterRender from '@/components/store-builder/sections/NewsletterRender'
 import { mergeHeaderTheme } from '@/lib/store-builder/landing-theme'
 
 // Les blocks de type "produit" — affichent des données du produit sélectionné.
@@ -55,7 +60,7 @@ export function renderBlock(block: any, product: any, storeId?: string | null, t
     case 'footer':
       return <FooterRender settings={settings} />
     case 'spacer':
-      return <div style={{ height: s.height || 48 }} />
+      return <SpacerRender settings={settings} />
 
     // ── Galerie (déplaçable) ──
     case 'Galerie':
@@ -100,6 +105,14 @@ export function renderBlock(block: any, product: any, storeId?: string | null, t
       return <TrustBarRender settings={settings} />
     case 'faq':
       return <FaqRender settings={settings} />
+    case 'circular_ingredients':
+      return <CircularIngredientsRender settings={settings} />
+    case 'expert_encart':
+      return <ExpertEncartRender settings={settings} />
+    case 'upsell_carousel':
+      return <UpsellCarouselRender settings={settings} />
+    case 'newsletter':
+      return <NewsletterRender settings={settings} />
 
     // ── Contenu ──
     case 'image_text':

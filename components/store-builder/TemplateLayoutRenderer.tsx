@@ -126,18 +126,15 @@ export default function TemplateLayoutRenderer({
 
   if (layout === 'hero-split') {
     const forceClass = forceMobile ? ' force-mobile' : ''
+    // Right column = ALL hero blocks (productInfo) + form, sorted by their original position
+    const rightColBlocks = sortByTemplateOrder([...parts.productInfo, ...parts.form])
     return (
       <>
         <section className={`landing-hero landing-hero--split${forceClass}`}>
           <div className="landing-hero-split-grid">
             <div className="landing-hero-split-gallery">{renderList(parts.gallery)}</div>
             <div className="landing-hero-split-buy">
-              {renderList(sortByTemplateOrder([
-                ...parts.productInfo,
-                ...parts.heroSidebar,
-                ...parts.form,
-                ...parts.heroBuyColumn
-              ]))}
+              {renderList(rightColBlocks)}
             </div>
           </div>
         </section>
@@ -147,29 +144,23 @@ export default function TemplateLayoutRenderer({
     )
   }
 
-  // hero-triple
+  // hero-triple: galerie | form sticky | resto du hero (titre, prix, etc.)
   const forceClass = forceMobile ? ' force-mobile' : ''
+  // Mobile: all hero blocks in one vertical flow, sorted by template order
+  const allHeroBlocksMobile = sortByTemplateOrder([...parts.gallery, ...parts.form, ...parts.productInfo])
   return (
     <>
       <section className={`landing-hero landing-hero--triple${forceClass}`}>
-        {/* Mobile : galerie, form, infos, marketing (ordonnés selon le template) */}
+        {/* Mobile : tous les blocs hero dans l'ordre du template */}
         <div className="landing-hero-triple-mobile">
-          {renderList(sortByTemplateOrder([
-            ...parts.form,
-            ...parts.gallery,
-            ...parts.productInfo,
-            ...parts.heroMarketing
-          ]))}
+          {renderList(allHeroBlocksMobile)}
         </div>
-        {/* Desktop : galerie | form sticky | infos + marketing */}
+        {/* Desktop : galerie | form sticky | productInfo */}
         <div className="landing-hero-triple-desktop">
           <div className="landing-hero-triple-gallery-col">{renderList(parts.gallery)}</div>
           <div className="landing-hero-triple-form-col">{renderList(parts.form)}</div>
           <div className="landing-hero-triple-marketing-col">
-            {renderList(sortByTemplateOrder([
-              ...parts.productInfo,
-              ...parts.heroMarketing
-            ]))}
+            {renderList(parts.productInfo)}
           </div>
         </div>
       </section>
