@@ -110,6 +110,11 @@ export default function TemplateLayoutRenderer({
 
   const renderList = (blocks: any[]) => blocks.map(render).filter(Boolean)
 
+  // Fonction pour trier un groupe de blocs selon leur ordre dans le template d'origine
+  const sortByTemplateOrder = (blocks: any[]) => {
+    return [...blocks].sort((a, b) => template.indexOf(a) - template.indexOf(b))
+  }
+
   if (layout === 'single-column') {
     return (
       <>
@@ -127,10 +132,12 @@ export default function TemplateLayoutRenderer({
           <div className="landing-hero-split-grid">
             <div className="landing-hero-split-gallery">{renderList(parts.gallery)}</div>
             <div className="landing-hero-split-buy">
-              {renderList(parts.productInfo)}
-              {renderList(parts.heroSidebar)}
-              {renderList(parts.form)}
-              {renderList(parts.heroBuyColumn)}
+              {renderList(sortByTemplateOrder([
+                ...parts.productInfo,
+                ...parts.heroSidebar,
+                ...parts.form,
+                ...parts.heroBuyColumn
+              ]))}
             </div>
           </div>
         </section>
@@ -145,20 +152,24 @@ export default function TemplateLayoutRenderer({
   return (
     <>
       <section className={`landing-hero landing-hero--triple${forceClass}`}>
-        {/* Mobile : formulaire → galerie → infos → marketing */}
+        {/* Mobile : galerie, form, infos, marketing (ordonnés selon le template) */}
         <div className="landing-hero-triple-mobile">
-          {renderList(parts.form)}
-          {renderList(parts.gallery)}
-          {renderList(parts.productInfo)}
-          {renderList(parts.heroMarketing)}
+          {renderList(sortByTemplateOrder([
+            ...parts.form,
+            ...parts.gallery,
+            ...parts.productInfo,
+            ...parts.heroMarketing
+          ]))}
         </div>
         {/* Desktop : galerie | form sticky | infos + marketing */}
         <div className="landing-hero-triple-desktop">
           <div className="landing-hero-triple-gallery-col">{renderList(parts.gallery)}</div>
           <div className="landing-hero-triple-form-col">{renderList(parts.form)}</div>
           <div className="landing-hero-triple-marketing-col">
-            {renderList(parts.productInfo)}
-            {renderList(parts.heroMarketing)}
+            {renderList(sortByTemplateOrder([
+              ...parts.productInfo,
+              ...parts.heroMarketing
+            ]))}
           </div>
         </div>
       </section>

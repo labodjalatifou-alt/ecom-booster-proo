@@ -97,7 +97,7 @@ export async function POST(request: Request) {
         .maybeSingle()
 
       if (guestError) {
-        return NextResponse.json({ error: guestError.message ?? 'Erreur lors de la recherche de l'utilisateur invité.' }, { status: 500 })
+        return NextResponse.json({ error: guestError.message ?? "Erreur lors de la recherche de l'utilisateur invité." }, { status: 500 })
       }
 
       if (guestUser?.id) {
@@ -111,7 +111,7 @@ export async function POST(request: Request) {
         })
         
         if (authError || !authUser?.user) {
-          return NextResponse.json({ error: authError?.message ?? 'Impossible de créer l'utilisateur invité.' }, { status: 500 })
+          return NextResponse.json({ error: authError?.message ?? "Impossible de créer l'utilisateur invité." }, { status: 500 })
         }
 
         const newGuestId = authUser.user.id
@@ -131,7 +131,7 @@ export async function POST(request: Request) {
           .single()
 
         if (createUserError || !newUser?.id) {
-          return NextResponse.json({ error: createUserError?.message ?? 'Impossible d'initialiser le profil invité.' }, { status: 500 })
+          return NextResponse.json({ error: createUserError?.message ?? "Impossible d'initialiser le profil invité." }, { status: 500 })
         }
 
         userId = newUser.id
