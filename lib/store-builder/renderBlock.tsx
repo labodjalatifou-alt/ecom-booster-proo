@@ -1,4 +1,4 @@
-﻿import React from 'react'
+import React from 'react'
 import AnnouncementBarRender from '@/components/store-builder/sections/AnnouncementBarRender'
 import HeaderRender from '@/components/store-builder/sections/HeaderRender'
 import MediasRender from '@/components/store-builder/sections/MediasRender'
@@ -173,7 +173,7 @@ export function renderBlock(block: any, product: any, storeId?: string | null, t
       break
     case 'OrderForm':
     case 'order_form':
-      content = <OrderFormRender settings={settings} product={product} storeId={storeId} />
+      content = <OrderFormRender settings={settings} product={product} storeId={storeId} themeSettings={themeSettings} />
       break
     default:
       break

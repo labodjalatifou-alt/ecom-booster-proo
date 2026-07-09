@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import React, { useState, useMemo, useEffect } from 'react'
 import { ShieldCheck, Truck, Sparkles } from 'lucide-react'
@@ -19,9 +19,10 @@ interface OrderFormRenderProps {
   settings: any
   product?: any
   storeId?: string | null
+  themeSettings?: any
 }
 
-export default function OrderFormRender({ settings, product, storeId }: OrderFormRenderProps) {
+export default function OrderFormRender({ settings, product, storeId, themeSettings }: OrderFormRenderProps) {
   const s = settings || {}
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
@@ -130,40 +131,78 @@ export default function OrderFormRender({ settings, product, storeId }: OrderFor
 
   if (sent) {
     const productImage = product?.image_url || product?.images?.[0] || 'https://placehold.co/100x100/e2e8f0/64748b?text=Produit'
+    const waNumber = themeSettings?.whatsapp_number || ''
+    const waText = encodeURIComponent(Bonjour, je viens de passer une commande pour  (x). Mon nom est .)
+    const waLink = waNumber ? https://wa.me/?text= : ''
     
     return (
-      <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 order-confetti-wrap" style={{ background: 'rgba(0,0,0,.6)', backdropFilter: 'blur(4px)' }}
-        onClick={() => { setSent(false); setName(''); setPhone(''); setCity(''); setEmail('') }}>
-        <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 text-center anim-pop" onClick={e => e.stopPropagation()}
-          style={{ border: `3px solid ${colors.btn}33` }}>
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: `${colors.btn}18` }}>
-            <Sparkles size={32} style={{ color: colors.btn }} />
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 order-confetti-wrap" 
+           style={{ background: 'rgba(0,0,0,.7)', backdropFilter: 'blur(16px)' }}
+           onClick={() => { setSent(false); setName(''); setPhone(''); setCity(''); setEmail('') }}>
+        <div className="bg-white rounded-[32px] shadow-2xl max-w-md w-full p-8 text-center anim-pop relative overflow-hidden" 
+             onClick={e => e.stopPropagation()}
+             style={{ border: 1px solid rgba(255,255,255,0.2) }}>
+          
+          <div className="absolute top-0 left-0 w-full h-2" style={{ background: linear-gradient(90deg, , ) }} />
+          
+          <div className="w-20 h-20 mx-auto mb-5 rounded-full flex items-center justify-center shadow-lg" 
+               style={{ background: linear-gradient(135deg,  0%,  100%) }}>
+            <Sparkles size={40} className="text-white" />
           </div>
-          <h3 className="text-2xl font-black mb-1" style={{ color: colors.title }}>Merci pour votre commande ! 🎉</h3>
-          <p className="text-sm mb-6" style={{ color: colors.subtitle }}>Votre commande a été enregistrée avec succès.</p>
+          
+          <h3 className="text-3xl font-black mb-2 tracking-tight text-gray-900">Félicitations !</h3>
+          <p className="text-base mb-6 text-gray-500 font-medium">
+            Votre commande a été confirmée avec succès.
+          </p>
 
-          <div className="bg-gray-50 rounded-2xl p-4 mb-6 text-left border border-gray-100 shadow-sm">
-            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Récapitulatif de commande</h4>
+          <div className="bg-gray-50 rounded-2xl p-5 mb-6 text-left border border-gray-100 shadow-inner">
+            <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-4">Récapitulatif de la commande</h4>
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-xl overflow-hidden bg-white border border-gray-100 flex-shrink-0">
+              <div className="w-16 h-16 rounded-xl overflow-hidden bg-white shadow-sm flex-shrink-0">
                 <img src={productImage} alt={product?.title || 'Produit'} className="w-full h-full object-cover" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-gray-800 text-sm line-clamp-2">{product?.title || 'Votre produit'}</p>
-                <p className="text-xs text-gray-500 mt-0.5">Quantité : {finalQty}</p>
-                <p className="font-black text-[15px] mt-1" style={{ color: colors.btn }}>
-                  {total.toLocaleString('fr-FR')} {currency}
-                </p>
+                <p className="font-bold text-gray-900 text-sm line-clamp-2 leading-snug">{product?.title || 'Votre produit'}</p>
+                <div className="flex justify-between items-center mt-2">
+                  <p className="text-xs font-semibold text-gray-500 bg-gray-200/50 px-2 py-0.5 rounded-md">Qté : {finalQty}</p>
+                  <p className="font-black text-lg" style={{ color: colors.btn }}>
+                    {total.toLocaleString('fr-FR')} {currency}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-blue-50 text-blue-800 rounded-xl p-3 mb-6 text-sm flex items-start gap-3 text-left">
-             <span className="text-lg">📞</span> 
-             <p><b>{name}</b>, notre équipe va vous appeler très bientôt au <b>{phone}</b> pour confirmer la livraison. Restez joignable !</p>
+          <div className="bg-blue-50/80 rounded-2xl p-4 mb-6 text-sm flex items-start gap-3 text-left border border-blue-100/50">
+             <span className="text-xl mt-0.5">🚚</span> 
+             <p className="text-blue-900 leading-relaxed">
+               <b>{name}</b>, nous vous appellerons au <b>{phone}</b> pour confirmer l'expédition. Restez à l'écoute !
+             </p>
           </div>
 
-          <button onClick={() => setSent(false)} className="w-full py-3.5 rounded-2xl font-black text-white text-[15px] shadow-lg transition-transform active:scale-95" style={{ background: `linear-gradient(135deg, ${colors.btn} 0%, ${colors.accent} 100%)` }}>Fermer</button>
+          <div className="flex flex-col gap-3">
+            {waLink && (
+              <a 
+                href={waLink} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="w-full py-4 rounded-xl font-black text-white text-[15px] shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2" 
+                style={{ background: '#25D366' }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/>
+                </svg>
+                Contacter sur WhatsApp
+              </a>
+            )}
+            
+            <button 
+              onClick={() => { setSent(false); setName(''); setPhone(''); setCity(''); setEmail('') }} 
+              className="w-full py-4 rounded-xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 text-[15px] transition-colors"
+            >
+              Fermer la fenêtre
+            </button>
+          </div>
         </div>
       </div>
     )
@@ -303,3 +342,5 @@ export default function OrderFormRender({ settings, product, storeId }: OrderFor
 
 export { BTN_ANIMATIONS }
 export type { BtnAnimation }
+
+
