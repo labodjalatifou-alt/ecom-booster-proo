@@ -1,7 +1,7 @@
-﻿'use client'
+'use client'
 
 import React from 'react'
-
+import toast from 'react-hot-toast'
 export default function NewsletterRender({ settings = {} }: { settings?: any }) {
   const title = settings.title || 'Rejoignez notre communauté'
   const subtitle = settings.subtitle || 'Recevez nos offres exclusives et promotions'
