@@ -40,16 +40,37 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      const { data, error } = await supabase
+      const { data: storeData, error: err1 } = await supabase
         .from('Store')
         .select('id, name, currency, country, shopifyUrl')
         .order('createdAt', { ascending: true });
-      
-      if (!error && data) {
-        setStores(data);
-        // Auto-select first store if none selected
-        if (data.length > 0 && !selectedStore) {
-          setSelectedStore(data[0].id);
+        
+      const { data: boutiquesData, error: err2 } = await supabase
+        .from('stores')
+        .select('id, name')
+        .order('created_at', { ascending: true });
+
+      const combined: StoreInfo[] = [];
+      if (storeData) combined.push(...storeData);
+      if (boutiquesData) {
+        boutiquesData.forEach(b => {
+          // Avoid duplicates if ids somehow match
+          if (!combined.find(s => s.id === b.id)) {
+            combined.push({
+              id: b.id,
+              name: `${b.name} (Boutique)`,
+              currency: 'FCFA',
+              country: 'Côte d\'Ivoire',
+              shopifyUrl: ''
+            });
+          }
+        });
+      }
+
+      if (combined.length > 0) {
+        setStores(combined);
+        if (!selectedStore) {
+          setSelectedStore(combined[0].id);
         }
       }
       setLoadingStores(false);
