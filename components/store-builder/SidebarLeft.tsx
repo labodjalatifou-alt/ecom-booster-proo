@@ -30,7 +30,7 @@ interface SidebarLeftProps {
 }
 
 // Dynamic catalog from defaults
-const dynamicCatalog = SECTIONS_CATALOG.reduce((acc, item) => {
+const dynamicCatalog = SECTIONS_CATALOG.reduce((acc: any[], item) => {
   const cat = acc.find(c => c.title === item.category)
   const mappedItem = {
     type: item.type,
