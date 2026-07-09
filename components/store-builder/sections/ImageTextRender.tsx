@@ -42,7 +42,7 @@ export default function ImageTextRender({ settings, forceMobile }: { settings: a
               {s.text}
             </div>
           )}
-          {s.cta_text && (
+          {s.show_cta && s.cta_text && (
             <a
               href={s.cta_link || '#order-form'}
               className="inline-block px-6 py-3 rounded-lg font-bold text-sm text-white transition-opacity hover:opacity-90"

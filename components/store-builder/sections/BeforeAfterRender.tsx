@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useRef, useEffect } from 'react'
 
 export default function BeforeAfterRender({ settings }: { settings: any }) {
@@ -82,8 +82,20 @@ export default function BeforeAfterRender({ settings }: { settings: any }) {
               <div className="w-1 h-3 bg-gray-300 rounded-full" />
             </div>
           </div>
+        {s.show_cta && s.cta_text && (
+          <div className="mt-8 text-center flex justify-center w-full">
+            <a
+              href="#order-form"
+              className="inline-block px-8 py-3.5 rounded-xl font-bold text-sm text-white transition-transform hover:scale-105 shadow-lg"
+              style={{ backgroundColor: s.cta_color || 'var(--color-primary)' }}
+            >
+              {s.cta_text}
+            </a>
+          </div>
+        )}
         </div>
       </div>
     </div>
   )
 }
+

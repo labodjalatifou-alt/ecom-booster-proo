@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // THÈMES BOUTIQUE — Source unique de vérité
 // Chaque thème = couleurs + polices + sections + layout
 // ============================================
@@ -99,26 +99,26 @@ export const BOUTIQUE_THEMES: BoutiqueTheme[] = [
     fonts: { display: "'Plus Jakarta Sans', sans-serif", body: "'Inter', sans-serif" },
   },
 
-  // ── 3. LUXE NOIR — Dark luxury, black & gold, premium brand ─────────────
+  // ── 3. AMBRE LUXE — Warm ivory luxury, serif, gold accents (Héline-style) ─
   {
     id: 'ambre-premium',
-    name: 'Luxe Noir',
-    description: 'Luxe intense — fond sombre, or, serif élégant. Marque premium haut de gamme.',
+    name: 'Ambre Luxe',
+    description: 'Marque premium haut de gamme — ivoire chaud, serif élégant, accents dorés.',
     tags: ['luxe', 'premium', 'beauté'],
     preview_image: '/themes/s1.png',
-    layout: 'hero-split',
-    cardMaxWidth: 960,
+    layout: 'single-column',
+    cardMaxWidth: 860,
     colors: {
-      bg: '#0F0F0F',
-      surface: '#1A1A1A',
-      text: '#F5F0E8',
-      text_soft: '#A09080',
-      accent: '#C9A84C',
-      accent_deep: '#A07830',
-      gold: '#E8C96A',
-      border: '#2E2A24',
+      bg: '#FAF7F2',
+      surface: '#FFFFFF',
+      text: '#2C1A0E',
+      text_soft: '#8B6F47',
+      accent: '#B8860B',
+      accent_deep: '#8B6914',
+      gold: '#D4AF37',
+      border: '#E8DCC8',
     },
-    fonts: { display: "'Playfair Display', serif", body: "'Outfit', sans-serif" },
+    fonts: { display: "'Playfair Display', serif", body: "'Lato', sans-serif" },
   },
 
   // ── 4. CONVERSION PRO — Bold red urgency, single column sales tunnel ─────
@@ -441,113 +441,40 @@ function buildAmbrePremium(c: BoutiqueThemeColors, name: string) {
   return {
     header: [
       block('AnnouncementBar', "Barre d'annonce", {
-        text: `✦ ${name} — Livraison gratuite à partir de 50€ · Paiement sécurisé ✦`,
-        bg_color: '#0A0A0A',
-        text_color: c.gold,
+        text: "Livraison offerte - Satisfait ou rembourse - 16 000+ avis 5 etoiles",
+        bg_color: '#2C1A0E',
+        text_color: '#D4AF37',
         bar_height: 38,
         font_size: 11,
-        font_weight: 600,
       }, 'h1'),
-      block('Header', 'En-tête', {
+      block('Header', 'En-tete', {
         logo_text: name,
         logo_position: 'center',
         show_search: false,
         show_cart: true,
-        bg_color: c.surface,
+        bg_color: '#FAF7F2',
         text_color: c.text,
       }, 'h2'),
     ],
     template: [
       block('Galerie', "Galerie d'images", {}, 't1'),
       block('Titre', 'Titre produit', { padding_top: 16 }, 't2'),
-      block('Note de produit', 'Note', { rating: 5, reviews_count: '318 avis', star_color: c.gold }, 't3'),
-      block('Prix', 'Prix', {
-        show_badge: true, badge_text: 'EXCLUSIF',
-        badge_bg: c.accent, badge_text_color: '#0A0A0A',
-        price_color: c.gold,
-      }, 't4'),
-      block('OrderForm', 'Formulaire commande', {
-        title: 'Réserver ma commande',
-        btn_text: '✦ COMMANDER — LIVRAISON OFFERTE',
-        btn_color: c.accent,
-        btn_text_color: '#0A0A0A',
-        bg_color: c.surface,
-        border_color: c.border,
-        border_radius: 16,
-        form_style: 'modern',
-        bundles_enabled: false,
-      }, 't5'),
-      block('marquee', 'Bandeau', {
-        text: `✦ ${name} — Expédié en 24h · Emballage luxe · Satisfait ou remboursé ✦`,
-        bg_color: c.accent,
-        text_color: '#0A0A0A',
-        speed: 25,
-      }, 't6'),
-      block('Description', 'Description', { padding_top: 32, padding_bottom: 32 }, 't7'),
-      block('image_text', 'L\'artisanat', {
-        title: 'Formulé pour l\'excellence',
-        text: 'Chaque produit est élaboré avec une sélection d\'ingrédients rares, choisis pour leur efficacité et leur pureté. Un savoir-faire artisanal au service de votre beauté.',
-        image_position: 'right',
-        bg_color: c.surface,
-        text_color: c.text,
-        title_color: c.gold,
-        cta_text: 'Découvrir notre philosophie',
-        cta_color: c.accent,
-        padding_top: 64,
-        padding_bottom: 64,
-      }, 't8'),
-      block('stats', 'Chiffres', {
-        title: '',
-        bg_color: '#0A0A0A',
-        text_color: c.text,
-        accent_color: c.gold,
-        items: [
-          { id: '1', number: '318', suffix: '+', label: 'Avis Vérifiés', icon: '⭐' },
-          { id: '2', number: '100', suffix: '%', label: 'Ingrédients Naturels', icon: '🌿' },
-          { id: '3', number: '24', suffix: 'h', label: 'Expédition Express', icon: '📦' },
-          { id: '4', number: '30', suffix: 'j', label: 'Remboursement', icon: '🛡️' },
-        ],
-      }, 't9'),
-      block('testimonials', 'Avis clients', {
-        title: 'Ce que disent nos clients',
-        layout: 'list',
-        bg_color: c.bg,
-        items: [
-          { id: '1', name: 'Isabelle M.', rating: 5, text: 'Un produit d\'une qualité exceptionnelle. Le packaging seul vaut le détour.', verified: true },
-          { id: '2', name: 'Aurélie K.', rating: 5, text: 'Les résultats sont bluffants. Je ne me vois plus sans.', verified: true },
-          { id: '3', name: 'Yasmine B.', rating: 5, text: 'Livraison parfaite, produit sublime. Merci !', verified: true },
-        ],
-      }, 't10'),
-      block('guarantees', 'Valeurs Luxe', {
-        title: '',
-        layout: 'row',
-        bg_color: c.surface,
-        icon_color: c.gold,
-        items: [
-          { id: '1', icon: '✦', title: 'Certifié Premium', text: '' },
-          { id: '2', icon: '🌿', title: '100% Naturel', text: '' },
-          { id: '3', icon: '📦', title: 'Emballage Luxe', text: '' },
-          { id: '4', icon: '🛡️', title: 'Remboursé 30j', text: '' },
-        ],
-      }, 't11'),
-      block('faq', 'FAQ', {
-        title: 'Vos Questions',
-        accent_color: c.accent,
-        bg_color: c.bg,
-        items: [
-          { id: '1', question: 'Mode d\'emploi', answer: 'Appliquer le soir sur peau propre. Laisser agir toute la nuit.' },
-          { id: '2', question: 'Livraison', answer: 'Expédition sous 24h. Colis discret et emballage luxe.' },
-          { id: '3', question: 'Remboursement', answer: 'Satisfait ou remboursé sous 30 jours, sans question.' },
-        ],
-      }, 't12'),
+      block('Note de produit', 'Note', { rating: 5, reviews_count: '16 842 avis', star_color: c.gold }, 't3'),
+      block('Prix', 'Prix', { show_badge: true, badge_text: 'OFFRE LIMITEE', badge_bg: c.accent, badge_text_color: '#FFFFFF', price_color: c.accent }, 't4'),
+      block('trust_bar', 'Barre de confiance', { show_score: false, bg_color: '#FAF7F2', icon_color: c.accent, items: [{ icon: 'shield', label: 'Satisfait ou rembourse' }, { icon: 'truck', label: 'Livraison offerte' }, { icon: 'star', label: '16 000+ avis' }] }, 't5'),
+      block('OrderForm', 'Formulaire commande', { title: 'Terminer mon achat', btn_text: 'COMMANDER MAINTENANT', btn_color: c.accent, btn_text_color: '#FFFFFF', bg_color: '#FFFFFF', border_color: c.border, border_radius: 12, bundles_enabled: true, bundle_layout: 'premium', bundles: [{ id: 'b1', qty: 1, label: '1 unite', sublabel: '', badge: '', discount_pct: 0, discount_fixed: 0, popular: false, hidden: false }, { id: 'b2', qty: 2, label: '2 unites', sublabel: 'Economisez 15%', badge: 'POPULAIRE', discount_pct: 15, discount_fixed: 0, popular: true, hidden: false }, { id: 'b3', qty: 3, label: '3 unites', sublabel: 'Meilleure offre -25%', badge: 'MEILLEUR PRIX', discount_pct: 25, discount_fixed: 0, popular: false, hidden: false }] }, 't6'),
+      block('Description', 'Description produit', { padding_top: 40, padding_bottom: 32, text_color: c.text, bg_color: '#FAF7F2' }, 't7'),
+      block('before_after', 'Avant / Apres', { title: 'Des resultats visibles et prouves', bg_color: '#FFFFFF' }, 't8'),
+      block('expert_encart', 'Encart Expert', { name: 'Dr. Sophie M.', title: 'Pharmacienne et Experte', quote: 'Ce que j apprecie dans ce produit c est la qualite des ingredients et la transparence de la formule.', bg_color: '#FDF6E3', border_color: c.gold, text_color: c.text }, 't9'),
+      block('circular_ingredients', 'Ingredients', { title: 'Des ingredients actifs naturels', subtitle: 'Chaque ingredient selectionne pour son efficacite prouvee', bg_color: '#FAF7F2', accent_color: c.accent, items: [{ id: '1', icon: '🌿', name: 'Extrait naturel', description: 'Actif principal' }, { id: '2', icon: '🫒', name: 'Huile vegetale', description: 'Nourrissant' }, { id: '3', icon: '🌸', name: 'Plante medicinale', description: 'Apaisant' }, { id: '4', icon: '💧', name: 'Eau florale', description: 'Hydratant' }] }, 't10'),
+      block('stats', 'Resultats', { title: '', bg_color: c.accent, text_color: '#FFFFFF', accent_color: '#FAF7F2', items: [{ id: '1', number: '16', suffix: 'k+', label: 'Avis verifies', icon: '⭐' }, { id: '2', number: '94', suffix: '%', label: 'Satisfaction', icon: '😊' }, { id: '3', number: '4', suffix: ' sem.', label: 'Resultats', icon: '📅' }, { id: '4', number: '100', suffix: '%', label: 'Naturel', icon: '🌿' }] }, 't11'),
+      block('testimonials', 'Avis clients', { title: 'Ce que disent nos clients', layout: 'list', bg_color: '#FFFFFF', items: [{ id: '1', name: 'Isabelle M.', rating: 5, text: 'Un produit de qualite exceptionnelle. Les resultats sont la des la 3eme semaine.', verified: true }, { id: '2', name: 'Nadia K.', rating: 5, text: 'La meilleure marque testee. L odeur, la texture, tout est parfait.', verified: true }, { id: '3', name: 'Yasmine B.', rating: 5, text: 'Mes cheveux ont retrouve de la vie. Livraison rapide, emballage soigne.', verified: true }, { id: '4', name: 'Aurelie T.', rating: 5, text: 'Je recommande a toutes mes amies. Un vrai investissement.', verified: true }] }, 't12'),
+      block('image_text', 'Notre histoire', { title: 'Pourquoi nous choisir ?', text: 'Nous croyons que la beaute authentique nait d ingredients purs et d un savoir-faire rigoureux.', image_position: 'right', bg_color: '#FAF7F2', text_color: c.text, title_color: c.accent, cta_text: 'Notre philosophie', cta_color: c.accent, show_cta: true }, 't13'),
+      block('faq', 'FAQ', { title: 'Vos questions, nos reponses', accent_color: c.accent, bg_color: '#FFFFFF', items: [{ id: '1', question: 'Comment utiliser ?', answer: 'Appliquez le soir sur peau propre. Laissez agir toute la nuit. Rincez le matin.' }, { id: '2', question: 'Quand voir les resultats ?', answer: 'Amelioration visible des la 3eme semaine d utilisation reguliere.' }, { id: '3', question: 'Livraison ?', answer: 'Expedition sous 24h. Livraison offerte a partir de 2 unites.' }, { id: '4', question: 'Remboursement ?', answer: 'Satisfait ou rembourse sous 30 jours, sans condition.' }] }, 't14'),
+      block('guarantees', 'Garanties', { title: '', layout: 'row', bg_color: '#FDF6E3', icon_color: c.gold, items: [{ id: '1', icon: '🏆', title: 'Qualite certifiee', text: '' }, { id: '2', icon: '🌿', title: '100% Naturel', text: '' }, { id: '3', icon: '📦', title: 'Livraison offerte', text: '' }, { id: '4', icon: '🛡️', title: 'Rembourse 30j', text: '' }] }, 't15'),
     ],
     footer: [
-      block('Footer', 'Pied de page', {
-        logo_text: name,
-        copyright: `© ${new Date().getFullYear()} ${name}. Tous droits réservés.`,
-        bg_color: '#0A0A0A',
-        text_color: '#6B5A48',
-      }, 'f1'),
+      block('Footer', 'Pied de page', { logo_text: name, copyright: 'Tous droits reserves.', bg_color: '#2C1A0E', text_color: '#C8A97A', show_newsletter: true, newsletter_title: 'Rejoignez notre communaute beaute' }, 'f1'),
     ],
   }
 }

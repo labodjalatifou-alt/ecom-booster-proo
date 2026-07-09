@@ -12,7 +12,7 @@ export default function HeaderRender({ settings }: { settings: any }) {
         backgroundColor: s.bg_color || 'var(--color-bg)', 
         color: s.text_color || 'var(--color-text)',
         borderColor: s.bg_color ? 'rgba(0,0,0,0.05)' : 'var(--color-secondary)',
-        minHeight: s.logo_height ? `calc(${s.logo_height}px + 32px)` : undefined,
+        minHeight: s.header_height ? `${s.header_height}px` : (s.logo_height ? `calc(${s.logo_height}px + 32px)` : undefined),
       }}
     >
       <div className="max-w-7xl mx-auto px-4 @sm:px-6 @lg:px-8">
@@ -40,7 +40,7 @@ export default function HeaderRender({ settings }: { settings: any }) {
                 className="object-contain block"
               />
             ) : (
-              <span className="text-xl @md:text-2xl font-black tracking-tight" style={{ fontFamily: 'var(--font-heading, inherit)' }}>
+              <span className="font-black tracking-tight" style={{ fontFamily: 'var(--font-heading, inherit)', fontSize: s.font_size ? `${s.font_size}px` : '1.5rem' }}>
                 {s.logo_text || 'MA BOUTIQUE'}
               </span>
             )}

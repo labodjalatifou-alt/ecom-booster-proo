@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import dynamic from 'next/dynamic'
@@ -66,8 +66,20 @@ export default function GuaranteesRender({ settings }: { settings: any }) {
               </div>
             )
           })}
+        {s.show_cta && s.cta_text && (
+          <div className="mt-8 text-center flex justify-center w-full">
+            <a
+              href="#order-form"
+              className="inline-block px-8 py-3.5 rounded-xl font-bold text-sm text-white transition-transform hover:scale-105 shadow-lg"
+              style={{ backgroundColor: s.cta_color || 'var(--color-primary)' }}
+            >
+              {s.cta_text}
+            </a>
+          </div>
+        )}
         </div>
       </div>
     </div>
   )
 }
+

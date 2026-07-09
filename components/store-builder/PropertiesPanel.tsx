@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { Trash2 } from 'lucide-react'
 import TextField from './fields/TextField'
@@ -70,6 +70,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
             <ImageUploadField label="Logo (image)" value={s.logo_image} onChange={v => update('logo_image', v)} />
             <TextField label="Nom / Logo texte" value={s.logo_text} onChange={v => update('logo_text', v)} />
             <SliderField label="Hauteur logo (px)" value={s.logo_height ?? 40} onChange={v => update('logo_height', v)} min={24} max={80} />
+            <SliderField label="Taille texte liens (px)" value={s.font_size ?? 14} onChange={v => update('font_size', v)} min={10} max={24} />
             <SelectField label="Position logo" value={s.logo_position || 'center'} options={['left', 'center', 'right']} onChange={v => update('logo_position', v)} />
             <ToggleField label="Afficher recherche" value={s.show_search} onChange={v => update('show_search', v)} />
             <ToggleField label="Afficher panier" value={s.show_cart} onChange={v => update('show_cart', v)} />
@@ -175,6 +176,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
         return (
           <>
             <PaddingFields />
+            <ToggleField label="Afficher bouton CTA" value={s.show_cta} onChange={v => update('show_cta', v)} />
             <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
             <SliderField label="Durée — heures" value={s.duration_hours ?? 2} onChange={v => update('duration_hours', v)} min={0} max={48} />
             <SliderField label="Durée — minutes" value={s.duration_minutes ?? 0} onChange={v => update('duration_minutes', v)} min={0} max={59} />
@@ -211,9 +213,15 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
         return (
           <>
             <PaddingFields />
+            <ToggleField label="Afficher bouton CTA" value={s.show_cta} onChange={v => update('show_cta', v)} />
             <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
             <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
             <ColorField label="Couleur icônes" value={s.icon_color} onChange={v => update('icon_color', v)} />
+            
+            <h4 className="text-xs font-bold text-gray-400 uppercase mt-4 mb-2">Bouton Action</h4>
+            <ToggleField label="Afficher bouton CTA" value={s.show_cta} onChange={v => update('show_cta', v)} />
+            <TextField label="Texte bouton" value={s.cta_text} onChange={v => update('cta_text', v)} />
+            <ColorField label="Couleur bouton" value={s.cta_color} onChange={v => update('cta_color', v)} />
             <ItemsListField
               label="Avantages" value={s.items} onChange={v => update('items', v)}
               itemSchema={[
@@ -229,11 +237,16 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
         return (
           <>
             <PaddingFields />
+            <ToggleField label="Afficher bouton CTA" value={s.show_cta} onChange={v => update('show_cta', v)} />
             <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
             <ImageUploadField label="Image Avant" value={s.before_image} onChange={v => update('before_image', v)} />
             <ImageUploadField label="Image Après" value={s.after_image} onChange={v => update('after_image', v)} />
             <TextField label="Label Avant" value={s.before_label} onChange={v => update('before_label', v)} />
             <TextField label="Label Après" value={s.after_label} onChange={v => update('after_label', v)} />
+            <h4 className="text-xs font-bold text-gray-400 uppercase mt-4 mb-2">Bouton Action</h4>
+            <ToggleField label="Afficher bouton CTA" value={s.show_cta} onChange={v => update('show_cta', v)} />
+            <TextField label="Texte bouton" value={s.cta_text} onChange={v => update('cta_text', v)} />
+            <ColorField label="Couleur bouton" value={s.cta_color} onChange={v => update('cta_color', v)} />
           </>
         )
       case 'comparison':
@@ -241,6 +254,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
         return (
           <>
             <PaddingFields />
+            <ToggleField label="Afficher bouton CTA" value={s.show_cta} onChange={v => update('show_cta', v)} />
             <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
             <TextField label="Nom colonne Nous" value={s.our_label || s.us_name} onChange={v => update('our_label', v)} />
             <TextField label="Nom colonne Concurrent" value={s.competitor_label || s.them_name} onChange={v => update('competitor_label', v)} />
@@ -274,8 +288,14 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
         return (
           <>
             <PaddingFields />
+            <ToggleField label="Afficher bouton CTA" value={s.show_cta} onChange={v => update('show_cta', v)} />
             <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
             <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+            
+            <h4 className="text-xs font-bold text-gray-400 uppercase mt-4 mb-2">Bouton Action</h4>
+            <ToggleField label="Afficher bouton CTA" value={s.show_cta} onChange={v => update('show_cta', v)} />
+            <TextField label="Texte bouton" value={s.cta_text} onChange={v => update('cta_text', v)} />
+            <ColorField label="Couleur bouton" value={s.cta_color} onChange={v => update('cta_color', v)} />
             <ItemsListField
               label="Questions" value={s.items} onChange={v => update('items', v)}
               itemSchema={[
@@ -290,6 +310,11 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
           <>
             <PaddingFields />
             <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+            
+            <h4 className="text-xs font-bold text-gray-400 uppercase mt-4 mb-2">Bouton Action</h4>
+            <ToggleField label="Afficher bouton CTA" value={s.show_cta} onChange={v => update('show_cta', v)} />
+            <TextField label="Texte bouton" value={s.cta_text} onChange={v => update('cta_text', v)} />
+            <ColorField label="Couleur bouton" value={s.cta_color} onChange={v => update('cta_color', v)} />
             <ItemsListField
               label="Garanties" value={s.items} onChange={v => update('items', v)}
               itemSchema={[
@@ -315,6 +340,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
         return (
           <>
             <PaddingFields />
+            <ToggleField label="Afficher bouton CTA" value={s.show_cta} onChange={v => update('show_cta', v)} />
             <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
             <TextareaField label="Texte" value={s.text} onChange={v => update('text', v)} />
             <ImageUploadField label="Image" value={s.image_url} onChange={v => update('image_url', v)} />
@@ -329,6 +355,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
         return (
           <>
             <PaddingFields />
+            <ToggleField label="Afficher bouton CTA" value={s.show_cta} onChange={v => update('show_cta', v)} />
             <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
             <TextField label="URL YouTube ou MP4" value={s.url} onChange={v => update('url', v)} />
             <ImageUploadField label="Image poster" value={s.poster_url || s.poster_image} onChange={v => update('poster_url', v)} />
@@ -478,6 +505,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
         return (
           <>
             <PaddingFields />
+            <ToggleField label="Afficher bouton CTA" value={s.show_cta} onChange={v => update('show_cta', v)} />
             <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
             <TextareaField label="Texte" value={s.text} onChange={v => update('text', v)} />
             <TextField label="Texte bouton" value={s.btn_text} onChange={v => update('btn_text', v)} />
@@ -590,6 +618,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
         return (
           <>
             <PaddingFields />
+            <ToggleField label="Afficher bouton CTA" value={s.show_cta} onChange={v => update('show_cta', v)} />
             <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
             <TextField label="Sous-titre" value={s.subtitle} onChange={v => update('subtitle', v)} />
             <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
@@ -620,6 +649,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
         return (
           <>
             <PaddingFields />
+            <ToggleField label="Afficher bouton CTA" value={s.show_cta} onChange={v => update('show_cta', v)} />
             <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
             <TextField label="Sous-titre" value={s.subtitle} onChange={v => update('subtitle', v)} />
             <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
@@ -676,6 +706,7 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
       case 'newsletter':
         return (
           <>
+            <ToggleField label="Afficher bouton CTA" value={s.show_cta} onChange={v => update('show_cta', v)} />
             <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
             <TextField label="Sous-titre" value={s.subtitle} onChange={v => update('subtitle', v)} />
             <TextField label="Texte bouton" value={s.button_text} onChange={v => update('button_text', v)} />

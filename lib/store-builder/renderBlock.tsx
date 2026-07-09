@@ -192,8 +192,11 @@ export function renderBlock(block: any, product: any, storeId?: string | null, t
     return content
   }
 
+  // Inherit block background color to avoid white-trace artifact when resizing
+  const wrapperBg = settings.bg_color || settings.background_color || undefined
+
   return (
-    <div style={{ paddingTop: pt, paddingBottom: pb, width: '100%' }}>
+    <div style={{ paddingTop: pt, paddingBottom: pb, width: '100%', background: wrapperBg }}>
       {content}
     </div>
   )
