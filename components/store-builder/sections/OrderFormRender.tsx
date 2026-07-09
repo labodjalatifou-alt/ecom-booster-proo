@@ -108,6 +108,11 @@ export default function OrderFormRender({ settings, product, storeId, themeSetti
         }),
       })
 
+      const contentType = res.headers.get("content-type")
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Erreur serveur inattendue (la réponse n'est pas au format JSON).")
+      }
+      
       const data = await res.json()
       
       if (!res.ok) {
@@ -120,7 +125,7 @@ export default function OrderFormRender({ settings, product, storeId, themeSetti
       }
     } catch (err: any) {
       console.error('[Order Submit Error]:', err)
-      alert(`Désolé, une erreur est survenue lors de l'enregistrement de votre commande : ${err.message}`)
+      toast.error(`Désolé, une erreur est survenue : ${err.message}`)
     } finally {
       setLoading(false)
     }
