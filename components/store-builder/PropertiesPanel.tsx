@@ -57,6 +57,8 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
         return (
           <>
             <TextField label="Texte de l'annonce" value={s.text} onChange={v => update('text', v)} />
+            <SliderField label="Taille du texte (px)" value={s.font_size ?? 13} onChange={v => update('font_size', v)} min={10} max={24} />
+            <SliderField label="Hauteur de la bannière (px)" value={s.bar_height ?? 42} onChange={v => update('bar_height', v)} min={24} max={80} />
             <SliderField label="Vitesse (s — grand = lent)" value={s.speed ?? 18} onChange={v => update('speed', v)} min={5} max={60} />
             <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
             <ColorField label="Couleur texte" value={s.text_color} onChange={v => update('text_color', v)} />
@@ -728,6 +730,25 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
             <ColorField label="Couleur texte" value={s.text_color} onChange={v => update('text_color', v)} />
           </>
         )
+            case 'popup':
+      case 'Popup':
+        return (
+          <>
+            <ToggleField label="Activer le pop-up" value={s.enabled !== false} onChange={v => update('enabled', v)} />
+            <SelectField label="Déclencheur" value={s.trigger || 'delay'} options={['delay', 'exit', 'scroll']} onChange={v => update('trigger', v)} />
+            <SliderField label="Délai (secondes)" value={s.delay_seconds ?? 5} onChange={v => update('delay_seconds', v)} min={0} max={30} />
+            <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
+            <TextField label="Sous-titre" value={s.subtitle} onChange={v => update('subtitle', v)} />
+            <TextareaField label="Texte principal" value={s.body_text} onChange={v => update('body_text', v)} />
+            <TextField label="Code Promo" value={s.discount_code} onChange={v => update('discount_code', v)} />
+            <TextField label="Texte du bouton" value={s.cta_text} onChange={v => update('cta_text', v)} />
+            <ImageUploadField label="Image d'illustration" value={s.image_url} onChange={v => update('image_url', v)} />
+            <ColorField label="Couleur de fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+            <ColorField label="Couleur texte" value={s.text_color} onChange={v => update('text_color', v)} />
+            <ColorField label="Couleur bouton" value={s.cta_color} onChange={v => update('cta_color', v)} />
+            <ColorField label="Couleur Overlay (ex: rgba(0,0,0,0.5))" value={s.overlay_color} onChange={v => update('overlay_color', v)} />
+          </>
+        )
       case 'slideshow':
         return (
           <>
@@ -790,3 +811,5 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
     </div>
   )
 }
+
+

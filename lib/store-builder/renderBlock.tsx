@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import AnnouncementBarRender from '@/components/store-builder/sections/AnnouncementBarRender'
 import HeaderRender from '@/components/store-builder/sections/HeaderRender'
 import MediasRender from '@/components/store-builder/sections/MediasRender'
@@ -30,6 +30,7 @@ import UpsellCarouselRender from '@/components/store-builder/sections/UpsellCaro
 import SpacerRender from '@/components/store-builder/sections/SpacerRender'
 import NewsletterRender from '@/components/store-builder/sections/NewsletterRender'
 import PopupRender from '@/components/store-builder/sections/PopupSection'
+import SlideshowRender from '@/components/store-builder/sections/SlideshowRender'
 import { mergeHeaderTheme } from '@/lib/store-builder/landing-theme'
 
 // Les blocks de type "produit" — affichent des données du produit sélectionné.
@@ -141,6 +142,9 @@ export function renderBlock(block: any, product: any, storeId?: string | null, t
     case 'Popup':
       content = <PopupRender settings={settings} />
       break
+    case 'slideshow':
+      content = <SlideshowRender settings={settings} />
+      break
 
     // ── Contenu ──
     case 'image_text':
@@ -201,3 +205,4 @@ export function renderBlock(block: any, product: any, storeId?: string | null, t
     </div>
   )
 }
+
