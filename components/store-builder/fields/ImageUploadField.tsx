@@ -1,9 +1,9 @@
-﻿'use client'
+'use client'
 
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Upload, Loader2, Image as ImageIcon, Trash2 } from 'lucide-react'
-
+import toast from 'react-hot-toast'
 interface ImageUploadFieldProps {
   label: string
   value: string
