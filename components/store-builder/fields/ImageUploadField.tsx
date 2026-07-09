@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -42,7 +42,7 @@ export default function ImageUploadField({ label, value, onChange }: ImageUpload
       onChange(data.publicUrl)
     } catch (error: any) {
       console.error('Erreur upload:', error)
-      alert('Erreur lors du téléchargement de l\'image: ' + error.message)
+      toast.error('Erreur lors du téléchargement: ' + error.message)
     } finally {
       setUploading(false)
       if (fileInputRef.current) {
@@ -120,3 +120,4 @@ export default function ImageUploadField({ label, value, onChange }: ImageUpload
     </div>
   )
 }
+

@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react'
 import { ShieldCheck, Truck, Sparkles } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { ensureOrderFormSettings, calcBundleTotal } from '@/lib/store-builder/form-presets'
 import BundleOffers from '@/components/store-builder/sections/BundleOffers'
 
@@ -132,8 +133,8 @@ export default function OrderFormRender({ settings, product, storeId, themeSetti
   if (sent) {
     const productImage = product?.image_url || product?.images?.[0] || 'https://placehold.co/100x100/e2e8f0/64748b?text=Produit'
     const waNumber = themeSettings?.whatsapp_number || ''
-    const waText = encodeURIComponent(Bonjour, je viens de passer une commande pour  (x). Mon nom est .)
-    const waLink = waNumber ? https://wa.me/?text= : ''
+    const waText = encodeURIComponent(`Bonjour, je viens de passer une commande pour ${product?.title || 'un produit'} (${finalQty}x). Mon nom est ${name}.`)
+    const waLink = waNumber ? `https://wa.me/${waNumber.replace(/\D/g, '')}?text=${waText}` : ''
     
     return (
       <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 order-confetti-wrap" 
@@ -342,5 +343,6 @@ export default function OrderFormRender({ settings, product, storeId, themeSetti
 
 export { BTN_ANIMATIONS }
 export type { BtnAnimation }
+
 
 

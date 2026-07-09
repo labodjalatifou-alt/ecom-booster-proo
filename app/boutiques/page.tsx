@@ -1,6 +1,7 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
+import ConfirmationModal from '@/components/ConfirmationModal'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -41,6 +42,7 @@ export default function BoutiquesPage() {
   const [loading, setLoading] = useState(true)
   const [openMenu, setOpenMenu] = useState<string | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
+  const [storeToDelete, setStoreToDelete] = useState<string | null>(null)
 
   useEffect(() => {
     fetchStores()
@@ -63,12 +65,17 @@ export default function BoutiquesPage() {
     setLoading(false)
   }
 
-  async function deleteStore(id: string) {
-    if (!confirm('Supprimer cette page ? Cette action est irréversible.')) return
-    setDeleting(id)
-    await supabase.from('stores').delete().eq('id', id)
-    setStores(prev => prev.filter(s => s.id !== id))
+  function deleteStore(id: string) {
+    setStoreToDelete(id)
+  }
+
+  async function handleConfirmDelete() {
+    if (!storeToDelete) return
+    setDeleting(storeToDelete)
+    await supabase.from('stores').delete().eq('id', storeToDelete)
+    setStores(prev => prev.filter(s => s.id !== storeToDelete))
     setDeleting(null)
+    setStoreToDelete(null)
   }
 
   async function duplicateStore(store: StoreType) {
@@ -101,7 +108,17 @@ export default function BoutiquesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+        <div className="min-h-screen bg-gray-50 p-6">
+      <ConfirmationModal
+        isOpen={!!storeToDelete}
+        onClose={() => setStoreToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="Supprimer la page ?"
+        message="Voulez-vous vraiment supprimer cette page ? Cette action est irréversible."
+        confirmLabel="Oui, supprimer"
+        cancelLabel="Annuler"
+        variant="danger"
+      />
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>

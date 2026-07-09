@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import React from 'react'
 
@@ -30,7 +30,7 @@ export default function NewsletterRender({ settings = {} }: { settings?: any }) 
           style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
           onSubmit={(e) => {
             e.preventDefault()
-            alert("Inscription enregistrée !")
+            toast.success("Inscription enregistrée !")
           }}
         >
           <input 
@@ -65,3 +65,4 @@ export default function NewsletterRender({ settings = {} }: { settings?: any }) 
     </section>
   )
 }
+

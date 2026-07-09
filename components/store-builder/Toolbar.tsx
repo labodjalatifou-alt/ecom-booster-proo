@@ -1,7 +1,8 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
+import ConfirmationModal from '@/components/ConfirmationModal'
 import { ArrowLeft, Monitor, Smartphone, Save, Rocket, Check, Copy, ExternalLink, Globe, Eye, EyeOff } from 'lucide-react'
 import { Browser } from '@capacitor/browser'
 
@@ -33,6 +34,7 @@ export default function Toolbar({
 }: ToolbarProps) {
   const [publishing, setPublishing] = useState(false)
   const [showShare, setShowShare] = useState(false)
+  const [showUnpublishModal, setShowUnpublishModal] = useState(false)
   const [copied, setCopied] = useState(false)
 
   const isPublished = storeStatus === 'published'
@@ -50,12 +52,18 @@ export default function Toolbar({
     }
   }
 
-  const handleUnpublish = async () => {
-    if (!confirm("Voulez-vous vraiment dépublier cette page ? Elle ne sera plus accessible au public.")) return
+  const handleUnpublishClick = () => {
+    setShowUnpublishModal(true)
+  }
+
+  const handleConfirmUnpublish = async () => {
     setPublishing(true)
     try {
       await onPublish?.('draft')
     } finally {
+      setPublishing(false)
+    }
+  } finally {
       setPublishing(false)
     }
   }
@@ -168,7 +176,7 @@ export default function Toolbar({
                 <span className="hidden sm:inline">Lien public</span>
               </button>
               <button
-                onClick={handleUnpublish}
+                onClick={handleUnpublishClick}
                 disabled={publishing}
                 title="Dépublier"
                 className="px-2 py-1.5 text-white hover:bg-green-700 transition-colors border-l border-green-500 disabled:opacity-50"
@@ -189,6 +197,16 @@ export default function Toolbar({
         </div>
       </div>
 
+            <ConfirmationModal
+        isOpen={showUnpublishModal}
+        onClose={() => setShowUnpublishModal(false)}
+        onConfirm={handleConfirmUnpublish}
+        title="Dépublier la page ?"
+        message="Voulez-vous vraiment dépublier cette page ? Elle ne sera plus accessible au public."
+        confirmLabel="Oui, dépublier"
+        cancelLabel="Annuler"
+        variant="warning"
+      />
       {/* ── MODALE DE PARTAGE ── */}
       {showShare && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50" onClick={() => setShowShare(false)}>
@@ -242,3 +260,4 @@ export default function Toolbar({
     </>
   )
 }
+
