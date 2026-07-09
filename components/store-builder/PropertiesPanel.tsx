@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { Trash2 } from 'lucide-react'
 import TextField from './fields/TextField'
@@ -807,6 +807,14 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
       </div>
       <div className="flex-1 overflow-y-auto p-5 custom-scrollbar bg-gray-50/30">
         {renderFields()}
+        
+        {isDeletable && (
+          <div className="mt-6 pt-6 border-t border-gray-200/60">
+            <h4 className="text-xs font-bold text-gray-400 uppercase mb-3">Apparence Globale Section</h4>
+            <ColorField label="Couleur de fond" value={s.bg_color || ''} onChange={v => update('bg_color', v)} />
+            <PaddingFields />
+          </div>
+        )}
       </div>
     </div>
   )

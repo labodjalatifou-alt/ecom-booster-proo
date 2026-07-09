@@ -23,8 +23,8 @@ export default function MediasRender({ settings, enableTilt = true }: MediasRend
     const rect = imgRef.current.getBoundingClientRect()
     const x = (e.clientX - rect.left) / rect.width  // 0..1
     const y = (e.clientY - rect.top) / rect.height   // 0..1
-    // Intensified tilt: ±22 degrees
-    setTilt({ x: (y - 0.5) * -28, y: (x - 0.5) * 28 })
+    // Ultra Intensified tilt
+    setTilt({ x: (y - 0.5) * -40, y: (x - 0.5) * 40 })
     setGlare({ x: x * 100, y: y * 100 })
     setIsTilting(true)
   }, [enableTilt])
@@ -36,13 +36,13 @@ export default function MediasRender({ settings, enableTilt = true }: MediasRend
   }, [])
 
   const tiltStyle = enableTilt ? {
-    transform: `perspective(700px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) scale3d(${isTilting ? 1.05 : 1}, ${isTilting ? 1.05 : 1}, ${isTilting ? 1.05 : 1})`,
+    transform: `perspective(700px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) scale3d(${isTilting ? 1.1 : 1}, ${isTilting ? 1.1 : 1}, ${isTilting ? 1.1 : 1})`,
     transition: isTilting
       ? 'transform 0.05s ease-out, box-shadow 0.05s ease-out'
       : 'transform 0.7s cubic-bezier(0.22,1,0.36,1), box-shadow 0.7s cubic-bezier(0.22,1,0.36,1)',
     willChange: 'transform',
     boxShadow: isTilting
-      ? `${tilt.y * -0.8}px ${tilt.x * 0.8}px 40px rgba(0,0,0,0.25), 0 20px 60px rgba(0,0,0,0.15)`
+      ? `${tilt.y * -1.2}px ${tilt.x * 1.2}px 50px rgba(0,0,0,0.35), 0 30px 80px rgba(0,0,0,0.25)`
       : '0 4px 16px rgba(0,0,0,0.08)',
   } : {}
 

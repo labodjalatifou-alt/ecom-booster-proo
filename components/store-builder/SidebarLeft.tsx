@@ -385,7 +385,7 @@ export default function SidebarLeft({
                 <div key={idx} className="mb-6">
                   <h3 className="text-xs font-bold text-gray-500 mb-3 uppercase tracking-wide">{category.title}</h3>
                   <div className="grid grid-cols-1 gap-2">
-                    {category.items.map((item, itemIdx) => (
+                    {category.items.map((item: any, itemIdx: number) => (
                       <button
                         key={itemIdx}
                         onClick={() => {
