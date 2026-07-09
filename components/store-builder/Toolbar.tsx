@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -63,11 +63,7 @@ export default function Toolbar({
     } finally {
       setPublishing(false)
     }
-  } finally {
-      setPublishing(false)
-    }
   }
-
   const copyLink = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl)

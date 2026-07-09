@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import React, { useState, useMemo, useEffect } from 'react'
 import { ShieldCheck, Truck, Sparkles } from 'lucide-react'
@@ -142,12 +142,12 @@ export default function OrderFormRender({ settings, product, storeId, themeSetti
            onClick={() => { setSent(false); setName(''); setPhone(''); setCity(''); setEmail('') }}>
         <div className="bg-white rounded-[32px] shadow-2xl max-w-md w-full p-8 text-center anim-pop relative overflow-hidden" 
              onClick={e => e.stopPropagation()}
-             style={{ border: 1px solid rgba(255,255,255,0.2) }}>
+             style={{ border: `1px solid rgba(255,255,255,0.2)` }}>
           
-          <div className="absolute top-0 left-0 w-full h-2" style={{ background: linear-gradient(90deg, , ) }} />
+          <div className="absolute top-0 left-0 w-full h-2" style={{ background: `linear-gradient(90deg, ${colors.btn}, ${colors.accent})` }} />
           
           <div className="w-20 h-20 mx-auto mb-5 rounded-full flex items-center justify-center shadow-lg" 
-               style={{ background: linear-gradient(135deg,  0%,  100%) }}>
+               style={{ background: `linear-gradient(135deg, ${colors.btn} 0%, ${colors.accent} 100%)` }}>
             <Sparkles size={40} className="text-white" />
           </div>
           
