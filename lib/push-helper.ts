@@ -1,6 +1,8 @@
-import { supabase } from './supabase';
+import { createAdminSupabase } from './supabase';
 import webpush from 'web-push';
 import admin from './firebase-admin';
+
+const supabaseAdmin = createAdminSupabase();
 
 const vapidEmail = process.env.VAPID_EMAIL || 'mailto:contact@votre-app.com';
 const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
@@ -40,7 +42,7 @@ export async function sendPushNotification({
       targetUserIds = [userId];
     } else if (role) {
       // Fetch all users with this role from the public User table
-      const { data: users, error: usersError } = await supabase
+      const { data: users, error: usersError } = await supabaseAdmin
         .from('User')
         .select('id')
         .eq('role', role);
@@ -58,7 +60,7 @@ export async function sendPushNotification({
     }
 
     // Retrieve subscriptions for target users
-    const { data: subscriptions, error: subsError } = await supabase
+    const { data: subscriptions, error: subsError } = await supabaseAdmin
       .from('push_subscriptions')
       .select('*')
       .in('user_id', targetUserIds);
@@ -131,7 +133,7 @@ export async function sendPushNotification({
           .catch(async (error: any) => {
             if (error.code === 'messaging/registration-token-not-registered' || error.code === 'messaging/invalid-registration-token') {
               console.log(`Pruning expired FCM subscription for user ${sub.user_id}`);
-              await supabase.from('push_subscriptions').delete().eq('id', sub.id);
+              await supabaseAdmin.from('push_subscriptions').delete().eq('id', sub.id);
             } else {
               console.error(`Error sending FCM to subscription ID ${sub.id}:`, error);
             }
@@ -152,7 +154,7 @@ export async function sendPushNotification({
           // If subscription is invalid (expired/gone), remove it
           if (error.statusCode === 410 || error.statusCode === 404) {
             console.log(`Pruning expired subscription for user ${sub.user_id}`);
-            await supabase
+            await supabaseAdmin
               .from('push_subscriptions')
               .delete()
               .eq('id', sub.id);

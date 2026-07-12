@@ -27,45 +27,25 @@ export default function CommandesPage() {
   async function fetchOrders(p = page, silent = false) {
     if (!silent) setLoading(true);
 
-    // Build count query
-    let countQuery = supabase.from('orders').select('*', { count: 'exact', head: true });
-    
-    // Store filtering — filtre obligatoire par boutique active
-    if (selectedStore) {
-      countQuery = countQuery.eq('store_id', selectedStore);
-    } else if (stores.length > 0) {
-      countQuery = countQuery.in('store_id', stores.map(s => s.id));
+    try {
+      const params = new URLSearchParams();
+      if (selectedStore) params.set('store_id', selectedStore);
+      else if (stores.length > 0) params.set('store_ids', stores.map(s => s.id).join(','));
+      if (dateRange.from) params.set('from', dateRange.from);
+      if (dateRange.to) params.set('to', dateRange.to);
+      if (statusFilter !== 'ALL') params.set('status', statusFilter);
+      params.set('page', String(p));
+      params.set('page_size', String(PAGE_SIZE));
+
+      const res = await fetch(`/api/orders/list?${params.toString()}`);
+      const data = await res.json();
+
+      if (data.orders) setOrders(data.orders);
+      if (data.total != null) setTotalCount(data.total);
+    } catch (err) {
+      console.error('Erreur fetch orders:', err);
     }
 
-    if (dateRange.from) countQuery = countQuery.gte('created_at', dateRange.from);
-    if (dateRange.to) countQuery = countQuery.lte('created_at', dateRange.to);
-    if (statusFilter !== 'ALL') countQuery = countQuery.eq('status', statusFilter);
-    
-    const { count } = await countQuery;
-    if (count !== null) setTotalCount(count);
-
-    // Build data query
-    const rangeFrom = (p - 1) * PAGE_SIZE;
-    const rangeTo = rangeFrom + PAGE_SIZE - 1;
-    let query = supabase
-      .from('orders')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .range(rangeFrom, rangeTo);
-
-    // Re-apply same store filter
-    if (selectedStore) {
-      query = query.eq('store_id', selectedStore);
-    } else if (stores.length > 0) {
-      query = query.in('store_id', stores.map(s => s.id));
-    }
-
-    if (dateRange.from) query = query.gte('created_at', dateRange.from);
-    if (dateRange.to) query = query.lte('created_at', dateRange.to);
-    if (statusFilter !== 'ALL') query = query.eq('status', statusFilter);
-
-    const { data, error } = await query;
-    if (!error && data) setOrders(data);
     if (!silent) setLoading(false);
   }
 
