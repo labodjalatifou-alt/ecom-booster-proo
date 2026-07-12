@@ -19,6 +19,9 @@ import {
   CheckCircle,
   Clock,
   PauseCircle,
+  Download,
+  X,
+  Loader2,
 } from 'lucide-react'
 import type { Store as StoreType } from '@/lib/store-builder/types'
 
@@ -43,6 +46,11 @@ export default function BoutiquesPage() {
   const [openMenu, setOpenMenu] = useState<string | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
   const [storeToDelete, setStoreToDelete] = useState<string | null>(null)
+  const [showClone, setShowClone] = useState(false)
+  const [cloneUrl, setCloneUrl] = useState('')
+  const [cloning, setCloning] = useState(false)
+  const [cloneError, setCloneError] = useState('')
+  const [cloneResult, setCloneResult] = useState<any>(null)
 
   useEffect(() => {
     fetchStores()
@@ -76,6 +84,29 @@ export default function BoutiquesPage() {
     setStores(prev => prev.filter(s => s.id !== storeToDelete))
     setDeleting(null)
     setStoreToDelete(null)
+  }
+
+  async function handleClone() {
+    setCloneError('')
+    setCloneResult(null)
+    if (!cloneUrl.trim()) return
+    setCloning(true)
+    try {
+      const res = await fetch('/api/stores/clone', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: cloneUrl.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Erreur de clonage')
+      setCloneResult(data)
+      setCloneUrl('')
+      await fetchStores()
+    } catch (err: any) {
+      setCloneError(err.message)
+    } finally {
+      setCloning(false)
+    }
   }
 
   async function duplicateStore(store: StoreType) {
@@ -119,6 +150,73 @@ export default function BoutiquesPage() {
         cancelLabel="Annuler"
         variant="danger"
       />
+      {/* Modal clonage */}
+      {showClone && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => { if (!cloning) { setShowClone(false); setCloneError(''); setCloneResult(null) } }}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="font-bold text-lg text-gray-900 flex items-center gap-2">
+                <Download className="w-5 h-5 text-indigo-600" /> Cloner une boutique
+              </h2>
+              <button onClick={() => { setShowClone(false); setCloneError(''); setCloneResult(null) }} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-500 mb-5 leading-relaxed">
+              Entrez l'URL d'une boutique en ligne pour analyser son design et créer une page similaire dans votre compte.
+            </p>
+            <div className="flex items-center gap-2 mb-4">
+              <input
+                type="url"
+                value={cloneUrl}
+                onChange={e => setCloneUrl(e.target.value)}
+                placeholder="https://exemple.com ou nom-de-domaine.com"
+                className="flex-1 px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-400 bg-gray-50 focus:bg-white transition-colors"
+                onKeyDown={e => e.key === 'Enter' && !cloning && handleClone()}
+                disabled={cloning}
+              />
+              <button
+                onClick={handleClone}
+                disabled={cloning || !cloneUrl.trim()}
+                className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 text-white text-sm font-semibold rounded-xl transition-colors flex items-center gap-2"
+              >
+                {cloning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                {cloning ? 'Analyse...' : 'Cloner'}
+              </button>
+            </div>
+
+            {cloneError && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 mb-3">{cloneError}</div>
+            )}
+
+            {cloneResult && (
+              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
+                <div className="flex items-center gap-2 text-emerald-700 font-semibold text-sm mb-3">
+                  <CheckCircle className="w-4 h-4" /> Boutique clonée avec succès !
+                </div>
+                <div className="text-xs text-gray-600 space-y-1">
+                  <p><b>Nom :</b> {cloneResult.data?.name}</p>
+                  <p><b>Thème :</b> {cloneResult.analysis?.theme_used}</p>
+                  {cloneResult.analysis?.colors_detected?.length > 0 && (
+                    <p><b>Couleurs détectées :</b> {cloneResult.analysis.colors_detected.join(', ')}</p>
+                  )}
+                  {cloneResult.analysis?.fonts_detected?.length > 0 && (
+                    <p><b>Polices :</b> {cloneResult.analysis.fonts_detected.join(', ')}</p>
+                  )}
+                  {cloneResult.analysis?.logo_detected && <p><b>Logo :</b> ✓ récupéré</p>}
+                </div>
+                <button
+                  onClick={() => { setShowClone(false); setCloneResult(null); router.push(`/boutiques/${cloneResult.data.id}`) }}
+                  className="mt-4 w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors"
+                >
+                  Ouvrir dans l'éditeur
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
@@ -130,13 +228,22 @@ export default function BoutiquesPage() {
             Créez et gérez vos pages produits en ligne
           </p>
         </div>
-        <button
-          onClick={() => router.push('/boutiques/nouvelle')}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition-colors shadow-sm"
-        >
-          <Plus className="w-4 h-4" />
-          Nouvelle page produit
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowClone(true)}
+            className="flex items-center gap-2 border-2 border-indigo-200 hover:border-indigo-400 text-indigo-700 hover:text-indigo-800 px-4 py-2.5 rounded-xl font-medium text-sm transition-all bg-white hover:bg-indigo-50/50"
+          >
+            <Download className="w-4 h-4" />
+            Cloner
+          </button>
+          <button
+            onClick={() => router.push('/boutiques/nouvelle')}
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition-colors shadow-sm"
+          >
+            <Plus className="w-4 h-4" />
+            Nouvelle page
+          </button>
+        </div>
       </div>
 
       {/* État vide */}
