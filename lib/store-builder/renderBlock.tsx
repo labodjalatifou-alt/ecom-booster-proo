@@ -76,8 +76,13 @@ export function renderBlock(block: any, product: any, storeId?: string | null, t
     case 'Galerie':
     case 'medias':
     case 'gallery': {
-      const images: string[] = product?.images?.length
-        ? product.images
+      const rawImages = product?.images
+      const parsedImages: string[] = Array.isArray(rawImages) ? rawImages
+        : typeof rawImages === 'string'
+        ? (() => { try { const p = JSON.parse(rawImages); return Array.isArray(p) ? p : [] } catch { return rawImages ? [rawImages] : [] } })()
+        : []
+      const images: string[] = parsedImages.length
+        ? parsedImages
         : product?.image_url
         ? [product.image_url]
         : []

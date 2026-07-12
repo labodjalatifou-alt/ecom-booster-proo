@@ -9,7 +9,11 @@ interface MediasRenderProps {
 }
 
 export default function MediasRender({ settings, enableTilt = true }: MediasRenderProps) {
-  const images: string[] = settings?.images?.length ? settings.images : []
+  const rawImages = settings?.images
+  const images: string[] = Array.isArray(rawImages) ? rawImages
+    : typeof rawImages === 'string'
+    ? (() => { try { const p = JSON.parse(rawImages); return Array.isArray(p) ? p : [] } catch { return rawImages ? [rawImages] : [] } })()
+    : []
   const [active, setActive] = useState(0)
 
   // 3D Tilt

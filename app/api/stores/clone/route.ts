@@ -430,7 +430,7 @@ export async function POST(request: Request) {
         currency: product.currency || 'FCFA',
         description: product.description || '',
         image_url: product.image_url || allImages[0] || '',
-        images: JSON.stringify(product.images.length ? product.images : allImages.slice(0, 5)),
+        images: product.images.length ? product.images : allImages.slice(0, 5),
         status: 'active',
       }).select('id').single()
       if (np) clonedProductId = np.id
