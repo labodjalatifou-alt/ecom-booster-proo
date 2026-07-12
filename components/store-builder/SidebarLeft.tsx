@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Eye, EyeOff, MoreVertical, Plus, Trash2, Edit3, X, Palette, LayoutTemplate, ChevronUp, ChevronDown, GripVertical } from 'lucide-react'
+import { Eye, EyeOff, MoreVertical, Plus, Trash2, Edit3, X, Palette, LayoutTemplate, ChevronUp, ChevronDown, GripVertical, Copy } from 'lucide-react'
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd'
 import type { EditorData, EditorBlock } from './Editor'
 import ColorField from './fields/ColorField'
@@ -20,6 +20,7 @@ interface SidebarLeftProps {
   onSelectBlock: (id: string) => void
   onToggleVisibility: (id: string) => void
   onDeleteBlock: (id: string) => void
+  onDuplicateBlock: (id: string) => void
   onAddBlock: (type: string, title: string, defaultSettings: Record<string, any>) => void
   onReorder: (fromIndex: number, toIndex: number) => void
   themeSettings: Record<string, any>
@@ -55,6 +56,7 @@ export default function SidebarLeft({
   onSelectBlock,
   onToggleVisibility,
   onDeleteBlock,
+  onDuplicateBlock,
   onAddBlock,
   onReorder,
   themeSettings,
@@ -142,6 +144,13 @@ export default function SidebarLeft({
                 </button>
                 {type === 'template' && (
                   <>
+                    <div className="h-px w-full bg-gray-100 my-1"></div>
+                    <button 
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      onClick={() => { onDuplicateBlock(block.id); setContextMenuBlock(null) }}
+                    >
+                      <Copy size={14} /> Dupliquer
+                    </button>
                     <div className="h-px w-full bg-gray-100 my-1"></div>
                     <button 
                       className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"

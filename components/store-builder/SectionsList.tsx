@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { GripVertical, EyeOff, Eye, Settings, Plus, LayoutTemplate, MoreVertical } from 'lucide-react';
+import { GripVertical, EyeOff, Eye, Settings, Plus, LayoutTemplate, MoreVertical, Copy, Trash2, Edit2 } from 'lucide-react';
 
 interface SectionsListProps {
   sections: any[];
@@ -10,6 +10,9 @@ interface SectionsListProps {
   onSelectSection: (id: string) => void;
   onToggleVisibility: (id: string) => void;
   onOpenCatalog: () => void;
+  onDuplicateSection: (id: string) => void;
+  onDeleteSection: (id: string) => void;
+  onEditSection: (id: string) => void;
   selectedSectionId: string | null;
 }
 
@@ -21,9 +24,25 @@ export default function SectionsList({
   onSelectSection, 
   onToggleVisibility,
   onOpenCatalog,
+  onDuplicateSection,
+  onDeleteSection,
+  onEditSection,
   selectedSectionId 
 }: SectionsListProps) {
   
+  const [dropdownOpen, setDropdownOpen] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(null);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const renderFixedSection = (section: any) => (
     <div 
       key={section.id}
@@ -44,6 +63,39 @@ export default function SectionsList({
           {section.hidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
         </button>
       </div>
+    </div>
+  );
+
+  const renderDropdown = (sectionId: string) => (
+    <div 
+      ref={dropdownRef}
+      className="absolute right-2 top-full z-50 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[140px]"
+    >
+      <button
+        onClick={(e) => { e.stopPropagation(); onEditSection(sectionId); setDropdownOpen(null); }}
+        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+      >
+        <Edit2 className="w-4 h-4" /> Modifier
+      </button>
+      <button
+        onClick={(e) => { e.stopPropagation(); onDuplicateSection(sectionId); setDropdownOpen(null); }}
+        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+      >
+        <Copy className="w-4 h-4" /> Dupliquer
+      </button>
+      <button
+        onClick={(e) => { e.stopPropagation(); onToggleVisibility(sectionId); setDropdownOpen(null); }}
+        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+      >
+        <EyeOff className="w-4 h-4" /> Masquer / Afficher
+      </button>
+      <div className="border-t border-gray-100 my-1" />
+      <button
+        onClick={(e) => { e.stopPropagation(); onDeleteSection(sectionId); setDropdownOpen(null); }}
+        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+      >
+        <Trash2 className="w-4 h-4" /> Supprimer
+      </button>
     </div>
   );
 
@@ -78,7 +130,7 @@ export default function SectionsList({
                         ref={provided.innerRef} 
                         {...provided.draggableProps} 
                         onClick={() => onSelectSection(section.id)}
-                        className={`group flex items-center justify-between pl-1 pr-2 py-1.5 mx-3 rounded-lg cursor-pointer border transition-colors ${
+                        className={`group flex items-center justify-between pl-1 pr-2 py-1.5 mx-3 rounded-lg cursor-pointer border transition-colors relative ${
                           snapshot.isDragging ? 'bg-white shadow-xl border-gray-200 z-50' : 
                           selectedSectionId === section.id ? 'bg-blue-50 border-blue-200' : 
                           'hover:bg-gray-100 border-transparent'
@@ -99,9 +151,15 @@ export default function SectionsList({
                           >
                             {section.hidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                           </button>
-                          <button className="p-1.5 rounded hover:bg-gray-200 text-gray-500">
-                            <MoreVertical className="w-3.5 h-3.5" />
-                          </button>
+                          <div className="relative">
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); setDropdownOpen(dropdownOpen === section.id ? null : section.id); }}
+                              className="p-1.5 rounded hover:bg-gray-200 text-gray-500"
+                            >
+                              <MoreVertical className="w-3.5 h-3.5" />
+                            </button>
+                            {dropdownOpen === section.id && renderDropdown(section.id)}
+                          </div>
                         </div>
                       </li>
                     )}

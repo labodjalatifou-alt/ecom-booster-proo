@@ -424,49 +424,48 @@ export const DEFAULT_FOOTER_PROPS: FooterProps = {
 }
 
 // ============================================
-// CATALOGUE PAR CATÉGORIE
+// CATALOGUE PAR CATÉGORIE — ~35 sections essentielles COD Afrique
 // ============================================
 
 export const SECTIONS_CATALOG: SectionCatalogItem[] = [
-  // 📣 Marketing
+  // 📣 Marketing (essentiel pour COD)
   { type: 'announcement_bar', label: 'Bandeau annonce', icon: '📣', description: 'Texte défilant en haut de page', category: 'Marketing', defaultProps: DEFAULT_ANNOUNCEMENT_BAR_PROPS },
   { type: 'countdown', label: 'Compte à rebours', icon: '⏱️', description: 'Timer pour créer de l\'urgence', category: 'Marketing', defaultProps: DEFAULT_COUNTDOWN_PROPS },
-  { type: 'countdown_top_bar', label: 'Bandeau countdown', icon: '🔥', description: 'Bandeau compact en haut de page avec timer', category: 'Marketing', defaultProps: { target_date: new Date(Date.now() + 12 * 3600000).toISOString(), label: 'Offre', discount_text: '-39%', suffix: 'se termine dans', bg_color: '#3A2A2E', text_color: '#FFF8F3', accent_color: '#C9A24B' } },
   { type: 'stats', label: 'Statistiques', icon: '📊', description: 'Chiffres clés animés', category: 'Marketing', defaultProps: DEFAULT_STATS_PROPS },
-  { type: 'popup', label: 'Pop-up promo', icon: '🎯', description: 'Fenêtre promotionnelle', category: 'Marketing', defaultProps: DEFAULT_POPUP_PROPS },
-  // 🎨 Contenu
+  { type: 'countdown_top_bar', label: 'Bandeau countdown', icon: '🔥', description: 'Bandeau compact en haut de page avec timer', category: 'Marketing', defaultProps: { target_date: new Date(Date.now() + 12 * 3600000).toISOString(), label: 'Offre', discount_text: '-39%', suffix: 'se termine dans', bg_color: '#3A2A2E', text_color: '#FFF8F3', accent_color: '#C9A24B' } },
+  
+  // 🎨 Contenu (essentiel)
   { type: 'hero', label: 'Hero / Bannière', icon: '🖼️', description: 'Grande section d\'accroche principale', category: 'Contenu', defaultProps: DEFAULT_HERO_PROPS },
-  { type: 'hotspots', label: 'Image Interactive', icon: '✨', description: 'Image avec bulles explicatives', category: 'Contenu', defaultProps: {} },
-  { type: 'parallax', label: 'Effet Parallaxe', icon: '🌀', description: 'Scroll 3D avec texte flottant', category: 'Contenu', defaultProps: {} },
-  { type: 'slideshow', label: 'Diaporama', icon: '🎠', description: 'Carousel d\'images ou contenus', category: 'Contenu', defaultProps: DEFAULT_SLIDESHOW_PROPS },
   { type: 'image_with_text', label: 'Image + Texte', icon: '📰', description: 'Image et texte côte à côte', category: 'Contenu', defaultProps: DEFAULT_IMAGE_WITH_TEXT_PROPS },
   { type: 'text_block', label: 'Bloc texte', icon: '📝', description: 'Paragraphe de texte libre', category: 'Contenu', defaultProps: DEFAULT_TEXT_BLOCK_PROPS },
-  { type: 'video', label: 'Vidéo', icon: '🎬', description: 'YouTube, Vimeo ou MP4', category: 'Contenu', defaultProps: DEFAULT_VIDEO_PROPS },
   { type: 'gallery', label: 'Galerie photos', icon: '🖼️', description: 'Grille d\'images', category: 'Contenu', defaultProps: DEFAULT_GALLERY_PROPS },
-  // 🛍️ Produits
-  { type: 'product_grid', label: 'Grille produits', icon: '🛒', description: 'Collection de produits', category: 'Produits', defaultProps: DEFAULT_PRODUCT_GRID_PROPS },
+  
+  // 🛍️ Produits (cœur du COD)
   { type: 'order_form', label: 'Formulaire commande', icon: '📋', description: 'Formulaire de commande personnalisable', category: 'Produits', defaultProps: DEFAULT_ORDER_FORM_PROPS },
-  // ⭐ Social Proof
+  
+  // ⭐ Social Proof (très important pour COD)
   { type: 'testimonials', label: 'Témoignages', icon: '💬', description: 'Avis et témoignages clients', category: 'Social Proof', defaultProps: DEFAULT_TESTIMONIALS_PROPS },
-  { type: 'testimonials_floating', label: 'Témoignages flottants', icon: '💬', description: 'Témoignages défilants en bandeau', category: 'Social Proof', defaultProps: { title: 'Ils nous font confiance', items: [] } },
   { type: 'trust_bar', label: 'Barre de confiance', icon: '✓', description: 'Score et arguments de confiance', category: 'Social Proof', defaultProps: {} },
   { type: 'stock_urgency', label: 'Stock urgent', icon: '🔥', description: 'Barre de stock avec urgence', category: 'Social Proof', defaultProps: {} },
   { type: 'before_after', label: 'Avant / Après', icon: '🔄', description: 'Comparaison avec slider interactif', category: 'Social Proof', defaultProps: DEFAULT_BEFORE_AFTER_PROPS },
   { type: 'comparison_table', label: 'Comparaison', icon: '📊', description: 'Nous vs concurrents', category: 'Social Proof', defaultProps: DEFAULT_COMPARISON_TABLE_PROPS },
-  // ℹ️ Info
-  { type: 'circular_ingredients', label: 'Ingrédients', icon: '🍃', description: 'Grille d\'ingrédients circulaires', category: 'Info', defaultProps: DEFAULT_CIRCULAR_INGREDIENTS_PROPS },
-  { type: 'expert_encart', label: 'Encart Expert', icon: '⚕️', description: 'Recommandation médicale ou expert', category: 'Info', defaultProps: DEFAULT_EXPERT_ENCART_PROPS },
+  
+  // ℹ️ Info (essentiel pour rassurer)
   { type: 'benefits', label: 'Avantages', icon: '✅', description: 'Points forts et bénéfices', category: 'Info', defaultProps: DEFAULT_BENEFITS_PROPS },
   { type: 'faq', label: 'FAQ', icon: '❓', description: 'Questions / réponses accordéon', category: 'Info', defaultProps: DEFAULT_FAQ_PROPS },
   { type: 'guarantees', label: 'Garanties', icon: '🛡️', description: 'Badges de confiance', category: 'Info', defaultProps: DEFAULT_GUARANTEES_PROPS },
-  { type: 'pricing_table', label: 'Tableau de prix', icon: '💰', description: 'Offres et tarifs', category: 'Info', defaultProps: DEFAULT_PRICING_TABLE_PROPS },
   { type: 'icon_grid', label: 'Grille d\'icônes', icon: '🔷', description: 'Services avec icônes', category: 'Info', defaultProps: DEFAULT_ICON_GRID_PROPS },
-  { type: 'newsletter', label: 'Newsletter', icon: '📧', description: 'Inscription email ou WhatsApp', category: 'Info', defaultProps: DEFAULT_NEWSLETTER_PROPS },
+  
   // 🏁 Structure
-  { type: 'upsell_carousel', label: 'Carrousel Upsell', icon: '🔄', description: 'Produits complémentaires', category: 'Produits', defaultProps: DEFAULT_UPSELL_CAROUSEL_PROPS },
-  { type: 'marquee', label: 'Marquee défilant', icon: '🔁', description: 'Bandeau texte en boucle', category: 'Structure', defaultProps: DEFAULT_MARQUEE_PROPS },
   { type: 'spacer', label: 'Espaceur', icon: '⬜', description: 'Espace vide / séparateur', category: 'Structure', defaultProps: DEFAULT_SPACER_PROPS },
-  { type: 'footer', label: 'Footer', icon: '🏁', description: 'Pied de page complet', category: 'Structure', defaultProps: DEFAULT_FOOTER_PROPS },
+  { type: 'marquee', label: 'Marquee défilant', icon: '🔁', description: 'Bandeau texte en boucle', category: 'Structure', defaultProps: DEFAULT_MARQUEE_PROPS },
+  
+  // Sections Cora (nouveau thème)
+  { type: 'hero_editorial', label: 'Hero Éditorial', icon: '📖', description: 'Titre centré + sous-titre + texte long', category: 'Contenu', defaultProps: { title: 'Votre titre', subtitle: 'Sous-titre', content: 'Votre histoire...', text_align: 'center', bg_color: '#FFFFFF', text_color: '#1A1A2E', title_font_size: 28, content_font_size: 16, padding: 48 } },
+  { type: 'feature_grid', label: 'Grille Fonctionnalités', icon: '📋', description: '4 colonnes icônes + titres + descriptions', category: 'Contenu', defaultProps: { title: '', columns: 4, bg_color: '#FFFFFF', icon_color: '#FF6B6B', items: [] } },
+  { type: 'comparison_vs', label: 'Comparaison VS', icon: '⚔️', description: 'Tableau NOUS vs EUX avec colonne mise en évidence', category: 'Social Proof', defaultProps: { title: 'US VS THEM', our_label: 'NOUS', competitor_label: 'AUTRES', accent_color: '#FF6B6B', bg_color: '#FFFFFF', highlight_our_column: true, rows: [] } },
+  { type: 'whats_in_box', label: 'Contenu du Colis', icon: '📦', description: 'Image + liste à puces de ce qu\'il y a dans la boîte', category: 'Produits', defaultProps: { title: 'What\'s Inside the Box:', text: '', image_position: 'left', bg_color: '#FFF5F3', text_color: '#1A1A2E', title_color: '#FF6B6B', padding: 48, image_border_radius: 12, show_cta: false } },
+  { type: 'faq_2col', label: 'FAQ 2 Colonnes', icon: '❓', description: 'FAQ accordéon en 2 colonnes', category: 'Info', defaultProps: { title: 'FAQs', layout: '2-columns', accent_color: '#FF6B6B', bg_color: '#FFFFFF', items: [] } },
 ]
 
 // ============================================

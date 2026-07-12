@@ -258,6 +258,23 @@ export default function Editor({ storeId, storeName, storeSlug, storeStatus = 'd
     setPropsPanelOpen(false)
   }, [])
 
+  // Dupliquer un bloc du template
+  const duplicateBlock = useCallback((blockId: string) => {
+    setData(prev => {
+      const blockToDuplicate = prev.template.find(b => b.id === blockId)
+      if (!blockToDuplicate) return prev
+      const newBlock: EditorBlock = {
+        ...blockToDuplicate,
+        id: `${blockToDuplicate.type}-${Date.now()}`,
+        title: `${blockToDuplicate.title} (copie)`,
+      }
+      const insertIndex = prev.template.findIndex(b => b.id === blockId) + 1
+      const newTemplate = [...prev.template]
+      newTemplate.splice(insertIndex, 0, newBlock)
+      return { ...prev, template: newTemplate }
+    })
+  }, [])
+
   // Ajouter un bloc au template
   const addBlock = useCallback((type: string, title: string, defaultSettings: Record<string, any>) => {
     const newBlock: EditorBlock = {
@@ -305,23 +322,24 @@ export default function Editor({ storeId, storeName, storeSlug, storeStatus = 'd
         {/* ── SIDEBAR GAUCHE ── masquée en mode "Personnaliser le thème" (style Shopify) ── */}
         {!themeFocusMode && (
           <div className="hidden md:block flex-shrink-0">
-            <SidebarLeft
-              data={data}
-              selectedBlockId={selectedBlockId}
-              activeTab={activeTab}
-              onTabChange={(tab) => {
-                setActiveTab(tab)
-                if (tab === 'theme_settings') setThemeFocusMode(true)
-              }}
-              onSelectBlock={(id) => { setSelectedBlockId(id); setSidebarOpen(false) }}
-              onToggleVisibility={toggleBlockVisibility}
-              onDeleteBlock={deleteBlock}
-              onAddBlock={addBlock}
-              onReorder={reorderBlocks}
-              themeSettings={themeSettings}
-              onUpdateThemeSettings={setThemeSettings}
-              onClose={undefined}
-            />
+<SidebarLeft
+                data={data}
+                selectedBlockId={selectedBlockId}
+                activeTab={activeTab}
+                onTabChange={(tab) => {
+                  setActiveTab(tab)
+                  if (tab === 'theme_settings') setThemeFocusMode(true)
+                }}
+                onSelectBlock={(id) => { setSelectedBlockId(id); setSidebarOpen(false) }}
+                onToggleVisibility={toggleBlockVisibility}
+                onDeleteBlock={deleteBlock}
+                onDuplicateBlock={duplicateBlock}
+                onAddBlock={addBlock}
+                onReorder={reorderBlocks}
+                themeSettings={themeSettings}
+                onUpdateThemeSettings={setThemeSettings}
+                onClose={undefined}
+              />
           </div>
         )}
         {/* Mode thème plein écran : panneau thème flottant à gauche */}
