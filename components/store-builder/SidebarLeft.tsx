@@ -228,8 +228,8 @@ export default function SidebarLeft({
         <div className="mb-6">
           <h3 className="text-xs font-semibold text-gray-400 mb-2 px-2 uppercase tracking-wide">En-tête</h3>
           <div>
-            {data.header.map(block => (
-              <BlockItem key={block.id} block={block} type="header" />
+            {data.header.map((block, idx) => (
+              <BlockItem key={block.id || `header-${idx}`} block={block} type="header" />
             ))}
           </div>
         </div>
@@ -246,8 +246,10 @@ export default function SidebarLeft({
             <Droppable droppableId="template-list">
               {(provided) => (
                 <div ref={provided.innerRef} {...provided.droppableProps}>
-                  {data.template.map((block, index) => (
-                    <Draggable key={block.id} draggableId={block.id} index={index}>
+                  {data.template.map((block, index) => {
+                    const safeId = block.id || `block-${index}-${Date.now()}`
+                    return (
+                    <Draggable key={safeId} draggableId={safeId} index={index}>
                       {(drag, snap) => (
                         <div
                           ref={drag.innerRef}
@@ -266,7 +268,7 @@ export default function SidebarLeft({
                         </div>
                       )}
                     </Draggable>
-                  ))}
+                  )})}
                   {provided.placeholder}
                 </div>
               )}
@@ -278,8 +280,8 @@ export default function SidebarLeft({
         <div className="mb-6">
           <h3 className="text-xs font-semibold text-gray-400 mb-2 px-2 uppercase tracking-wide">Pied de page</h3>
           <div>
-            {data.footer.map(block => (
-              <BlockItem key={block.id} block={block} type="footer" />
+            {data.footer.map((block, idx) => (
+              <BlockItem key={block.id || `footer-${idx}`} block={block} type="footer" />
             ))}
           </div>
         </div>

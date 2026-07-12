@@ -50,6 +50,18 @@ export default async function StoreBuilderPage({ params }: { params: Promise<{ i
     }
   }
 
+  // ── Migration silencieuse : injecter un id pour chaque bloc qui en manque ──
+  if (builderJson) {
+    for (const section of ['header', 'template', 'footer'] as const) {
+      if (Array.isArray(builderJson[section])) {
+        builderJson[section] = (builderJson[section] as any[]).map((b: any, i: number) => ({
+          ...b,
+          id: b.id || `${b.type || 'block'}-${Date.now()}-${i}`,
+        }))
+      }
+    }
+  }
+
   if (!builderJson || !builderJson.template || builderJson.template.length === 0) {
     // Utiliser le système de thèmes boutique pour générer un builder_json complet avec layout
     const themeId = store.store_settings?.theme_id || 'nature-vert';
