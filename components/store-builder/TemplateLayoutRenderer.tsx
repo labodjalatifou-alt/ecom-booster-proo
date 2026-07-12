@@ -11,6 +11,21 @@ const LAYOUT_CSS = `
   .landing-template--full-width { max-width: 100%; }
   .landing-template-rest { width: 100%; }
 
+  /* ── Hero-split: sections sous le hero en pleine largeur ── */
+  .landing-hero--split ~ .landing-template-rest,
+  .landing-hero--triple ~ .landing-template-rest {
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+  }
+  .landing-hero--split ~ .landing-template-rest > *,
+  .landing-hero--triple ~ .landing-template-rest > * {
+    width: 100%;
+  }
+
   /* ── Full-width: sections pleine largeur avec fond alterné ── */
   .landing-template--full-width .landing-full-section {
     width: 100%;

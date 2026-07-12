@@ -143,14 +143,14 @@ export const BOUTIQUE_THEMES: BoutiqueTheme[] = [
     fonts: { display: "'Bebas Neue', cursive", body: "'Roboto', sans-serif" },
   },
 
-  // ── 5. CORA — Full-width editorial, coral/salmon, modern clean ────────
+  // ── 5. CORA — Hero-split editorial, coral/salmon, modern clean ────────
   {
     id: 'cora',
     name: 'Cora',
-    description: 'Éditorial moderne — pleine largeur, corail vibrant, sections alternées, style Shopify premium.',
+    description: 'Éditorial moderne — galerie split, corail vibrant, sections alternées, style Shopify premium.',
     tags: ['moderne', 'éditorial', 'corail'],
     preview_image: '/themes/T1.webp',
-    layout: 'full-width',
+    layout: 'hero-split',
     cardMaxWidth: 1200,
     colors: {
       bg: '#FFFFFF',
