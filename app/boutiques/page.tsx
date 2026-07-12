@@ -208,7 +208,10 @@ export default function BoutiquesPage() {
                     <p><b>Produit :</b> {cloneResult.analysis.product_title} ({cloneResult.analysis.product_price?.toLocaleString('fr-FR')} FCFA)</p>
                   )}
                   {cloneResult.analysis?.images_extracted > 0 && (
-                    <p><b>Images :</b> {cloneResult.analysis.images_extracted} extraites → galerie</p>
+                    <p><b>Images :</b> {cloneResult.analysis.images_extracted} page + {cloneResult.analysis.product_images} produit → galerie</p>
+                  )}
+                  {cloneResult.analysis?.headings_detected > 0 && (
+                    <p><b>Titres :</b> {cloneResult.analysis.headings_detected} heading(s) détecté(s)</p>
                   )}
                   {cloneResult.analysis?.testimonials_extracted > 0 && (
                     <p><b>Avis :</b> {cloneResult.analysis.testimonials_extracted} récupérés</p>

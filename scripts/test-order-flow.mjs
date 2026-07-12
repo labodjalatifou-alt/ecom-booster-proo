@@ -116,6 +116,8 @@ async function main() {
       assert('Analyse contient theme_used', !!data.analysis?.theme_used)
       assert('Analyse contient couleurs', data.analysis?.colors_detected?.length > 0)
       assert('Champ images_extracted présent', typeof data.analysis?.images_extracted === 'number')
+      assert('Champ product_images présent', typeof data.analysis?.product_images === 'number')
+      assert('Champ headings_detected présent', typeof data.analysis?.headings_detected === 'number')
       assert('Champ testimonials_extracted présent', typeof data.analysis?.testimonials_extracted === 'number')
       assert('Champ faq_extracted présent', typeof data.analysis?.faq_extracted === 'number')
       assert('Store ID présent', !!data.data?.id)

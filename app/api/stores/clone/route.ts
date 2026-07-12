@@ -6,7 +6,12 @@ import { getBoutiqueTheme, toStoreColors, toStoreFonts, BOUTIQUE_THEMES } from '
 import { buildStorePage } from '@/lib/store-builder/boutique-themes'
 import * as cheerio from 'cheerio'
 
-// ── Extractors ──────────────────────────────────────────────────────────────
+// ── Helpers ─────────────────────────────────────────────────────────────────
+
+function absoluteUrl(href: string, base: string): string | null {
+  if (!href || href.startsWith('data:')) return null
+  try { return new URL(href, base).href } catch { return null }
+}
 
 function extractMeta($: cheerio.CheerioAPI, name: string): string | null {
   return $(`meta[name="${name}"]`).attr('content')
@@ -17,12 +22,11 @@ function extractMeta($: cheerio.CheerioAPI, name: string): string | null {
 
 function extractHexColors($: cheerio.CheerioAPI): string[] {
   const found = new Set<string>()
-  const html = $.html()
   const re = /#([0-9a-fA-F]{6})\b/g
   let m
-  while ((m = re.exec(html)) !== null) {
+  while ((m = re.exec($.html())) !== null) {
     const c = m[0].toLowerCase()
-    if (c !== '#ffffff' && c !== '#000000' && c !== '#000000') found.add(c)
+    if (c !== '#ffffff' && c !== '#000000') found.add(c)
   }
   return Array.from(found).slice(0, 15)
 }
@@ -33,7 +37,7 @@ function extractFonts($: cheerio.CheerioAPI): string[] {
   let m
   while ((m = re.exec($.html())) !== null) {
     m[1].split(',').map((p: string) => p.replace(/["']/g, '').trim()).forEach((p: string) => {
-      if (p && !['sans-serif', 'serif', 'monospace', 'inherit', 'arial', 'helvetica'].includes(p.toLowerCase())) fonts.add(p)
+      if (p && !['sans-serif', 'serif', 'monospace', 'inherit', 'arial', 'helvetica', 'sans'].includes(p.toLowerCase())) fonts.add(p)
     })
   }
   return Array.from(fonts)
@@ -44,16 +48,207 @@ function extractLogoUrl($: cheerio.CheerioAPI, baseUrl: string): string | null {
     'img[src*="logo"]', 'img[class*="logo"]', 'img[id*="logo"]',
     'img[alt*="logo"]', 'header img:first', '.logo img', '#logo img',
     'a:has(img[alt*="logo"]) img', 'header a img',
+    '.header img[src*="logo"]', '[class*="brand"] img', '[class*="site-logo"] img',
   ]
   for (const sel of selectors) {
     const src = $(sel).first().attr('src')
-    if (src) try { return new URL(src, baseUrl).href } catch { return src }
+    if (src) return absoluteUrl(src, baseUrl) || src
   }
   return null
 }
 
-function extractProductJsonLd($: cheerio.CheerioAPI): { title: string; price: number; currency: string; description: string; image_url: string; images: string[] } | null {
+// ── Try to parse any <script> as JSON (Shopify often uses untyped scripts) ──
+
+function findAllJsonScripts($: cheerio.CheerioAPI): any[] {
   const results: any[] = []
+  $('script').each((_, el) => {
+    const type = $(el).attr('type')
+    if (type && type !== 'application/ld+json' && !type.includes('json')) return
+    // skip known non-data scripts
+    const src = $(el).attr('src')
+    if (src) return
+    try {
+      const text = $(el).text().trim()
+      // Try full parse first
+      try {
+        const data = JSON.parse(text)
+        results.push(data)
+      } catch {
+        // Try extracting JSON from var assignments: var product = {...}; or window.product = {...}
+        const jsonMatch = text.match(/(?:window\.)?(?:product|Product|shopify|Shopify|meta|__INITIAL_STATE__|__STORE__)\s*(?:=|:)\s*(\{[\s\S]*?\})(?:\s*;|\s*,\s*function|\s*\))/)
+        if (jsonMatch) {
+          try { results.push(JSON.parse(jsonMatch[1])) } catch {}
+        }
+      }
+    } catch {}
+  })
+  return results
+}
+
+// ── Extract images from Shopify product JSON embedded in scripts ───────────
+
+function extractImagesFromShopifyJson(scripts: any[], baseUrl: string): string[] {
+  const urls = new Set<string>()
+  for (const data of scripts) {
+    // Try common Shopify patterns
+    const sources = [
+      data?.product?.images,       // { product: { images: [...] } }
+      data?.product?.media,        // { product: { media: [...] } }
+      data?.images,                // { images: [...] }
+      data?.media,                 // { media: [...] }
+      data?.variants?.map((v: any) => v.image?.src || v.featured_image?.src).filter(Boolean),
+      data?.product?.variants?.map((v: any) => v.image?.src || v.featured_image?.src).filter(Boolean),
+    ]
+    for (const srcArray of sources) {
+      if (Array.isArray(srcArray)) {
+        for (const item of srcArray) {
+          const url = typeof item === 'string' ? item : item?.src || item?.url || item?.originalSrc || item?.srcset
+          if (url) {
+            const abs = absoluteUrl(url, baseUrl)
+            if (abs) urls.add(abs)
+          }
+        }
+      }
+    }
+  }
+  return Array.from(urls)
+}
+
+// ── Extract images from HTML description text (body_html from JSON-LD) ────
+
+function extractImagesFromHtml(html: string, baseUrl: string): string[] {
+  const urls = new Set<string>()
+  const imgRe = /<img[^>]+src=["']([^"']+)["']/gi
+  let m
+  while ((m = imgRe.exec(html)) !== null) {
+    const abs = absoluteUrl(m[1], baseUrl)
+    if (abs) urls.add(abs)
+  }
+  return Array.from(urls)
+}
+
+// ── Main image extraction: ALL sources ─────────────────────────────────────
+
+function extractAllImages($: cheerio.CheerioAPI, baseUrl: string, jsonScripts: any[]): string[] {
+  const urls = new Set<string>()
+
+  // 1. OG / Twitter images
+  const ogImg = $('meta[property="og:image"]').attr('content')
+    || $('meta[property="og:image:secure_url"]').attr('content')
+    || $('meta[name="twitter:image"]').attr('content')
+  if (ogImg) { const a = absoluteUrl(ogImg, baseUrl); if (a) urls.add(a) }
+
+  // 2. <link rel="image_src">
+  const linkImg = $('link[rel="image_src"]').attr('href')
+  if (linkImg) { const a = absoluteUrl(linkImg, baseUrl); if (a) urls.add(a) }
+
+  // 3. All <img> tags — src, data-src, data-image, data-media, data-zoom
+  $('img').each((_, el) => {
+    const attrs = ['src', 'data-src', 'data-image', 'data-media', 'data-zoom', 'data-original', 'data-lazy', 'data-srcset']
+    for (const attr of attrs) {
+      const val = $(el).attr(attr)
+      if (val && !val.startsWith('data:') && !val.includes('placeholder') && !val.includes('pixel') && !val.includes('spacer') && !val.includes('1x1')) {
+        // srcset may contain multiple URLs
+        if (attr === 'data-srcset' || attr === 'srcset') {
+          val.split(',').forEach(part => {
+            const u = part.trim().split(/\s+/)[0]
+            const a = absoluteUrl(u, baseUrl)
+            if (a) urls.add(a)
+          })
+        } else {
+          const a = absoluteUrl(val, baseUrl)
+          if (a) urls.add(a)
+        }
+      }
+    }
+    // Check srcset attribute
+    const srcset = $(el).attr('srcset')
+    if (srcset) {
+      srcset.split(',').forEach(part => {
+        const u = part.trim().split(/\s+/)[0]
+        const a = absoluteUrl(u, baseUrl)
+        if (a) urls.add(a)
+      })
+    }
+  })
+
+  // 4. Background images from style attributes
+  const bgRe = /background(?:-image)?:\s*url\(['"]?([^'")\s]+)['"]?\)/gi
+  let m
+  while ((m = bgRe.exec($.html())) !== null) {
+    if (m[1] && !m[1].startsWith('data:')) {
+      const a = absoluteUrl(m[1], baseUrl)
+      if (a) urls.add(a)
+    }
+  }
+
+  // 5. JSON-LD images
+  $('script[type="application/ld+json"]').each((_, el) => {
+    try {
+      const data = JSON.parse($(el).text())
+      const items = Array.isArray(data) ? data : [data]
+      for (const item of items) {
+        if (item['@type'] === 'Product' && item.image) {
+          const arr = Array.isArray(item.image) ? item.image : [item.image]
+          arr.forEach((img: any) => {
+            const u = typeof img === 'string' ? img : img?.url || img?.['@id']
+            if (u) urls.add(u)
+          })
+        }
+      }
+    } catch {}
+  })
+
+  // 6. Shopify embedded JSON (window.__INITIAL_STATE__, window.Shopify, etc.)
+  const shopifyImages = extractImagesFromShopifyJson(jsonScripts, baseUrl)
+  shopifyImages.forEach(u => urls.add(u))
+
+  // 7. JSON-LD description HTML images
+  $('script[type="application/ld+json"]').each((_, el) => {
+    try {
+      const data = JSON.parse($(el).text())
+      const items = Array.isArray(data) ? data : [data]
+      for (const item of items) {
+        if (item['@type'] === 'Product' && item.description) {
+          const descImages = extractImagesFromHtml(item.description, baseUrl)
+          descImages.forEach(u => urls.add(u))
+        }
+      }
+    } catch {}
+  })
+
+  // De-duplicate by normalizing common Shopify image size variants
+  // Shopify serves _1024x1024, _2048x2048, _small, _thumb etc.
+  // We prefer the largest version
+  const normalized = new Map<string, string>()
+  for (const url of urls) {
+    // Keep the URL as-is but de-dup by base image name
+    const key = url.replace(/_[a-z]+\.(jpg|jpeg|png|webp)/i, '.$1').replace(/\?.*/, '')
+    if (!normalized.has(key)) {
+      normalized.set(key, url)
+    }
+  }
+
+  return Array.from(normalized.values()).slice(0, 20)
+}
+
+// ── Extended product extraction ────────────────────────────────────────────
+
+interface ExtractedProduct {
+  title: string
+  price: number
+  currency: string
+  description: string        // plain text description
+  descriptionHtml: string    // HTML description with <img> tags preserved
+  image_url: string
+  images: string[]
+  headingHtml: string        // full HTML of h1 (for preserving heading hierarchy)
+  subheadings: string[]      // h2 texts for section headings
+}
+
+function extractProductJsonLd($: cheerio.CheerioAPI, jsonScripts: any[], baseUrl: string): ExtractedProduct | null {
+  // Try JSON-LD first
+  let result: ExtractedProduct | null = null
   $('script[type="application/ld+json"]').each((_, el) => {
     try {
       const data = JSON.parse($(el).text())
@@ -63,80 +258,102 @@ function extractProductJsonLd($: cheerio.CheerioAPI): { title: string; price: nu
           const imgs: string[] = []
           if (item.image) {
             const arr = Array.isArray(item.image) ? item.image : [item.image]
-            arr.forEach((img: any) => { const u = typeof img === 'string' ? img : img?.url; if (u) imgs.push(u) })
+            arr.forEach((img: any) => {
+            const u = typeof img === 'string' ? img : img?.url || img?.['@id']
+              if (u) imgs.push(u)
+            })
           }
-          results.push({
+          const descHtml = item.description || ''
+          const plainDesc = descHtml.replace(/<[^>]*>/g, '').slice(0, 2000)
+          const descImages = extractImagesFromHtml(descHtml, baseUrl)
+          result = {
             title: item.name || '',
             price: item.offers?.price ? parseFloat(item.offers.price) : 0,
             currency: item.offers?.priceCurrency || 'FCFA',
-            description: (item.description || '').slice(0, 2000),
+            description: plainDesc,
+            descriptionHtml: descHtml,
             image_url: imgs[0] || '',
             images: imgs,
-          })
+            headingHtml: '',
+            subheadings: [],
+          }
+          // Add images from description
+          if (descImages.length) {
+            result.images = [...new Set([...result.images, ...descImages])]
+          }
         }
       }
     } catch {}
   })
-  return results[0] || null
-}
 
-function extractAllImages($: cheerio.CheerioAPI, baseUrl: string): string[] {
-  const urls = new Set<string>()
-  // OG image
-  const ogImg = $('meta[property="og:image"]').attr('content') || $('meta[name="twitter:image"]').attr('content')
-  if (ogImg) urls.add(new URL(ogImg, baseUrl).href)
-
-  // All img tags
-  $('img').each((_, el) => {
-    const src = $(el).attr('src')
-    if (src && !src.startsWith('data:') && !src.includes('placeholder') && !src.includes('pixel') && !src.includes('spacer')) {
-      try { urls.add(new URL(src, baseUrl).href) } catch {}
-    }
-  })
-
-  // Background images from style attributes
-  const bgRe = /background(?:-image)?:\s*url\(['"]?([^'")\s]+)['"]?\)/gi
-  let m
-  while ((m = bgRe.exec($.html())) !== null) {
-    if (m[1] && !m[1].startsWith('data:')) {
-      try { urls.add(new URL(m[1], baseUrl).href) } catch {}
+  // Fallback: try Shopify JSON scripts for product data
+  if (!result) {
+    for (const data of jsonScripts) {
+      const p = data?.product || data
+      if (p?.title && p?.variants?.[0]?.price) {
+        const imgs: string[] = []
+        if (p.images) {
+          p.images.forEach((img: any) => {
+            const u = typeof img === 'string' ? img : img?.src || img?.originalSrc || img?.url
+            if (u) imgs.push(u)
+          })
+        }
+        if (p.media) {
+          p.media.forEach((m: any) => {
+            if (m?.src || m?.url) imgs.push(m.src || m.url)
+          })
+        }
+        const descHtml = p.body_html || p.description || ''
+        const plainDesc = descHtml.replace(/<[^>]*>/g, '').slice(0, 2000)
+        result = {
+          title: p.title,
+          price: parseFloat(p.variants[0].price),
+          currency: p.variants[0].currency || 'FCFA',
+          description: plainDesc,
+          descriptionHtml: descHtml,
+          image_url: imgs[0] || p.featured_image?.src || p.image?.src || '',
+          images: imgs,
+          headingHtml: '',
+          subheadings: [],
+        }
+        break
+      }
     }
   }
 
-  // JSON-LD images
-  $('script[type="application/ld+json"]').each((_, el) => {
-    try {
-      const data = JSON.parse($(el).text())
-      const items = Array.isArray(data) ? data : [data]
-      for (const item of items) {
-        if (item['@type'] === 'Product' && item.image) {
-          const arr = Array.isArray(item.image) ? item.image : [item.image]
-          arr.forEach((img: any) => {
-            const u = typeof img === 'string' ? img : img?.url
-            if (u) urls.add(u)
-          })
-        }
-      }
-    } catch {}
-  })
+  // Add page headings if product found
+  if (result) {
+    const h1 = $('h1').first()
+    result.headingHtml = h1.html() || h1.text() || ''
+    $('h2').each((_, el) => {
+      const t = $(el).text().trim()
+      if (t && t.length < 100) result!.subheadings.push(t)
+    })
+  }
 
-  return Array.from(urls).slice(0, 15)
+  return result
 }
 
-function extractTextBlock($: cheerio.CheerioAPI): { title: string; description: string } {
+// ── Extract text blocks with heading preservation ──────────────────────────
+
+function extractHeadings($: cheerio.CheerioAPI): { h1: string; h2s: string[]; h3s: string[] } {
   const h1 = $('h1').first().text().trim()
-  const h2 = $('h2').first().text().trim()
-  const firstP = $('p').first().text().trim().slice(0, 300)
-  const desc = $('meta[name="description"]').attr('content') || ''
-  return {
-    title: h1 || h2 || '',
-    description: desc || firstP || '',
-  }
+  const h2s: string[] = []
+  const h3s: string[] = []
+  $('h2').each((_, el) => {
+    const t = $(el).text().trim()
+    if (t && t.length < 100) h2s.push(t)
+  })
+  $('h3').each((_, el) => {
+    const t = $(el).text().trim()
+    if (t && t.length < 100) h3s.push(t)
+  })
+  return { h1, h2s, h3s }
 }
 
 function extractTestimonials($: cheerio.CheerioAPI): { name: string; text: string; rating: number }[] {
   const items: { name: string; text: string; rating: number }[] = []
-  // Try JSON-LD reviews
+  // JSON-LD reviews
   $('script[type="application/ld+json"]').each((_, el) => {
     try {
       const data = JSON.parse($(el).text())
@@ -158,9 +375,9 @@ function extractTestimonials($: cheerio.CheerioAPI): { name: string; text: strin
     } catch {}
   })
 
-  // Try HTML blockquotes / review-like elements
+  // HTML blockquotes / review elements
   if (items.length < 3) {
-    $('blockquote, .review, .testimonial, [class*="review"], [class*="testimonial"]').each((_, el) => {
+    $('blockquote, .review, .testimonial, [class*="review"], [class*="testimonial"], [class*="avis"]').each((_, el) => {
       const text = $(el).text().trim().slice(0, 200)
       if (text.length > 20 && text.length < 500) {
         const nameEl = $(el).find('.author, .name, [class*="author"], [class*="name"]').first().text().trim()
@@ -174,7 +391,6 @@ function extractTestimonials($: cheerio.CheerioAPI): { name: string; text: strin
 function extractFaq($: cheerio.CheerioAPI): { question: string; answer: string }[] {
   const items: { question: string; answer: string }[] = []
 
-  // Try JSON-LD FAQPage
   $('script[type="application/ld+json"]').each((_, el) => {
     try {
       const data = JSON.parse($(el).text())
@@ -192,9 +408,8 @@ function extractFaq($: cheerio.CheerioAPI): { question: string; answer: string }
     } catch {}
   })
 
-  // Try HTML accordion/faq patterns
   if (items.length === 0) {
-    $('.faq, [class*="faq"], .accordion, [class*="accordion"]').each((_, el) => {
+    $('.faq, [class*="faq"], .accordion, [class*="accordion"], [class*="questions"]').each((_, el) => {
       $(el).find('h3, h4, .question, [class*="question"], dt').each((i, qEl) => {
         const qText = $(qEl).text().trim()
         const aEl = $(qEl).next('p, .answer, [class*="answer"], dd').first()
@@ -210,9 +425,9 @@ function extractFaq($: cheerio.CheerioAPI): { question: string; answer: string }
 
 function extractFeatures($: cheerio.CheerioAPI): string[] {
   const features: string[] = []
-  $('li, .feature, [class*="feature"], .benefit, [class*="benefit"]').each((_, el) => {
+  $('li, .feature, [class*="feature"], .benefit, [class*="benefit"], [class*="point"], [class*="bullet"]').each((_, el) => {
     const text = $(el).text().trim()
-    if (text.length > 10 && text.length < 120 && !text.includes('©')) {
+    if (text.length > 10 && text.length < 120 && !text.includes('©') && !text.includes('$')) {
       features.push(text)
     }
   })
@@ -246,22 +461,25 @@ function sanitizeSlug(name: string): string {
 
 function injectContent(
   builder: any,
-  images: string[],
-  product: { title: string; price: number; currency?: string; description: string; images: string[] } | null,
-  textBlock: { title: string; description: string },
+  allImages: string[],
+  product: ExtractedProduct | null,
+  headings: { h1: string; h2s: string[]; h3s: string[] },
   testimonials: { name: string; text: string; rating: number }[],
   faq: { question: string; answer: string }[],
   features: string[],
 ) {
-  const productTitle = product?.title || textBlock.title || 'Produit'
-  const productDesc = product?.description || textBlock.description
-  const productImages = product?.images?.length ? product.images : images
-  const allImages = [...new Set([...productImages, ...images])]
+  const productTitle = product?.title || headings.h1 || 'Produit'
+  const productDesc = product?.description || ''
+  const productDescHtml = product?.descriptionHtml || ''
+  const productImages = product?.images?.length ? product.images : []
+
+  // Merge product images + page images, product images first
+  const mergedImages = [...new Set([...productImages, ...allImages])]
 
   // ── Galerie section ────────────────────────────────────────────────────
   const galerie = builder.template.find((b: any) => b.type === 'Galerie')
-  if (galerie && allImages.length) {
-    galerie.settings.images = allImages.slice(0, 10)
+  if (galerie && mergedImages.length) {
+    galerie.settings.images = mergedImages.slice(0, 15)
     galerie.settings.title = `Galerie ${productTitle}`
   }
 
@@ -278,25 +496,34 @@ function injectContent(
     prix.settings.price = `${fmt} ${product.currency || 'FCFA'}`
   }
 
-  // ── Description ────────────────────────────────────────────────────────
+  // ── Description (with HTML preserved) ──────────────────────────────────
   const desc = builder.template.find((b: any) => b.type === 'Description')
-  if (desc && productDesc) {
-    desc.settings.content = productDesc
+  if (desc) {
+    desc.settings.content = productDescHtml || productDesc
+    desc.settings.html_content = productDescHtml ? true : false
   }
 
-  // ── Hero / Image+Texte first one ───────────────────────────────────────
+  // ── text_block first one → use heading hierarchy ───────────────────────
+  const textBlock = builder.template.find((b: any) => b.type === 'text_block')
+  if (textBlock && headings.h2s.length) {
+    textBlock.settings.title = headings.h2s[0]
+  }
+
+  // ── Hero / Image+Texte ─────────────────────────────────────────────────
   const hero = builder.template.find((b: any) => b.type === 'hero')
-  if (hero && allImages.length) {
-    hero.settings.image_url = allImages[0]
+  if (hero && mergedImages.length) {
+    hero.settings.image_url = mergedImages[0]
     hero.settings.headline = productTitle
     hero.settings.subheadline = productDesc.slice(0, 200)
   }
   const imgText = builder.template.find((b: any) => b.type === 'image_text')
   if (imgText) {
-    if (!imgText.settings.image_url && allImages.length > 1) {
-      imgText.settings.image_url = allImages[1]
+    if (!imgText.settings.image_url && mergedImages.length > 1) {
+      imgText.settings.image_url = mergedImages[1]
     }
-    if (!imgText.settings.title) imgText.settings.title = `Pourquoi choisir ${productTitle} ?`
+    if (!imgText.settings.title || imgText.settings.title.startsWith('Pourquoi choisir')) {
+      imgText.settings.title = headings.h2s.length > 1 ? headings.h2s[1] : `Pourquoi choisir ${productTitle} ?`
+    }
   }
 
   // ── Témoignages ────────────────────────────────────────────────────────
@@ -319,9 +546,6 @@ function injectContent(
       question: q.question,
       answer: q.answer,
     }))
-    if (faqBlock.settings.title === 'Questions fréquentes' || faqBlock.settings.title === 'Vos questions, nos réponses') {
-      faqBlock.settings.title = faq.length > 1 ? 'Questions fréquentes' : 'FAQ'
-    }
   }
 
   // ── Avantages / Features ──────────────────────────────────────────────
@@ -335,10 +559,10 @@ function injectContent(
     benefits.settings.layout = 'checklist'
   }
 
-  // ── Hero section settings background image ─────────────────────────────
+  // ── Theme settings ─────────────────────────────────────────────────────
   const themeSettings = builder.themeSettings
-  if (!themeSettings.hero_background && allImages[0]) {
-    themeSettings.hero_background = allImages[0]
+  if (!themeSettings.hero_background && mergedImages[0]) {
+    themeSettings.hero_background = mergedImages[0]
   }
   if (product?.title) {
     themeSettings.store_title = product.title
@@ -369,15 +593,18 @@ export async function POST(request: Request) {
     const domain = new URL(baseUrl).hostname.replace('www.', '')
     const $ = cheerio.load(html)
 
-    // ── Extraction complète ──
+    // ── Step 1: Find all JSON scripts first (used by multiple extractors) ──
+    const jsonScripts = findAllJsonScripts($)
+
+    // ── Step 2: Extraction complète ──
     const siteTitle = extractMeta($, 'title') || $('title').text().trim() || domain
     const description = extractMeta($, 'description') || ''
     const allColors = extractHexColors($)
     const fonts = extractFonts($)
     const logoUrl = extractLogoUrl($, baseUrl)
-    const product = extractProductJsonLd($)
-    const allImages = extractAllImages($, baseUrl)
-    const textBlock = extractTextBlock($)
+    const product = extractProductJsonLd($, jsonScripts, baseUrl)
+    const allImages = extractAllImages($, baseUrl, jsonScripts)
+    const headings = extractHeadings($)
     const testimonials = extractTestimonials($)
     const faq = extractFaq($)
     const features = extractFeatures($)
@@ -424,13 +651,15 @@ export async function POST(request: Request) {
     // ── Création du produit cloné ──
     let clonedProductId: string | null = null
     if (product && product.title) {
+      // Merge product images + all images found on page
+      const mergedProdImages = [...new Set([...product.images, ...allImages])]
       const { data: np } = await supabase.from('products').insert({
         title: product.title,
         price: String(product.price || 0),
         currency: product.currency || 'FCFA',
-        description: product.description || '',
+        description: product.descriptionHtml || product.description || '',
         image_url: product.image_url || allImages[0] || '',
-        images: product.images.length ? product.images : allImages.slice(0, 5),
+        images: mergedProdImages.length ? mergedProdImages : allImages.slice(0, 5),
         status: 'active',
       }).select('id').single()
       if (np) clonedProductId = np.id
@@ -447,7 +676,7 @@ export async function POST(request: Request) {
     const builderJson = buildStorePage(theme.id, storeName, clonedProductId)
 
     // ── Injecter le contenu extrait dans les sections ──
-    injectContent(builderJson, allImages, product, textBlock, testimonials, faq, features)
+    injectContent(builderJson, allImages, product, headings, testimonials, faq, features)
 
     // ── Thème settings ──
     builderJson.themeSettings = {
@@ -494,6 +723,8 @@ export async function POST(request: Request) {
         product_title: product?.title || null,
         product_price: product?.price || null,
         images_extracted: allImages.length,
+        product_images: product?.images?.length || 0,
+        headings_detected: headings.h1 ? 1 + headings.h2s.length : 0,
         testimonials_extracted: testimonials.length,
         faq_extracted: faq.length,
         theme_used: theme.name,
