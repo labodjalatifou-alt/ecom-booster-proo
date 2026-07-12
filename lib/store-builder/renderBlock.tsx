@@ -183,6 +183,26 @@ export function renderBlock(block: any, product: any, storeId?: string | null, t
     case 'order_form':
       content = <OrderFormRender settings={settings} product={product} storeId={storeId} themeSettings={themeSettings} />
       break
+
+    // ── Sections aliasées (catalogue étendu → réutilise les renderers existants) ──
+    case 'hero_editorial':
+      content = <TextBlockRender settings={{ ...settings, content: settings.content || '', text_align: settings.text_align || 'center' }} />
+      break
+    case 'feature_grid':
+      content = <BenefitsRender settings={{ ...settings, layout: 'grid', items: settings.items || [] }} />
+      break
+    case 'comparison_vs':
+      content = <ComparisonRender settings={{ ...settings, our_label: settings.our_label || 'NOUS', competitor_label: settings.competitor_label || 'EUX' }} />
+      break
+    case 'whats_in_box':
+      content = <ImageTextRender settings={{ ...settings, cta_text: settings.cta_text || 'Commander', cta_link: settings.cta_link || '#order-form' }} />
+      break
+    case 'faq_2col':
+      content = <FaqRender settings={{ ...settings }} />
+      break
+    case 'product_grid':
+      content = <BenefitsRender settings={{ ...settings, layout: 'grid', items: settings.items || [] }} />
+      break
     default:
       break
   }

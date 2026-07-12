@@ -461,11 +461,21 @@ export const SECTIONS_CATALOG: SectionCatalogItem[] = [
   { type: 'marquee', label: 'Marquee défilant', icon: '🔁', description: 'Bandeau texte en boucle', category: 'Structure', defaultProps: DEFAULT_MARQUEE_PROPS },
   
   // Sections Cora (nouveau thème)
-  { type: 'hero_editorial', label: 'Hero Éditorial', icon: '📖', description: 'Titre centré + sous-titre + texte long', category: 'Contenu', defaultProps: { title: 'Votre titre', subtitle: 'Sous-titre', content: 'Votre histoire...', text_align: 'center', bg_color: '#FFFFFF', text_color: '#1A1A2E', title_font_size: 28, content_font_size: 16, padding: 48 } },
-  { type: 'feature_grid', label: 'Grille Fonctionnalités', icon: '📋', description: '4 colonnes icônes + titres + descriptions', category: 'Contenu', defaultProps: { title: '', columns: 4, bg_color: '#FFFFFF', icon_color: '#FF6B6B', items: [] } },
-  { type: 'comparison_vs', label: 'Comparaison VS', icon: '⚔️', description: 'Tableau NOUS vs EUX avec colonne mise en évidence', category: 'Social Proof', defaultProps: { title: 'US VS THEM', our_label: 'NOUS', competitor_label: 'AUTRES', accent_color: '#FF6B6B', bg_color: '#FFFFFF', highlight_our_column: true, rows: [] } },
-  { type: 'whats_in_box', label: 'Contenu du Colis', icon: '📦', description: 'Image + liste à puces de ce qu\'il y a dans la boîte', category: 'Produits', defaultProps: { title: 'What\'s Inside the Box:', text: '', image_position: 'left', bg_color: '#FFF5F3', text_color: '#1A1A2E', title_color: '#FF6B6B', padding: 48, image_border_radius: 12, show_cta: false } },
-  { type: 'faq_2col', label: 'FAQ 2 Colonnes', icon: '❓', description: 'FAQ accordéon en 2 colonnes', category: 'Info', defaultProps: { title: 'FAQs', layout: '2-columns', accent_color: '#FF6B6B', bg_color: '#FFFFFF', items: [] } },
+  { type: 'hero_editorial', label: 'Hero Éditorial', icon: '📖', description: 'Titre centré + sous-titre + texte long', category: 'Contenu', defaultProps: { title: 'Votre histoire', content: 'Racontez votre histoire...', text_align: 'center', bg_color: '#FFFFFF', text_color: '#1A1A2E', title_font_size: 28, padding: 48 } },
+  { type: 'feature_grid', label: 'Grille Fonctionnalités', icon: '📋', description: '4 colonnes icônes + titres + descriptions', category: 'Contenu', defaultProps: { title: '', columns: 4, bg_color: '#FFFFFF', icon_color: '#6366f1', items: [] } },
+  { type: 'comparison_vs', label: 'Comparaison VS', icon: '⚔️', description: 'Tableau NOUS vs EUX avec colonne mise en évidence', category: 'Social Proof', defaultProps: { title: 'Pourquoi nous ?', our_label: 'NOUS', competitor_label: 'EUX', accent_color: '#6366f1', bg_color: '#FFFFFF', highlight_our_column: true, rows: [{ feature: 'Qualité premium', us: true, them: false }, { feature: 'Service client', us: true, them: false }] } },
+  { type: 'whats_in_box', label: 'Contenu du Colis', icon: '📦', description: 'Image + liste à puces de ce qu\'il y a dans la boîte', category: 'Produits', defaultProps: { title: 'Dans le colis :', text: '✓ Produit principal\n✓ Notice d\'utilisation\n✓ Cadeau offert', image_position: 'left', bg_color: '#FFF5F3', text_color: '#1A1A2E', padding: 48, show_cta: false } },
+  { type: 'faq_2col', label: 'FAQ 2 Colonnes', icon: '❓', description: 'FAQ accordéon en 2 colonnes', category: 'Info', defaultProps: { title: 'FAQ', accent_color: '#6366f1', bg_color: '#FFFFFF', items: [{ id: 'f1', question: 'Question 1 ?', answer: 'Réponse 1...' }, { id: 'f2', question: 'Question 2 ?', answer: 'Réponse 2...' }] } },
+
+  // Sections supplémentaires avec renderers existants
+  { type: 'testimonials_floating', label: 'Témoignages flottants', icon: '💬', description: 'Avis clients avec effet flottant', category: 'Social Proof', defaultProps: { title: 'Ce que disent nos clients', bg_color: '#FFFFFF', items: [] } },
+  { type: 'video', label: 'Vidéo', icon: '🎬', description: 'Section vidéo YouTube ou MP4', category: 'Contenu', defaultProps: DEFAULT_VIDEO_PROPS },
+  { type: 'product_grid', label: 'Grille produits', icon: '🏷️', description: 'Catalogue de produits en grille', category: 'Produits', defaultProps: DEFAULT_PRODUCT_GRID_PROPS },
+  { type: 'upsell_carousel', label: 'Carousel upsell', icon: '🎠', description: 'Suggestions de produits complémentaires', category: 'Produits', defaultProps: DEFAULT_UPSELL_CAROUSEL_PROPS },
+  { type: 'expert_encart', label: 'Encart Expert', icon: '👨‍⚕️', description: 'Recommandation d\'un expert ou médecin', category: 'Social Proof', defaultProps: DEFAULT_EXPERT_ENCART_PROPS },
+  { type: 'circular_ingredients', label: 'Ingrédients circulaires', icon: '🧪', description: 'Cercle d\'ingrédients avec descriptions', category: 'Contenu', defaultProps: DEFAULT_CIRCULAR_INGREDIENTS_PROPS },
+  { type: 'hotspots', label: 'Points interactifs', icon: '📍', description: 'Image avec points cliquables', category: 'Contenu', defaultProps: { title: 'Découvrez', image_url: '', hotspots: [], padding: 48 } },
+  { type: 'parallax', label: 'Parallax', icon: '🏔️', description: 'Section avec effet parallaxe au scroll', category: 'Contenu', defaultProps: { title: 'Titre', subtitle: 'Sous-titre', bg_image: '', overlay_opacity: 40, padding: 48 } },
 ]
 
 // ============================================

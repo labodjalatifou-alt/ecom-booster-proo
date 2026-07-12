@@ -356,6 +356,7 @@ export default function Editor({ storeId, storeName, storeSlug, storeStatus = 'd
               onSelectBlock={(id) => { setSelectedBlockId(id); setSidebarOpen(false) }}
               onToggleVisibility={toggleBlockVisibility}
               onDeleteBlock={deleteBlock}
+              onDuplicateBlock={duplicateBlock}
               onAddBlock={addBlock}
               onReorder={reorderBlocks}
               themeSettings={themeSettings}
@@ -387,6 +388,7 @@ export default function Editor({ storeId, storeName, storeSlug, storeStatus = 'd
                 onSelectBlock={(id) => { setSelectedBlockId(id); setSidebarOpen(false) }}
                 onToggleVisibility={toggleBlockVisibility}
                 onDeleteBlock={deleteBlock}
+                onDuplicateBlock={duplicateBlock}
                 onAddBlock={addBlock}
                 onReorder={reorderBlocks}
                 themeSettings={themeSettings}

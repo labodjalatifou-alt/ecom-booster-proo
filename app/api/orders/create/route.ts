@@ -85,19 +85,24 @@ export async function POST(request: Request) {
       console.error('Erreur catch insertion notifications:', notifErr)
     }
 
-    sendPushNotification({
-      role: 'CLOSER',
-      title: 'Nouvelle commande à confirmer ☎️',
-      body: `${customerName} (${city}) attend votre appel.`,
-      url: '/interface-closer',
-    }).catch(console.error)
-
-    sendPushNotification({
-      role: 'ADMIN',
-      title: 'Nouvelle commande boutique 🛍️',
-      body: msg,
-      url: '/commandes',
-    }).catch(console.error)
+    Promise.allSettled([
+      sendPushNotification({
+        role: 'CLOSER',
+        title: 'Nouvelle commande à confirmer ☎️',
+        body: `${customerName} (${city}) attend votre appel.`,
+        url: '/interface-closer',
+      }),
+      sendPushNotification({
+        role: 'ADMIN',
+        title: 'Nouvelle commande boutique 🛍️',
+        body: msg,
+        url: '/commandes',
+      }),
+    ]).then(results => {
+      results.forEach((r, i) => {
+        if (r.status === 'rejected') console.error(`Push notification ${i} failed:`, r.reason)
+      })
+    })
 
     return NextResponse.json({ success: true, orderId: orderIdStr })
   } catch (err: any) {

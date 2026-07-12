@@ -794,6 +794,100 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
             />
           </>
         )
+      case 'hero_editorial':
+        return (
+          <>
+            <PaddingFields />
+            <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
+            <TextareaField label="Contenu éditorial" value={s.content} onChange={v => update('content', v)} rows={6} />
+            <SelectField label="Alignement" value={s.text_align || 'center'} options={['left', 'center', 'right']} onChange={v => update('text_align', v)} />
+            <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+            <ColorField label="Couleur texte" value={s.text_color} onChange={v => update('text_color', v)} />
+            <SliderField label="Taille titre (px)" value={s.title_font_size ?? 28} onChange={v => update('title_font_size', v)} min={16} max={56} />
+          </>
+        )
+      case 'feature_grid':
+        return (
+          <>
+            <PaddingFields />
+            <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
+            <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+            <ColorField label="Couleur icônes" value={s.icon_color} onChange={v => update('icon_color', v)} />
+            <ItemsListField
+              label="Fonctionnalités" value={s.items} onChange={v => update('items', v)}
+              itemSchema={[
+                { type: 'text', id: 'icon', label: 'Icône (emoji)' },
+                { type: 'text', id: 'title', label: 'Titre' },
+                { type: 'text', id: 'text', label: 'Texte' },
+              ] as FieldSchema[]}
+            />
+          </>
+        )
+      case 'comparison_vs':
+        return (
+          <>
+            <PaddingFields />
+            <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
+            <TextField label="Notre colonne" value={s.our_label || 'NOUS'} onChange={v => update('our_label', v)} />
+            <TextField label="Colonne concurrent" value={s.competitor_label || 'EUX'} onChange={v => update('competitor_label', v)} />
+            <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+            <ColorField label="Couleur accent" value={s.accent_color} onChange={v => update('accent_color', v)} />
+            <ItemsListField
+              label="Lignes comparaison" value={s.rows} onChange={v => update('rows', v)}
+              itemSchema={[
+                { type: 'text', id: 'feature', label: 'Fonctionnalité' },
+                { type: 'toggle', id: 'us', label: 'Nous ✓' },
+                { type: 'toggle', id: 'them', label: 'Eux ✓' }
+              ] as FieldSchema[]}
+            />
+          </>
+        )
+      case 'whats_in_box':
+        return (
+          <>
+            <PaddingFields />
+            <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
+            <TextareaField label="Contenu (liste à puces ✓)" value={s.text} onChange={v => update('text', v)} rows={6} />
+            <ImageUploadField label="Image du colis" value={s.image_url} onChange={v => update('image_url', v)} />
+            <SelectField label="Position image" value={s.image_position || 'left'} options={['left', 'right']} onChange={v => update('image_position', v)} />
+            <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+            <ColorField label="Couleur texte" value={s.text_color} onChange={v => update('text_color', v)} />
+          </>
+        )
+      case 'faq_2col':
+        return (
+          <>
+            <PaddingFields />
+            <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
+            <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+            <ColorField label="Couleur accent" value={s.accent_color} onChange={v => update('accent_color', v)} />
+            <ItemsListField
+              label="Questions" value={s.items} onChange={v => update('items', v)}
+              itemSchema={[
+                { type: 'text', id: 'question', label: 'Question' },
+                { type: 'textarea', id: 'answer', label: 'Réponse' }
+              ] as FieldSchema[]}
+            />
+          </>
+        )
+      case 'product_grid':
+        return (
+          <>
+            <PaddingFields />
+            <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
+            <SelectField label="Colonnes" value={s.columns || 3} options={['1', '2', '3', '4']} onChange={v => update('columns', parseInt(v))} />
+            <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+            <ColorField label="Couleur icônes" value={s.icon_color} onChange={v => update('icon_color', v)} />
+            <ItemsListField
+              label="Produits" value={s.items} onChange={v => update('items', v)}
+              itemSchema={[
+                { type: 'text', id: 'icon', label: 'Icône' },
+                { type: 'text', id: 'title', label: 'Nom' },
+                { type: 'text', id: 'text', label: 'Description' },
+              ] as FieldSchema[]}
+            />
+          </>
+        )
       default:
         return (
           <div className="text-sm text-gray-500">
