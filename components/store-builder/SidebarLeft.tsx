@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Eye, EyeOff, MoreVertical, Plus, Trash2, Edit3, X, Palette, LayoutTemplate, ChevronUp, ChevronDown, GripVertical, Copy } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { Eye, EyeOff, MoreVertical, Plus, Trash2, Edit3, X, Palette, LayoutTemplate, ChevronUp, ChevronDown, GripVertical, Copy, Search, Layers } from 'lucide-react'
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd'
 import type { EditorData, EditorBlock } from './Editor'
 import ColorField from './fields/ColorField'
@@ -65,7 +65,23 @@ export default function SidebarLeft({
   themeFocusMode = false,
 }: SidebarLeftProps) {
   const [showCatalog, setShowCatalog] = useState(false)
+  const [catalogSearch, setCatalogSearch] = useState('')
   const [contextMenuBlock, setContextMenuBlock] = useState<{ id: string, type: 'header' | 'template' | 'footer' } | null>(null)
+
+  const filteredCatalog = useMemo(() => {
+    if (!catalogSearch.trim()) return dynamicCatalog
+    const q = catalogSearch.toLowerCase().trim()
+    return dynamicCatalog.map(cat => ({
+      ...cat,
+      items: cat.items.filter((item: any) =>
+        item.title.toLowerCase().includes(q) ||
+        item.description.toLowerCase().includes(q) ||
+        cat.title.toLowerCase().includes(q)
+      )
+    })).filter(cat => cat.items.length > 0)
+  }, [catalogSearch])
+
+  const totalSections = dynamicCatalog.reduce((sum, cat) => sum + cat.items.length, 0)
 
   const updateTheme = (key: string, value: any) => onUpdateThemeSettings({ ...themeSettings, [key]: value })
 
@@ -283,10 +299,17 @@ export default function SidebarLeft({
         ) : (
           <div className="flex-1 overflow-y-auto p-5 custom-scrollbar bg-gray-50/30">
             {/* ── Sélecteur de thème ── */}
-            <h3 className="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wide">Thème prédéfini</h3>
-            <div className="flex gap-2 mb-5 flex-wrap">
+            <h3 className="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wide">🎨 Thème prédéfini</h3>
+            <div className="grid grid-cols-2 gap-2 mb-5">
               {STORE_THEMES.map((theme) => {
                 const isActive = themeSettings.primaryColor === theme.colors.accent
+                const previewColors = [
+                  theme.colors.accent,
+                  theme.colors.bg,
+                  theme.colors.accent_deep,
+                  theme.colors.gold,
+                  theme.colors.surface,
+                ]
                 return (
                   <button
                     key={theme.id}
@@ -303,16 +326,34 @@ export default function SidebarLeft({
                       border: theme.colors.border,
                       surface: theme.colors.surface,
                     })}
-                    className={`flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all ${
-                      isActive ? 'border-current shadow-md' : 'border-transparent hover:border-gray-200'
+                    className={`relative flex flex-col items-start gap-2 p-3 rounded-xl border-2 transition-all text-left ${
+                      isActive ? 'shadow-lg scale-[1.02]' : 'hover:shadow-sm'
                     }`}
-                    style={{ borderColor: isActive ? theme.colors.accent : undefined }}
+                    style={{ 
+                      borderColor: isActive ? theme.colors.accent : '#e5e7eb',
+                      background: isActive ? `${theme.colors.accent}08` : '#ffffff',
+                    }}
                   >
-                    <span
-                      className="w-8 h-8 rounded-full shadow-sm border-2 border-white"
-                      style={{ backgroundColor: theme.preview_color }}
-                    />
-                    <span className="text-[10px] text-gray-600 font-medium leading-tight text-center max-w-[52px]">{theme.name}</span>
+                    {/* Palette preview */}
+                    <div className="flex items-center gap-1.5">
+                      {previewColors.map((c, i) => (
+                        <span
+                          key={i}
+                          className="w-4 h-4 rounded-full border border-white/60 shadow-sm"
+                          style={{ backgroundColor: c }}
+                        />
+                      ))}
+                    </div>
+                    <div className="w-full">
+                      <span className="text-xs font-bold block" style={{ color: theme.colors.text }}>
+                        {theme.name}
+                      </span>
+                    </div>
+                    {isActive && (
+                      <span className="absolute top-2 right-2 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full text-white" style={{ background: theme.colors.accent }}>
+                        Actif
+                      </span>
+                    )}
                   </button>
                 )
               })}
@@ -378,38 +419,78 @@ export default function SidebarLeft({
           </div>
         )}
 
-      {/* CATALOG — overlay plein panneau, caché proprement */}
+      {/* CATALOG — overlay plein panneau */}
       {showCatalog && (
         <>
-          <div className="absolute inset-0 bg-black/20 z-20" onClick={() => setShowCatalog(false)} />
-          <div className="absolute inset-0 bg-white z-30 flex flex-col animate-drawer-left">
-            <div className="p-4 border-b border-gray-100 flex items-center justify-between shrink-0">
-              <h2 className="font-bold text-sm text-gray-800">Catalogue de sections</h2>
-              <button onClick={() => setShowCatalog(false)} className="p-1 hover:bg-gray-100 rounded-md text-gray-500">
-                <X size={18} />
-              </button>
+          <div className="absolute inset-0 bg-black/20 z-20" onClick={() => { setShowCatalog(false); setCatalogSearch('') }} />
+          <div className="absolute inset-0 bg-white z-30 flex flex-col">
+            {/* Header + Search */}
+            <div className="p-4 border-b border-gray-100 shrink-0">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-bold text-sm text-gray-800 flex items-center gap-2">
+                  <Layers size={16} /> Catalogue <span className="text-gray-400 font-normal text-xs">({totalSections} sections)</span>
+                </h2>
+                <button onClick={() => { setShowCatalog(false); setCatalogSearch('') }} className="p-1.5 hover:bg-gray-100 rounded-md text-gray-400">
+                  <X size={18} />
+                </button>
+              </div>
+              <div className="relative">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  value={catalogSearch}
+                  onChange={e => setCatalogSearch(e.target.value)}
+                  placeholder="Rechercher une section…"
+                  className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:border-blue-400 focus:bg-white focus:shadow-sm transition-all"
+                  autoFocus
+                />
+              </div>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-gray-50/50 min-h-0">
-              {dynamicCatalog.map((category, idx) => (
-                <div key={idx} className="mb-6">
-                  <h3 className="text-xs font-bold text-gray-500 mb-3 uppercase tracking-wide">{category.title}</h3>
-                  <div className="grid grid-cols-1 gap-2">
-                    {category.items.map((item: any, itemIdx: number) => (
-                      <button
-                        key={itemIdx}
-                        onClick={() => {
-                          onAddBlock(item.type, item.title, item.defaultSettings)
-                          setShowCatalog(false)
-                        }}
-                        className="w-full text-left p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:border-blue-400 hover:shadow transition-all group"
-                      >
-                        <span className="text-sm font-medium text-gray-700 group-hover:text-blue-700 block mb-0.5">{item.icon} {item.title}</span>
-                        <span className="text-xs text-gray-400 block truncate">{item.description}</span>
-                      </button>
-                    ))}
+
+            {/* Liste des sections */}
+            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar min-h-0">
+              {filteredCatalog.map((category, idx) => (
+                <div key={idx} className="mb-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">{category.title}</h3>
+                    <span className="text-[10px] text-gray-300 font-medium">({category.items.length})</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {category.items.map((item: any, itemIdx: number) => {
+                      const catColors: Record<string, string> = {
+                        Marketing: 'from-violet-50 to-violet-100/50 border-violet-200 hover:border-violet-400',
+                        Contenu: 'from-blue-50 to-blue-100/50 border-blue-200 hover:border-blue-400',
+                        Produits: 'from-emerald-50 to-emerald-100/50 border-emerald-200 hover:border-emerald-400',
+                        'Social Proof': 'from-amber-50 to-amber-100/50 border-amber-200 hover:border-amber-400',
+                        Info: 'from-cyan-50 to-cyan-100/50 border-cyan-200 hover:border-cyan-400',
+                        Structure: 'from-gray-50 to-gray-100/50 border-gray-200 hover:border-gray-400',
+                      }
+                      const bgGrad = catColors[category.title] || 'from-gray-50 to-gray-100/50 border-gray-200 hover:border-gray-400'
+                      return (
+                        <button
+                          key={itemIdx}
+                          onClick={() => {
+                            onAddBlock(item.type, item.title, item.defaultSettings)
+                            setShowCatalog(false)
+                            setCatalogSearch('')
+                          }}
+                          className={`w-full text-left p-2.5 bg-gradient-to-br ${bgGrad} border rounded-lg transition-all group`}
+                        >
+                          <span className="text-sm font-semibold text-gray-700 block leading-tight">{item.icon} {item.title}</span>
+                          <span className="text-[10px] text-gray-400 block mt-0.5 leading-tight line-clamp-2">{item.description}</span>
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
               ))}
+              {filteredCatalog.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+                  <Search size={32} className="mb-3 opacity-50" />
+                  <p className="text-sm font-medium">Aucune section trouvée</p>
+                  <p className="text-xs mt-1">Essayez un autre mot-clé</p>
+                </div>
+              )}
             </div>
           </div>
         </>

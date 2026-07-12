@@ -476,6 +476,7 @@ export const SECTIONS_CATALOG: SectionCatalogItem[] = [
   { type: 'circular_ingredients', label: 'Ingrédients circulaires', icon: '🧪', description: 'Cercle d\'ingrédients avec descriptions', category: 'Contenu', defaultProps: DEFAULT_CIRCULAR_INGREDIENTS_PROPS },
   { type: 'hotspots', label: 'Points interactifs', icon: '📍', description: 'Image avec points cliquables', category: 'Contenu', defaultProps: { title: 'Découvrez', image_url: '', hotspots: [], padding: 48 } },
   { type: 'parallax', label: 'Parallax', icon: '🏔️', description: 'Section avec effet parallaxe au scroll', category: 'Contenu', defaultProps: { title: 'Titre', subtitle: 'Sous-titre', bg_image: '', overlay_opacity: 40, padding: 48 } },
+  { type: 'popup', label: 'Pop-up promo', icon: '🪟', description: 'Fenêtre modale avec offre', category: 'Marketing', defaultProps: { title: 'Offre spéciale', text: 'Profitez de -20% aujourd\'hui !', btn_text: 'Je profite', bg_color: '#1f2937', btn_color: '#f59e0b', delay: 3, show_cta: true } },
 ]
 
 // ============================================
