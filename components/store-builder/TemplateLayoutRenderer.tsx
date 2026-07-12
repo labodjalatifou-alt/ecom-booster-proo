@@ -38,21 +38,23 @@ const LAYOUT_CSS = `
     .landing-hero--split .landing-hero-split-grid {
       flex-direction: row;
       align-items: stretch;
-      gap: 0;
-      padding: 0;
+      gap: 24px;
+      padding: 24px;
     }
     .landing-hero--split .landing-hero-split-gallery {
       flex: 0 0 48%;
       min-width: 0;
       position: sticky;
-      top: 0;
-      max-height: 100vh;
+      top: 24px;
+      max-height: calc(100vh - 48px);
+      overflow: hidden;
+      border-radius: 12px;
       overflow: hidden;
     }
     .landing-hero--split .landing-hero-split-buy {
       flex: 1 1 52%;
       min-width: 0;
-      padding: 24px 32px;
+      padding: 8px 16px;
       display: flex;
       flex-direction: column;
     }
@@ -65,6 +67,7 @@ const LAYOUT_CSS = `
   .landing-hero--split.force-mobile .landing-hero-split-gallery {
     position: static !important;
     max-height: none !important;
+    border-radius: 0 !important;
   }
   .landing-hero--split.force-mobile .landing-hero-split-buy {
     padding: 16px !important;
@@ -82,16 +85,17 @@ const LAYOUT_CSS = `
       display: flex;
       flex-direction: row;
       align-items: stretch;
-      gap: 0;
-      padding: 0;
+      gap: 24px;
+      padding: 24px;
     }
     .landing-hero--triple .landing-hero-triple-gallery-col {
       flex: 0 0 48%;
       min-width: 0;
       position: sticky;
-      top: 0;
-      max-height: 100vh;
+      top: 24px;
+      max-height: calc(100vh - 48px);
       overflow: hidden;
+      border-radius: 12px;
     }
     .landing-hero--triple .landing-hero-triple-right-col {
       flex: 1 1 52%;
@@ -99,7 +103,7 @@ const LAYOUT_CSS = `
       display: flex;
       flex-direction: column;
       gap: 16px;
-      padding: 24px 32px;
+      padding: 8px 16px;
     }
     .landing-hero--triple .landing-hero-triple-mobile {
       display: none;
