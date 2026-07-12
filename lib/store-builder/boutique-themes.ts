@@ -164,6 +164,160 @@ export const BOUTIQUE_THEMES: BoutiqueTheme[] = [
     },
     fonts: { display: "'Outfit', sans-serif", body: "'Inter', sans-serif" },
   },
+
+  // ── 6. CLASSIC — Polyvalent, épuré, conversion équilibrée ───────────
+  {
+    id: 'classic',
+    name: 'Classic',
+    description: 'Polyvalent — layout hero-split, neutre élégant, idéal multi-catégories.',
+    tags: ['polyvalent', 'propre', 'équilibré'],
+    preview_image: '/themes/classic-preview.jpg',
+    layout: 'hero-split',
+    cardMaxWidth: 1100,
+    colors: {
+      bg: '#FAFAFA',
+      surface: '#FFFFFF',
+      text: '#1F2937',
+      text_soft: '#6B7280',
+      accent: '#3B82F6',
+      accent_deep: '#2563EB',
+      gold: '#F59E0B',
+      border: '#E5E7EB',
+    },
+    fonts: { display: "'Inter', sans-serif", body: "'Inter', sans-serif" },
+  },
+
+  // ── 7. HOME — Meubles & Déco, lifestyle, ambiance ──────────────────
+  {
+    id: 'home',
+    name: 'Home',
+    description: 'Meubles & Déco — ambiance lifestyle, grandes images, ton chaud, éditorial.',
+    tags: ['meubles', 'déco', 'lifestyle', 'chaleureux'],
+    preview_image: '/themes/home-preview.jpg',
+    layout: 'hero-split',
+    cardMaxWidth: 1200,
+    colors: {
+      bg: '#FDFBF7',
+      surface: '#FFFFFF',
+      text: '#2D2A26',
+      text_soft: '#78716C',
+      accent: '#A16207',
+      accent_deep: '#854D0E',
+      gold: '#D4A843',
+      border: '#E7E5E4',
+    },
+    fonts: { display: "'Playfair Display', serif", body: "'DM Sans', sans-serif" },
+  },
+
+  // ── 8. JEWELS — Bijoux & Luxe, élégant, serif, doré ─────────────────
+  {
+    id: 'jewels',
+    name: 'Jewels',
+    description: 'Bijoux & Luxe — élégance serif, or/ivoire, haute conversion, trust maximal.',
+    tags: ['bijoux', 'luxe', 'premium', 'élégant'],
+    preview_image: '/themes/jewels-preview.jpg',
+    layout: 'hero-split',
+    cardMaxWidth: 1000,
+    colors: {
+      bg: '#FAF9F7',
+      surface: '#FFFFFF',
+      text: '#1C1917',
+      text_soft: '#78716C',
+      accent: '#92400E',
+      accent_deep: '#78350F',
+      gold: '#D4AF37',
+      border: '#E7E5E4',
+    },
+    fonts: { display: "'Cormorant Garamond', serif", body: "'Inter', sans-serif" },
+  },
+
+  // ── 9. MOVE — Sportwear technique, dynamique, dark/accents ───────────
+  {
+    id: 'move',
+    name: 'Move',
+    description: 'Sportwear technique — dark mode, accents vifs, urgence, performance.',
+    tags: ['sport', 'technique', 'dynamic', 'performance'],
+    preview_image: '/themes/move-preview.jpg',
+    layout: 'hero-triple',
+    cardMaxWidth: 1100,
+    colors: {
+      bg: '#0F172A',
+      surface: '#1E293B',
+      text: '#F1F5F9',
+      text_soft: '#94A3B8',
+      accent: '#22D3EE',
+      accent_deep: '#06B6D4',
+      gold: '#FBBF24',
+      border: '#334155',
+    },
+    fonts: { display: "'Space Grotesk', sans-serif", body: "'Inter', sans-serif" },
+  },
+
+  // ── 10. SKIN — Soins & Cosmétiques, clean, clinique, confiance ────────
+  {
+    id: 'skin',
+    name: 'Skin',
+    description: 'Soins & Cosmétiques — clinique, propre, confiance scientifique, avant/après.',
+    tags: ['soins', 'cosmétiques', 'clinique', 'confiance'],
+    preview_image: '/themes/skin-preview.jpg',
+    layout: 'hero-split',
+    cardMaxWidth: 1100,
+    colors: {
+      bg: '#F8FAFC',
+      surface: '#FFFFFF',
+      text: '#0F172A',
+      text_soft: '#475569',
+      accent: '#0D9488',
+      accent_deep: '#0F766E',
+      gold: '#F59E0B',
+      border: '#E2E8F0',
+    },
+    fonts: { display: "'Plus Jakarta Sans', sans-serif", body: "'Inter', sans-serif" },
+  },
+
+  // ── 11. SLEEP — Literie & Sommeil, apaisant, doux, nocturne ──────────
+  {
+    id: 'sleep',
+    name: 'Sleep',
+    description: 'Literie & Sommeil — apaisant, tons nuit, douceur, rêve, confiance.',
+    tags: ['literie', 'sommeil', 'apaisant', 'doux'],
+    preview_image: '/themes/sleep-preview.jpg',
+    layout: 'hero-split',
+    cardMaxWidth: 1100,
+    colors: {
+      bg: '#F0F4F8',
+      surface: '#FFFFFF',
+      text: '#1E293B',
+      text_soft: '#64748B',
+      accent: '#6366F1',
+      accent_deep: '#4F46E5',
+      gold: '#F59E0B',
+      border: '#E2E8F0',
+    },
+    fonts: { display: "'DM Serif Display', serif", body: "'DM Sans', sans-serif" },
+  },
+
+  // ── 12. SUPPLEMENT — Compléments alimentaires, santé, urgence COD ─────
+  {
+    id: 'supplement',
+    name: 'Supplement',
+    description: 'Compléments alimentaires — santé, urgence COD, preuves sociales, conversion max.',
+    tags: ['suppléments', 'santé', 'COD', 'conversion', 'afrique'],
+    preview_image: '/themes/supplement-preview.jpg',
+    layout: 'single-column',
+    cardMaxWidth: 720,
+    colors: {
+      bg: '#FFF8F7',
+      surface: '#FFFFFF',
+      text: '#1A0505',
+      text_soft: '#7A3030',
+      accent: '#D4180A',
+      accent_deep: '#A01006',
+      gold: '#F59E0B',
+      border: '#FDD5D0',
+    },
+    fonts: { display: "'Bebas Neue', cursive", body: "'Roboto', sans-serif" },
+  },
 ]
 
 export const DEFAULT_BOUTIQUE_THEME = BOUTIQUE_THEMES[0]
@@ -830,12 +984,213 @@ function buildCora(c: BoutiqueThemeColors, name: string) {
   }
 }
 
+// ── Builders pour les nouveaux thèmes FullStack ─────────────────────────────
+
+function buildClassic(c: BoutiqueThemeColors, name: string) {
+  return {
+    header: [
+      block('AnnouncementBar', "Barre d'annonce", {
+        text: '🚚 Livraison gratuite dès 50 000 FCFA · Paiement à la livraison · Satisfait ou remboursé',
+        bg_color: '#1e1b4b',
+        text_color: '#ffffff',
+      }, 'h1'),
+      block('Header', 'En-tête', {
+        logo_text: name,
+        logo_position: 'center',
+        show_search: true,
+        show_cart: true,
+        bg_color: '#ffffff',
+        text_color: c.text,
+      }, 'h2'),
+    ],
+    template: [
+      block('Galerie', "Galerie d'images", { gallery_style: 'grid', image_ratio: '1/1', show_thumbnails: true, enable_zoom: true }, 't1'),
+      block('Titre', 'Titre produit', { tag: 'h1', font_size: 32, font_weight: 'bold', text_align: 'left', padding_top: 24, padding_bottom: 8 }, 't2'),
+      block('Note de produit', 'Note', { rating: 5, reviews_count: '2 000+ avis', star_color: c.gold, text_align: 'left' }, 't3'),
+      block('Prix', 'Prix', { show_badge: true, badge_text: 'BEST SELLER', badge_bg: c.accent, badge_text_color: '#FFFFFF', price_color: c.accent }, 't4'),
+      block('benefits', 'Avantages', { layout: 'checklist', bg_color: '#FFFFFF', text_color: c.text, icon_color: c.accent, items: [{ id: '1', icon: '✓', title: 'Livraison rapide 2-5j' }, { id: '2', icon: '✓', title: 'Paiement à la livraison' }, { id: '3', icon: '✓', title: 'Retour gratuit 30j' }, { id: '4', icon: '✓', title: 'Support 24/7' }] }, 't5'),
+      block('OrderForm', 'Formulaire commande', { title: 'Finaliser ma commande', btn_text: 'COMMANDER MAINTENANT', btn_color: c.accent, btn_text_color: '#FFFFFF', btn_width: 'full', bundles_enabled: true, bundle_layout: 'deals', bundles: [{ id: 'b1', qty: 1, label: '1 unité', sublabel: '', badge: '', discount_pct: 0, discount_fixed: 0, popular: false, hidden: false }, { id: 'b2', qty: 2, label: '2 unités', sublabel: 'Économisez 15%', badge: 'POPULAIRE', discount_pct: 15, discount_fixed: 0, popular: true, hidden: false }, { id: 'b3', qty: 3, label: '3 unités', sublabel: 'Meilleure offre -25%', badge: 'MEILLEUR PRIX', discount_pct: 25, discount_fixed: 0, popular: false, hidden: false }], border_color: c.border, border_radius: 12, show_payment_icons: true }, 't6'),
+      block('trust_bar', 'Barre confiance', { show_score: true, score: '4.9', score_label: '2 000+ avis vérifiés', bg_color: c.surface, icon_color: c.accent, items: [{ icon: 'shield', label: 'Paiement sécurisé' }, { icon: 'truck', label: 'Livraison 48h' }, { icon: 'lock', label: 'Données protégées' }] }, 't7'),
+      block('Description', 'Description', {}, 't8'),
+      block('before_after', 'Avant / Après', { title: 'Résultats visibles', bg_color: c.surface }, 't9'),
+      block('icon_grid', 'Étapes', { title: 'Simple en 3 étapes', columns: 3, bg_color: c.surface, icon_color: c.accent, items: [{ id: '1', icon: '1️⃣', title: 'Commander', description: 'Remplissez le formulaire' }, { id: '2', icon: '2️⃣', title: 'Confirmer', description: 'Nous vous appelons' }, { id: '3', icon: '3️⃣', title: 'Recevoir', description: 'Paiement à la livraison' }] }, 't10'),
+      block('testimonials', 'Témoignages', { title: 'Ils nous font confiance', layout: 'grid', bg_color: c.bg, items: [{ id: '1', name: 'Aminata K.', rating: 5, text: 'Livraison rapide, produit conforme.', verified: true }, { id: '2', name: 'Moussa D.', rating: 5, text: 'Service client au top.', verified: true }, { id: '3', name: 'Fatou B.', rating: 5, text: 'Je recommande à 100%.', verified: true }] }, 't11'),
+      block('guarantees', 'Garanties', { title: '', layout: 'row', style: 'icons', bg_color: c.surface, icon_color: c.accent, items: [{ id: '1', icon: '🛡️', title: 'Paiement sécurisé', text: '' }, { id: '2', icon: '📦', title: 'Livraison offerte', text: '' }, { id: '3', icon: '↩️', title: 'Retour 30j', text: '' }, { id: '4', icon: '💵', title: 'Paiement à la livraison', text: '' }] }, 't12'),
+      block('faq', 'FAQ', { title: 'Questions fréquentes', accent_color: c.accent, bg_color: c.surface, items: [{ id: '1', question: '💳 Paiement à la livraison ?', answer: 'Oui, vous payez uniquement à la réception.' }, { id: '2', question: '📦 Délais de livraison ?', answer: '2 à 5 jours selon votre ville.' }, { id: '3', question: '🔄 Retours ?', answer: 'Retour gratuit sous 30 jours.' }] }, 't13'),
+    ],
+    footer: [
+      block('Footer', 'Pied de page', { logo_text: name, copyright: `© ${new Date().getFullYear()} ${name}. Tous droits réservés.`, bg_color: '#1e1b4b', text_color: '#9ca3af', show_newsletter: true, newsletter_title: 'Rejoignez-nous & profitez d\'offres exclusives 🔔' }, 'f1'),
+    ],
+  }
+}
+
+function buildHome(c: BoutiqueThemeColors, name: string) {
+  return {
+    header: [
+      block('AnnouncementBar', "Barre d'annonce", { text: '🏠 Bienvenue chez vous — Livraison offerte dès 75 000 FCFA', bg_color: '#166534', text_color: '#dcfce7', bar_height: 40, font_size: 13 }, 'h1'),
+      block('Header', 'En-tête', { logo_text: name, logo_position: 'left', show_search: true, show_cart: true, bg_color: '#ffffff', text_color: c.text, nav_items: ['Nouveautés', 'Canapés', 'Tables', 'Chambre', 'Déco', 'Soldes'] }, 'h2'),
+    ],
+    template: [
+      block('Galerie', "Galerie d'images", { gallery_style: 'grid', image_ratio: '4/3', show_thumbnails: true, enable_zoom: true }, 't1'),
+      block('Titre', 'Titre produit', { tag: 'h1', font_size: 36, font_weight: 'bold', text_align: 'left', padding_top: 24, padding_bottom: 8 }, 't2'),
+      block('Note de produit', 'Note', { rating: 4.9, reviews_count: '1 200+ avis', star_color: c.gold, text_align: 'left' }, 't3'),
+      block('Prix', 'Prix', { show_badge: true, badge_text: 'NOUVEAU', badge_bg: c.accent, badge_text_color: '#FFFFFF', price_color: c.accent }, 't4'),
+      block('benefits', 'Pourquoi nous', { layout: 'checklist', bg_color: '#F0FDF4', text_color: c.text, icon_color: c.accent, items: [{ id: '1', icon: '🛋️', title: 'Confort premium' }, { id: '2', icon: '🌿', title: 'Matériaux durables' }, { id: '3', icon: '🚚', title: 'Livraison gratuite' }, { id: '4', icon: '🔧', title: 'Garantie 5 ans' }] }, 't5'),
+      block('OrderForm', 'Formulaire commande', { title: '', btn_text: 'COMMANDER', btn_color: c.accent, btn_text_color: '#FFFFFF', btn_width: 'full', bundles_enabled: true, bundle_layout: 'cards', bundles: [{ id: 'b1', qty: 1, label: 'Standard', sublabel: '', badge: '', discount_pct: 0, discount_fixed: 0, popular: false, hidden: false }, { id: 'b2', qty: 2, label: 'Pack Duo', sublabel: 'Économisez 20%', badge: '🔥 POPULAIRE', discount_pct: 20, discount_fixed: 0, popular: true, hidden: false }], border_color: c.border, border_radius: 12, show_payment_icons: true }, 't6'),
+      block('image_text', 'Notre histoire', { title: 'Pourquoi choisir ' + name + ' ?', text: 'Des meubles pensés pour durer, conçus avec des matériaux nobles et respectueux de l\'environnement.', image_position: 'right', bg_color: c.surface, text_color: c.text, title_color: c.accent, padding: 64, image_border_radius: 12, show_cta: true, cta_text: 'Voir la collection', cta_color: c.accent }, 't7'),
+      block('icon_grid', 'Engagements', { title: '', columns: 4, bg_color: '#FFFFFF', icon_color: c.accent, items: [{ id: '1', icon: '🌿', title: 'Éco-responsable', text: 'Bois certifié FSC' }, { id: '2', icon: '🛠️', title: 'Artisanal', text: 'Fabriqué à la main' }, { id: '3', icon: '🔄', title: 'Évolutif', text: 'Modulable dans le temps' }, { id: '4', icon: '💚', title: 'Sain', text: 'Sans COV, sans formaldéhyde' }], padding: 48 }, 't8'),
+      block('testimonials', 'Avis clients', { title: 'Nos clients en parlent', layout: 'grid', bg_color: c.bg, items: [{ id: '1', name: 'Sophie M.', rating: 5, text: 'Canapé incroyablement confortable, livraison impeccable.', verified: true }, { id: '2', name: 'Thomas L.', rating: 5, text: 'Qualité au rendez-vous, on voit que c\'est fait pour durer.', verified: true }] }, 't9'),
+      block('guarantees', 'Garanties', { title: '', layout: 'row', bg_color: c.surface, icon_color: c.accent, items: [{ id: '1', icon: '🛡️', title: '5 ans garantie', text: '' }, { id: '2', icon: '🚚', title: 'Livraison offerte', text: '' }, { id: '3', icon: '🌿', title: 'Éco-responsable', text: '' }, { id: '4', icon: '🔄', title: 'Retour 30j', text: '' }] }, 't10'),
+      block('faq', 'FAQ', { title: 'Questions fréquentes', accent_color: c.accent, bg_color: c.surface, items: [{ id: '1', question: '🛋️ Comment choisir mon canapé ?', answer: 'Nos conseillers vous guident par téléphone ou chat.' }, { id: '2', question: '🚚 Livraison et installation ?', answer: 'Livraison gratuite, installation incluse sur RDV.' }, { id: '3', question: '🔄 Si ça ne va pas ?', answer: 'Retour gratuit sous 30 jours, on récupère tout.' }] }, 't11'),
+    ],
+    footer: [
+      block('Footer', 'Pied de page', { logo_text: name, copyright: `© ${new Date().getFullYear()} ${name}. Tous droits réservés.`, bg_color: '#14532d', text_color: '#86efac', show_newsletter: true, newsletter_title: 'Inscrivez-vous pour nos offres déco', columns: [{ title: name, links: ['Notre histoire', 'Showrooms', 'Presse', 'Carrières'] }, { title: 'Aide', links: ['Contact', 'Livraison', 'Retours', 'Garantie', 'FAQ'] }] }, 'f1'),
+    ],
+  }
+}
+
+function buildJewels(c: BoutiqueThemeColors, name: string) {
+  return {
+    header: [
+      block('AnnouncementBar', "Barre d'annonce", { text: '✨ Livraison offerte & écrin offert · Paiement 3x sans frais', bg_color: '#78350f', text_color: '#fef3c7', bar_height: 38, font_size: 12 }, 'h1'),
+      block('Header', 'En-tête', { logo_text: name, logo_position: 'center', show_search: false, show_cart: true, bg_color: '#fffbeb', text_color: c.text }, 'h2'),
+    ],
+    template: [
+      block('Galerie', "Galerie d'images", { gallery_style: 'grid', image_ratio: '1/1', show_thumbnails: true, enable_zoom: true }, 't1'),
+      block('Titre', 'Titre produit', { tag: 'h1', font_size: 32, font_weight: 'bold', text_align: 'center', padding_top: 24, padding_bottom: 8 }, 't2'),
+      block('Note de produit', 'Note', { rating: 5, reviews_count: '800+ avis', star_color: c.gold, text_align: 'center' }, 't3'),
+      block('Prix', 'Prix', { show_badge: true, badge_text: 'ÉDITION LIMITÉE', badge_bg: c.accent, badge_text_color: '#FFFFFF', price_color: c.accent }, 't4'),
+      block('benefits', 'Nos promesses', { layout: 'checklist', bg_color: '#FFF7ED', text_color: c.text, icon_color: c.accent, items: [{ id: '1', icon: '💎', title: 'Or 18 carats certifié' }, { id: '2', icon: '💍', title: 'Pierres naturelles' }, { id: '3', icon: '📦', title: 'Écrin luxe offert' }, { id: '4', icon: '🔒', title: 'Certificat d\'authenticité' }] }, 't5'),
+      block('OrderForm', 'Formulaire commande', { title: 'Réserver mon bijou', btn_text: 'RÉSERVER MAINTENANT', btn_color: c.accent, btn_text_color: '#FFFFFF', btn_width: 'full', bundles_enabled: false, border_color: c.border, border_radius: 16, show_payment_icons: true }, 't6'),
+      block('trust_bar', 'Confiance', { show_score: true, score: '5.0', score_label: 'Certifié joaillerie', bg_color: '#FFFFFF', icon_color: c.accent, items: [{ icon: 'shield', label: 'Or 750/1000' }, { icon: 'truck', label: 'Assuré & sécurisé' }, { icon: 'lock', label: 'Certificat inclus' }] }, 't7'),
+      block('image_text', 'Savoir-faire', { title: 'L\'art de la joaillerie', text: 'Chaque pièce est façonnée à la main dans nos ateliers par des artisans joailliers passionnés.', image_position: 'left', bg_color: '#FFF7ED', text_color: c.text, title_color: c.accent, padding: 64, image_border_radius: 12, show_cta: false }, 't8'),
+      block('icon_grid', 'Pierres', { title: 'Nos pierres d\'exception', columns: 3, bg_color: '#FFFFFF', icon_color: c.accent, items: [{ id: '1', icon: '💠', title: 'Diamant', text: 'Qualité VS/SI, couleur G-H' }, { id: '2', icon: '🔷', title: 'Saphir', text: 'Bleu royal de Ceylan' }, { id: '3', icon: '💚', title: 'Émeraude', text: 'Vert intense de Colombie' }], padding: 48 }, 't9'),
+      block('testimonials', 'Témoignages', { title: 'Leurs moments précieux', layout: 'list', bg_color: c.bg, items: [{ id: '1', name: 'Camille & Thomas', rating: 5, text: 'Alliance parfaite, service irréprochable. Merci pour ce moment.', verified: true }, { id: '2', name: 'Sophie R.', rating: 5, text: 'Bague de fiançailles sublime, elle a dit oui !', verified: true }] }, 't10'),
+      block('guarantees', 'Garanties', { title: '', layout: 'row', bg_color: c.surface, icon_color: c.gold, items: [{ id: '1', icon: '💎', title: 'Or 18K certifié', text: '' }, { id: '2', icon: '📜', title: 'Certificat GIA', text: '' }, { id: '3', icon: '📦', title: 'Écrin luxe offert', text: '' }, { id: '4', icon: '🔒', title: 'Assurance transport', text: '' }] }, 't11'),
+      block('faq', 'FAQ', { title: 'Vos questions', accent_color: c.accent, bg_color: '#FFFFFF', items: [{ id: '1', question: '💎 Comment choisir ma taille ?', answer: 'Guide des tailles offert, échange gratuit sous 14j.' }, { id: '2', question: '🔧 Entretien du bijou ?', answer: 'Nettoyage offert à vie dans nos ateliers.' }, { id: '3', question: '📦 Livraison sécurisée ?', answer: 'Transport assuré, signature requise, écrin discret.' }] }, 't12'),
+    ],
+    footer: [
+      block('Footer', 'Pied de page', { logo_text: name, copyright: `© ${new Date().getFullYear()} ${name}. Tous droits réservés.`, bg_color: '#1c1917', text_color: '#d6d3d1', show_newsletter: true, newsletter_title: 'Recevez nos créations en avant-première', columns: [{ title: name, links: ['Nos collections', 'Sur mesure', 'Atelier', 'Histoire'] }, { title: 'Services', links: ['Guide tailles', 'Entretien', 'Certificats', 'Assurance', 'Contact'] }] }, 'f1'),
+    ],
+  }
+}
+
+function buildMove(c: BoutiqueThemeColors, name: string) {
+  return {
+    header: [
+      block('AnnouncementBar', "Barre d'annonce", { text: '🏃‍♂️ Nouveau : Collection Running 2025 · Livraison 24h offerte', bg_color: '#dc2626', text_color: '#ffffff', bar_height: 36, font_size: 12 }, 'h1'),
+      block('Header', 'En-tête', { logo_text: name, logo_position: 'left', show_search: true, show_cart: true, bg_color: '#ffffff', text_color: c.text, nav_items: ['Running', 'Training', 'Outdoor', 'Accessoires', 'Soldes'] }, 'h2'),
+    ],
+    template: [
+      block('Galerie', "Galerie d'images", { gallery_style: 'grid', image_ratio: '1/1', show_thumbnails: true, enable_zoom: true }, 't1'),
+      block('Titre', 'Titre produit', { tag: 'h1', font_size: 32, font_weight: 'bold', text_align: 'left', padding_top: 24, padding_bottom: 8 }, 't2'),
+      block('Note de produit', 'Note', { rating: 5, reviews_count: '5 000+ avis', star_color: c.gold, text_align: 'left' }, 't3'),
+      block('Prix', 'Prix', { show_badge: true, badge_text: 'EDITION LIMITÉE', badge_bg: c.accent, badge_text_color: '#FFFFFF', price_color: c.accent }, 't4'),
+      block('benefits', 'Performance', { layout: 'checklist', bg_color: '#1E293B', text_color: '#F1F5F9', icon_color: c.accent, items: [{ id: '1', icon: '🏃', title: 'Ultra-léger' }, { id: '2', icon: '💨', title: 'Respirant' }, { id: '3', icon: '⚡', title: 'Réactif' }, { id: '4', icon: '🛡️', title: 'Protection' }] }, 't5'),
+      block('OrderForm', 'Formulaire commande', { title: '', btn_text: 'AJOUTER AU PANIER', btn_color: c.accent, btn_text_color: '#FFFFFF', btn_width: 'full', bundles_enabled: true, bundle_layout: 'cards', bundles: [{ id: 'b1', qty: 1, label: '1 paire', sublabel: '', badge: '', discount_pct: 0, discount_fixed: 0, popular: false, hidden: false }, { id: 'b2', qty: 2, label: '2 paires', sublabel: 'Économisez 20%', badge: '🔥 DUO', discount_pct: 20, discount_fixed: 0, popular: true, hidden: false }], border_color: c.border, border_radius: 12, show_payment_icons: true }, 't7'),
+      block('image_text', 'Pour les coureurs', { title: 'Conçues pour performer', text: 'Des centaines de kilomètres de test, des milliers d\'heures de R&D pour vous offrir la foulée parfaite.', image_position: 'right', bg_color: c.surface, text_color: c.text, title_color: c.accent, padding: 64, image_border_radius: 12, show_cta: false }, 't8'),
+      block('icon_grid', 'Caractéristiques', { title: '', columns: 4, bg_color: '#FFFFFF', icon_color: c.accent, items: [{ id: '1', icon: '⚖️', title: 'Ultra-léger', text: 'Moins de 220g' }, { id: '2', icon: '💧', title: 'Anti-transpiration', text: 'Mesh technique 3D' }, { id: '3', icon: '🔄', title: 'Drop 8mm', text: 'Foulée naturelle' }, { id: '4', icon: '🛡️', title: 'Stabilité', text: 'Guide-fil intégral' }], padding: 48 }, 't9'),
+      block('testimonials', 'Athlètes', { title: 'Approuvé par les pros', layout: 'grid', bg_color: c.bg, items: [{ id: '1', name: 'Marie K.', rating: 5, text: 'Meilleures chaussures que j\'ai eues, marathon en 3h15 !', verified: true }, { id: '2', name: 'Youssouf D.', rating: 5, text: 'Incroyable amorti, mes genoux me remercient.', verified: true }] }, 't10'),
+      block('guarantees', 'Engagements', { title: '', layout: 'row', bg_color: c.surface, icon_color: c.accent, items: [{ id: '1', icon: '🏃', title: 'Testé par des pros', text: '' }, { id: '2', icon: '🔄', title: 'Échange 30j', text: '' }, { id: '3', icon: '🚚', title: 'Livraison 24h', text: '' }, { id: '4', icon: '💳', title: 'Paiement 3x', text: '' }] }, 't11'),
+      block('faq', 'FAQ', { title: 'Questions coureurs', accent_color: c.accent, bg_color: c.surface, items: [{ id: '1', question: '🏃 Quelle pointure choisir ?', answer: 'Prenez votre pointure habituelle, le chaussant est standard.' }, { id: '2', question: '🛤️ Pour quel type de course ?', answer: 'Route, chemin, piste - polyvalente jusqu\'au marathon.' }, { id: '3', question: '🧼 Entretien ?', answer: 'Lavable à 30°, séchage air libre, semelle amovible.' }] }, 't12'),
+    ],
+    footer: [
+      block('Footer', 'Pied de page', { logo_text: name, copyright: `© ${new Date().getFullYear()} ${name}. Tous droits réservés.`, bg_color: '#1f2937', text_color: '#9ca3af', show_newsletter: true, newsletter_title: 'Rejoignez la team ' + name, columns: [{ title: name, links: ['Homme', 'Femme', 'Enfant', 'Accessoires'] }, { title: 'Communauté', links: ['Club running', 'Événements', 'Coaching', 'Blog', 'Contact'] }] }, 'f1'),
+    ],
+  }
+}
+
+function buildSkin(c: BoutiqueThemeColors, name: string) {
+  return {
+    header: [
+      block('AnnouncementBar', "Barre d'annonce", { text: '✨ -20% sur toute la routine · Code: GLOW20', bg_color: '#ec4899', text_color: '#ffffff', bar_height: 38, font_size: 12 }, 'h1'),
+      block('Header', 'En-tête', { logo_text: name, logo_position: 'center', show_search: false, show_cart: true, bg_color: '#fdf2f8', text_color: c.text }, 'h2'),
+    ],
+    template: [
+      block('Galerie', "Galerie d'images", { gallery_style: 'grid', image_ratio: '1/1', show_thumbnails: true, enable_zoom: true }, 't1'),
+      block('Titre', 'Titre produit', { tag: 'h1', font_size: 32, font_weight: 'bold', text_align: 'center', padding_top: 24, padding_bottom: 8 }, 't2'),
+      block('Note de produit', 'Note', { rating: 5, reviews_count: '15 000+ avis', star_color: c.gold, text_align: 'center' }, 't3'),
+      block('Prix', 'Prix', { show_badge: true, badge_text: 'ROUTINE COMPLÈTE', badge_bg: c.accent, badge_text_color: '#FFFFFF', price_color: c.accent }, 't4'),
+      block('trust_bar', 'Score confiance', { show_score: true, score: '4.9', score_label: 'Basé sur 15 000 avis', bg_color: c.surface, icon_color: c.accent, items: [{ icon: 'shield', label: 'Cliniquement testé' }, { icon: 'truck', label: 'Livraison 48h' }, { icon: 'lock', label: 'Paiement sécurisé' }] }, 't5'),
+      block('OrderForm', 'Formulaire commande', { title: 'Ma routine personnalisée', btn_text: 'COMMENCER MA ROUTINE', btn_color: c.accent, btn_text_color: '#FFFFFF', btn_width: 'full', bundles_enabled: true, bundle_layout: 'cards', bundles: [{ id: 'b1', qty: 1, label: 'Produit seul', sublabel: '', badge: '', discount_pct: 0, discount_fixed: 0, popular: false, hidden: false }, { id: 'b2', qty: 3, label: 'Routine complète 3 étapes', sublabel: 'Nettoyer · Traiter · Protéger', badge: '🔥 ROUTINE', discount_pct: 20, discount_fixed: 0, popular: true, hidden: false }, { id: 'b3', qty: 5, label: 'Routine expert 5 étapes', sublabel: 'Ajouter sérum + contour yeux', badge: '⭐ EXPERT', discount_pct: 30, discount_fixed: 0, popular: false, hidden: false }], border_color: c.border, border_radius: 16, show_payment_icons: true }, 't6'),
+      block('circular_ingredients', 'Ingrédients actifs', { title: 'La science au cœur de la formule', subtitle: 'Chaque ingrédient dosé à son efficacité optimale', bg_color: '#FDF2F8', accent_color: c.accent, items: [{ id: '1', icon: '🧬', name: 'Rétinol 0.3%', description: 'Renouvellement cellulaire' }, { id: '2', icon: '💧', name: 'Acide hyaluronique', description: 'Hydratation profonde' }, { id: '3', icon: '🌿', name: 'Niacinamide 5%', description: 'Pores, teint, barrière' }, { id: '4', icon: '☀️', name: 'Vitamine C', description: 'Éclat, anti-taches' }] }, 't7'),
+      block('image_text', 'Résultats cliniques', { title: 'Efficacité prouvée', text: '✔ 94% peaux plus lisses en 4 semaines\n✔ 87% rides atténuées en 8 semaines\n✔ 91% teint plus uniforme', image_position: 'right', bg_color: '#FFFFFF', text_color: c.text, title_color: c.accent, padding: 64, image_border_radius: 12, show_cta: false }, 't8'),
+      block('before_after', 'Avant / Après', { title: 'Transformations réelles', bg_color: c.surface }, 't9'),
+      block('testimonials', 'Témoignages', { title: 'Leurs peaux, leurs mots', layout: 'grid', bg_color: c.bg, items: [{ id: '1', name: 'Aïcha M.', rating: 5, text: 'Ma peau n\'a jamais été aussi belle. Routine simple, résultats fous.', verified: true }, { id: '2', name: 'Khadija B.', rating: 5, text: 'Enfin des produits qui tiennent leurs promesses.', verified: true }] }, 't10'),
+      block('guarantees', 'Nos engagements', { title: '', layout: 'row', bg_color: c.surface, icon_color: c.accent, items: [{ id: '1', icon: '🧪', title: 'Testé dermatologiquement', text: '' }, { id: '2', icon: '🐰', title: 'Non testé sur animaux', text: '' }, { id: '3', icon: '🌿', title: 'Formules clean', text: '' }, { id: '4', icon: '🔄', title: 'Satisfait ou remboursé', text: '' }] }, 't11'),
+      block('faq', 'FAQ', { title: 'Vos questions peau', accent_color: c.accent, bg_color: '#FFFFFF', items: [{ id: '1', question: '🕐 Quand voir les résultats ?', answer: 'Premiers effets 2-4 semaines, optimal à 8-12 semaines.' }, { id: '2', question: '☀️ Rétinol l\'été ?', answer: 'Oui avec SPF50 quotidien. Nous incluons un guide détaillé.' }, { id: '3', question: '🤰 Grossesse / allaitement ?', answer: 'Évitez rétinol. Le reste de la routine est compatible.' }] }, 't12'),
+    ],
+    footer: [
+      block('Footer', 'Pied de page', { logo_text: name, copyright: `© ${new Date().getFullYear()} ${name}. Tous droits réservés.`, bg_color: '#831843', text_color: '#fce7f3', show_newsletter: true, newsletter_title: 'Recevez vos conseils peau personnalisés', columns: [{ title: name, links: ['Notre science', 'Ingrédients', 'Routines', 'Blog peau'] }, { title: 'Aide', links: ['Diagnostic peau', 'Contact', 'Livraison', 'Retours', 'FAQ'] }] }, 'f1'),
+    ],
+  }
+}
+
+function buildSleep(c: BoutiqueThemeColors, name: string) {
+  return {
+    header: [
+      block('AnnouncementBar', "Barre d'annonce", { text: '🌙 100 nuits d\'essai · Livraison offerte · Retours gratuits', bg_color: '#1e1b4b', text_color: '#e0e7ff', bar_height: 40, font_size: 13 }, 'h1'),
+      block('Header', 'En-tête', { logo_text: name, logo_position: 'center', show_search: false, show_cart: true, bg_color: '#ffffff', text_color: c.text }, 'h2'),
+    ],
+    template: [
+      block('Galerie', "Galerie d'images", { gallery_style: 'grid', image_ratio: '4/3', show_thumbnails: true, enable_zoom: true }, 't1'),
+      block('Titre', 'Titre produit', { tag: 'h1', font_size: 36, font_weight: 'bold', text_align: 'center', padding_top: 24, padding_bottom: 8 }, 't2'),
+      block('Note de produit', 'Note', { rating: 4.9, reviews_count: '5 000+ nuits testées', star_color: c.gold, text_align: 'center' }, 't3'),
+      block('Prix', 'Prix', { show_badge: true, badge_text: 'MEILLEUR RAPPORT QUALITÉ', badge_bg: c.accent, badge_text_color: '#FFFFFF', price_color: c.accent }, 't4'),
+      block('benefits', 'Pourquoi ' + name + ' ?', { layout: 'checklist', bg_color: '#F5F3FF', text_color: c.text, icon_color: c.accent, items: [{ id: '1', icon: '🌙', title: '100 nuits d\'essai' }, { id: '2', icon: '🚚', title: 'Livraison & retours gratuits' }, { id: '3', icon: '🛡️', title: 'Garantie 10 ans' }, { id: '4', icon: '🇫🇷', title: 'Fabriqué en France' }] }, 't5'),
+      block('OrderForm', 'Formulaire commande', { title: 'Choisir mon matelas', btn_text: 'COMMENCER MES 100 NUITS', btn_color: c.accent, btn_text_color: '#FFFFFF', btn_width: 'full', bundles_enabled: false, border_color: c.border, border_radius: 16, show_payment_icons: true }, 't6'),
+      block('image_text', 'Technologie', { title: 'L\'hybride parfait', text: 'Mousse à mémoire de forme + Ressorts ensachés = soutien précis + indépendance de couchage', image_position: 'left', bg_color: c.surface, text_color: c.text, title_color: c.accent, padding: 64, image_border_radius: 12, show_cta: false }, 't7'),
+      block('icon_grid', 'Caractéristiques', { title: '', columns: 4, bg_color: '#FFFFFF', icon_color: c.accent, items: [{ id: '1', icon: '📏', title: '25 cm d\'épaisseur', text: '7 zones de confort' }, { id: '2', icon: '🌡️', title: 'Thermorégulant', text: 'Mousse gel infusée' }, { id: '3', icon: '🛡️', title: 'Anti-acariens', text: 'Traitement naturel' }, { id: '4', icon: '📦', title: 'Livré compressé', text: 'Déballage en 2 min' }], padding: 48 }, 't8'),
+      block('stats', 'En chiffres', { title: '', bg_color: c.accent, text_color: '#FFFFFF', accent_color: c.gold, items: [{ id: '1', number: '97', suffix: '%', label: 'Clients satisfaits', icon: '⭐' }, { id: '2', number: '100', suffix: ' nuits', label: 'Essai sans risque', icon: '🌙' }, { id: '3', number: '4.9', suffix: '/5', label: 'Note moyenne', icon: '😴' }, { id: '4', number: '10', suffix: ' ans', label: 'Garantie', icon: '🛡️' }] }, 't9'),
+      block('testimonials', 'Ils dorment mieux', { title: 'Vos nuits changent', layout: 'grid', bg_color: c.bg, items: [{ id: '1', name: 'Pierre L.', rating: 5, text: 'Fini le mal de dos au réveil. Meilleur investissement de l\'année.', verified: true }, { id: '2', name: 'Julie M.', rating: 5, text: 'Mon mari ne bouge plus, je dors enfin toute la nuit.', verified: true }] }, 't10'),
+      block('guarantees', 'Sérénité', { title: '', layout: 'row', bg_color: c.surface, icon_color: c.accent, items: [{ id: '1', icon: '🌙', title: '100 nuits essai', text: '' }, { id: '2', icon: '🚚', title: 'Livraison offerte', text: '' }, { id: '3', icon: '🔄', title: 'Retour gratuit', text: '' }, { id: '4', icon: '🛡️', title: 'Garantie 10 ans', text: '' }] }, 't11'),
+      block('faq', 'FAQ', { title: 'Vos questions sommeil', accent_color: c.accent, bg_color: c.surface, items: [{ id: '1', question: '🛏️ Quelle fermeté choisir ?', answer: 'Notre matelas est medium-ferme (6.5/10), convient à 95% des dormeurs.' }, { id: '2', question: '📦 Comment se passe la livraison ?', answer: 'Livré roulé dans une boîte, se déploie en 2 min. On récupère l\'ancien.' }, { id: '3', question: '😴 Et si je n\'aime pas ?', answer: '100 nuits pour tester. Retour gratuit, remboursement intégral.' }] }, 't11'),
+    ],
+    footer: [
+      block('Footer', 'Pied de page', { logo_text: name, copyright: `© ${new Date().getFullYear()} ${name}. Tous droits réservés.`, bg_color: '#0f172a', text_color: '#94a3b8', show_newsletter: true, newsletter_title: 'Recevez nos conseils sommeil', columns: [{ title: name, links: ['Notre matelas', 'Oreillers', 'Linge de lit', 'Accessoires'] }, { title: 'Aide', links: ['Essai 100 nuits', 'Livraison', 'Garantie', 'Contact', 'Blog sommeil'] }] }, 'f1'),
+    ],
+  }
+}
+
+function buildSupplement(c: BoutiqueThemeColors, name: string) {
+  return {
+    header: [
+      block('AnnouncementBar', "Barre d'annonce", { text: '🔬 Cliniquement prouvé · 97% satisfaction · Livraison 24h', bg_color: '#166534', text_color: '#dcfce7', bar_height: 38, font_size: 12 }, 'h1'),
+      block('Header', 'En-tête', { logo_text: name, logo_position: 'left', show_search: false, show_cart: true, bg_color: '#f0fdf4', text_color: c.text, nav_items: ['Compléments', 'Packs', 'Routines', 'Science', 'Avis'] }, 'h2'),
+    ],
+    template: [
+      block('Galerie', "Galerie d'images", { gallery_style: 'grid', image_ratio: '1/1', show_thumbnails: true, enable_zoom: true }, 't1'),
+      block('Titre', 'Titre produit', { tag: 'h1', font_size: 32, font_weight: 'bold', text_align: 'left', padding_top: 24, padding_bottom: 8 }, 't2'),
+      block('Note de produit', 'Note', { rating: 5, reviews_count: '25 000+ avis', star_color: c.gold, text_align: 'left' }, 't3'),
+      block('Prix', 'Prix', { show_badge: true, badge_text: 'BEST SELLER', badge_bg: c.accent, badge_text_color: '#FFFFFF', price_color: c.accent }, 't4'),
+      block('trust_bar', 'Preuves cliniques', { show_score: true, score: '4.9', score_label: 'Étude clinique 8 semaines', bg_color: c.surface, icon_color: c.accent, items: [{ icon: 'shield', label: 'Testé cliniquement' }, { icon: 'truck', label: 'Fabriqué en France' }, { icon: 'lock', label: 'Sans additifs' }] }, 't5'),
+      block('OrderForm', 'Formulaire commande', { title: 'Commencer ma cure', btn_text: 'DÉMARRER MAINTENANT', btn_color: c.accent, btn_text_color: '#FFFFFF', btn_width: 'full', bundles_enabled: true, bundle_layout: 'deals', bundles: [{ id: 'b1', qty: 1, label: '1 mois', sublabel: 'Découverte', badge: '', discount_pct: 0, discount_fixed: 0, popular: false, hidden: false }, { id: 'b2', qty: 3, label: '3 mois', sublabel: 'Économisez 20%', badge: '🔥 LE PLUS POPULAIRE', discount_pct: 20, discount_fixed: 0, popular: true, hidden: false }, { id: 'b3', qty: 6, label: '6 mois', sublabel: 'Meilleure offre — 35% OFF', badge: '⭐ CURE COMPLÈTE', discount_pct: 35, discount_fixed: 0, popular: false, hidden: false }], border_color: c.border, border_radius: 12, show_payment_icons: true }, 't6'),
+      block('circular_ingredients', 'Ingrédients brevetés', { title: 'La science au service de l\'efficacité', subtitle: 'Chaque ingrédient dosé à son efficacité clinique', bg_color: '#F0FDF4', accent_color: c.accent, items: [{ id: '1', icon: '🧬', name: 'Brevet BioPerine®', description: 'Absorption x20' }, { id: '2', icon: '🌿', name: 'Curcumine C3 Complex®', description: 'Standardisé 95% curcuminoïdes' }, { id: '3', icon: '☕', name: 'Caféine naturelle', description: 'Énergie sans crash' }, { id: '4', icon: '🌱', name: 'Adaptogènes premium', description: 'Rhodiola, Ashwagandha, Ginseng' }] }, 't7'),
+      block('stats', 'Résultats mesurés', { title: '', bg_color: c.accent, text_color: '#FFFFFF', accent_color: c.gold, items: [{ id: '1', number: '92', suffix: '%', label: 'Énergie retrouvée', icon: '⚡' }, { id: '2', number: '87', suffix: '%', label: 'Moins de fatigue', icon: '😴' }, { id: '3', number: '94', suffix: '%', label: 'Recommandent', icon: '👍' }, { id: '4', number: '4', suffix: ' sem.', label: 'Premiers effets', icon: '📅' }] }, 't8'),
+      block('comparison_table', 'Pourquoi nous ?', { title: 'Nous vs Autres marques', our_label: name, competitor_label: 'Compléments standards', accent_color: c.accent, bg_color: c.surface, rows: [{ feature: 'Dosages cliniques', us: true, them: false }, { feature: 'Biodisponibilité prouvée', us: true, them: false }, { feature: 'Sans excipients nocifs', us: true, them: false }, { feature: 'Traçabilité totale', us: true, them: false }, { feature: 'Fabrication France', us: true, them: false }] }, 't9'),
+      block('testimonials', 'Témoignages', { title: 'Ils ont changé leur quotidien', layout: 'grid', bg_color: c.bg, items: [{ id: '1', name: 'Moussa T.', rating: 5, text: 'Fatigue chronique disparue en 3 semaines. Je revis.', verified: true }, { id: '2', name: 'Aïcha K.', rating: 5, text: 'Enfin un produit qui tient ses promesses. Qualité au rendez-vous.', verified: true }] }, 't10'),
+      block('guarantees', 'Nos engagements', { title: '', layout: 'row', bg_color: c.surface, icon_color: c.accent, items: [{ id: '1', icon: '🧪', title: 'Cliniquement prouvé', text: '' }, { id: '2', icon: '🇫🇷', title: 'Fabriqué en France', text: '' }, { id: '3', icon: '🔄', title: 'Satisfait ou remboursé', text: '' }, { id: '4', icon: '📦', title: 'Livraison 24h offerte', text: '' }] }, 't11'),
+      block('faq', 'FAQ', { title: 'Vos questions santé', accent_color: c.accent, bg_color: c.surface, items: [{ id: '1', question: '💊 Comment prendre la cure ?', answer: '2 gélules le matin à jeun avec un grand verre d\'eau.' }, { id: '2', question: '⏱️ Quand voir les effets ?', answer: 'Première semaine énergie, 4 semaines effets profonds.' }, { id: '3', question: '⚠️ Contre-indications ?', answer: 'Déconseillé femme enceinte/allaitante. Consultez votre médecin.' }] }, 't12'),
+    ],
+    footer: [
+      block('Footer', 'Pied de page', { logo_text: name, copyright: `© ${new Date().getFullYear()} ${name}. Tous droits réservés.`, bg_color: '#052e16', text_color: '#86efac', show_newsletter: true, newsletter_title: 'Recevez nos conseils santé & offres', columns: [{ title: name, links: ['Nos cures', 'Ingrédients', 'Études cliniques', 'Notre labo'] }, { title: 'Santé', links: ['Diagnostic gratuit', 'Blog santé', 'Contact médecin', 'Livraison', 'CGV'] }] }, 'f1'),
+    ],
+  }
+}
+
 const SECTION_BUILDERS: Record<string, (c: BoutiqueThemeColors, name: string) => { header: StoreBlock[]; template: StoreBlock[]; footer: StoreBlock[] }> = {
   'nature-vert': buildNatureVert,
   'clinique-bleu': buildCliniqueBleu,
   'ambre-premium': buildAmbrePremium,
   'conversion-pro': buildConversionPro,
   'cora': buildCora,
+  'classic': buildClassic,
+  'home': buildHome,
+  'jewels': buildJewels,
+  'move': buildMove,
+  'skin': buildSkin,
+  'sleep': buildSleep,
+  'supplement': buildSupplement,
 }
 
 /** Construit le builder_json complet pour une nouvelle boutique */
