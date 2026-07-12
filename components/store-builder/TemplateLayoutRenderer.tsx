@@ -39,7 +39,7 @@ const LAYOUT_CSS = `
       flex-direction: row;
       align-items: stretch;
       gap: 32px;
-      padding: 24px 24px 24px 48px;
+      padding: 24px 40px 24px 60px;
     }
     .landing-hero--split .landing-hero-split-gallery {
       flex: 0 0 48%;
@@ -85,7 +85,7 @@ const LAYOUT_CSS = `
       flex-direction: row;
       align-items: stretch;
       gap: 32px;
-      padding: 24px 24px 24px 48px;
+      padding: 24px 40px 24px 60px;
     }
     .landing-hero--triple .landing-hero-triple-gallery-col {
       flex: 0 0 48%;
