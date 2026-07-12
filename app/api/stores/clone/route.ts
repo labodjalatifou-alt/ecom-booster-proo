@@ -8,6 +8,7 @@ import {
   toStoreFonts,
   BOUTIQUE_THEMES,
 } from '@/lib/store-builder/boutique-themes'
+import { generateSectionId } from '@/lib/store-builder/defaults'
 
 // ── Helpers HTML ──
 
@@ -240,6 +241,7 @@ function sectionToBlock(scraped: ScrapedSection, themeId: string) {
   switch (scraped.type) {
     case 'hero':
       return {
+        id: generateSectionId('hero'),
         type: 'hero',
         title: 'Hero / Bannière',
         settings: {
@@ -256,6 +258,7 @@ function sectionToBlock(scraped: ScrapedSection, themeId: string) {
       }
     case 'testimonials_floating':
       return {
+        id: generateSectionId('testimonials_floating'),
         type: 'testimonials_floating',
         title: 'Témoignages flottants',
         settings: {
@@ -267,6 +270,7 @@ function sectionToBlock(scraped: ScrapedSection, themeId: string) {
       }
     case 'faq':
       return {
+        id: generateSectionId('faq'),
         type: 'faq',
         title: 'FAQ',
         settings: {
@@ -280,6 +284,7 @@ function sectionToBlock(scraped: ScrapedSection, themeId: string) {
       }
     case 'benefits':
       return {
+        id: generateSectionId('benefits'),
         type: 'benefits',
         title: 'Avantages',
         settings: {
@@ -366,6 +371,7 @@ export async function POST(request: Request) {
 
     // Blocs de base
     const headerBlock = {
+      id: generateSectionId('Header'),
       type: 'Header',
       title: 'En-tête',
       settings: {
@@ -379,6 +385,7 @@ export async function POST(request: Request) {
     }
 
     const footerBlock = {
+      id: generateSectionId('Footer'),
       type: 'Footer',
       title: 'Footer',
       settings: {
@@ -440,6 +447,7 @@ export async function POST(request: Request) {
         ...(scrapedBlocks.length > 0 ? scrapedBlocks : []),
         // Galerie avec images extraites
         ...(galleryImages.length >= 2 ? [{
+          id: generateSectionId('gallery'),
           type: 'gallery',
           title: 'Galerie photos',
           settings: {
@@ -453,6 +461,7 @@ export async function POST(request: Request) {
         }] : []),
         // Vidéos
         ...(allVideos.length >= 1 ? [{
+          id: generateSectionId('video'),
           type: 'video',
           title: 'Vidéo',
           settings: {
@@ -464,6 +473,7 @@ export async function POST(request: Request) {
         }] : []),
         // Order form
         ...(allImages.length > 0 ? [{
+          id: generateSectionId('order_form'),
           type: 'order_form',
           title: 'Formulaire commande',
           settings: {
@@ -478,6 +488,7 @@ export async function POST(request: Request) {
         }] : []),
         // Marquee avec des produits
         ...(allImages.length > 0 ? [{
+          id: generateSectionId('marquee'),
           type: 'marquee',
           title: 'Marquee défilant',
           settings: {
