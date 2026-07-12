@@ -28,7 +28,7 @@ const LAYOUT_CSS = `
     padding: 0;
   }
 
-  /* ── Hero split : galerie grande | colonne achat ── */
+  /* ── Hero split : galerie | colonne achat ── */
   .landing-hero--split .landing-hero-split-grid {
     display: flex;
     flex-direction: column;
@@ -40,29 +40,27 @@ const LAYOUT_CSS = `
       align-items: stretch;
       gap: 0;
       padding: 0;
-      min-height: 80vh;
     }
     .landing-hero--split .landing-hero-split-gallery {
-      flex: 1 1 58%;
+      flex: 0 0 48%;
       min-width: 0;
       position: sticky;
       top: 0;
       max-height: 100vh;
+      overflow: hidden;
     }
     .landing-hero--split .landing-hero-split-buy {
-      flex: 1 1 42%;
+      flex: 1 1 52%;
       min-width: 0;
-      padding: 32px 40px;
+      padding: 24px 32px;
       display: flex;
       flex-direction: column;
-      justify-content: center;
     }
   }
   .landing-hero--split.force-mobile .landing-hero-split-grid {
     flex-direction: column !important;
     padding: 0 !important;
     gap: 0 !important;
-    min-height: auto !important;
   }
   .landing-hero--split.force-mobile .landing-hero-split-gallery {
     position: static !important;
@@ -72,7 +70,7 @@ const LAYOUT_CSS = `
     padding: 16px !important;
   }
 
-  /* ── Hero triple : galerie grande | form sticky | marketing ── */
+  /* ── Hero triple : galerie | form sticky | marketing ── */
   .landing-hero--triple .landing-hero-triple-desktop {
     display: none;
   }
@@ -86,23 +84,22 @@ const LAYOUT_CSS = `
       align-items: stretch;
       gap: 0;
       padding: 0;
-      min-height: 80vh;
     }
     .landing-hero--triple .landing-hero-triple-gallery-col {
-      flex: 1 1 58%;
+      flex: 0 0 48%;
       min-width: 0;
       position: sticky;
       top: 0;
       max-height: 100vh;
+      overflow: hidden;
     }
     .landing-hero--triple .landing-hero-triple-right-col {
-      flex: 1 1 42%;
+      flex: 1 1 52%;
       min-width: 0;
       display: flex;
       flex-direction: column;
       gap: 16px;
-      padding: 32px 40px;
-      justify-content: center;
+      padding: 24px 32px;
     }
     .landing-hero--triple .landing-hero-triple-mobile {
       display: none;
