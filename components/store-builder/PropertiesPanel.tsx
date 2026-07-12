@@ -190,22 +190,25 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
             <TextField label="Message d'expiration" value={s.expire_message} onChange={v => update('expire_message', v)} />
           </>
         )
-      case 'testimonials':
+      case 'reel_media':
         return (
           <>
             <PaddingFields />
             <TextField label="Titre section" value={s.title} onChange={v => update('title', v)} />
+            <TextField label="Sous-titre" value={s.subtitle} onChange={v => update('subtitle', v)} />
             <ColorField label="Couleur fond" value={s.bg_color} onChange={v => update('bg_color', v)} />
+            <ColorField label="Couleur accent" value={s.accent_color} onChange={v => update('accent_color', v)} />
+            <ColorField label="Couleur titre" value={s.title_color} onChange={v => update('title_color', v)} />
+            <ToggleField label="Lecture automatique" value={s.auto_play !== false} onChange={v => update('auto_play', v)} />
+            <SliderField label="Vitesse défilement" value={s.speed ?? 40} onChange={v => update('speed', v)} min={10} max={100} />
+            <ToggleField label="Afficher compteur" value={s.show_counter !== false} onChange={v => update('show_counter', v)} />
             <ItemsListField
-              label="Avis clients" value={s.items} onChange={v => update('items', v)}
+              label="Médias" value={s.items} onChange={v => update('items', v)}
               itemSchema={[
-                { type: 'text', id: 'name', label: 'Nom' },
-                { type: 'text', id: 'location', label: 'Pays / Ville' },
-                { type: 'textarea', id: 'text', label: 'Avis' },
-                { type: 'slider', id: 'rating', label: 'Note', min: 1, max: 5 },
-                { type: 'image', id: 'image', label: 'Photo de profil' },
-                { type: 'image', id: 'product_image', label: 'Photo du produit reçu' },
-                { type: 'toggle', id: 'verified', label: 'Vérifié' }
+                { type: 'text', id: 'type', label: 'Type (image/video/gif)' },
+                { type: 'image', id: 'url', label: 'URL fichier' },
+                { type: 'text', id: 'caption', label: 'Légende' },
+                { type: 'text', id: 'author', label: 'Nom auteur' },
               ]}
             />
           </>

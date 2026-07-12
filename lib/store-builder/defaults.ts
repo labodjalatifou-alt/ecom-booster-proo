@@ -444,7 +444,7 @@ export const SECTIONS_CATALOG: SectionCatalogItem[] = [
   { type: 'order_form', label: 'Formulaire commande', icon: '📋', description: 'Formulaire de commande personnalisable', category: 'Produits', defaultProps: DEFAULT_ORDER_FORM_PROPS },
   
   // ⭐ Social Proof (très important pour COD)
-  { type: 'testimonials', label: 'Témoignages', icon: '💬', description: 'Avis et témoignages clients', category: 'Social Proof', defaultProps: DEFAULT_TESTIMONIALS_PROPS },
+  { type: 'reel_media', label: 'Reel Média', icon: '🎞️', description: 'Défilement horizontal de vidéos/GIFs/images façon TikTok', category: 'Social Proof', defaultProps: { title: 'Ils parlent de nous', subtitle: 'Témoignages en vidéo', items: [], auto_play: true, speed: 40, show_counter: true, bg_color: '#FFFFFF', accent_color: '#E8527A' } },
   { type: 'trust_bar', label: 'Barre de confiance', icon: '✓', description: 'Score et arguments de confiance', category: 'Social Proof', defaultProps: {} },
   { type: 'stock_urgency', label: 'Stock urgent', icon: '🔥', description: 'Barre de stock avec urgence', category: 'Social Proof', defaultProps: {} },
   { type: 'before_after', label: 'Avant / Après', icon: '🔄', description: 'Comparaison avec slider interactif', category: 'Social Proof', defaultProps: DEFAULT_BEFORE_AFTER_PROPS },

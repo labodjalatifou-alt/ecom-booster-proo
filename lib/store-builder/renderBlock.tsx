@@ -33,6 +33,7 @@ import PopupRender from '@/components/store-builder/sections/PopupSection'
 import SlideshowRender from '@/components/store-builder/sections/SlideshowRender'
 import HotspotsRender from '@/components/store-builder/sections/HotspotsRender'
 import ParallaxRender from '@/components/store-builder/sections/ParallaxRender'
+import ReelMediaRender from '@/components/store-builder/sections/ReelMediaRender'
 import { mergeHeaderTheme } from '@/lib/store-builder/landing-theme'
 
 // Les blocks de type "produit" — affichent des données du produit sélectionné.
@@ -107,6 +108,9 @@ export function renderBlock(block: any, product: any, storeId?: string | null, t
       break
     case 'testimonials_floating':
       content = <TestimonialsFloatingRender settings={settings} />
+      break
+    case 'reel_media':
+      content = <ReelMediaRender settings={settings} />
       break
     case 'before_after':
       content = <BeforeAfterRender settings={settings} />
