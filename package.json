@@ -39,6 +39,7 @@
     "@tiptap/react": "^3.27.0",
     "@tiptap/starter-kit": "^3.27.0",
     "canvas": "^3.2.3",
+    "cheerio": "^1.2.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "firebase-admin": "^13.10.0",

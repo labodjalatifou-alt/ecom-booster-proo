@@ -198,7 +198,7 @@ export default function BoutiquesPage() {
                   <p><b>Nom :</b> {cloneResult.data?.name}</p>
                   <p><b>Thème :</b> {cloneResult.analysis?.theme_used}</p>
                   {cloneResult.analysis?.colors_detected?.length > 0 && (
-                    <p><b>Couleurs détectées :</b> {cloneResult.analysis.colors_detected.join(', ')}</p>
+                    <p><b>Couleurs :</b> {cloneResult.analysis.colors_detected.join(', ')}</p>
                   )}
                   {cloneResult.analysis?.fonts_detected?.length > 0 && (
                     <p><b>Polices :</b> {cloneResult.analysis.fonts_detected.join(', ')}</p>
@@ -206,6 +206,15 @@ export default function BoutiquesPage() {
                   {cloneResult.analysis?.logo_detected && <p><b>Logo :</b> ✓ récupéré</p>}
                   {cloneResult.analysis?.product_extracted && (
                     <p><b>Produit :</b> {cloneResult.analysis.product_title} ({cloneResult.analysis.product_price?.toLocaleString('fr-FR')} FCFA)</p>
+                  )}
+                  {cloneResult.analysis?.images_extracted > 0 && (
+                    <p><b>Images :</b> {cloneResult.analysis.images_extracted} extraites → galerie</p>
+                  )}
+                  {cloneResult.analysis?.testimonials_extracted > 0 && (
+                    <p><b>Avis :</b> {cloneResult.analysis.testimonials_extracted} récupérés</p>
+                  )}
+                  {cloneResult.analysis?.faq_extracted > 0 && (
+                    <p><b>FAQ :</b> {cloneResult.analysis.faq_extracted} questions récupérées</p>
                   )}
                 </div>
                 <button
