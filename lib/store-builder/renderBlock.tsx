@@ -31,6 +31,8 @@ import SpacerRender from '@/components/store-builder/sections/SpacerRender'
 import NewsletterRender from '@/components/store-builder/sections/NewsletterRender'
 import PopupRender from '@/components/store-builder/sections/PopupSection'
 import SlideshowRender from '@/components/store-builder/sections/SlideshowRender'
+import HotspotsRender from '@/components/store-builder/sections/HotspotsRender'
+import ParallaxRender from '@/components/store-builder/sections/ParallaxRender'
 import { mergeHeaderTheme } from '@/lib/store-builder/landing-theme'
 
 // Les blocks de type "produit" — affichent des données du produit sélectionné.
@@ -144,6 +146,12 @@ export function renderBlock(block: any, product: any, storeId?: string | null, t
       break
     case 'slideshow':
       content = <SlideshowRender settings={settings} />
+      break
+    case 'hotspots':
+      content = <HotspotsRender settings={settings} />
+      break
+    case 'parallax':
+      content = <ParallaxRender settings={settings} />
       break
 
     // ── Contenu ──

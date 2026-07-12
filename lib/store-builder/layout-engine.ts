@@ -1,6 +1,6 @@
 // Partition du template selon le layout du thème (structure visuelle, pas les couleurs)
 
-export type LayoutMode = 'single-column' | 'hero-split' | 'hero-triple'
+export type LayoutMode = 'single-column' | 'hero-split' | 'hero-triple' | 'full-width'
 
 const GALLERY_TYPES = new Set(['Galerie', 'medias', 'gallery'])
 const FORM_TYPES = new Set(['OrderForm', 'order_form'])
@@ -32,8 +32,8 @@ export function partitionTemplate(template: any[], layout: LayoutMode): Template
   // Trouver où s'arrête la zone "Hero" (dès qu'on rencontre un bloc 100% largeur)
   let splitIndex = withoutGallery.findIndex(b => FULL_WIDTH_TYPES.has(b.type))
   
-  // Si on est en layout single-column, tout va dans rest pour être affiché de haut en bas
-  if (layout === 'single-column') {
+  // Si on est en layout single-column ou full-width, tout va dans rest pour être affiché de haut en bas
+  if (layout === 'single-column' || layout === 'full-width') {
     return { gallery: [], form: [], productInfo: [], heroSidebar: [], heroMarketing: [], heroBuyColumn: [], rest: template }
   }
 
@@ -66,6 +66,6 @@ export function partitionTemplate(template: any[], layout: LayoutMode): Template
 
 export function resolveLayout(themeSettings?: Record<string, any>): LayoutMode {
   const l = themeSettings?.layout
-  if (l === 'hero-split' || l === 'hero-triple' || l === 'single-column') return l
+  if (l === 'hero-split' || l === 'hero-triple' || l === 'single-column' || l === 'full-width') return l
   return 'single-column'
 }

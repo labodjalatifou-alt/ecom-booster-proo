@@ -20,7 +20,7 @@ export interface BoutiqueTheme {
   description: string
   tags: string[]
   preview_image: string
-  layout: 'single-column' | 'hero-split' | 'hero-triple'
+  layout: 'single-column' | 'hero-split' | 'hero-triple' | 'full-width'
   cardMaxWidth: number
   colors: BoutiqueThemeColors
   fonts: { display: string; body: string }
@@ -141,6 +141,28 @@ export const BOUTIQUE_THEMES: BoutiqueTheme[] = [
       border: '#FDD5D0',
     },
     fonts: { display: "'Bebas Neue', cursive", body: "'Roboto', sans-serif" },
+  },
+
+  // ── 5. CORA — Full-width editorial, coral/salmon, modern clean ────────
+  {
+    id: 'cora',
+    name: 'Cora',
+    description: 'Éditorial moderne — pleine largeur, corail vibrant, sections alternées, style Shopify premium.',
+    tags: ['moderne', 'éditorial', 'corail'],
+    preview_image: '/themes/T1.webp',
+    layout: 'full-width',
+    cardMaxWidth: 1200,
+    colors: {
+      bg: '#FFFFFF',
+      surface: '#FFF5F3',
+      text: '#1A1A2E',
+      text_soft: '#6B7280',
+      accent: '#FF6B6B',
+      accent_deep: '#E55A5A',
+      gold: '#FFB347',
+      border: '#F3F4F6',
+    },
+    fonts: { display: "'Outfit', sans-serif", body: "'Inter', sans-serif" },
   },
 ]
 
@@ -614,11 +636,206 @@ function buildConversionPro(c: BoutiqueThemeColors, name: string) {
   }
 }
 
+function buildCora(c: BoutiqueThemeColors, name: string) {
+  return {
+    header: [
+      block('AnnouncementBar', "Barre d'annonce", {
+        text: '🔥 50% OFF SALE ENDS SOON · FREE SHIPPING',
+        bg_color: c.accent,
+        text_color: '#FFFFFF',
+        bar_height: 40,
+        font_size: 12,
+        font_weight: 'bold',
+      }, 'h1'),
+      block('Header', 'En-tête', {
+        logo_text: name,
+        logo_position: 'left',
+        show_search: true,
+        show_cart: true,
+        bg_color: '#FFFFFF',
+        text_color: c.text,
+        nav_items: ['About Us', 'Home', 'Our Products', 'Track Your Order', 'Contact Us'],
+      }, 'h2'),
+    ],
+    template: [
+      block('Galerie', "Galerie d'images", {
+        gallery_style: 'grid',
+        image_ratio: '1/1',
+        show_thumbnails: true,
+        enable_zoom: true,
+      }, 't1'),
+      block('Titre', 'Titre produit', {
+        tag: 'h1',
+        font_size: 32,
+        font_weight: 'bold',
+        text_align: 'left',
+        padding_top: 24,
+        padding_bottom: 8,
+      }, 't2'),
+      block('Note de produit', 'Note', {
+        rating: 5,
+        reviews_count: '1000+ Happy Customers',
+        star_color: c.gold,
+        text_align: 'left',
+      }, 't3'),
+      block('Description', 'Sous-titre', {
+        text: 'From stable to destination, watch over your horse during every moment of transport.',
+        font_size: 16,
+        text_color: c.text_soft,
+        text_align: 'left',
+        padding_bottom: 16,
+      }, 't4'),
+      block('Prix', 'Prix', {
+        show_badge: true,
+        badge_text: '50% OFF',
+        badge_bg: c.accent,
+        badge_text_color: '#FFFFFF',
+        price_color: c.accent,
+        show_original_price: true,
+      }, 't5'),
+      block('benefits', 'Avantages', {
+        layout: 'checklist',
+        bg_color: '#FFFFFF',
+        text_color: c.text,
+        icon_color: c.accent,
+        items: [
+          { id: '1', icon: '✓', title: 'Real-time horse monitoring' },
+          { id: '2', icon: '✓', title: 'Spot issues instantly' },
+          { id: '3', icon: '✓', title: 'Ensure road safety' },
+        ],
+      }, 't6'),
+      block('OrderForm', 'Formulaire commande', {
+        title: '',
+        btn_text: 'Order Now',
+        btn_color: c.accent,
+        btn_text_color: '#FFFFFF',
+        btn_width: 'full',
+        bundles_enabled: true,
+        bundle_layout: 'cards',
+        bundles: [
+          { id: 'b1', qty: 1, label: 'Single', sublabel: 'Standard Price', badge: '', discount_pct: 0, discount_fixed: 0, popular: false, hidden: false },
+          { id: 'b2', qty: 2, label: 'Buy 2 Get One FREE', sublabel: '+ Phone Holder', badge: 'BEST OFFER', discount_pct: 50, discount_fixed: 0, popular: true, hidden: false },
+        ],
+        border_color: c.border,
+        border_radius: 12,
+        show_payment_icons: true,
+      }, 't7'),
+      block('trust_bar', 'Badge urgence', {
+        show_countdown: true,
+        countdown_text: 'Ends Soon: 50% Off + Free Shipping',
+        icon_color: c.accent,
+        bg_color: '#FFFFFF',
+      }, 't8'),
+      block('image_text', 'Image + Texte — Feature 1', {
+        title: 'Best way to monitor your horse',
+        text: 'Wireless | Magnetic | Waterproof | Durable | Rechargeable',
+        image_position: 'left',
+        bg_color: c.accent,
+        text_color: '#FFFFFF',
+        title_color: '#FFFFFF',
+        padding: 64,
+        image_border_radius: 12,
+        show_cta: false,
+      }, 't9'),
+      block('text_block', 'Headline centre', {
+        title: 'Your Horse\'s Well Being Right At Your Fingertips',
+        content: 'EquiWatch™ allows you to track and monitor your horse\'s condition in real-time. No more guessing or worrying about how your horse is doing.',
+        text_align: 'center',
+        bg_color: '#FFFFFF',
+        text_color: c.text,
+        title_font_size: 28,
+        content_font_size: 16,
+        padding: 48,
+      }, 't10'),
+      block('icon_grid', 'Features', {
+        title: '',
+        columns: 4,
+        bg_color: '#FFFFFF',
+        icon_color: c.accent,
+        items: [
+          { id: '1', icon: '📡', title: 'Wireless Connectivity', text: 'Seamlessly stream HD video with a reliable wireless connection for uninterrupted towing.' },
+          { id: '2', icon: '💧', title: 'Waterproof & Weatherproof', text: 'Built to withstand all elements, so you can travel with peace of mind in any environment.' },
+          { id: '3', icon: '🎥', title: 'High-Quality Resolution', text: 'Crystal-clear video so you won\'t miss a single detail.' },
+          { id: '4', icon: '📐', title: 'Wide-Angle Lens', text: 'Get a complete view of your horse, even in tight light spots and around every corner of your trailer.' },
+        ],
+        padding: 48,
+      }, 't11'),
+      block('image_text', 'Pourquoi nous choisir', {
+        title: 'Why Choose EquiWatch™ Camera?',
+        text: '✔ Real-Time Monitoring — Watch your horse\'s every move and catch any signs of stress instantly.\n✔ No Internet Needed — Only connected within a 12-meter range, so you can travel with peace of mind every mile.\n✔ Easy Setup — Quick installation with no complicated wiring or tools required.\n✔ Compact & Portable — Perfect for horse trailers, it won\'t take up space but gives you total visibility.',
+        image_position: 'right',
+        bg_color: c.surface,
+        text_color: c.text,
+        title_color: c.accent,
+        padding: 64,
+        image_border_radius: 12,
+        show_cta: false,
+      }, 't12'),
+      block('comparison_table', 'US VS THEM', {
+        title: 'US VS THEM',
+        our_label: name.toUpperCase(),
+        competitor_label: 'Other',
+        accent_color: c.accent,
+        bg_color: '#FFFFFF',
+        highlight_our_column: true,
+        rows: [
+          { feature: 'Wireless', us: true, them: false },
+          { feature: 'Night Vision', us: true, them: false },
+          { feature: 'Real-Time Monitoring', us: true, them: false },
+          { feature: 'Long-Lasting Battery', us: true, them: false },
+          { feature: 'Strong Mount', us: true, them: false },
+        ],
+        padding: 48,
+      }, 't13'),
+      block('image_text', 'What\'s Inside the Box', {
+        title: 'What\'s Inside the Box:',
+        text: '✓ 1 x EquiWatch™ Camera\n✓ 1 x Holder\n✓ 1 x USB Cable\n✓ 1 x 32G Card\n✓ 1 x Manual Instruction',
+        image_position: 'left',
+        bg_color: c.surface,
+        text_color: c.text,
+        title_color: c.accent,
+        padding: 48,
+        image_border_radius: 12,
+        show_cta: false,
+      }, 't14'),
+      block('faq', 'FAQ', {
+        title: 'FAQs',
+        layout: '2-columns',
+        accent_color: c.accent,
+        bg_color: '#FFFFFF',
+        items: [
+          { id: '1', question: 'How easy is it to install the EquiWatch™ camera in my horse trailer?', answer: 'Very easy! The installation takes less than 5 minutes with no tools required.' },
+          { id: '2', question: 'How does the EquiWatch™ camera connect to my phone?', answer: 'It connects via a direct WiFi signal within 12 meters.' },
+          { id: '3', question: 'What is the battery life of the EquiWatch™ camera, and how is it charged?', answer: 'Up to 8 hours of continuous use. Charges via USB.' },
+          { id: '4', question: 'Can I use the EquiWatch™ camera in any type of trailer?', answer: 'Yes, it works with all standard horse trailers.' },
+          { id: '5', question: 'Does the EquiWatch™ camera work at night or in low light conditions?', answer: 'Yes, it features infrared night vision for clear viewing in any lighting.' },
+        ],
+        padding: 48,
+      }, 't15'),
+    ],
+    footer: [
+      block('Footer', 'Pied de page', {
+        logo_text: name,
+        copyright: `© ${new Date().getFullYear()} ${name}. All rights reserved.`,
+        bg_color: '#1A1A2E',
+        text_color: '#9CA3AF',
+        show_newsletter: true,
+        newsletter_title: 'Subscribe to our newsletter to receive updates, access to exclusive deals, and more.',
+        columns: [
+          { title: 'About ' + name, links: ['We are committed to providing our customers with the best products.', 'Contact Us'] },
+          { title: 'Faster menu', links: ['Contact Us', 'Privacy Policy', 'Refund Policy', 'Shipping Policy', 'Terms of Service'] },
+        ],
+      }, 'f1'),
+    ],
+  }
+}
+
 const SECTION_BUILDERS: Record<string, (c: BoutiqueThemeColors, name: string) => { header: StoreBlock[]; template: StoreBlock[]; footer: StoreBlock[] }> = {
   'nature-vert': buildNatureVert,
   'clinique-bleu': buildCliniqueBleu,
   'ambre-premium': buildAmbrePremium,
   'conversion-pro': buildConversionPro,
+  'cora': buildCora,
 }
 
 /** Construit le builder_json complet pour une nouvelle boutique */

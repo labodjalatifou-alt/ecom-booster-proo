@@ -374,6 +374,34 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
             <ColorField label="Couleur texte" value={s.text_color} onChange={v => update('text_color', v)} />
           </>
         )
+      case 'hotspots':
+        return (
+          <>
+            <PaddingFields />
+            <ImageUploadField label="Image principale" value={s.image_url} onChange={v => update('image_url', v)} />
+            <ItemsListField
+              label="Points interactifs" value={s.hotspots || []} onChange={v => update('hotspots', v)}
+              itemSchema={[
+                { type: 'text', id: 'title', label: 'Titre' },
+                { type: 'textarea', id: 'description', label: 'Description' },
+                { type: 'text', id: 'x', label: 'Position X (%) ex: 45' },
+                { type: 'text', id: 'y', label: 'Position Y (%) ex: 60' }
+              ]}
+            />
+          </>
+        )
+      case 'parallax':
+        return (
+          <>
+            <PaddingFields />
+            <TextField label="Titre" value={s.title} onChange={v => update('title', v)} />
+            <TextField label="Sous-titre" value={s.subtitle} onChange={v => update('subtitle', v)} />
+            <TextField label="Texte bouton" value={s.cta_text} onChange={v => update('cta_text', v)} />
+            <ImageUploadField label="Image de fond" value={s.bg_image} onChange={v => update('bg_image', v)} />
+            <ImageUploadField label="Image de premier plan (optionnel)" value={s.fg_image} onChange={v => update('fg_image', v)} />
+            <SliderField label="Opacité overlay noir (%)" value={s.overlay_opacity ?? 40} onChange={v => update('overlay_opacity', v)} min={0} max={90} />
+          </>
+        )
       case 'order_form':
       case 'OrderForm': {
         const unitPrice = selectedProduct?.price ? Number(selectedProduct.price) : 15000

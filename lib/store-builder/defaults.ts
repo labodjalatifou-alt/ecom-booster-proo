@@ -436,6 +436,8 @@ export const SECTIONS_CATALOG: SectionCatalogItem[] = [
   { type: 'popup', label: 'Pop-up promo', icon: '🎯', description: 'Fenêtre promotionnelle', category: 'Marketing', defaultProps: DEFAULT_POPUP_PROPS },
   // 🎨 Contenu
   { type: 'hero', label: 'Hero / Bannière', icon: '🖼️', description: 'Grande section d\'accroche principale', category: 'Contenu', defaultProps: DEFAULT_HERO_PROPS },
+  { type: 'hotspots', label: 'Image Interactive', icon: '✨', description: 'Image avec bulles explicatives', category: 'Contenu', defaultProps: {} },
+  { type: 'parallax', label: 'Effet Parallaxe', icon: '🌀', description: 'Scroll 3D avec texte flottant', category: 'Contenu', defaultProps: {} },
   { type: 'slideshow', label: 'Diaporama', icon: '🎠', description: 'Carousel d\'images ou contenus', category: 'Contenu', defaultProps: DEFAULT_SLIDESHOW_PROPS },
   { type: 'image_with_text', label: 'Image + Texte', icon: '📰', description: 'Image et texte côte à côte', category: 'Contenu', defaultProps: DEFAULT_IMAGE_WITH_TEXT_PROPS },
   { type: 'text_block', label: 'Bloc texte', icon: '📝', description: 'Paragraphe de texte libre', category: 'Contenu', defaultProps: DEFAULT_TEXT_BLOCK_PROPS },

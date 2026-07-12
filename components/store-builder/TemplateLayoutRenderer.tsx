@@ -8,7 +8,25 @@ import RevealSection from '@/components/store-builder/RevealSection'
 const LAYOUT_CSS = `
   .landing-template { width: 100%; }
   .landing-template--single { max-width: 100%; }
+  .landing-template--full-width { max-width: 100%; }
   .landing-template-rest { width: 100%; }
+
+  /* ── Full-width: sections pleine largeur avec fond alterné ── */
+  .landing-template--full-width .landing-full-section {
+    width: 100%;
+    padding: 48px 24px;
+  }
+  .landing-template--full-width .landing-full-section--padded {
+    padding: 48px 24px;
+  }
+  @media (min-width: 768px) {
+    .landing-template--full-width .landing-full-section--padded {
+      padding: 64px 48px;
+    }
+  }
+  .landing-template--full-width .landing-full-section--no-pad {
+    padding: 0;
+  }
 
   /* ── Hero split (Heline / Cellagen) : galerie | colonne achat ── */
   .landing-hero--split .landing-hero-split-grid {
@@ -150,6 +168,30 @@ export default function TemplateLayoutRenderer({
     return (
       <>
         <main className="landing-template landing-template--single">{renderRevealList(template)}</main>
+        <style>{LAYOUT_CSS}</style>
+      </>
+    )
+  }
+
+  if (layout === 'full-width') {
+    return (
+      <>
+        <main className="landing-template landing-template--full-width">
+          {template.map((block, i) => {
+            const node = renderBlock(block, product, storeId, themeSettings, allProducts)
+            if (!node) return null
+            const wrapped = wrapBlock ? wrapBlock(block, node) : <div key={block.id}>{node}</div>
+            if (enableReveal) {
+              const variant = REVEAL_VARIANTS[i % REVEAL_VARIANTS.length]
+              return (
+                <RevealSection key={block.id} variant={variant} delay={i * 80}>
+                  {wrapped}
+                </RevealSection>
+              )
+            }
+            return wrapped
+          })}
+        </main>
         <style>{LAYOUT_CSS}</style>
       </>
     )
