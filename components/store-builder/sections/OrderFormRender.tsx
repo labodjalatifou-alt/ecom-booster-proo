@@ -57,12 +57,12 @@ export default function OrderFormRender({ settings, product, storeId, themeSetti
     ? calcBundleTotal(unitPrice, finalQty, selectedBundle)
     : unitPrice * finalQty
 
-  const btnAnimation: BtnAnimation = formSettings.btn_animation || 'pulse'
-  const borderR = formSettings.border_radius ?? 20
+const btnAnimation: BtnAnimation = formSettings.btn_animation || 'pulse'
+  const borderR = formSettings.card_border_radius ?? formSettings.border_radius ?? 20
 
   const colors = useMemo(() => ({
     bg: formSettings.bg_color || '#ffffff',
-    border: formSettings.border_color || '#fce7f3',
+    border: formSettings.custom_border_color || formSettings.border_color || '#fce7f3',
     title: formSettings.title_color || '#1f2937',
     subtitle: formSettings.subtitle_color || '#6b7280',
     label: formSettings.label_color || '#374151',
@@ -78,6 +78,29 @@ export default function OrderFormRender({ settings, product, storeId, themeSetti
     bundleBadgeBg: formSettings.bundle_badge_bg || formSettings.btn_color || '#E8527A',
     bundleBadgeText: formSettings.bundle_badge_text || '#ffffff',
     accent: formSettings.accent_color || formSettings.btn_color || '#E8527A',
+    // Premium
+    cardShadow: formSettings.card_shadow || '0 20px 50px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04)',
+    cardShadowHover: formSettings.card_shadow_hover || '0 28px 60px rgba(0,0,0,0.12), 0 8px 24px rgba(0,0,0,0.06)',
+    cardBorderWidth: formSettings.card_border_width ?? 2,
+    cardBorderStyle: formSettings.card_border_style || 'solid',
+    cardBorderColor: formSettings.custom_border_color || formSettings.border_color || '#fce7f3',
+    headerGradient: formSettings.header_gradient || `linear-gradient(135deg, ${formSettings.btn_color || '#E8527A'} 0%, ${formSettings.accent_color || '#C23A5E'} 100%)`,
+    bgGradient: formSettings.bg_gradient || `linear-gradient(180deg, ${formSettings.bg_color || '#ffffff'} 0%, ${formSettings.bg_color || '#ffffff'} 100%)`,
+    btnShadow: formSettings.btn_shadow || `0 4px 20px ${formSettings.btn_color || '#E8527A'}45`,
+    btnShadowHover: formSettings.btn_shadow_hover || `0 8px 30px ${formSettings.btn_color || '#E8527A'}55`,
+    btnBorderRadius: formSettings.btn_border_radius ?? 14,
+    inputBorderRadius: formSettings.input_border_radius ?? 10,
+    inputFocusShadow: formSettings.input_focus_shadow || `0 0 0 3px ${formSettings.btn_color || '#E8527A'}33`,
+    bundleCardShadow: formSettings.bundle_card_shadow || '0 8px 24px rgba(0,0,0,0.06)',
+    bundleCardShadowHover: formSettings.bundle_card_shadow_hover || '0 16px 40px rgba(0,0,0,0.1)',
+    bundleCardBorderRadius: formSettings.bundle_card_border_radius ?? 14,
+    bundleCardBorderWidth: formSettings.bundle_card_border_width ?? 2,
+    bundleCardBorderStyle: formSettings.bundle_card_border_style || 'solid',
+    bundleCardBorderColor: formSettings.bundle_border || '#f3f4f6',
+    paddingTop: formSettings.padding_top ?? 24,
+    paddingBottom: formSettings.padding_bottom ?? 24,
+    paddingLeft: formSettings.padding_left ?? 24,
+    paddingRight: formSettings.padding_right ?? 24,
   }), [formSettings])
 
   const btnLabel = loading
@@ -214,19 +237,22 @@ export default function OrderFormRender({ settings, product, storeId, themeSetti
     )
   }
 
-  return (
+return (
     <div className="w-full px-4 py-8" id="order-form">
       <div
-        className="max-w-md mx-auto overflow-hidden shadow-xl order-form-card"
+        className="max-w-md mx-auto overflow-hidden order-form-card"
         style={{
-          background: `linear-gradient(180deg, ${colors.bg} 0%, ${colors.bg} 100%)`,
+          background: colors.bgGradient,
           borderRadius: borderR,
-          border: `2px solid ${colors.border}`,
-          boxShadow: `0 20px 50px ${colors.btn}12, 0 4px 16px rgba(0,0,0,0.06)`,
+          border: `${colors.cardBorderWidth}px ${colors.cardBorderStyle} ${colors.cardBorderColor}`,
+          boxShadow: colors.cardShadow,
+          transition: 'box-shadow 0.3s ease, transform 0.2s ease',
         }}
+        onMouseEnter={(e) => { e.currentTarget.style.boxShadow = colors.cardShadowHover }}
+        onMouseLeave={(e) => { e.currentTarget.style.boxShadow = colors.cardShadow }}
       >
-        {/* Bandeau coloré en-tête */}
-        <div className="px-5 py-4" style={{ background: `linear-gradient(135deg, ${colors.btn} 0%, ${colors.accent} 100%)` }}>
+{/* Bandeau coloré en-tête */}
+        <div className="px-5 py-4" style={{ background: colors.headerGradient }}>
           <h3 className="font-black text-white text-lg leading-tight">
             {formSettings.title || '📦 Finaliser ma commande'}
           </h3>
@@ -274,14 +300,21 @@ export default function OrderFormRender({ settings, product, storeId, themeSetti
             ].filter(f => f.show).map(f => (
               <div key={f.key} className="order-field">
                 <label className="block text-xs font-black mb-1.5 uppercase tracking-wide" style={{ color: colors.label }}>{f.label}</label>
-                <input
+<input
                   type={f.type}
                   value={f.val}
                   onChange={e => f.set(e.target.value)}
                   required={f.req}
                   placeholder={f.ph}
-                  className="w-full px-4 py-3.5 text-sm font-medium outline-none transition-all rounded-xl order-input"
-                  style={{ backgroundColor: colors.inputBg, border: `2px solid ${colors.inputBorder}`, color: colors.title }}
+                  className="w-full px-4 py-3.5 text-sm font-medium outline-none transition-all order-input"
+                  style={{
+                    backgroundColor: colors.inputBg,
+                    border: `2px solid ${colors.inputBorder}`,
+                    borderRadius: formSettings.input_border_radius ?? 10,
+                    color: colors.title,
+                  }}
+                  onFocus={(e) => { e.currentTarget.style.boxShadow = colors.inputFocusShadow }}
+                  onBlur={(e) => { e.currentTarget.style.boxShadow = 'none' }}
                 />
               </div>
             ))}
@@ -297,16 +330,18 @@ export default function OrderFormRender({ settings, product, storeId, themeSetti
               </div>
             )}
 
-            <button
+<button
               type="submit"
               disabled={loading}
               className={`w-full py-4 font-black text-[15px] shadow-lg transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-60 mt-1 ${btnAnimClass[btnAnimation]}`}
               style={{
                 background: `linear-gradient(135deg, ${colors.btn} 0%, ${colors.accent} 100%)`,
                 color: colors.btnText,
-                borderRadius: formSettings.btn_radius ?? 16,
-                boxShadow: `0 8px 24px ${colors.btn}45`,
+                borderRadius: formSettings.btn_border_radius ?? 14,
+                boxShadow: colors.btnShadow,
               }}
+              onMouseEnter={(e) => { e.currentTarget.style.boxShadow = colors.btnShadowHover }}
+              onMouseLeave={(e) => { e.currentTarget.style.boxShadow = colors.btnShadow }}
             >
               {btnLabel}
             </button>
