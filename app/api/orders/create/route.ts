@@ -30,6 +30,12 @@ export async function POST(request: Request) {
     const qty = body.quantity || 1
     const productName = qty > 1 ? `${qty}x ${product}` : product
 
+    let note = `Quantité : ${qty}`
+    if (body.variant && typeof body.variant === 'object' && Object.keys(body.variant).length) {
+      const variantSummary = Object.entries(body.variant).map(([k, v]) => `${k}: ${v}`).join(', ')
+      note += ` | Variantes: ${variantSummary}`
+    }
+
     const { data: order, error } = await supabase
       .from('orders')
       .insert({
@@ -43,7 +49,7 @@ export async function POST(request: Request) {
         status: 'A Confirmer',
         address: body.address || null,
         country: body.country || null,
-        note: `Quantité : ${qty}`
+        note,
       })
       .select('id')
       .single()

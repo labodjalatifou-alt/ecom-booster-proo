@@ -5,6 +5,7 @@ import { ShieldCheck, Truck, Sparkles } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { ensureOrderFormSettings, calcBundleTotal } from '@/lib/store-builder/form-presets'
 import BundleOffers from '@/components/store-builder/sections/BundleOffers'
+import VariantSelector from './VariantSelector'
 
 const BTN_ANIMATIONS = [
   { id: 'shake', label: 'Secousse' },
@@ -31,6 +32,7 @@ export default function OrderFormRender({ settings, product, storeId, themeSetti
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [variantSelections, setVariantSelections] = useState<Record<string, string>>({})
 
   const unitPrice = product?.price ? Number(product.price) : 0
   const currency = product?.currency || 'FCFA'
@@ -59,6 +61,8 @@ export default function OrderFormRender({ settings, product, storeId, themeSetti
 
 const btnAnimation: BtnAnimation = formSettings.btn_animation || 'pulse'
   const borderR = formSettings.card_border_radius ?? formSettings.border_radius ?? 20
+
+  const variantOptions: { name: string; values: string[] }[] = formSettings.variant_options || []
 
   const colors = useMemo(() => ({
     bg: formSettings.bg_color || '#ffffff',
@@ -128,6 +132,7 @@ const btnAnimation: BtnAnimation = formSettings.btn_animation || 'pulse'
           quantity: finalQty,
           currency,
           store_id: storeId || s.store_id || null,
+          variant: Object.keys(variantSelections).length ? variantSelections : null,
         }),
       })
 
@@ -289,6 +294,12 @@ return (
               selectedBorderWidth={formSettings.bundle_selected_border_width ?? 3}
               layout={formSettings.bundle_layout || 'deals'}
             />
+          )}
+
+          {variantOptions.length > 0 && (
+            <div className="mb-4">
+              <VariantSelector options={variantOptions} onChange={setVariantSelections} themeSettings={themeSettings} />
+            </div>
           )}
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">

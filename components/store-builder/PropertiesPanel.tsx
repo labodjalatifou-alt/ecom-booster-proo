@@ -528,6 +528,12 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
             <ToggleField label="Afficher champ Téléphone" value={s.show_phone !== false} onChange={v => update('show_phone', v)} />
             <ToggleField label="Afficher champ Ville" value={s.show_city !== false} onChange={v => update('show_city', v)} />
             <ToggleField label="Afficher champ Email" value={!!s.show_email} onChange={v => update('show_email', v)} />
+
+            <h4 className="text-xs font-bold text-gray-400 uppercase mb-3 mt-4">Variantes / Options produit</h4>
+            <p className="text-[10px] text-gray-400 mb-2 -mt-2">
+              Ajoute des sélecteurs de variantes (taille, couleur, parfum…). Les choix seront envoyés avec la commande.
+            </p>
+            <VariantOptionsEditor value={s.variant_options || []} onChange={v => update('variant_options', v)} />
           </>
         )
       }
@@ -938,6 +944,63 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+function VariantOptionsEditor({ value, onChange }: { value: { name: string; values: string[] }[], onChange: (v: any) => void }) {
+  const add = () => onChange([...value, { name: '', values: [''] }])
+  const remove = (i: number) => onChange(value.filter((_, idx) => idx !== i))
+  const updateGroup = (i: number, field: string, v: any) => {
+    const next = value.map((g, idx) => idx === i ? { ...g, [field]: v } : g)
+    onChange(next)
+  }
+  const addValue = (i: number) => {
+    updateGroup(i, 'values', [...value[i].values, ''])
+  }
+  const removeValue = (gi: number, vi: number) => {
+    const next = value.map((g, idx) => idx === gi ? { ...g, values: g.values.filter((_, vIdx) => vIdx !== vi) } : g)
+    onChange(next)
+  }
+  const updateValue = (gi: number, vi: number, v: string) => {
+    const next = value.map((g, idx) => idx === gi ? { ...g, values: g.values.map((val, vIdx) => vIdx === vi ? v : val) } : g)
+    onChange(next)
+  }
+
+  return (
+    <div className="space-y-3 mb-4">
+      {value.map((group, gi) => (
+        <div key={gi} className="border border-gray-200 rounded-xl p-3 bg-white shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] font-bold text-gray-400 uppercase">Groupe {gi + 1}</span>
+            <button type="button" onClick={() => remove(gi)} className="text-red-400 hover:text-red-600 text-xs font-bold">Supprimer</button>
+          </div>
+          <input
+            type="text"
+            value={group.name}
+            onChange={e => updateGroup(gi, 'name', e.target.value)}
+            placeholder="Ex: Taille, Couleur, Parfum…"
+            className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg mb-2 focus:outline-none focus:border-blue-400"
+          />
+          <label className="text-[9px] font-semibold text-gray-400 uppercase block mb-1">Valeurs</label>
+          {group.values.map((val, vi) => (
+            <div key={vi} className="flex items-center gap-1 mb-1">
+              <input
+                type="text"
+                value={val}
+                onChange={e => updateValue(gi, vi, e.target.value)}
+                placeholder="Ex: S, M, Rouge, Vanille…"
+                className="flex-1 px-2 py-1 text-xs border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400"
+              />
+              {group.values.length > 1 && (
+                <button type="button" onClick={() => removeValue(gi, vi)} className="text-gray-300 hover:text-red-400 text-xs px-1">✕</button>
+              )}
+            </div>
+          ))}
+          <button type="button" onClick={() => addValue(gi)} className="text-[10px] font-semibold text-blue-500 hover:text-blue-700 mt-1">+ Ajouter une valeur</button>
+        </div>
+      ))}
+      <button type="button" onClick={add} className="w-full py-2 text-xs font-semibold text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-lg border border-dashed border-gray-300">+ Ajouter un groupe de variantes</button>
     </div>
   )
 }
