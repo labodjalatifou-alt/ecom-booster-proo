@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
+import { randomUUID } from 'crypto'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { createAdminSupabase } from '@/lib/supabase'
 import {
-  buildStorePage,
   getBoutiqueTheme,
   toStoreColors,
   toStoreFonts,
@@ -392,6 +393,40 @@ export async function POST(request: Request) {
 
     const supabase = createAdminSupabase()
 
+    const authHeader = request.headers.get('Authorization')
+    const token = authHeader?.replace('Bearer ', '')
+
+    const supabaseAuth = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { auth: { persistSession: false } },
+    )
+
+    let userId = null
+    if (token) {
+      const { data: authData } = await supabaseAuth.auth.getUser(token)
+      userId = authData?.user?.id ?? null
+      if (userId) {
+        const { data: existingUser } = await supabase.from('User').select('id').eq('id', userId).maybeSingle()
+        if (!existingUser) {
+          await supabase.from('User').insert({ id: userId, email: authData!.user!.email!, name: authData!.user!.user_metadata?.name || 'Utilisateur', role: 'CLOSER', commissionPerConfirm: 0, commissionPerDeliver: 0, earnings: 0 })
+        }
+      }
+    }
+
+    if (!userId) {
+      const { data: guestUser } = await supabase.from('User').select('id').eq('email', 'guest@local').maybeSingle()
+      if (guestUser?.id) {
+        userId = guestUser.id
+      } else {
+        const { data: authUser, error: authError } = await supabase.auth.admin.createUser({ email: `guest-${Date.now()}@local.dev`, password: randomUUID(), email_confirm: true, user_metadata: { name: 'Invité' } })
+        if (authUser?.user) {
+          const { data: newUser } = await supabase.from('User').insert({ id: authUser.user.id, email: authUser.user.email!, name: 'Invité', role: 'CLOSER', commissionPerConfirm: 0, commissionPerDeliver: 0, earnings: 0 }).select('id').single()
+          if (newUser) userId = newUser.id
+        }
+      }
+    }
+
     const { data: existing } = await supabase.from('stores').select('id').eq('slug', slug).maybeSingle()
     const finalSlug = existing ? `${slug}-${Date.now().toString(36)}` : slug
 
@@ -481,7 +516,7 @@ export async function POST(request: Request) {
     // ── Création en base ──
     const { data: store, error: storeError } = await supabase
       .from('stores')
-      .insert({ name: storeNameDisplay, slug: finalSlug, status: 'draft' })
+      .insert({ name: storeNameDisplay, slug: finalSlug, status: 'draft', user_id: userId })
       .select()
       .single()
 

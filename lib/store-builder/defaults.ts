@@ -444,7 +444,12 @@ export const SECTIONS_CATALOG: SectionCatalogItem[] = [
   { type: 'order_form', label: 'Formulaire commande', icon: '📋', description: 'Formulaire de commande personnalisable', category: 'Produits', defaultProps: DEFAULT_ORDER_FORM_PROPS },
   
   // ⭐ Social Proof (très important pour COD)
-  { type: 'reel_media', label: 'Reel Média', icon: '🎞️', description: 'Défilement horizontal de vidéos/GIFs/images façon TikTok', category: 'Social Proof', defaultProps: { title: 'Ils parlent de nous', subtitle: 'Témoignages en vidéo', items: [], auto_play: true, speed: 40, show_counter: true, bg_color: '#FFFFFF', accent_color: '#E8527A' } },
+  { type: 'reel_media', label: 'Reel Média', icon: '🎞️', description: 'Défilement horizontal de vidéos/GIFs/images façon TikTok', category: 'Social Proof', defaultProps: { title: 'Ils parlent de nous', subtitle: 'Glissez pour voir plus →', items: [
+    { id: '1', type: 'image', url: 'https://placehold.co/400x600/E8527A/white?text=Client+1', caption: 'Résultat après 2 semaines ✨', author: 'Aminata' },
+    { id: '2', type: 'image', url: 'https://placehold.co/400x600/10B981/white?text=Client+2', caption: 'Livraison rapide ! 🚚', author: 'Moussa' },
+    { id: '3', type: 'image', url: 'https://placehold.co/400x600/6366f1/white?text=Client+3', caption: 'Mes enfants adorent 💛', author: 'Fatou' },
+    { id: '4', type: 'image', url: 'https://placehold.co/400x600/f59e0b/white?text=Client+4', caption: 'Je recommande à 100%', author: 'Ibrahim' },
+  ], auto_play: false, speed: 40, show_counter: true, bg_color: '#FFFFFF', accent_color: '#E8527A' } },
   { type: 'trust_bar', label: 'Barre de confiance', icon: '✓', description: 'Score et arguments de confiance', category: 'Social Proof', defaultProps: {} },
   { type: 'stock_urgency', label: 'Stock urgent', icon: '🔥', description: 'Barre de stock avec urgence', category: 'Social Proof', defaultProps: {} },
   { type: 'before_after', label: 'Avant / Après', icon: '🔄', description: 'Comparaison avec slider interactif', category: 'Social Proof', defaultProps: DEFAULT_BEFORE_AFTER_PROPS },
