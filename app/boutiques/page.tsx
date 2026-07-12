@@ -204,6 +204,9 @@ export default function BoutiquesPage() {
                     <p><b>Polices :</b> {cloneResult.analysis.fonts_detected.join(', ')}</p>
                   )}
                   {cloneResult.analysis?.logo_detected && <p><b>Logo :</b> ✓ récupéré</p>}
+                  {cloneResult.analysis?.product_extracted && (
+                    <p><b>Produit :</b> {cloneResult.analysis.product_title} ({cloneResult.analysis.product_price?.toLocaleString('fr-FR')} FCFA) — {cloneResult.analysis.product_images} image(s)</p>
+                  )}
                 </div>
                 <button
                   onClick={() => { setShowClone(false); setCloneResult(null); router.push(`/boutiques/${cloneResult.data.id}`) }}

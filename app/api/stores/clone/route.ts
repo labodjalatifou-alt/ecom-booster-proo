@@ -197,6 +197,88 @@ function extractBenefits(html: string): ScrapedSection | null {
   return { type: 'benefits', title: 'Nos avantages', images: [], items: items.slice(0, 6) }
 }
 
+// ── Extraction produit (Shopify / e-commerce) ──
+
+interface ScrapedProduct {
+  title: string
+  price: number
+  currency: string
+  description: string
+  image_url: string
+  images: string[]
+}
+
+function extractProductFromJsonLd(html: string): ScrapedProduct | null {
+  const scripts = [...html.matchAll(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)]
+  for (const s of scripts) {
+    try {
+      const data = JSON.parse(s[1])
+      const items = Array.isArray(data) ? data : [data]
+      for (const item of items) {
+        if (item['@type'] === 'Product' || item['@type'] === 'ProductGroup') {
+          const images = []
+          if (item.image) {
+            const imgArr = Array.isArray(item.image) ? item.image : [item.image]
+            for (const img of imgArr) {
+              if (typeof img === 'string') images.push(img)
+              else if (img?.url) images.push(img.url)
+            }
+          }
+          return {
+            title: item.name || '',
+            price: item.offers?.price ? parseFloat(item.offers.price) : 0,
+            currency: item.offers?.priceCurrency || 'FCFA',
+            description: item.description || '',
+            image_url: images[0] || '',
+            images,
+          }
+        }
+      }
+    } catch {}
+  }
+  return null
+}
+
+function extractProductFromMeta(html: string, baseUrl: string): Partial<ScrapedProduct> {
+  const p: Partial<ScrapedProduct> = {}
+  const title = extractMeta(html, 'og:title') || html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)?.[1]?.replace(/<[^>]+>/g, '').trim() || ''
+  if (title) p.title = title
+  const ogPrice = extractMeta(html, 'product:price:amount') || extractMeta(html, 'og:price:amount')
+  if (ogPrice) p.price = parseFloat(ogPrice) || 0
+  const ogCurrency = extractMeta(html, 'product:price:currency') || extractMeta(html, 'og:price:currency')
+  if (ogCurrency) p.currency = ogCurrency
+  const ogImage = extractMeta(html, 'og:image')
+  if (ogImage) {
+    try { p.image_url = new URL(ogImage, baseUrl).href } catch { p.image_url = ogImage }
+  }
+  const desc = extractMeta(html, 'description') || extractMeta(html, 'og:description')
+  if (desc) p.description = desc
+  return p
+}
+
+function extractProductFromHtml(html: string, baseUrl: string): ScrapedProduct | null {
+  // 1. Try JSON-LD first (richest data)
+  const ld = extractProductFromJsonLd(html)
+  if (ld && ld.title && ld.price > 0) return ld
+
+  // 2. Fallback: meta tags + HTML
+  const meta = extractProductFromMeta(html, baseUrl)
+  const images = extractAllImages(html, baseUrl)
+
+  if (meta.title) {
+    return {
+      title: meta.title,
+      price: meta.price || 0,
+      currency: meta.currency || 'FCFA',
+      description: meta.description || '',
+      image_url: meta.image_url || images[0] || '',
+      images: meta.image_url ? [meta.image_url, ...images.slice(0, 4)] : images.slice(0, 5),
+    }
+  }
+
+  return null
+}
+
 function extractFooterInfo(html: string): { copyright?: string; whatsapp?: string } {
   const info: { copyright?: string; whatsapp?: string } = {}
   const c = html.match(/©\s*\d{4}[^<]*/i)?.[0]?.trim()
@@ -347,6 +429,9 @@ export async function POST(request: Request) {
     const allVideos = extractAllVideos(html, baseUrl)
     const footerInfo = extractFooterInfo(html)
 
+    // ── Extraction produit ──
+    const scrapedProduct = extractProductFromHtml(html, baseUrl)
+
     // ── Extraction structure ──
     const hero = extractHeroSection(html, baseUrl)
     const testimonials = extractTestimonials(html, baseUrl)
@@ -366,8 +451,9 @@ export async function POST(request: Request) {
       .map(s => s ? sectionToBlock(s, bestThemeId) : null)
       .filter(Boolean) as any[]
 
-    // Prendre les images du hero pour la galerie
-    const galleryImages = hero?.images.length ? hero.images : allImages.slice(0, 4)
+    // Prendre les images du hero ou du produit pour la galerie
+    const productImages = scrapedProduct?.images || []
+    const galleryImages = hero?.images.length ? hero.images : (productImages.length ? productImages : allImages.slice(0, 4))
 
     // Blocs de base
     const headerBlock = {
@@ -439,6 +525,28 @@ export async function POST(request: Request) {
 
     const storeNameDisplay = extractMeta(html, 'og:site_name') || domain.split('.')[0] || storeName
 
+    // ── Création du produit cloné ──
+    let clonedProductId: string | null = null
+    if (scrapedProduct && scrapedProduct.title) {
+      const { data: newProduct, error: productError } = await supabase
+        .from('products')
+        .insert({
+          title: scrapedProduct.title,
+          price: String(scrapedProduct.price || 0),
+          currency: scrapedProduct.currency || 'FCFA',
+          description: scrapedProduct.description?.slice(0, 2000) || '',
+          image_url: scrapedProduct.image_url || '',
+          images: JSON.stringify(scrapedProduct.images || []),
+          status: 'active',
+        })
+        .select('id')
+        .single()
+
+      if (!productError && newProduct) {
+        clonedProductId = newProduct.id
+      }
+    }
+
     // Construire builder_json
     const builderJson = {
       header: [headerBlock],
@@ -478,11 +586,19 @@ export async function POST(request: Request) {
           title: 'Formulaire commande',
           settings: {
             store_id: null,
+            title: scrapedProduct?.title ? `Finaliser : ${scrapedProduct.title.slice(0, 40)}` : 'Finaliser ma commande',
+            btn_text: 'COMMANDER MAINTENANT',
             bg_color: theme.colors.surface,
             border_color: theme.colors.border,
             title_color: theme.colors.text,
             btn_color: theme.colors.accent,
             accent_color: theme.colors.gold,
+            bundles_enabled: scrapedProduct && scrapedProduct.price > 0,
+            bundles: scrapedProduct && scrapedProduct.price > 0 ? [
+              { id: 'b1', qty: 1, label: '1 unité', sublabel: '', badge: '', discount_pct: 0, popular: false, hidden: false },
+              { id: 'b2', qty: 2, label: '2 unités', sublabel: 'Économisez 15%', badge: 'POPULAIRE', discount_pct: 15, popular: true, hidden: false },
+              { id: 'b3', qty: 3, label: '3 unités', sublabel: 'Meilleur prix', badge: 'MEILLEURE OFFRE', discount_pct: 25, popular: false, hidden: false },
+            ] : [],
           },
           hidden: false,
         }] : []),
@@ -521,7 +637,7 @@ export async function POST(request: Request) {
         whatsapp_number: footerInfo.whatsapp || '',
         show_whatsapp: !!footerInfo.whatsapp,
       },
-      selectedProductId: null,
+      selectedProductId: clonedProductId,
     }
 
     // ── Création en base ──
@@ -576,6 +692,10 @@ export async function POST(request: Request) {
         images_extracted: allImages.length,
         videos_extracted: allVideos.length,
         sections_rebuilt: scrapedSections,
+        product_extracted: !!scrapedProduct,
+        product_title: scrapedProduct?.title || null,
+        product_price: scrapedProduct?.price || null,
+        product_images: scrapedProduct?.images?.length || 0,
         theme_used: theme.name,
         theme_id: theme.id,
       },
