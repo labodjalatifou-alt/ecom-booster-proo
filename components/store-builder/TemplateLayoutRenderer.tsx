@@ -11,21 +11,6 @@ const LAYOUT_CSS = `
   .landing-template--full-width { max-width: 100%; }
   .landing-template-rest { width: 100%; }
 
-  /* ── Hero-split: sections sous le hero en pleine largeur ── */
-  .landing-hero--split ~ .landing-template-rest,
-  .landing-hero--triple ~ .landing-template-rest {
-    width: 100vw;
-    position: relative;
-    left: 50%;
-    right: 50%;
-    margin-left: -50vw;
-    margin-right: -50vw;
-  }
-  .landing-hero--split ~ .landing-template-rest > *,
-  .landing-hero--triple ~ .landing-template-rest > * {
-    width: 100%;
-  }
-
   /* ── Full-width: sections pleine largeur avec fond alterné ── */
   .landing-template--full-width .landing-full-section {
     width: 100%;
@@ -43,7 +28,7 @@ const LAYOUT_CSS = `
     padding: 0;
   }
 
-  /* ── Hero split (Heline / Cellagen) : galerie | colonne achat ── */
+  /* ── Hero split : galerie grande | colonne achat ── */
   .landing-hero--split .landing-hero-split-grid {
     display: flex;
     flex-direction: column;
@@ -52,31 +37,42 @@ const LAYOUT_CSS = `
   @media (min-width: 900px) {
     .landing-hero--split .landing-hero-split-grid {
       flex-direction: row;
-      align-items: flex-start;
-      gap: 32px;
-      padding: 28px 32px 12px;
+      align-items: stretch;
+      gap: 0;
+      padding: 0;
+      min-height: 80vh;
     }
     .landing-hero--split .landing-hero-split-gallery {
-      flex: 1 1 52%;
+      flex: 1 1 58%;
       min-width: 0;
       position: sticky;
-      top: 88px;
+      top: 0;
+      max-height: 100vh;
     }
     .landing-hero--split .landing-hero-split-buy {
-      flex: 1 1 48%;
+      flex: 1 1 42%;
       min-width: 0;
+      padding: 32px 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
   }
   .landing-hero--split.force-mobile .landing-hero-split-grid {
     flex-direction: column !important;
     padding: 0 !important;
     gap: 0 !important;
+    min-height: auto !important;
   }
   .landing-hero--split.force-mobile .landing-hero-split-gallery {
     position: static !important;
+    max-height: none !important;
+  }
+  .landing-hero--split.force-mobile .landing-hero-split-buy {
+    padding: 16px !important;
   }
 
-  /* ── Hero triple (Pelo-Bio) : galerie | form sticky | marketing ── */
+  /* ── Hero triple : galerie grande | form sticky | marketing ── */
   .landing-hero--triple .landing-hero-triple-desktop {
     display: none;
   }
@@ -87,22 +83,26 @@ const LAYOUT_CSS = `
     .landing-hero--triple .landing-hero-triple-desktop {
       display: flex;
       flex-direction: row;
-      align-items: flex-start;
-      gap: 32px;
-      padding: 28px 32px 12px;
+      align-items: stretch;
+      gap: 0;
+      padding: 0;
+      min-height: 80vh;
     }
     .landing-hero--triple .landing-hero-triple-gallery-col {
-      flex: 1 1 52%;
+      flex: 1 1 58%;
       min-width: 0;
       position: sticky;
-      top: 88px;
+      top: 0;
+      max-height: 100vh;
     }
     .landing-hero--triple .landing-hero-triple-right-col {
-      flex: 1 1 48%;
+      flex: 1 1 42%;
       min-width: 0;
       display: flex;
       flex-direction: column;
       gap: 16px;
+      padding: 32px 40px;
+      justify-content: center;
     }
     .landing-hero--triple .landing-hero-triple-mobile {
       display: none;

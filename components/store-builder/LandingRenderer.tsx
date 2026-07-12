@@ -76,7 +76,8 @@ export default function LandingRenderer({
   const cardBg = normalizeHexColor(theme.surface, '#ffffff')
   const layout = resolveLayout(theme)
   const isFullWidth = layout === 'full-width'
-  const mainMaxWidth = layout === 'single-column' ? (theme.cardMaxWidth ?? 720) : isFullWidth ? '100%' : '100%'
+  const isHeroSplit = layout === 'hero-split' || layout === 'hero-triple'
+  const mainMaxWidth = layout === 'single-column' ? (theme.cardMaxWidth ?? 720) : '100%'
   // Enrichir le thème avec les flags de la page publique
   const publicTheme = showFloating ? { ...theme, __enableTilt: true } : theme
 
@@ -101,6 +102,7 @@ export default function LandingRenderer({
         .landing-root img { max-width: 100%; display: block; }
         .landing-root body { overflow-x: hidden; }
         .landing-card--full-width { max-width: 100% !important; border: none !important; box-shadow: none !important; border-radius: 0 !important; }
+        .landing-card--hero { max-width: 100% !important; border: none !important; box-shadow: none !important; border-radius: 0 !important; }
         @keyframes landingCtaPulse {
           0%, 100% { transform: scale(1); box-shadow: 0 4px 20px rgba(0,0,0,.18); }
           50% { transform: scale(1.02); box-shadow: 0 8px 30px rgba(0,0,0,.28); }
@@ -122,11 +124,18 @@ export default function LandingRenderer({
         }
       `}</style>
 
-      {/* ── CARTE CENTRÉE (la "feuille" posée sur le fond) ──
-          Large sur desktop (max ~960px), pleine largeur sur mobile.
-          Ombre + bordure discrète pour l'effet Deal224.
-          En mode full-width, pas de carte centrée. */}
-      <div className={`landing-card${isFullWidth ? ' landing-card--full-width' : ''}`} style={isFullWidth ? { ...styles.outer, paddingBottom: showFloating ? '90px' : '0px' } : { ...styles.card, paddingBottom: showFloating ? `calc(${styles.card?.paddingBottom || '0px'} + 90px)` : styles.card?.paddingBottom }}>
+      {/* ── CONTENEUR PRINCIPAL ──
+          single-column : carte centrée avec bordures/ombre
+          hero-split/triple : pleine largeur, pas de carte
+          full-width : pleine largeur, pas de carte */}
+      <div
+        className={`landing-card${isFullWidth ? ' landing-card--full-width' : ''}${isHeroSplit ? ' landing-card--hero' : ''}`}
+        style={
+          isFullWidth || isHeroSplit
+            ? { ...styles.outer, paddingBottom: showFloating ? '90px' : '0px' }
+            : { ...styles.card, paddingBottom: showFloating ? `calc(${styles.card?.paddingBottom || '0px'} + 90px)` : styles.card?.paddingBottom }
+        }
+      >
         {!hasHeaderBlock && theme.logo_url?.trim() && (
           <ThemeLogoBar
             logoUrl={theme.logo_url}
