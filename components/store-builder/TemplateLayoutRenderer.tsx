@@ -38,8 +38,8 @@ const LAYOUT_CSS = `
     .landing-hero--split .landing-hero-split-grid {
       flex-direction: row;
       align-items: stretch;
-      gap: 24px;
-      padding: 24px;
+      gap: 32px;
+      padding: 24px 24px 24px 48px;
     }
     .landing-hero--split .landing-hero-split-gallery {
       flex: 0 0 48%;
@@ -49,7 +49,6 @@ const LAYOUT_CSS = `
       max-height: calc(100vh - 48px);
       overflow: hidden;
       border-radius: 12px;
-      overflow: hidden;
     }
     .landing-hero--split .landing-hero-split-buy {
       flex: 1 1 52%;
@@ -85,8 +84,8 @@ const LAYOUT_CSS = `
       display: flex;
       flex-direction: row;
       align-items: stretch;
-      gap: 24px;
-      padding: 24px;
+      gap: 32px;
+      padding: 24px 24px 24px 48px;
     }
     .landing-hero--triple .landing-hero-triple-gallery-col {
       flex: 0 0 48%;
