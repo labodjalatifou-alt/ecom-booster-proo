@@ -403,8 +403,7 @@ export function dateRangeToQuery(range: DateRange): { from: string | null; to: s
 }
 
 // ── Default "All" range ───────────────────────────────────────
-const today = new Date();
-today.setHours(0, 0, 0, 0);
-const todayEnd = new Date();
-todayEnd.setHours(23, 59, 59, 999);
-export const DEFAULT_RANGE: DateRange = { from: today.toISOString(), to: todayEnd.toISOString(), label: "Aujourd'hui" };
+export function getDefaultRange(): DateRange {
+  return { from: null, to: null, label: 'Toute la période' };
+}
+export const DEFAULT_RANGE: DateRange = getDefaultRange();

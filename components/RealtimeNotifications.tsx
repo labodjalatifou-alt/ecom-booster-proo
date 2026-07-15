@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAppSounds } from '@/lib/hooks/useAppSounds';
 import toast from 'react-hot-toast';
@@ -13,71 +13,71 @@ export default function RealtimeNotifications() {
   const pathname = usePathname();
   const isPublicRoute = pathname?.startsWith('/s/') || pathname?.startsWith('/terms') || pathname?.startsWith('/privacy');
 
+  // --- Nouveau : mémoire des commandes déjà vues + timestamp du dernier check ---
+  const seenOrderIds = useRef<Set<string>>(new Set());
+  const lastCheckRef = useRef<string>(new Date().toISOString());
+
+  const handleOrderInsert = (newOrder: any) => {
+    if (seenOrderIds.current.has(newOrder.id)) return; // déjà traité, on évite le doublon
+    seenOrderIds.current.add(newOrder.id);
+
+    if (selectedStore && newOrder.store_id !== selectedStore) return;
+
+    playSound('order');
+    toast.success("Nouvelle commande !", {
+      icon: '💰',
+      duration: 6000,
+      style: {
+        borderRadius: '1rem',
+        background: '#0f172a',
+        color: '#fff',
+        fontWeight: 'bold',
+        fontSize: '12px',
+        textTransform: 'uppercase',
+        letterSpacing: '0.1em',
+        padding: '16px 24px'
+      }
+    });
+  };
+
   useEffect(() => {
     if (isPublicRoute) return;
 
     console.log('[Realtime] Initializing global listener with sounds...');
-    
+
     const channel = supabase
       .channel('global-orders')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'orders'
-        },
+        { event: '*', schema: 'public', table: 'orders' },
         (payload) => {
           const newOrder = payload.new as any;
           const oldOrder = payload.old as any;
 
-          // --- FILTRE PAR BOUTIQUE ---
-          if (selectedStore && newOrder.store_id !== selectedStore) {
-            return; 
-          }
-
-          console.log('[Realtime] Order event:', payload.eventType, newOrder);
-
-          // NOUVELLE COMMANDE (INSERT)
           if (payload.eventType === 'INSERT') {
-            playSound('order'); // Son de clochette
-            toast.success("Nouvelle commande !", { 
-              icon: '💰',
-              duration: 6000,
-              style: {
-                borderRadius: '1rem',
-                background: '#0f172a',
-                color: '#fff',
-                fontWeight: 'bold',
-                fontSize: '12px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.1em',
-                padding: '16px 24px'
-              }
-            });
+            handleOrderInsert(newOrder);
           }
 
-          // CHANGEMENT DE STATUT OU CASH (UPDATE)
           if (payload.eventType === 'UPDATE') {
-            // 1. Changement de Statut
+            if (selectedStore && newOrder.store_id !== selectedStore) return;
+
             if (newOrder.status !== oldOrder.status) {
               if (newOrder.status === 'Confirmé') {
-                playSound('confirm'); // Son Téléphone raccroché
+                playSound('confirm');
                 toast.success(`Commande de ${newOrder.customer} CONFIRMÉE`, { icon: '✅' });
               } else if (newOrder.status === 'Livré') {
-                playSound('deliver'); // Son Klaxon
+                playSound('deliver');
                 toast.success(`Commande de ${newOrder.customer} LIVRÉE !`, { icon: '📦' });
               } else if (newOrder.status === 'Annulé') {
                 toast.error(`Commande de ${newOrder.customer} ANNULÉE`, { icon: '❌' });
               } else if (newOrder.status === 'Programmé') {
-                playSound('confirm'); // You can change this to a specific alarm sound later
+                playSound('confirm');
                 toast.success(`Commande de ${newOrder.customer} PROGRAMMÉE !`, { icon: '📅' });
               }
             }
 
-            // 2. Réception du Cash (cash_received passe de false à true)
             if (newOrder.cash_received === true && oldOrder.cash_received === false) {
-              playSound('cash'); // Son Pièces
+              playSound('cash');
               toast.success("💰 Cash validé en comptabilité !", { icon: '💵' });
             }
           }
@@ -85,18 +85,47 @@ export default function RealtimeNotifications() {
       )
       .subscribe((status) => {
         console.log('[Realtime] Subscription status:', status);
-        if (status === 'CHANNEL_ERROR') {
-          console.error('[Realtime] Subscription error. Realtime might not be enabled on the table "orders" in Supabase.');
+        // --- Nouveau : dès qu'on (re)devient SUBSCRIBED, on rattrape ce qui a pu être raté ---
+        if (status === 'SUBSCRIBED') {
+          catchUpMissedOrders();
+        }
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.error('[Realtime] Connexion perdue, tentative de reconnexion...');
         }
       });
+
+    // --- Nouveau : fonction de rattrapage ---
+    const catchUpMissedOrders = async () => {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .gt('created_at', lastCheckRef.current)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('[Realtime] Erreur catch-up:', error);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        console.log(`[Realtime] Rattrapage : ${data.length} commande(s) potentiellement manquée(s)`);
+        data.forEach((order) => handleOrderInsert(order));
+      }
+
+      lastCheckRef.current = new Date().toISOString();
+    };
+
+    // --- Nouveau : polling de sécurité toutes les 20 secondes, même si le websocket est SUBSCRIBED ---
+    const pollInterval = setInterval(catchUpMissedOrders, 20000);
 
     return () => {
       console.log('[Realtime] Cleaning up global listener...');
       supabase.removeChannel(channel);
+      clearInterval(pollInterval);
     };
   }, [playSound, selectedStore]);
 
-  // Polling check for Programmed Orders
+  // Polling check for Programmed Orders (inchangé)
   useEffect(() => {
     const checkProgrammed = async () => {
       try {
@@ -105,12 +134,8 @@ export default function RealtimeNotifications() {
         console.error("Cron check failed", err);
       }
     };
-    
-    // Delay initial check by 5s to not block page load
     const initialTimeout = setTimeout(checkProgrammed, 5000);
-    // Then check every minute
     const interval = setInterval(checkProgrammed, 60000);
-    
     return () => {
       clearTimeout(initialTimeout);
       clearInterval(interval);
