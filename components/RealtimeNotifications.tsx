@@ -27,7 +27,10 @@ export default function RealtimeNotifications() {
         headers: { 'Content-Type': 'application/json' },
       });
 
-      if (!response.ok) throw new Error('Failed to fetch orders');
+      if (!response.ok) {
+        console.warn('[Polling] Response not ok:', response.status);
+        return;
+      }
 
       const data = await response.json();
       
