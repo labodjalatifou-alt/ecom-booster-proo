@@ -1,0 +1,15 @@
+{
+  "env": {
+    "ANTHROPIC_API_KEY": "sk-8916fbaff3039356-cae955-c9427c63",
+    "ANTHROPIC_BASE_URL": "http://localhost:20128/v1",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "oc/deepseek-v4-flash-free",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "oc/big-pickle",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "nvidia/minimaxai/minimax-m2.7"
+  },
+  "model": "opus",
+For Windows;-
+  "statusLine": {
+    "type": "command",
+    "command": "node \"C:\\Users\\PC\\.claude\\statusline.js\""
+  },

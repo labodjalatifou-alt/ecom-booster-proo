@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useEffect, useRef } from 'react';
 import { useAppSounds } from '@/lib/hooks/useAppSounds';
 import toast from 'react-hot-toast';
 import { useStore } from './StoreProvider';
@@ -13,86 +12,84 @@ export default function RealtimeNotifications() {
   const pathname = usePathname();
   const isPublicRoute = pathname?.startsWith('/s/') || pathname?.startsWith('/terms') || pathname?.startsWith('/privacy');
 
+  // Polling state - track last seen order ID
+  const lastOrderIdRef = useRef<string | null>(null);
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isPollingRef = useRef(false);
+
+  // Fetch latest orders via API (polling)
+  const fetchLatestOrders = async () => {
+    if (isPollingRef.current) return;
+    isPollingRef.current = true;
+
+    try {
+      const response = await fetch('/api/orders/realtime', {
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch orders');
+
+      const data = await response.json();
+      
+      if (data.success && data.orders.length > 0) {
+        // Filter by selected store if applicable
+        const orders = selectedStore 
+          ? data.orders.filter((order: any) => order.store_id === selectedStore)
+          : data.orders;
+
+        // Process new orders only - compare order IDs
+        for (const order of orders) {
+          // If we haven't seen any order yet, or this is a newer order
+          if (!lastOrderIdRef.current || order.id !== lastOrderIdRef.current) {
+            // NEW ORDER (INSERT) - only notify if we've seen orders before
+            if (lastOrderIdRef.current) {
+              playSound('order');
+              toast.success("Nouvelle commande !", { 
+                icon: '💰',
+                duration: 6000,
+                style: {
+                  borderRadius: '1rem',
+                  background: '#0f172a',
+                  color: '#fff',
+                  fontWeight: 'bold',
+                  fontSize: '12px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em',
+                  padding: '16px 24px'
+                }
+              });
+            }
+          }
+        }
+
+        // Update last seen order ID
+        if (orders.length > 0) {
+          lastOrderIdRef.current = orders[0].id;
+        }
+      }
+    } catch (error) {
+      console.error('[Polling] Error fetching orders:', error);
+    } finally {
+      isPollingRef.current = false;
+    }
+  };
+
   useEffect(() => {
     if (isPublicRoute) return;
 
-    console.log('[Realtime] Initializing global listener with sounds...');
+    console.log('[Polling] Initializing order notifications...');
     
-    const channel = supabase
-      .channel('global-orders')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'orders'
-        },
-        (payload) => {
-          const newOrder = payload.new as any;
-          const oldOrder = payload.old as any;
+    // Initial fetch
+    fetchLatestOrders();
 
-          // --- FILTRE PAR BOUTIQUE ---
-          if (selectedStore && newOrder.store_id !== selectedStore) {
-            return; 
-          }
-
-          console.log('[Realtime] Order event:', payload.eventType, newOrder);
-
-          // NOUVELLE COMMANDE (INSERT)
-          if (payload.eventType === 'INSERT') {
-            playSound('order'); // Son de clochette
-            toast.success("Nouvelle commande !", { 
-              icon: '💰',
-              duration: 6000,
-              style: {
-                borderRadius: '1rem',
-                background: '#0f172a',
-                color: '#fff',
-                fontWeight: 'bold',
-                fontSize: '12px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.1em',
-                padding: '16px 24px'
-              }
-            });
-          }
-
-          // CHANGEMENT DE STATUT OU CASH (UPDATE)
-          if (payload.eventType === 'UPDATE') {
-            // 1. Changement de Statut
-            if (newOrder.status !== oldOrder.status) {
-              if (newOrder.status === 'Confirmé') {
-                playSound('confirm'); // Son Téléphone raccroché
-                toast.success(`Commande de ${newOrder.customer} CONFIRMÉE`, { icon: '✅' });
-              } else if (newOrder.status === 'Livré') {
-                playSound('deliver'); // Son Klaxon
-                toast.success(`Commande de ${newOrder.customer} LIVRÉE !`, { icon: '📦' });
-              } else if (newOrder.status === 'Annulé') {
-                toast.error(`Commande de ${newOrder.customer} ANNULÉE`, { icon: '❌' });
-              } else if (newOrder.status === 'Programmé') {
-                playSound('confirm'); // You can change this to a specific alarm sound later
-                toast.success(`Commande de ${newOrder.customer} PROGRAMMÉE !`, { icon: '📅' });
-              }
-            }
-
-            // 2. Réception du Cash (cash_received passe de false à true)
-            if (newOrder.cash_received === true && oldOrder.cash_received === false) {
-              playSound('cash'); // Son Pièces
-              toast.success("💰 Cash validé en comptabilité !", { icon: '💵' });
-            }
-          }
-        }
-      )
-      .subscribe((status) => {
-        console.log('[Realtime] Subscription status:', status);
-        if (status === 'CHANNEL_ERROR') {
-          console.error('[Realtime] Subscription error. Realtime might not be enabled on the table "orders" in Supabase.');
-        }
-      });
+    // Poll every 30 seconds
+    pollIntervalRef.current = setInterval(fetchLatestOrders, 30000);
 
     return () => {
-      console.log('[Realtime] Cleaning up global listener...');
-      supabase.removeChannel(channel);
+      console.log('[Polling] Cleaning up...');
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+      }
     };
   }, [playSound, selectedStore]);
 
@@ -106,9 +103,7 @@ export default function RealtimeNotifications() {
       }
     };
     
-    // Delay initial check by 5s to not block page load
     const initialTimeout = setTimeout(checkProgrammed, 5000);
-    // Then check every minute
     const interval = setInterval(checkProgrammed, 60000);
     
     return () => {

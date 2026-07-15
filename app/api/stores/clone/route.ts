@@ -64,17 +64,14 @@ function findAllJsonScripts($: cheerio.CheerioAPI): any[] {
   $('script').each((_, el) => {
     const type = $(el).attr('type')
     if (type && type !== 'application/ld+json' && !type.includes('json')) return
-    // skip known non-data scripts
     const src = $(el).attr('src')
     if (src) return
     try {
       const text = $(el).text().trim()
-      // Try full parse first
       try {
         const data = JSON.parse(text)
         results.push(data)
       } catch {
-        // Try extracting JSON from var assignments: var product = {...}; or window.product = {...}
         const jsonMatch = text.match(/(?:window\.)?(?:product|Product|shopify|Shopify|meta|__INITIAL_STATE__|__STORE__)\s*(?:=|:)\s*(\{[\s\S]*?\})(?:\s*;|\s*,\s*function|\s*\))/)
         if (jsonMatch) {
           try { results.push(JSON.parse(jsonMatch[1])) } catch {}
@@ -90,12 +87,11 @@ function findAllJsonScripts($: cheerio.CheerioAPI): any[] {
 function extractImagesFromShopifyJson(scripts: any[], baseUrl: string): string[] {
   const urls = new Set<string>()
   for (const data of scripts) {
-    // Try common Shopify patterns
     const sources = [
-      data?.product?.images,       // { product: { images: [...] } }
-      data?.product?.media,        // { product: { media: [...] } }
-      data?.images,                // { images: [...] }
-      data?.media,                 // { media: [...] }
+      data?.product?.images,
+      data?.product?.media,
+      data?.images,
+      data?.media,
       data?.variants?.map((v: any) => v.image?.src || v.featured_image?.src).filter(Boolean),
       data?.product?.variants?.map((v: any) => v.image?.src || v.featured_image?.src).filter(Boolean),
     ]
@@ -114,7 +110,7 @@ function extractImagesFromShopifyJson(scripts: any[], baseUrl: string): string[]
   return Array.from(urls)
 }
 
-// ── Extract images from HTML description text (body_html from JSON-LD) ────
+// ── Extract images from HTML description text (body_html from JSON-LD) ──────
 
 function extractImagesFromHtml(html: string, baseUrl: string): string[] {
   const urls = new Set<string>()
@@ -127,7 +123,7 @@ function extractImagesFromHtml(html: string, baseUrl: string): string[] {
   return Array.from(urls)
 }
 
-// ── Main image extraction: ALL sources ─────────────────────────────────────
+// ── Main image extraction: ALL sources ──────────────────────────────────────
 
 function extractAllImages($: cheerio.CheerioAPI, baseUrl: string, jsonScripts: any[]): string[] {
   const urls = new Set<string>()
@@ -148,7 +144,6 @@ function extractAllImages($: cheerio.CheerioAPI, baseUrl: string, jsonScripts: a
     for (const attr of attrs) {
       const val = $(el).attr(attr)
       if (val && !val.startsWith('data:') && !val.includes('placeholder') && !val.includes('pixel') && !val.includes('spacer') && !val.includes('1x1')) {
-        // srcset may contain multiple URLs
         if (attr === 'data-srcset' || attr === 'srcset') {
           val.split(',').forEach(part => {
             const u = part.trim().split(/\s+/)[0]
@@ -161,7 +156,6 @@ function extractAllImages($: cheerio.CheerioAPI, baseUrl: string, jsonScripts: a
         }
       }
     }
-    // Check srcset attribute
     const srcset = $(el).attr('srcset')
     if (srcset) {
       srcset.split(',').forEach(part => {
@@ -217,12 +211,15 @@ function extractAllImages($: cheerio.CheerioAPI, baseUrl: string, jsonScripts: a
     } catch {}
   })
 
+  // 8. Product page specific selectors - common patterns
+  $('.product-gallery img, .product-images img, .product-media img, .gallery img, .thumbnails img, [data-gallery] img').each((_, el) => {
+    const src = $(el).attr('src') || $(el).attr('data-src') || $(el).attr('data-large') || $(el).attr('data-zoom')
+    if (src) { const a = absoluteUrl(src, baseUrl); if (a) urls.add(a) }
+  })
+
   // De-duplicate by normalizing common Shopify image size variants
-  // Shopify serves _1024x1024, _2048x2048, _small, _thumb etc.
-  // We prefer the largest version
   const normalized = new Map<string, string>()
   for (const url of urls) {
-    // Keep the URL as-is but de-dup by base image name
     const key = url.replace(/_[a-z]+\.(jpg|jpeg|png|webp)/i, '.$1').replace(/\?.*/, '')
     if (!normalized.has(key)) {
       normalized.set(key, url)
@@ -259,7 +256,7 @@ function extractProductJsonLd($: cheerio.CheerioAPI, jsonScripts: any[], baseUrl
           if (item.image) {
             const arr = Array.isArray(item.image) ? item.image : [item.image]
             arr.forEach((img: any) => {
-            const u = typeof img === 'string' ? img : img?.url || img?.['@id']
+              const u = typeof img === 'string' ? img : img?.url || img?.['@id']
               if (u) imgs.push(u)
             })
           }
@@ -277,7 +274,6 @@ function extractProductJsonLd($: cheerio.CheerioAPI, jsonScripts: any[], baseUrl
             headingHtml: '',
             subheadings: [],
           }
-          // Add images from description
           if (descImages.length) {
             result.images = [...new Set([...result.images, ...descImages])]
           }
@@ -457,7 +453,7 @@ function sanitizeSlug(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 50) || 'boutique-clonee'
 }
 
-// ── Inject extracted content into builder JSON sections ─────────────────────
+// ── Inject extracted content into builder JSON sections ────────────────────
 
 function injectContent(
   builder: any,
@@ -580,7 +576,7 @@ export async function POST(request: Request) {
     const normalizedUrl = url.startsWith('http') ? url : 'https://' + url
 
     const resp = await fetch(normalizedUrl, {
-      signal: AbortSignal.timeout(20000),
+      signal: AbortSignal.timeout(25000),
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
