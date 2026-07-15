@@ -62,11 +62,21 @@ export default async function StoreBuilderPage({ params }: { params: Promise<{ i
     }
   }
 
-  if (!builderJson || !builderJson.template || builderJson.template.length === 0) {
+  // ── NE PAS régénérer si le builderJson a déjà du contenu (header/template/footer) ──
+  // Le buildStorePage avec productId=null perdrait le produit cloné
+  const hasContent = builderJson && (
+    (builderJson.template && builderJson.template.length > 0) ||
+    (builderJson.header && builderJson.header.length > 0) ||
+    (builderJson.footer && builderJson.footer.length > 0)
+  );
+
+  if (!hasContent) {
     // Utiliser le système de thèmes boutique pour générer un builder_json complet avec layout
     const themeId = store.store_settings?.theme_id || 'nature-vert';
     const storeName = store.name || 'Ma Boutique';
-    builderJson = buildStorePage(themeId, storeName, null);
+    // Préserver selectedProductId s'il existe dans l'ancien builderJson
+    const existingProductId = builderJson?.selectedProductId || null;
+    builderJson = buildStorePage(themeId, storeName, existingProductId);
 
     if (storePage) {
       await supabase.from('store_pages').update({ builder_json: builderJson }).eq('id', storePage.id);

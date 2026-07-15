@@ -149,7 +149,7 @@ export const BOUTIQUE_THEMES: BoutiqueTheme[] = [
     name: 'Cora',
     description: 'Éditorial moderne — galerie split, corail vibrant, sections alternées, style Shopify premium.',
     tags: ['moderne', 'éditorial', 'corail'],
-    preview_image: '/themes/T1.webp',
+    preview_image: '/themes/s1.png',
     layout: 'hero-split',
     cardMaxWidth: 1200,
     colors: {
@@ -171,7 +171,7 @@ export const BOUTIQUE_THEMES: BoutiqueTheme[] = [
     name: 'Classic',
     description: 'Universel & pro — bleu professionnel, hero-split, sections équilibrées, idéal tech & services.',
     tags: ['polyvalent', 'professionnel', 'bleu', 'tech'],
-    preview_image: '/themes/classic-preview.jpg',
+    preview_image: '/themes/screencapture-colagea-products-micro-infusion-capillaire-regenerante-men-2026-07-05-03_44_58.png',
     layout: 'hero-split',
     cardMaxWidth: 1100,
     colors: {
@@ -193,7 +193,7 @@ export const BOUTIQUE_THEMES: BoutiqueTheme[] = [
     name: 'Home',
     description: 'Meubles & Déco — terracotta chaud, hero-split, grandes images, lifestyle éditorial.',
     tags: ['meubles', 'déco', 'terracotta', 'chaleureux'],
-    preview_image: '/themes/home-preview.jpg',
+    preview_image: '/themes/screencapture-afroli-products-batana-2026-07-05-03_42_58.png',
     layout: 'hero-split',
     cardMaxWidth: 1200,
     colors: {
@@ -215,7 +215,7 @@ export const BOUTIQUE_THEMES: BoutiqueTheme[] = [
     name: 'Jewels',
     description: 'Bijouterie luxe — ivoire & bordeaux, single-column centré, typo serif, doré.',
     tags: ['bijoux', 'luxe', 'bordeaux', 'serif'],
-    preview_image: '/themes/jewels-preview.jpg',
+    preview_image: '/themes/s1.png',
     layout: 'single-column',
     cardMaxWidth: 720,
     colors: {
@@ -237,7 +237,7 @@ export const BOUTIQUE_THEMES: BoutiqueTheme[] = [
     name: 'Move',
     description: 'Sportwear — fond sombre, full-width, néon cyan, urgence, dynamique, performance.',
     tags: ['sport', 'dark', 'full-width', 'néon', 'performance'],
-    preview_image: '/themes/move-preview.jpg',
+    preview_image: '/themes/screencapture-lbiocareplus-netlify-app-description-html-2026-07-05-03_43_38.png',
     layout: 'full-width',
     cardMaxWidth: 100,
     colors: {
@@ -259,7 +259,7 @@ export const BOUTIQUE_THEMES: BoutiqueTheme[] = [
     name: 'Skin',
     description: 'Soins & Cosmétiques — teal clinique, hero-split, preuves scientifiques, clean.',
     tags: ['soins', 'cosmétiques', 'teal', 'clinique'],
-    preview_image: '/themes/skin-preview.jpg',
+    preview_image: '/themes/screencapture-colagea-products-micro-infusion-capillaire-regenerante-men-2026-07-05-03_44_58.png',
     layout: 'hero-split',
     cardMaxWidth: 1100,
     colors: {
@@ -281,7 +281,7 @@ export const BOUTIQUE_THEMES: BoutiqueTheme[] = [
     name: 'Sleep',
     description: 'Literie & Sommeil — indigo profond, hero-split, apaisant, tons nuit, 100 nuits.',
     tags: ['literie', 'sommeil', 'indigo', 'apaisant'],
-    preview_image: '/themes/sleep-preview.jpg',
+    preview_image: '/themes/s1.png',
     layout: 'hero-split',
     cardMaxWidth: 1100,
     colors: {
@@ -303,7 +303,7 @@ export const BOUTIQUE_THEMES: BoutiqueTheme[] = [
     name: 'Supplement',
     description: 'Compléments santé — vert émeraude, single-column, urgence, preuves cliniques, COD Afrique.',
     tags: ['suppléments', 'santé', 'émeraude', 'urgence', 'COD'],
-    preview_image: '/themes/supplement-preview.jpg',
+    preview_image: '/themes/screencapture-lbiocareplus-netlify-app-description-html-2026-07-05-03_43_38.png',
     layout: 'single-column',
     cardMaxWidth: 720,
     colors: {
