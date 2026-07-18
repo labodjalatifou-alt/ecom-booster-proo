@@ -11,6 +11,7 @@ import {
   Edit3,
   MoreVertical,
   Globe,
+
   ShoppingBag,
   TrendingUp,
   Eye,
@@ -22,6 +23,7 @@ import {
   Download,
   X,
   Loader2,
+  EyeOff,
 } from 'lucide-react'
 import type { Store as StoreType } from '@/lib/store-builder/types'
 
