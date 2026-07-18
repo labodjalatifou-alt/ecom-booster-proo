@@ -14,11 +14,18 @@ export default async function StorePage({ params }: PageProps) {
   const supabase = createClient()
 
   // ── Boutique + ses paramètres ──
-  const { data: store, error } = await supabase
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug)
+  const query = supabase
     .from('stores')
     .select('id, name, slug, status, user_id, store_settings(*)')
-    .or(`slug.eq."${slug}",id.eq."${slug}"`)
-    .single()
+
+  if (isUuid) {
+    query.or(`slug.eq."${slug}",id.eq."${slug}"`)
+  } else {
+    query.eq('slug', slug)
+  }
+
+  const { data: store, error } = await query.single()
 
   if (error || !store) notFound()
 
@@ -91,11 +98,14 @@ export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params
   const supabase = createClient()
 
-  const { data: store } = await supabase
-    .from('stores')
-    .select('id, name')
-    .eq('slug', slug)
-    .single()
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug)
+  const query = supabase.from('stores').select('id, name')
+  if (isUuid) {
+    query.or(`slug.eq."${slug}",id.eq."${slug}"`)
+  } else {
+    query.eq('slug', slug)
+  }
+  const { data: store } = await query.single()
 
   if (!store) return { title: slug }
 
