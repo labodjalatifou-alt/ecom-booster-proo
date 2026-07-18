@@ -74,8 +74,6 @@ const PRESETS: Preset[] = [
   },
 ];
 
-export const DEFAULT_RANGE: DateRange = { from: null, to: null, label: 'Toute la période' };
-
 interface Props {
   value: DateRange;
   onChange: (range: DateRange) => void;
