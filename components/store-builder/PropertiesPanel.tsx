@@ -532,6 +532,23 @@ export default function PropertiesPanel({ block, onUpdateSettings, onDelete, onC
             <ToggleField label="Afficher champ Ville" value={s.show_city !== false} onChange={v => update('show_city', v)} />
             <ToggleField label="Afficher champ Email" value={!!s.show_email} onChange={v => update('show_email', v)} />
 
+            <h4 className="text-xs font-bold text-gray-400 uppercase mb-3 mt-4">Commande via WhatsApp</h4>
+            <ToggleField label="Rediriger vers WhatsApp au clic" value={!!s.enable_whatsapp_order} onChange={v => update('enable_whatsapp_order', v)} />
+            {s.enable_whatsapp_order && (
+              <>
+                <TextField label="Numéro WhatsApp" value={s.whatsapp_order_number} onChange={v => update('whatsapp_order_number', v)} />
+                <TextareaField label="Message pré-rempli" value={s.whatsapp_order_msg} onChange={v => update('whatsapp_order_msg', v)} />
+              </>
+            )}
+
+            <h4 className="text-xs font-bold text-gray-400 uppercase mb-3 mt-4">Popup de confirmation</h4>
+            <ToggleField label="Bouton WhatsApp dans le popup" value={s.show_popup_whatsapp !== false} onChange={v => update('show_popup_whatsapp', v)} />
+            {s.show_popup_whatsapp !== false && (
+              <>
+                <TextareaField label="Message WhatsApp popup" value={s.popup_whatsapp_msg} onChange={v => update('popup_whatsapp_msg', v)} />
+              </>
+            )}
+
             <h4 className="text-xs font-bold text-gray-400 uppercase mb-3 mt-4">Variantes / Options produit</h4>
             <p className="text-[10px] text-gray-400 mb-2 -mt-2">
               Ajoute des sélecteurs de variantes (taille, couleur, parfum…). Les choix seront envoyés avec la commande.

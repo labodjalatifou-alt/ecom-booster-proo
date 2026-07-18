@@ -376,6 +376,7 @@ function extractFaq($: cheerio.CheerioAPI): { question: string; answer: string }
     } catch {}
   })
   if (items.length === 0) {
+    // Look for explicit FAQ containers
     $('.faq, [class*="faq"], .accordion, [class*="accordion"], [class*="questions"]').each((_, el) => {
       $(el).find('h3, h4, .question, [class*="question"], dt').each((_, qEl) => {
         const qText = $(qEl).text().trim()
@@ -386,6 +387,20 @@ function extractFaq($: cheerio.CheerioAPI): { question: string; answer: string }
         }
       })
     })
+
+    // Fallback: look for ANY h3/h4/strong that ends with a question mark and is followed by a paragraph
+    if (items.length === 0) {
+      $('h2, h3, h4, strong, b').each((_, el) => {
+        const qText = $(el).text().trim()
+        if (qText.endsWith('?') && qText.length > 10) {
+          const aEl = $(el).next('p, div').first()
+          const aText = aEl.text().trim().slice(0, 300)
+          if (aText && aText.length > 10 && !aText.endsWith('?')) {
+            items.push({ question: qText.slice(0, 150), answer: aText })
+          }
+        }
+      })
+    }
   }
   return items.slice(0, 5)
 }
@@ -485,14 +500,11 @@ function analyzePageStructure(
   // Product hero is always first if product detected
   if (product.title) sectionOrder.push('product_hero')
 
-  // Trust badges right after hero if explicitly present
+  // Trust badges
   if (hasTrustBadges) sectionOrder.push('trust_badges')
 
-  // Description (the core text of the product page)
+  // Description
   if (product.description || resolvedDescHtml) sectionOrder.push('description')
-
-  // Description images as a visual gallery section
-  if (descriptionImages.length > 0) sectionOrder.push('description_images')
 
   // Features/benefits section
   if (hasFeatures) sectionOrder.push('features')
@@ -503,18 +515,15 @@ function analyzePageStructure(
   // Testimonials/reviews
   if (testimonials.length > 0) sectionOrder.push('testimonials')
 
-  // Photo gallery
-  if (hasGallery) sectionOrder.push('gallery')
+  // Guarantee (only if trust_badges wasn't added to avoid duplicates)
+  if (hasGuarantee && !hasTrustBadges) sectionOrder.push('guarantee')
 
-  // Guarantee
-  if (hasGuarantee) sectionOrder.push('guarantee')
-
-  // FAQ at the bottom
+  // FAQ
   if (faq.length > 0) sectionOrder.push('faq')
 
   return {
     hasHero: !!product.title,
-    hasGallery,
+    hasGallery: false, // We don't use the duplicate gallery section
     hasDescription: !!(product.description || resolvedDescHtml),
     hasFeatures,
     hasTestimonials: testimonials.length > 0,
@@ -522,7 +531,7 @@ function analyzePageStructure(
     hasBundles,
     hasCountdown,
     hasTrustBadges,
-    hasGuarantee,
+    hasGuarantee: hasGuarantee && !hasTrustBadges,
     descriptionImages,
     sectionOrder,
   }
@@ -840,6 +849,7 @@ function generateBuilderJson(
     selectedProductId: productId,
     themeSettings: {
       ...baseBuilder.themeSettings,
+      layout: 'single-column', // Force single column to respect top-to-bottom layout
       logo_url: logoUrl || '',
       store_title: product.title || storeName,
       store_description: product.description.slice(0, 160),
