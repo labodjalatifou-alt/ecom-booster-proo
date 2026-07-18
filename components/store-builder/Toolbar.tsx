@@ -38,9 +38,9 @@ export default function Toolbar({
   const [copied, setCopied] = useState(false)
 
   const isPublished = storeStatus === 'published'
-  const shareUrl = typeof window !== 'undefined' && storeSlug
-    ? `${window.location.origin}/s/${storeSlug}`
-    : `/s/${storeSlug || ''}`
+  const shareUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/s/${storeSlug || storeId}`
+    : `/s/${storeSlug || storeId}`
 
   const handlePublish = async () => {
     setPublishing(true)

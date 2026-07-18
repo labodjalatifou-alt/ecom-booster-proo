@@ -11,7 +11,7 @@ import { sanitizeError } from '@/lib/utils';
 import { genererPageShopify, parseShopifyPage, ShopifyPageParsed, shopifyPageToHtml } from '@/lib/claude-prompts';
 import { ShopifyPageDisplay } from '@/components/analyse/ShopifyPageDisplay';
 
-export default function PageShopifyPage() {
+export default function GenerateurFichePage() {
   const { currency, storeId } = useStore();
   const [loadingLatest, setLoadingLatest] = useState(true);
   const [latestProduct, setLatestProduct] = useState<any>(null);
@@ -79,27 +79,24 @@ export default function PageShopifyPage() {
     }
   };
 
-  const handleCreateOnShopify = async (data: { title: string, price: string, stock: string, description: string }) => {
+  const handleCreateOnShopify = async (data: { title: string, price: string, stock: string, description: string, images: string[] }) => {
     if (!parsedPage || !latestProduct) return;
     setIsCreating(true);
     try {
-      const res = await fetch('/api/create-product', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: data.title,
-          price: data.price,
-          stock: parseInt(data.stock),
-          description: data.description,
-          category: 'AI Generated',
-          store_id: storeId
-        }),
+      const { error } = await supabase.from('products').insert({
+        title: data.title,
+        price: data.price,
+        stock: parseInt(data.stock) || 100,
+        description: data.description,
+        category: 'Généré par IA',
+        status: 'draft',
+        image_url: data.images[0] || '',
+        currency: currency
       });
 
-      const resData = await res.json();
-      if (resData.error) throw new Error(resData.error);
+      if (error) throw new Error(error.message);
 
-      toast.success('🚀 Produit créé sur Shopify !');
+      toast.success('🚀 Produit ajouté à Mes Produits !');
     } catch (err: any) {
       toast.error(sanitizeError(err));
     } finally {
@@ -117,8 +114,8 @@ export default function PageShopifyPage() {
     <div className="pt-20">
       <EmptyAnalysisState 
         icon={<Store />} 
-        title="Shopify Builder" 
-        description="Analysez un produit d'abord pour générer sa page de vente." 
+        title="Générateur de Fiche" 
+        description="Analysez un produit d'abord pour générer sa page de vente optimisée." 
       />
     </div>
   );
@@ -131,7 +128,7 @@ export default function PageShopifyPage() {
             <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
               <Store className="w-5 h-5 text-emerald-600" />
             </div>
-            <span className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em]">Shopify Builder · {latestProduct.product_name}</span>
+            <span className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em]">Générateur Fiche · {latestProduct.product_name}</span>
           </div>
           <h2 className="text-4xl font-black tracking-tighter">Copywriting Neuromarketing</h2>
           <p className="text-slate-400 text-sm font-bold mt-1">Structure optimisée pour le taux de conversion (CRO).</p>

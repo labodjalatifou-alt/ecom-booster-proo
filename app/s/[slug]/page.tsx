@@ -17,7 +17,7 @@ export default async function StorePage({ params }: PageProps) {
   const { data: store, error } = await supabase
     .from('stores')
     .select('id, name, slug, status, user_id, store_settings(*)')
-    .eq('slug', slug)
+    .or(`slug.eq."${slug}",id.eq."${slug}"`)
     .single()
 
   if (error || !store) notFound()

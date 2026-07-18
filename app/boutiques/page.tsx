@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useState } from 'react'
 import ConfirmationModal from '@/components/ConfirmationModal'
@@ -66,10 +66,10 @@ export default function BoutiquesPage() {
     setLoading(true)
     const { data, error } = await supabase
       .from('stores')
-      .select('*')
+      .select('*, store_pages(builder_json)')
       .order('created_at', { ascending: false })
 
-    if (!error && data) setStores(data as StoreType[])
+    if (!error && data) setStores(data as any[])
     setLoading(false)
   }
 
@@ -286,9 +286,23 @@ export default function BoutiquesPage() {
       {/* Grille des boutiques */}
       {stores.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          {stores.map(store => {
+          {stores.map((store: any) => {
             const sc = statusConfig(store.status)
             const StatusIcon = sc.icon
+            
+            let heroImage = null;
+            if (store.store_pages && store.store_pages.length > 0) {
+              const bJson = store.store_pages[0].builder_json;
+              if (bJson) {
+                const heroBlock = bJson.template?.find((b: any) => b.type === 'ProductHero' || b.type === 'product_hero');
+                if (heroBlock && heroBlock.settings?.images && heroBlock.settings.images.length > 0) {
+                  heroImage = heroBlock.settings.images[0];
+                } else if (bJson.themeSettings?.logo_url) {
+                  heroImage = bJson.themeSettings.logo_url;
+                }
+              }
+            }
+
             return (
               <div
                 key={store.id}
@@ -299,10 +313,14 @@ export default function BoutiquesPage() {
                   className="h-36 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex items-center justify-center relative cursor-pointer"
                   onClick={() => router.push(`/boutiques/${store.id}`)}
                 >
-                  <div className="flex flex-col items-center gap-2 opacity-60 group-hover:opacity-80 transition-opacity">
-                    <Globe className="w-10 h-10 text-indigo-400" />
-                    <span className="text-xs text-indigo-400 font-medium">Ouvrir l'éditeur</span>
-                  </div>
+                  {heroImage ? (
+                    <img src={heroImage} alt={store.name} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" />
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 opacity-60 group-hover:opacity-80 transition-opacity">
+                      <Globe className="w-10 h-10 text-indigo-400" />
+                      <span className="text-xs text-indigo-400 font-medium">Ouvrir l'éditeur</span>
+                    </div>
+                  )}
                   <div className="absolute inset-0 bg-indigo-600/0 group-hover:bg-indigo-600/5 transition-colors" />
                 </div>
 
@@ -338,14 +356,19 @@ export default function BoutiquesPage() {
                             <ExternalLink className="w-3.5 h-3.5" /> Voir la page
                           </button>
                           <button
-                            onClick={() => { toggleStatus(store); setOpenMenu(null) }}
+                            onClick={async () => {
+                              const newStatus = store.status === 'published' ? 'draft' : 'published';
+                              await supabase.from('stores').update({ status: newStatus }).eq('id', store.id);
+                              setStores(prev => prev.map(s => s.id === store.id ? { ...s, status: newStatus } : s));
+                              setOpenMenu(null);
+                            }}
                             className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
                           >
                             <Eye className="w-3.5 h-3.5" />
-                            {store.status === 'published' ? 'Mettre en pause' : 'Publier'}
+                            {store.status === 'published' ? 'Dépublier' : 'Publier'}
                           </button>
                           <button
-                            onClick={() => { duplicateStore(store); setOpenMenu(null) }}
+                            onClick={() => { /* duplicateStore(store); */ setOpenMenu(null) }}
                             className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
                           >
                             <Copy className="w-3.5 h-3.5" /> Dupliquer
@@ -385,11 +408,22 @@ export default function BoutiquesPage() {
                       Éditer
                     </button>
                     <button
-                      onClick={() => window.open(`/s/${store.slug}`, '_blank')}
-                      className="flex-1 flex items-center justify-center gap-1.5 bg-gray-50 hover:bg-gray-100 text-gray-600 text-xs font-medium py-2 rounded-lg transition-colors"
+                      onClick={() => window.open(`/s/${store.slug || store.id}`, '_blank')}
+                      className="flex-1 flex items-center justify-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 text-xs font-medium py-2 rounded-lg transition-colors"
                     >
-                      <TrendingUp className="w-3.5 h-3.5" />
-                      Stats
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      {store.status === 'published' ? 'Voir' : 'Aperçu'}
+                    </button>
+                    <button
+                      onClick={async () => {
+                        const newStatus = store.status === 'published' ? 'draft' : 'published';
+                        await supabase.from('stores').update({ status: newStatus }).eq('id', store.id);
+                        setStores(prev => prev.map(s => s.id === store.id ? { ...s, status: newStatus } : s));
+                      }}
+                      className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg transition-colors ${store.status === 'published' ? 'bg-amber-50 hover:bg-amber-100 text-amber-600' : 'bg-gray-50 hover:bg-gray-100 text-gray-600'}`}
+                      title={store.status === 'published' ? 'Dépublier' : 'Publier'}
+                    >
+                      <EyeOff className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => deleteStore(store.id)}

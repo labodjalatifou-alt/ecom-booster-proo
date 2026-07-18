@@ -55,7 +55,7 @@ const menuGroups = [
       { name: 'Avatar Client', icon: User, href: '/avatar' },
       { name: 'Analyse Concurrent', icon: Trophy, href: '/analyse-concurrent' },
       { name: 'Produits Gagnants', icon: Flame, href: '/produits-gagnants' },
-      { name: 'Page Shopify', icon: Store, href: '/page-shopify' },
+      { name: 'Générateur Fiche', icon: Store, href: '/page-shopify' },
       { name: 'Textes Publicitaires', icon: FileText, href: '/textes-publicitaires' },
       { name: 'Script Voix Off', icon: Mic, href: '/script-voix-off' },
       { name: 'Création GIF', icon: Film, href: '/montage-video' },

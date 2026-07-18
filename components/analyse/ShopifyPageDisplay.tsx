@@ -7,7 +7,7 @@ interface Props {
   parsed: ShopifyPageParsed;
   selectedTitle: number;
   onSelectTitle: (i: number) => void;
-  onCreateProduct: (data: { title: string; price: string; stock: string; description: string }) => void;
+  onCreateProduct: (data: { title: string; price: string; stock: string; description: string; images: string[] }) => void;
   hasShopify: boolean;
   isCreating?: boolean;
   currency: string;
@@ -147,7 +147,7 @@ export function ShopifyPageDisplay({
 
         {/* 1. Configuration boutique */}
         <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-5 md:p-8 shadow-sm">
-          <h3 className="text-[10px] font-black mb-6 uppercase tracking-widest text-slate-400">1. Configuration Boutique</h3>
+          <h3 className="text-[10px] font-black mb-6 uppercase tracking-widest text-slate-400">1. Détails du Produit</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-3">
               <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block ml-2">Prix ({currency})</label>
@@ -166,7 +166,7 @@ export function ShopifyPageDisplay({
               </div>
             </div>
             <div className="space-y-3">
-              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block ml-2">Statut Shopify</label>
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block ml-2">Statut</label>
               <div className="flex bg-slate-50 dark:bg-slate-800 p-1.5 rounded-2xl h-[56px] items-center">
                 <button 
                   onClick={() => setPublishStatus('draft')}
@@ -267,7 +267,7 @@ export function ShopifyPageDisplay({
               <a href={publishedUrl} target="_blank" rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black uppercase tracking-widest text-xs transition-all"
               >
-                ✅ Voir le produit sur Shopify ↗
+                ✅ Voir le produit ↗
               </a>
             </div>
           )}
@@ -370,7 +370,7 @@ export function ShopifyPageDisplay({
           {/* Header preview */}
           <div className="flex items-center justify-between px-8 pt-8 pb-4 relative z-10">
             <h3 className="text-base font-black flex items-center gap-2">
-              <Eye className="w-5 h-5 text-blue-400" /> Aperçu Shopify
+              <Eye className="w-5 h-5 text-blue-400" /> Aperçu Fiche
             </h3>
             <span className="text-[10px] font-black text-white/30 uppercase tracking-widest bg-white/5 px-3 py-1 rounded-full">
               LIVE PREVIEW
@@ -495,22 +495,16 @@ export function ShopifyPageDisplay({
               <Database className="w-4 h-4" /> Télécharger CSV Shopify
             </button>
             <button
-              disabled={isCreating || (showImagePicker && pickerRef.current?.isPublishing) || !hasShopify}
+              disabled={isCreating}
               onClick={() => {
-                if (showImagePicker && pickerRef.current) {
-                  pickerRef.current.publishToShopify();
-                } else {
-                  onCreateProduct({ title: editableTitres[selectedTitle] || '', price, stock, description: getPreviewHtml() });
-                }
+                onCreateProduct({ title: editableTitres[selectedTitle] || '', price, stock, description: getPreviewHtml(), images: mediaSelected });
               }}
               className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all flex items-center justify-center gap-3 disabled:opacity-50 active:scale-[0.98]"
             >
-              {(isCreating || (showImagePicker && pickerRef.current?.isPublishing)) ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
-              {(isCreating || (showImagePicker && pickerRef.current?.isPublishing)) ? 'Publication en cours...' : 'Créer sur Shopify'}
+              {isCreating ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+              {isCreating ? 'Exportation en cours...' : 'Exporter vers Mes Produits'}
             </button>
-            {!hasShopify && (
-              <p className="text-[9px] text-center text-white/30 font-bold uppercase tracking-wider">Connectez une boutique pour publier</p>
-            )}
+
           </div>
         </div>
       </div>
