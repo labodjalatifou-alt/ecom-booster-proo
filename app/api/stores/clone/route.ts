@@ -420,6 +420,7 @@ interface PageAnalysis {
   hasGuarantee: boolean
   descriptionImages: string[]
   sectionOrder: string[]
+  detectedLayout: 'hero-split' | 'single-column'
 }
 
 function resolveDescriptionImages(html: string, baseUrl: string): string {
@@ -521,6 +522,14 @@ function analyzePageStructure(
   // FAQ
   if (faq.length > 0) sectionOrder.push('faq')
 
+  // ── Layout heuristic ──
+  // Assume single-column (funnel style) by default
+  let detectedLayout: 'hero-split' | 'single-column' = 'single-column'
+  // If it's a standard e-commerce store (Shopify, standard cart forms), it's likely a split layout
+  if ($('form[action*="/cart/add"]').length > 0 || $('script:contains("Shopify")').length > 0 || $('link[href*="cdn.shopify.com"]').length > 0) {
+    detectedLayout = 'hero-split'
+  }
+
   return {
     hasHero: !!product.title,
     hasGallery: false, // We don't use the duplicate gallery section
@@ -534,6 +543,7 @@ function analyzePageStructure(
     hasGuarantee: hasGuarantee && !hasTrustBadges,
     descriptionImages,
     sectionOrder,
+    detectedLayout,
   }
 }
 
@@ -849,7 +859,7 @@ function generateBuilderJson(
     selectedProductId: productId,
     themeSettings: {
       ...baseBuilder.themeSettings,
-      layout: 'single-column', // Force single column to respect top-to-bottom layout
+      layout: analysis.detectedLayout,
       logo_url: logoUrl || '',
       store_title: product.title || storeName,
       store_description: product.description.slice(0, 160),
