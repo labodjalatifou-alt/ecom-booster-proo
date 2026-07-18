@@ -462,105 +462,107 @@ function generateBuilderJson(
   const theme = getBoutiqueTheme(themeId)
   const baseBuilder = buildStorePage(themeId, storeName, productId)
 
-  // Merge all image sources: product images first, then description images, then page images
   const allProductImages = [...new Set([
     ...product.images,
     ...analysis.descriptionImages,
     ...allImages,
   ])].filter(Boolean).slice(0, 25)
 
-  const uniqueId = () => `clone-${Math.random().toString(36).slice(2, 9)}`
+  const uid = () => `clone-${Math.random().toString(36).slice(2, 9)}`
+  const fmtPrice = (n: number) => new Intl.NumberFormat('fr-FR').format(n)
 
-  // Build sections based on what was actually detected on the page
+  // Primary color from extracted page colors
+  const primaryColor = colors.find(c => {
+    const r = parseInt(c.slice(1, 3), 16), g = parseInt(c.slice(3, 5), 16), b = parseInt(c.slice(5, 7), 16)
+    return Math.max(r, g, b) - Math.min(r, g, b) > 50
+  }) || theme.colors.accent
+
   const sections: any[] = []
 
   for (const sectionType of analysis.sectionOrder) {
     switch (sectionType) {
 
+      // ── Product hero → Galerie (images) + Titre + Prix ──
       case 'product_hero': {
-        // Main product image + title + price + CTA
+        // The Galerie block auto-reads images from the selected product
+        // We push Titre + Prix as separate blocks (that's how the builder works)
         sections.push({
-          id: uniqueId(),
-          type: 'hero_produit',
-          title: 'Produit Principal',
-          hidden: false,
-          settings: {
-            title: product.title,
-            subtitle: product.description.slice(0, 200),
-            price: product.price > 0 ? `${new Intl.NumberFormat('fr-FR').format(product.price)} ${product.currency}` : '',
-            compare_price: product.comparePrice ? `${new Intl.NumberFormat('fr-FR').format(product.comparePrice)} ${product.currency}` : '',
-            image_url: allProductImages[0] || '',
-            images: allProductImages.slice(0, 8),
-            cta_text: 'Commander maintenant',
-            show_gallery: allProductImages.length > 1,
-            badge: product.comparePrice ? `Économisez ${Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)}%` : '',
-          }
+          id: uid(), type: 'Galerie', title: 'Galerie', hidden: false,
+          settings: { images: allProductImages.slice(0, 12) }
+        })
+        sections.push({
+          id: uid(), type: 'Titre', title: 'Titre', hidden: false,
+          settings: {}
+        })
+        sections.push({
+          id: uid(), type: 'Prix', title: 'Prix', hidden: false,
+          settings: {}
         })
         break
       }
 
+      // ── Trust badges → guarantees ──
       case 'trust_badges': {
         sections.push({
-          id: uniqueId(),
-          type: 'trust_badges',
-          title: 'Badges de confiance',
-          hidden: false,
+          id: uid(), type: 'guarantees', title: 'Garanties', hidden: false,
           settings: {
+            title: 'Achetez en toute confiance',
             items: [
-              { id: uniqueId(), icon: '🚚', text: 'Livraison rapide' },
-              { id: uniqueId(), icon: '✅', text: 'Satisfait ou remboursé' },
-              { id: uniqueId(), icon: '🔒', text: 'Paiement sécurisé' },
-              { id: uniqueId(), icon: '📞', text: 'Support client 7j/7' },
-            ]
+              { id: uid(), icon: '🚚', title: 'Livraison rapide', text: 'Recevez votre commande rapidement' },
+              { id: uid(), icon: '✅', title: 'Satisfait ou remboursé', text: 'Retour sous 30 jours' },
+              { id: uid(), icon: '🔒', title: 'Paiement sécurisé', text: 'Transaction 100% sécurisée' },
+              { id: uid(), icon: '📞', title: 'Support client 7j/7', text: 'Nous sommes là pour vous' },
+            ],
+            layout: 'row',
+            bg_color: '#f9fafb',
+            icon_color: primaryColor,
+            style: 'cards',
           }
         })
         break
       }
 
+      // ── Description → Description block (reads from product) ──
       case 'description': {
-        // Use the FULL description HTML including any inline content
-        const descContent = product.descriptionHtml || product.description
         sections.push({
-          id: uniqueId(),
-          type: 'description_riche',
-          title: 'Description du produit',
-          hidden: false,
-          settings: {
-            title: product.headings.h2s[0] || 'Description',
-            content: descContent,
-            html_content: true,
-          }
+          id: uid(), type: 'Description', title: 'Description', hidden: false,
+          settings: {}
         })
         break
       }
 
+      // ── Description images → image_text + gallery ──
       case 'description_images': {
-        // Images embedded in the description — show as inline image blocks
         if (analysis.descriptionImages.length > 0) {
+          // Show the first desc image alongside text
           sections.push({
-            id: uniqueId(),
-            type: 'image_text',
-            title: 'Détails visuels',
-            hidden: false,
+            id: uid(), type: 'image_text', title: 'Image + Texte', hidden: false,
             settings: {
-              title: product.headings.h2s[1] || 'Pourquoi choisir ce produit ?',
-              content: product.description.slice(200, 600) || '',
+              title: product.headings.h2s[1] || `Pourquoi choisir ${product.title} ?`,
+              subtitle: '',
+              text: product.description.slice(200, 600) || product.description.slice(0, 400),
               image_url: analysis.descriptionImages[0],
               image_position: 'right',
-              images: analysis.descriptionImages.slice(0, 6),
+              image_fit: 'cover',
+              cta_text: 'Commander',
+              cta_link: '#order-form',
+              bg_color: '#ffffff',
+              text_color: '#111827',
+              image_style: 'rounded',
             }
           })
-          // If there are more description images, add a gallery of them
+          // Additional description images as a gallery
           if (analysis.descriptionImages.length > 2) {
             sections.push({
-              id: uniqueId(),
-              type: 'galerie_inline',
-              title: 'Photos détaillées',
-              hidden: false,
+              id: uid(), type: 'gallery', title: 'Galerie détails', hidden: false,
               settings: {
+                title: 'Plus de détails',
                 images: analysis.descriptionImages.slice(0, 10),
+                layout: 'grid',
                 columns: 2,
-                title: '',
+                gap: 12,
+                border_radius: 12,
+                show_lightbox: true,
               }
             })
           }
@@ -568,144 +570,150 @@ function generateBuilderJson(
         break
       }
 
+      // ── Features → benefits ──
       case 'features': {
-        const featureItems = product.headings.h3s.slice(0, 4).map((h, i) => ({
-          id: uniqueId(),
-          icon: ['⭐', '💡', '🎯', '✨'][i] || '✓',
+        const items = product.headings.h3s.slice(0, 4).map((h, i) => ({
+          id: uid(),
+          icon: ['🚚', '✅', '🔒', '💬', '⭐', '✨'][i] || '✓',
           title: h,
-          description: '',
+          text: '',
+          color: primaryColor,
         }))
-        if (featureItems.length === 0) {
-          featureItems.push(
-            { id: uniqueId(), icon: '🚀', title: 'Résultats rapides', description: '' },
-            { id: uniqueId(), icon: '💎', title: 'Qualité premium', description: '' },
-            { id: uniqueId(), icon: '🛡️', title: 'Garanti 30 jours', description: '' },
+        if (items.length === 0) {
+          items.push(
+            { id: uid(), icon: '🚀', title: 'Résultats rapides', text: 'Efficacité prouvée', color: primaryColor },
+            { id: uid(), icon: '💎', title: 'Qualité premium', text: 'Matériaux haut de gamme', color: primaryColor },
+            { id: uid(), icon: '🛡️', title: 'Garanti 30 jours', text: 'Satisfait ou remboursé', color: primaryColor },
+            { id: uid(), icon: '📦', title: 'Livraison offerte', text: 'Partout en Afrique', color: primaryColor },
           )
         }
         sections.push({
-          id: uniqueId(),
-          type: 'avantages',
-          title: 'Avantages',
-          hidden: false,
+          id: uid(), type: 'benefits', title: 'Avantages', hidden: false,
           settings: {
             title: product.headings.h2s[2] || `Pourquoi choisir ${product.title} ?`,
+            subtitle: 'Des avantages pensés pour vous',
+            items,
             layout: 'grid',
-            items: featureItems,
+            bg_color: '#f9fafb',
+            icon_style: 'circle',
           }
         })
         break
       }
 
+      // ── Bundles/Variants → text_block with formatted HTML ──
       case 'bundles': {
         if (product.bundles.length > 0) {
+          const bundleHtml = product.bundles.map(b =>
+            `<div style="padding:16px;border:2px solid ${primaryColor};border-radius:12px;margin-bottom:12px;background:#f9fafb">
+              <strong>${b.name}</strong><br/>
+              <span style="font-size:1.3em;font-weight:bold;color:${primaryColor}">${fmtPrice(b.price)} ${product.currency}</span>
+              ${b.comparePrice ? `<span style="text-decoration:line-through;color:#999;margin-left:8px">${fmtPrice(b.comparePrice)} ${product.currency}</span>` : ''}
+              <br/><small>Pack x${b.items}</small>
+            </div>`
+          ).join('')
           sections.push({
-            id: uniqueId(),
-            type: 'bundles',
-            title: 'Offres groupées',
-            hidden: false,
+            id: uid(), type: 'text_block', title: 'Offres', hidden: false,
             settings: {
               title: 'Choisissez votre offre',
-              items: product.bundles.map(b => ({
-                id: uniqueId(),
-                name: b.name,
-                items: b.items,
-                price: `${new Intl.NumberFormat('fr-FR').format(b.price)} ${product.currency}`,
-                compare_price: b.comparePrice ? `${new Intl.NumberFormat('fr-FR').format(b.comparePrice)} ${product.currency}` : '',
-                badge: b.items > 1 ? `Pack x${b.items}` : '',
-              })),
-            }
-          })
-        } else if (product.variants.length > 0) {
-          // Show variants as selector
-          sections.push({
-            id: uniqueId(),
-            type: 'variantes',
-            title: 'Variantes',
-            hidden: false,
-            settings: {
-              title: 'Choisissez votre option',
-              items: product.variants.map(v => ({
-                id: uniqueId(),
-                name: v.name,
-                price: `${new Intl.NumberFormat('fr-FR').format(v.price)} ${product.currency}`,
-              })),
+              content: bundleHtml,
+              text_align: 'center',
+              bg_color: '#ffffff',
+              text_color: '#374151',
+              max_width: 720,
+              show_divider: false,
             }
           })
         }
         break
       }
 
+      // ── Testimonials → testimonials ──
       case 'testimonials': {
         if (testimonials.length > 0) {
           sections.push({
-            id: uniqueId(),
-            type: 'temoignages',
-            title: 'Avis clients',
-            hidden: false,
+            id: uid(), type: 'testimonials', title: 'Témoignages', hidden: false,
             settings: {
-              title: `Ce que nos clients disent de ${product.title}`,
+              title: `Ce que nos clients disent`,
+              subtitle: `Plus de ${testimonials.length * 100}+ clients satisfaits`,
               items: testimonials.map(t => ({
-                id: uniqueId(),
+                id: uid(),
                 name: t.name,
-                rating: t.rating,
                 text: t.text,
-                verified: true,
+                avatar_url: '',
+                rating: t.rating,
+                location: '',
                 date: '',
-              }))
+                verified: true,
+              })),
+              layout: 'grid',
+              bg_color: '#ffffff',
+              show_stars: true,
+              show_verified: true,
+              show_photos: true,
             }
           })
         }
         break
       }
 
+      // ── Gallery → gallery ──
       case 'gallery': {
         const galleryImages = [...new Set([...product.images, ...allProductImages])].slice(0, 15)
         if (galleryImages.length > 1) {
           sections.push({
-            id: uniqueId(),
-            type: 'galerie',
-            title: 'Galerie photos',
-            hidden: false,
+            id: uid(), type: 'gallery', title: 'Galerie photos', hidden: false,
             settings: {
-              title: `Photos de ${product.title}`,
+              title: `Galerie ${product.title}`,
               images: galleryImages,
+              layout: 'grid',
               columns: 3,
+              gap: 12,
+              border_radius: 12,
+              show_lightbox: true,
             }
           })
         }
         break
       }
 
+      // ── Guarantee → guarantees ──
       case 'guarantee': {
         sections.push({
-          id: uniqueId(),
-          type: 'garantie',
-          title: 'Garantie',
-          hidden: false,
+          id: uid(), type: 'guarantees', title: 'Nos garanties', hidden: false,
           settings: {
-            title: 'Notre Garantie',
-            text: 'Satisfait ou remboursé sous 30 jours. Votre satisfaction est notre priorité absolue.',
-            icon: '🛡️',
-            show_seal: true,
+            title: 'Nos garanties',
+            items: [
+              { id: uid(), icon: '🛡️', title: 'Paiement sécurisé', text: 'Transaction 100% sécurisée' },
+              { id: uid(), icon: '📦', title: 'Livraison garantie', text: 'Suivi en temps réel' },
+              { id: uid(), icon: '↩️', title: 'Retour facile', text: '30 jours pour changer d\'avis' },
+              { id: uid(), icon: '⭐', title: 'Satisfaction client', text: '98% de clients satisfaits' },
+            ],
+            layout: 'row',
+            bg_color: '#f9fafb',
+            icon_color: primaryColor,
+            style: 'cards',
           }
         })
         break
       }
 
+      // ── FAQ → faq ──
       case 'faq': {
         if (faq.length > 0) {
           sections.push({
-            id: uniqueId(),
-            type: 'faq',
-            title: 'FAQ',
-            hidden: false,
+            id: uid(), type: 'faq', title: 'FAQ', hidden: false,
             settings: {
               title: 'Questions fréquentes',
+              subtitle: 'Tout ce que vous devez savoir',
               items: faq.map(q => ({
-                id: uniqueId(),
+                id: uid(),
                 question: q.question,
                 answer: q.answer,
-              }))
+              })),
+              bg_color: '#ffffff',
+              accent_color: primaryColor,
+              style: 'bordered',
             }
           })
         }
@@ -714,29 +722,29 @@ function generateBuilderJson(
     }
   }
 
-  // Final CTA always at the bottom
+  // ── Always end with order form ──
   sections.push({
-    id: uniqueId(),
-    type: 'cta_final',
-    title: 'Appel à l\'action final',
-    hidden: false,
+    id: uid(), type: 'order_form', title: 'Formulaire commande', hidden: false,
     settings: {
-      title: `Commandez ${product.title} maintenant`,
-      subtitle: 'Livraison rapide · Paiement sécurisé · Satisfait ou remboursé',
-      cta_text: 'Commander maintenant',
-      price: product.price > 0 ? `${new Intl.NumberFormat('fr-FR').format(product.price)} ${product.currency}` : '',
-      background_image: allProductImages[0] || '',
+      title: `Commander ${product.title}`,
+      subtitle: 'Remplissez le formulaire, nous vous appelons dans les 24h',
+      fields: [
+        { id: 'field-name', type: 'text', label: 'Nom complet', placeholder: 'Votre nom et prénom', required: true },
+        { id: 'field-phone', type: 'tel', label: 'Téléphone', placeholder: 'Ex: +224 620 000 000', required: true },
+        { id: 'field-address', type: 'text', label: 'Adresse de livraison', placeholder: 'Quartier, ville', required: true },
+      ],
+      submit_text: 'Confirmer ma commande',
+      submit_color: primaryColor,
+      submit_text_color: '#ffffff',
+      success_message: 'Merci ! Votre commande a été reçue.',
+      bg_color: '#f9fafb',
+      border_radius: 12,
+      show_product_summary: true,
+      show_quantity: true,
+      show_variants: false,
+      layout: 'standard',
     }
   })
-
-  // Apply extracted colors to theme settings
-  const primaryColor = colors.find(c => {
-    const r = parseInt(c.slice(1, 3), 16)
-    const g = parseInt(c.slice(3, 5), 16)
-    const b = parseInt(c.slice(5, 7), 16)
-    // Find saturated colors (not grey)
-    return Math.max(r, g, b) - Math.min(r, g, b) > 50
-  }) || theme.colors.accent
 
   const bodyFont = fonts.find(f => !f.includes('Icon') && !f.includes('Font Awesome')) || 'Inter'
   const headingFont = fonts.length > 1 ? fonts.find(f => f !== bodyFont) || fonts[0] : bodyFont
@@ -749,10 +757,6 @@ function generateBuilderJson(
     themeSettings: {
       ...baseBuilder.themeSettings,
       logo_url: logoUrl || '',
-      primary_color: primaryColor,
-      accent_color: primaryColor,
-      body_font: bodyFont,
-      heading_font: headingFont,
       store_title: product.title || storeName,
       store_description: product.description.slice(0, 160),
     },
