@@ -256,11 +256,32 @@ function extractProduct($: cheerio.CheerioAPI, jsonScripts: any[], baseUrl: stri
     title = $('h1').first().text().trim() || extractMeta($, 'title') || ''
   }
 
-  // HTML fallback for description
+  // ALways try to get rich HTML description from DOM first (JSON-LD is usually plain text)
+  const descSel = $('.product-description, .description, [class*="description"], [class*="product-details"], .product__description, #product-description')
+  if (descSel.length) {
+    // Find the most likely container (the one with the most text/elements)
+    let bestDesc = descSel.first()
+    let maxLength = 0
+    descSel.each((_, el) => {
+      const html = $(el).html() || ''
+      if (html.length > maxLength) {
+        maxLength = html.length
+        bestDesc = $(el)
+      }
+    })
+    
+    const domHtml = bestDesc.html() || ''
+    const domText = bestDesc.text().replace(/\s+/g, ' ').trim().slice(0, 3000)
+    
+    // If DOM description is richer than what we found in JSON, use it
+    if (domHtml.length > descriptionHtml.length || domHtml.includes('<img')) {
+      descriptionHtml = domHtml
+      description = domText
+    }
+  }
+
   if (!description) {
-    const descSel = $('.product-description, .description, [class*="description"], [class*="product-details"], .product__description')
-    descriptionHtml = descSel.html() || ''
-    description = descSel.text().replace(/\s+/g, ' ').trim().slice(0, 3000)
+    description = descriptionHtml.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().slice(0, 3000)
   }
 
   // Extract bundles from page (common pattern: "Pack X + Y = price")
@@ -386,52 +407,115 @@ interface PageAnalysis {
   sectionOrder: string[]
 }
 
-function analyzePageStructure($: cheerio.CheerioAPI, baseUrl: string, product: ExtractedProduct, testimonials: any[], faq: any[]): PageAnalysis {
-  // Extract images embedded in description HTML
+function resolveDescriptionImages(html: string, baseUrl: string): string {
+  // Replace data-src with src so lazy-loaded images render properly
+  let resolved = html
+  // data-src → src (keep src if already exists)
+  resolved = resolved.replace(/<img([^>]*)\sdata-src=["']([^"']+)["']([^>]*)>/gi, (match, before, dataSrc, after) => {
+    const absUrl = absoluteUrl(dataSrc, baseUrl) || dataSrc
+    // If no src attr, inject it
+    if (!before.includes(' src=') && !after.includes(' src=')) {
+      return `<img${before} src="${absUrl}" data-src="${absUrl}"${after}>`
+    }
+    return match
+  })
+  // Make all relative src absolute
+  resolved = resolved.replace(/<img([^>]*)\ssrc=["']([^"']+)["']([^>]*)>/gi, (match, before, src, after) => {
+    if (src.startsWith('data:') || src.startsWith('http')) return match
+    const absUrl = absoluteUrl(src, baseUrl)
+    if (!absUrl) return match
+    return `<img${before} src="${absUrl}"${after}>`
+  })
+  return resolved
+}
+
+function analyzePageStructure(
+  $: cheerio.CheerioAPI,
+  baseUrl: string,
+  product: ExtractedProduct,
+  testimonials: any[],
+  faq: any[]
+): PageAnalysis {
+  // ── Extract & resolve images from description HTML ──
   const descriptionImages: string[] = []
+  let resolvedDescHtml = product.descriptionHtml
+
   if (product.descriptionHtml) {
-    const imgRe = /<img[^>]+src=["']([^"']+)["']/gi
+    // Collect all img src + data-src from description
+    const srcRe = /<img[^>]+(?:src|data-src)=["']([^"']+)["']/gi
     let m
-    while ((m = imgRe.exec(product.descriptionHtml)) !== null) {
-      const abs = absoluteUrl(m[1], baseUrl)
-      if (abs) descriptionImages.push(abs)
+    while ((m = srcRe.exec(product.descriptionHtml)) !== null) {
+      if (!m[1].startsWith('data:')) {
+        const abs = absoluteUrl(m[1], baseUrl)
+        if (abs && !descriptionImages.includes(abs)) descriptionImages.push(abs)
+      }
     }
-    // Also check data-src
-    const dataSrcRe = /<img[^>]+data-src=["']([^"']+)["']/gi
-    while ((m = dataSrcRe.exec(product.descriptionHtml)) !== null) {
-      const abs = absoluteUrl(m[1], baseUrl)
-      if (abs) descriptionImages.push(abs)
-    }
+    // Rewrite lazy-load images in HTML so they render
+    resolvedDescHtml = resolveDescriptionImages(product.descriptionHtml, baseUrl)
+    // Update the product's descriptionHtml so the Description block gets resolved images
+    product.descriptionHtml = resolvedDescHtml
   }
 
-  const html = $.html()
-  const hasHero = !!($('[class*="hero"], [class*="banner"], [class*="main-image"], .product-image--main').length)
-  const hasGallery = !!($('[class*="gallery"], [class*="slider"], [class*="carousel"], .swiper, .splide, .glide').length) || product.images.length > 1
-  const hasFeatures = !!($('[class*="feature"], [class*="benefit"], [class*="point"], [class*="icon-box"], ul.features, .benefits').length)
-  const hasCountdown = !!($('[class*="countdown"], [class*="timer"], [data-countdown]').length || /countdown|timer|temps\s*restant|minuteur/i.test(html))
-  const hasTrustBadges = !!($('[class*="trust"], [class*="badge"], [class*="secure"], [class*="garantie"], [class*="paiement"], .payment-icons').length || /livraison\s*offerte|satisfait\s*ou\s*rembours|rembours|garanti/i.test(html))
-  const hasGuarantee = !!(/garantie|garanti|remboursement|satisfait\s*ou/i.test(html))
-  const hasBundles = product.bundles.length > 0 || !!($('[class*="bundle"], [class*="pack"], [class*="lot"]').length)
+  // ── Strict section detection (DOM-based, not keyword matching) ──
+  const hasGallery = product.images.length > 1 ||
+    !!($('[class*="gallery"], [class*="slider"], [class*="carousel"], .swiper, .splide, .glide').length)
 
-  // Try to detect section order by vertical position in DOM
+  // Features: must have actual feature/benefit containers with multiple children
+  const featureContainers = $('[class*="feature"], [class*="benefit"], [class*="icon-box"], [class*="avantage"], ul.features, .benefits')
+  const hasFeatures = featureContainers.length > 0 && featureContainers.children().length >= 2
+
+  // Countdown: only if explicit countdown widget found
+  const hasCountdown = !!($('[class*="countdown"], [data-countdown], [class*="timer-block"]').length)
+
+  // Trust badges: only if explicit trust/badge section with multiple items (not just words)
+  const trustEl = $('[class*="trust-badge"], [class*="trust_badge"], [class*="badge-bar"], .trust-bar, [class*="iconsBar"], [class*="guarantee-bar"]')
+  const hasTrustBadges = trustEl.length > 0 && trustEl.children().length >= 2
+
+  // Guarantee section: must be a dedicated guarantee block (not just a word in description)
+  const guaranteeEl = $('[class*="guarantee"]:not([class*="description"]):not([class*="text"]), [class*="satisfaction"], .money-back, [class*="policy-bar"]')
+  const hasGuarantee = guaranteeEl.length > 0
+
+  // Bundles: must have explicit bundle/pack containers
+  const hasBundles = product.bundles.length > 0 ||
+    !!($('[class*="bundle"], [class*="pack-select"], [class*="lot-select"], [class*="quantity-break"]').length)
+
+  // ── Build section order matching the real page flow ──
   const sectionOrder: string[] = []
 
-  // Always start with hero/product image if product found
+  // Product hero is always first if product detected
   if (product.title) sectionOrder.push('product_hero')
+
+  // Trust badges right after hero if explicitly present
   if (hasTrustBadges) sectionOrder.push('trust_badges')
-  if (product.description) sectionOrder.push('description')
+
+  // Description (the core text of the product page)
+  if (product.description || resolvedDescHtml) sectionOrder.push('description')
+
+  // Description images as a visual gallery section
   if (descriptionImages.length > 0) sectionOrder.push('description_images')
+
+  // Features/benefits section
   if (hasFeatures) sectionOrder.push('features')
+
+  // Bundles/offers
   if (hasBundles) sectionOrder.push('bundles')
+
+  // Testimonials/reviews
   if (testimonials.length > 0) sectionOrder.push('testimonials')
+
+  // Photo gallery
   if (hasGallery) sectionOrder.push('gallery')
+
+  // Guarantee
   if (hasGuarantee) sectionOrder.push('guarantee')
+
+  // FAQ at the bottom
   if (faq.length > 0) sectionOrder.push('faq')
 
   return {
-    hasHero,
+    hasHero: !!product.title,
     hasGallery,
-    hasDescription: !!product.description,
+    hasDescription: !!(product.description || resolvedDescHtml),
     hasFeatures,
     hasTestimonials: testimonials.length > 0,
     hasFaq: faq.length > 0,
