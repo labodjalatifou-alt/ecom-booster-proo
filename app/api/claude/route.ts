@@ -11,7 +11,7 @@ export const maxDuration = 60 // Vercel Pro / Edge config
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { messages, system, max_tokens = 2000, images } = body
+    const { messages, system, max_tokens = 2000, images, expect_json } = body
 
     if (!messages && !body.prompt) {
       return NextResponse.json({ error: 'messages requis' }, { status: 400 })
@@ -105,8 +105,10 @@ export async function POST(req: NextRequest) {
     const data = await response.json()
     let text = data.content?.[0]?.text || ''
 
-    // Nettoyage agressif — Claude peut envelopper sa réponse de plusieurs façons
-    text = cleanClaudeResponse(text)
+    // Nettoyage conditionnel — seulement si l'appelant attend du JSON
+    if (expect_json) {
+      text = cleanClaudeResponse(text)
+    }
 
     return NextResponse.json({ text, usage: data.usage })
 

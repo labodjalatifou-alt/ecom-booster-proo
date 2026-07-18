@@ -56,7 +56,7 @@ export default function PerformanceWidget() {
       const closerStats: any = {};
       filtered.forEach(o => {
         if (o.status === 'Confirmé' || o.status === 'Livré' || o.status === 'Annulé') {
-          const name = o.closer?.name || 'Closer Inconnu';
+          const name = typeof o.closer === 'string' ? (o.closer || 'Closer Inconnu') : (o.closer?.name || 'Closer Inconnu');
           if (!closerStats[name]) closerStats[name] = { name, confirmed: 0, total: 0 };
           closerStats[name].confirmed += (o.status === 'Confirmé' || o.status === 'Livré' ? 1 : 0);
           closerStats[name].total += 1;
@@ -71,7 +71,7 @@ export default function PerformanceWidget() {
       const livreurStats: any = {};
       filtered.forEach(o => {
         if (o.status === 'Livré' || o.status === 'Annulé') {
-          const name = o.livreur?.name || 'Livreur Inconnu';
+          const name = typeof o.livreur === 'string' ? (o.livreur || 'Livreur Inconnu') : (o.livreur?.name || 'Livreur Inconnu');
           if (!livreurStats[name]) livreurStats[name] = { name, delivered: 0, total: 0, cash: 0 };
           if (o.status === 'Livré') {
             livreurStats[name].delivered += 1;

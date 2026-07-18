@@ -49,7 +49,7 @@ export default function AnalysesPage() {
         const res = await fetch('/api/claude', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ system: promptObj.system, prompt: promptObj.user })
+          body: JSON.stringify({ system: promptObj.system, prompt: promptObj.user, expect_json: !!options.parseJSON })
         });
         const data = await res.json();
         if (data.error) throw new Error(data.error);

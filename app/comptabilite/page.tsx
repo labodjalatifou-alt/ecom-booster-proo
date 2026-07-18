@@ -5,10 +5,12 @@ import { Calculator, TrendingUp, TrendingDown, DollarSign, Target, Wallet, BarCh
 import { supabase } from '@/lib/supabase';
 import { useStore } from '@/components/StoreProvider';
 import TeamEarnings from '@/components/dashboard/TeamEarnings';
+import DateRangePicker, { DateRange, DEFAULT_RANGE } from '@/components/DateRangePicker';
+import { getCommissions } from '@/app/equipe/page';
 
 function parsePrice(val: any): number {
   if (!val) return 0;
-  const str = String(val).replace(/\s/g, '').replace(/[^\\d.,]/g, '').replace(',', '.');
+  const str = String(val).replace(/\s/g, '').replace(/[^\d.,]/g, '').replace(',', '.');
   return parseFloat(str) || 0;
 }
 
@@ -20,9 +22,9 @@ export default function ComptabilitePage() {
   const [confirmedCount, setConfirmedCount] = useState(0);
   const [pendingRevenue, setPendingRevenue] = useState(0);
   const [cancelledCount, setCancelledCount] = useState(0);
+  const [dateRange, setDateRange] = useState<DateRange>(DEFAULT_RANGE);
 
-  const COMMISSION_CLOSER = 500;
-  const COMMISSION_LIVREUR = 1000;
+  const commissions = getCommissions();
 
   useEffect(() => {
     async function fetchData() {
@@ -35,6 +37,8 @@ export default function ComptabilitePage() {
         } else if (stores.length > 0) {
           query = query.in('store_id', stores.map(s => s.id));
         }
+        if (dateRange.from) query = query.gte('created_at', dateRange.from);
+        if (dateRange.to) query = query.lte('created_at', dateRange.to);
 
         const { data, error } = await query;
 
@@ -57,12 +61,19 @@ export default function ComptabilitePage() {
       }
     }
     fetchData();
-  }, [selectedStore]);
+
+    const channel = supabase
+      .channel('comptabilite-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => fetchData())
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [selectedStore, dateRange]);
 
   const fmt = (n: number) => new Intl.NumberFormat('fr-FR').format(Math.round(n));
 
-  const totalCommCloser = (confirmedCount * 500) + (deliveredCount * 500);
-  const totalCommLivreur = deliveredCount * COMMISSION_LIVREUR;
+  const totalCommCloser = (confirmedCount * commissions.closerPerConfirm) + (deliveredCount * commissions.closerPerDelivered);
+  const totalCommLivreur = deliveredCount * commissions.livreurPerDelivery;
   const totalCommissions = totalCommCloser + totalCommLivreur;
   const netProfit = revenue - totalCommissions;
 
@@ -121,6 +132,9 @@ export default function ComptabilitePage() {
           </div>
           <h2 className="text-4xl font-black tracking-tighter">Comptabilité</h2>
         </div>
+        <div className="shrink-0">
+          <DateRangePicker value={dateRange} onChange={setDateRange} />
+        </div>
       </div>
 
       {loading ? (
@@ -153,7 +167,7 @@ export default function ComptabilitePage() {
 
           {/* Team Earnings Widget */}
           <div className="mb-10">
-            <TeamEarnings />
+            <TeamEarnings dateRange={dateRange} />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

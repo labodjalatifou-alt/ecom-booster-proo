@@ -4,8 +4,13 @@ import React, { useEffect, useState } from 'react';
 import { Star, Package } from 'lucide-react';
 import { useStore } from '../StoreProvider';
 import { supabase } from '@/lib/supabase';
+import { DateRange } from '@/components/DateRangePicker';
 
-export default function TopProducts() {
+interface TopProductsProps {
+  dateRange: DateRange;
+}
+
+export default function TopProducts({ dateRange }: TopProductsProps) {
   const { currency, selectedStore } = useStore();
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<any[]>([]);
@@ -18,6 +23,8 @@ export default function TopProducts() {
         if (selectedStore) {
           query = query.eq('store_id', selectedStore);
         }
+        if (dateRange.from) query = query.gte('created_at', dateRange.from);
+        if (dateRange.to) query = query.lte('created_at', dateRange.to);
         const { data: orders, error } = await query;
         if (error) throw error;
 
@@ -64,7 +71,7 @@ export default function TopProducts() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [selectedStore]);
+  }, [selectedStore, dateRange]);
 
   const emojis = ['✨', '🎥', '⌚', '🛍️', '🔥'];
 

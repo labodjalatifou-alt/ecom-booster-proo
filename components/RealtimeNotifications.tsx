@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAppSounds } from '@/lib/hooks/useAppSounds';
 import toast from 'react-hot-toast';
@@ -13,17 +13,23 @@ export default function RealtimeNotifications() {
   const pathname = usePathname();
   const isPublicRoute = pathname?.startsWith('/s/') || pathname?.startsWith('/terms') || pathname?.startsWith('/privacy');
 
-  // --- Nouveau : mémoire des commandes déjà vues + timestamp du dernier check ---
+  // Use refs to avoid stale closures in the realtime callback
+  const selectedStoreRef = useRef(selectedStore);
+  const playSoundRef = useRef(playSound);
   const seenOrderIds = useRef<Set<string>>(new Set());
   const lastCheckRef = useRef<string>(new Date().toISOString());
 
-  const handleOrderInsert = (newOrder: any) => {
-    if (seenOrderIds.current.has(newOrder.id)) return; // déjà traité, on évite le doublon
+  // Keep refs in sync
+  useEffect(() => { selectedStoreRef.current = selectedStore; }, [selectedStore]);
+  useEffect(() => { playSoundRef.current = playSound; }, [playSound]);
+
+  const handleOrderInsert = useCallback((newOrder: any) => {
+    if (seenOrderIds.current.has(newOrder.id)) return;
     seenOrderIds.current.add(newOrder.id);
 
-    if (selectedStore && newOrder.store_id !== selectedStore) return;
+    if (selectedStoreRef.current && newOrder.store_id !== selectedStoreRef.current) return;
 
-    playSound('order');
+    playSoundRef.current('order');
     toast.success("Nouvelle commande !", {
       icon: '💰',
       duration: 6000,
@@ -38,7 +44,7 @@ export default function RealtimeNotifications() {
         padding: '16px 24px'
       }
     });
-  };
+  }, []);
 
   useEffect(() => {
     if (isPublicRoute) return;
@@ -59,25 +65,25 @@ export default function RealtimeNotifications() {
           }
 
           if (payload.eventType === 'UPDATE') {
-            if (selectedStore && newOrder.store_id !== selectedStore) return;
+            if (selectedStoreRef.current && newOrder.store_id !== selectedStoreRef.current) return;
 
             if (newOrder.status !== oldOrder.status) {
               if (newOrder.status === 'Confirmé') {
-                playSound('confirm');
+                playSoundRef.current('confirm');
                 toast.success(`Commande de ${newOrder.customer} CONFIRMÉE`, { icon: '✅' });
               } else if (newOrder.status === 'Livré') {
-                playSound('deliver');
+                playSoundRef.current('deliver');
                 toast.success(`Commande de ${newOrder.customer} LIVRÉE !`, { icon: '📦' });
               } else if (newOrder.status === 'Annulé') {
                 toast.error(`Commande de ${newOrder.customer} ANNULÉE`, { icon: '❌' });
               } else if (newOrder.status === 'Programmé') {
-                playSound('confirm');
+                playSoundRef.current('confirm');
                 toast.success(`Commande de ${newOrder.customer} PROGRAMMÉE !`, { icon: '📅' });
               }
             }
 
             if (newOrder.cash_received === true && oldOrder.cash_received === false) {
-              playSound('cash');
+              playSoundRef.current('cash');
               toast.success("💰 Cash validé en comptabilité !", { icon: '💵' });
             }
           }
@@ -85,7 +91,6 @@ export default function RealtimeNotifications() {
       )
       .subscribe((status) => {
         console.log('[Realtime] Subscription status:', status);
-        // --- Nouveau : dès qu'on (re)devient SUBSCRIBED, on rattrape ce qui a pu être raté ---
         if (status === 'SUBSCRIBED') {
           catchUpMissedOrders();
         }
@@ -94,7 +99,6 @@ export default function RealtimeNotifications() {
         }
       });
 
-    // --- Nouveau : fonction de rattrapage ---
     const catchUpMissedOrders = async () => {
       const { data, error } = await supabase
         .from('orders')
@@ -115,7 +119,7 @@ export default function RealtimeNotifications() {
       lastCheckRef.current = new Date().toISOString();
     };
 
-    // --- Nouveau : polling de sécurité toutes les 20 secondes, même si le websocket est SUBSCRIBED ---
+    // Polling de sécurité toutes les 20 secondes
     const pollInterval = setInterval(catchUpMissedOrders, 20000);
 
     return () => {
@@ -123,9 +127,9 @@ export default function RealtimeNotifications() {
       supabase.removeChannel(channel);
       clearInterval(pollInterval);
     };
-  }, [playSound, selectedStore]);
+  }, [isPublicRoute, handleOrderInsert]);
 
-  // Polling check for Programmed Orders (inchangé)
+  // Polling check for Programmed Orders
   useEffect(() => {
     const checkProgrammed = async () => {
       try {

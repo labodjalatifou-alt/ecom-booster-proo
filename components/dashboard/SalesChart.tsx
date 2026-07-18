@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { useStore } from '../StoreProvider';
 import { supabase } from '@/lib/supabase';
-import { format, startOfYear, eachMonthOfInterval, isSameMonth, parseISO } from 'date-fns';
+import { format, startOfYear, startOfDay, eachMonthOfInterval, isSameMonth, parseISO, subMonths, subDays, isBefore } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 const EMPTY_YEAR_DATA = [
@@ -50,6 +50,7 @@ export default function SalesChart() {
         }
 
         let formattedData: any[] = [];
+        const parseOrderPrice = (p: string) => { const n = parseFloat(p || '0'); return isNaN(n) ? 0 : n; };
 
         if (period === '1Y') {
           const months = eachMonthOfInterval({
@@ -59,11 +60,57 @@ export default function SalesChart() {
           formattedData = months.map(month => {
             const monthSales = orders
               .filter(o => isSameMonth(parseISO(o.created_at), month))
-              .reduce((acc, curr) => {
-                const price = parseFloat(curr.price || '0');
-                return acc + (isNaN(price) ? 0 : price);
-              }, 0);
+              .reduce((acc, curr) => acc + parseOrderPrice(curr.price), 0);
             return { name: format(month, 'MMM', { locale: fr }), sales: Math.round(monthSales) };
+          });
+        } else if (period === '3M') {
+          const now = new Date();
+          const threeMonthsAgo = subMonths(now, 3);
+          const months = eachMonthOfInterval({ start: threeMonthsAgo, end: now });
+          formattedData = months.map(month => {
+            const monthSales = orders
+              .filter(o => {
+                const d = parseISO(o.created_at);
+                return isSameMonth(d, month) && !isBefore(d, threeMonthsAgo);
+              })
+              .reduce((acc, curr) => acc + parseOrderPrice(curr.price), 0);
+            return { name: format(month, 'MMM', { locale: fr }), sales: Math.round(monthSales) };
+          });
+        } else if (period === '1M') {
+          const now = new Date();
+          const thirtyDaysAgo = subDays(now, 29);
+          const filtered = orders.filter(o => !isBefore(parseISO(o.created_at), thirtyDaysAgo));
+          // Group into 4 weeks
+          const weeks = [
+            { name: 'Sem 1', from: 0, to: 7 },
+            { name: 'Sem 2', from: 7, to: 14 },
+            { name: 'Sem 3', from: 14, to: 21 },
+            { name: 'Sem 4', from: 21, to: 30 },
+          ];
+          formattedData = weeks.map(w => {
+            const weekSales = filtered
+              .filter(o => {
+                const daysAgo = Math.floor((now.getTime() - parseISO(o.created_at).getTime()) / 86400000);
+                return daysAgo >= (29 - w.to) && daysAgo < (29 - w.from);
+              })
+              .reduce((acc, curr) => acc + parseOrderPrice(curr.price), 0);
+            return { name: w.name, sales: Math.round(weekSales) };
+          });
+        } else if (period === '1D') {
+          const now = new Date();
+          const todayStart = startOfDay(now);
+          const filtered = orders.filter(o => !isBefore(parseISO(o.created_at), todayStart));
+          const hours = ['06:00', '09:00', '12:00', '15:00', '18:00', '21:00'];
+          formattedData = hours.map((h, i) => {
+            const hourStart = parseInt(h.split(':')[0]);
+            const hourEnd = i < hours.length - 1 ? parseInt(hours[i + 1].split(':')[0]) : 24;
+            const hourSales = filtered
+              .filter(o => {
+                const orderHour = parseISO(o.created_at).getHours();
+                return orderHour >= hourStart && orderHour < hourEnd;
+              })
+              .reduce((acc, curr) => acc + parseOrderPrice(curr.price), 0);
+            return { name: h, sales: Math.round(hourSales) };
           });
         } else {
           formattedData = getEmptyData(period);

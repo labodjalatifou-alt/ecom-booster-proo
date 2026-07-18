@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 
 export type SoundType = 'order' | 'confirm' | 'deliver' | 'cash';
 
@@ -55,7 +55,7 @@ export function useAppSounds() {
     };
   }, []);
 
-  const playSound = (type: SoundType) => {
+  const playSound = useCallback((type: SoundType) => {
     const audio = soundsRef.current[type];
     if (audio) {
       console.log(`[Audio] Tentative de lecture du son : ${type}`);
@@ -64,10 +64,10 @@ export function useAppSounds() {
         console.warn(`[Audio] Lecture bloquée pour ${type}. Veuillez cliquer sur l'application pour activer les sons.`, e);
       });
     }
-  };
+  }, []);
 
   return { 
     playSound,
-    playKaching: () => playSound('order')
+    playKaching: useCallback(() => playSound('order'), [playSound])
   };
 }

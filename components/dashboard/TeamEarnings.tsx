@@ -5,8 +5,13 @@ import { Users, Headset, Truck, DollarSign, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useStore } from '../StoreProvider';
 import { getCommissions } from '@/app/equipe/page';
+import { DateRange } from '@/components/DateRangePicker';
 
-export default function TeamEarnings() {
+interface TeamEarningsProps {
+  dateRange: DateRange;
+}
+
+export default function TeamEarnings({ dateRange }: TeamEarningsProps) {
   const { currency, selectedStore } = useStore();
   const [loading, setLoading] = useState(true);
   const [closerEarnings, setCloserEarnings] = useState(0);
@@ -28,6 +33,8 @@ export default function TeamEarnings() {
         if (selectedStore) {
           query = query.eq('store_id', selectedStore);
         }
+        if (dateRange.from) query = query.gte('created_at', dateRange.from);
+        if (dateRange.to) query = query.lte('created_at', dateRange.to);
         
         const { data, error } = await query;
         if (error) throw error;
@@ -76,7 +83,7 @@ export default function TeamEarnings() {
       .subscribe();
     
     return () => { supabase.removeChannel(channel); };
-  }, [selectedStore]);
+  }, [selectedStore, dateRange]);
 
   if (loading) {
     return (

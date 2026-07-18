@@ -49,20 +49,41 @@ export default function CommandesPage() {
     if (!silent) setLoading(false);
   }
 
+  // Fetch when filters change — always reset to page 1
   useEffect(() => {
-    if (loadingStores) return; // Attendre que les stores soient chargés
+    if (loadingStores) return;
     setPage(1);
     fetchOrders(1);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateRange, statusFilter, selectedStore, loadingStores]);
 
+  // Fetch when page changes (but not on initial mount since the above handles it)
+  const isFirstRender = React.useRef(true);
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     fetchOrders(page);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
+
+  // Keep a ref to always call latest fetchOrders in realtime callback
+  const fetchOrdersRef = React.useRef(fetchOrders);
+  React.useEffect(() => { fetchOrdersRef.current = fetchOrders; });
+
+  // Stable realtime subscription — doesn't depend on page/filters
+  useEffect(() => {
     const channel = supabase
       .channel('orders-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => fetchOrders(page, true))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+        // Silently refresh current view using latest fetchOrders
+        fetchOrdersRef.current(undefined, true);
+      })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [page]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const filtered = orders.filter(o =>
     o.customer?.toLowerCase().includes(searchTerm.toLowerCase()) ||

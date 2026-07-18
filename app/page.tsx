@@ -1,15 +1,19 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import StatCards from '@/components/dashboard/StatCards';
 import TopProducts from '@/components/dashboard/TopProducts';
 import TeamEarnings from '@/components/dashboard/TeamEarnings';
+import SalesChart from '@/components/dashboard/SalesChart';
+import DateRangePicker, { DateRange, DEFAULT_RANGE } from '@/components/DateRangePicker';
 import { LayoutDashboard } from 'lucide-react';
 
 export default function DashboardPage() {
+  const [dateRange, setDateRange] = useState<DateRange>(DEFAULT_RANGE);
+
   return (
     <div className="max-w-7xl mx-auto pb-10 px-2 md:px-4 text-slate-800 dark:text-slate-100 animate-in fade-in duration-500">
-      <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <div className="flex items-center gap-2 mb-2">
             <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
@@ -20,16 +24,22 @@ export default function DashboardPage() {
           <h2 className="text-3xl md:text-4xl font-black text-slate-800 dark:text-slate-100 tracking-tighter">Tableau de bord</h2>
           <p className="text-slate-400 text-sm mt-1 font-medium italic">Analysez la santé de vos boutiques en temps réel.</p>
         </div>
+        <div className="shrink-0">
+          <DateRangePicker value={dateRange} onChange={setDateRange} />
+        </div>
       </div>
 
-      <StatCards />
+      <StatCards dateRange={dateRange} />
 
       {/* Commission Tracker */}
       <div className="mb-8">
-        <TeamEarnings />
+        <TeamEarnings dateRange={dateRange} />
       </div>
 
-      <TopProducts />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <SalesChart />
+        <TopProducts dateRange={dateRange} />
+      </div>
     </div>
   );
 }

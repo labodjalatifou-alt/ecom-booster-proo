@@ -8,9 +8,13 @@ import toast from 'react-hot-toast';
 import { useAppSounds } from '@/lib/hooks/useAppSounds';
 import { sanitizeError } from '@/lib/utils';
 import ConfirmationModal from '@/components/ConfirmationModal';
-import DateRangePicker, { DateRange, DEFAULT_RANGE } from '@/components/DateRangePicker';
+import { DateRange } from '@/components/DateRangePicker';
 
-export default function StatCards() {
+interface StatCardsProps {
+  dateRange: DateRange;
+}
+
+export default function StatCards({ dateRange }: StatCardsProps) {
   const { currency, selectedStore } = useStore();
   const { playSound } = useAppSounds();
   const [loading, setLoading] = useState(true);
@@ -20,7 +24,6 @@ export default function StatCards() {
     deliveryRate: 0,
     pendingOrders: 0
   });
-  const [dateRange, setDateRange] = useState<DateRange>(DEFAULT_RANGE);
   const [showMarkReceivedConfirm, setShowMarkReceivedConfirm] = useState(false);
 
   useEffect(() => {
@@ -145,9 +148,6 @@ export default function StatCards() {
 
   return (
     <>
-    <div className="flex flex-col sm:flex-row justify-end items-stretch sm:items-center gap-3 mb-4">
-      <DateRangePicker value={dateRange} onChange={setDateRange} />
-    </div>
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
       {stats.map((stat, idx) => {
         const Icon = stat.icon;
