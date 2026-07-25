@@ -4,10 +4,6 @@
   "cleanUrls": true,
   "crons": [
     {
-      "path": "/api/cron/check-programmed",
-      "schedule": "0 * * * *"
-    },
-    {
       "path": "/api/cron/sav-j3",
       "schedule": "0 10 * * *"
     },
