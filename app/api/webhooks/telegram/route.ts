@@ -51,15 +51,14 @@ export async function POST(req: Request) {
   try {
     const update = await req.json();
 
-    // Traiter en arrière-plan pour répondre vite à Telegram
-    handleTelegramUpdate(update).catch(err => {
-      console.error('Telegram update processing error:', err);
-    });
+    // Vercel Serverless va couper la fonction si on n'utilise pas await.
+    // On attend donc la fin du traitement avant de répondre 200 OK à Telegram.
+    await handleTelegramUpdate(update);
 
-    // Telegram attend une réponse rapide
     return NextResponse.json({ ok: true }, { status: 200 });
   } catch (error) {
     console.error('Telegram webhook error:', error);
+    // On retourne toujours 200 pour éviter que Telegram ne retente en boucle
     return NextResponse.json({ ok: true }, { status: 200 });
   }
 }
