@@ -195,118 +195,153 @@ const btnAnimation: BtnAnimation = formSettings.btn_animation || 'pulse'
     const waText = encodeURIComponent(s.popup_whatsapp_msg || defaultWaMsg)
     const waLink = waNumber ? `https://wa.me/${waNumber.replace(/\D/g, '')}?text=${waText}` : ''
     
+    // Génère un numéro de commande aléatoire (ou utilise un hash) pour l'affichage
+    const randomId = Math.floor(10000 + Math.random() * 90000)
+    
     return (
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 order-confetti-wrap overflow-y-auto" 
-           style={{ background: 'rgba(0,0,0,.7)', backdropFilter: 'blur(16px)' }}>
-        <div className="bg-white rounded-[24px] shadow-2xl max-w-lg w-full p-6 @md:p-8 text-center anim-pop relative overflow-hidden my-auto border border-gray-100">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto" 
+           style={{ background: 'rgba(23, 37, 84, 0.6)', backdropFilter: 'blur(8px)' }}>
+        <div className="bg-white rounded-[28px] shadow-2xl max-w-[500px] w-full p-6 @md:p-8 text-center anim-pop relative overflow-hidden my-auto border border-gray-100">
           
+          {/* Confetti Background (CSS) */}
+          <div className="absolute top-0 left-0 right-0 h-48 pointer-events-none opacity-60">
+             <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="10%" cy="20%" r="3" fill="#E8527A" opacity="0.8"/>
+                <circle cx="80%" cy="10%" r="4" fill="#E8527A" opacity="0.6"/>
+                <rect x="20%" y="30%" width="6" height="6" fill="#10B981" opacity="0.7" transform="rotate(25)"/>
+                <rect x="85%" y="40%" width="5" height="5" fill="#3B82F6" opacity="0.8" transform="rotate(45)"/>
+                <path d="M50,10 L54,18 L46,18 Z" fill="#F59E0B" opacity="0.9" />
+                <path d="M70,30 L73,36 L67,36 Z" fill="#10B981" opacity="0.6" transform="rotate(-20 70 30)"/>
+                <circle cx="30%" cy="10%" r="2" fill="#3B82F6" opacity="0.5"/>
+                <circle cx="90%" cy="25%" r="3" fill="#F59E0B" opacity="0.8"/>
+             </svg>
+          </div>
+
           <button onClick={() => { setSent(false); setName(''); setPhone(''); setCity(''); setEmail('') }}
-                  className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-full text-gray-500 transition-colors z-10">
+                  className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-gray-50 border border-gray-100 hover:bg-gray-100 rounded-full text-gray-500 transition-colors z-20 shadow-sm">
             ✕
           </button>
 
-          {/* Icône succès animée */}
-          <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-tr from-blue-500 to-blue-400 rounded-full flex items-center justify-center shadow-[0_8px_30px_rgba(59,130,246,0.3)] anim-bounce">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          {/* Icône succès */}
+          <div className="relative z-10 w-[88px] h-[88px] mx-auto mb-5 bg-[#0066ff] rounded-full flex items-center justify-center shadow-[0_0_0_12px_rgba(0,102,255,0.08)]">
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
           </div>
           
-          <h3 className="text-2xl @md:text-3xl font-black mb-2 text-[#0b1f3f]">Commande passée avec succès ! 🎉</h3>
-          <p className="text-sm @md:text-base mb-6 text-gray-600 font-medium">
-            Merci pour votre confiance, nous vous appelons bientôt pour confirmer votre commande.
+          <h3 className="text-[26px] font-black mb-1.5 text-[#0b1f3f] relative z-10 tracking-tight">Commande confirmée !</h3>
+          <p className="text-[14px] mb-5 text-[#475569] relative z-10 px-2 font-medium">
+            Merci pour votre confiance, votre commande a été enregistrée avec succès.
           </p>
 
-          <div className="flex flex-col @md:flex-row gap-4 mb-8">
-            {/* Récapitulatif Box */}
-            <div className="flex-1 bg-[#0b1f3f] text-white rounded-[16px] p-5 text-left shadow-lg">
-              <h4 className="text-xs font-bold text-white/70 uppercase mb-3 flex items-center gap-2">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                Récapitulatif
-              </h4>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-14 h-14 rounded-lg overflow-hidden bg-white/10 flex-shrink-0">
-                  <img src={productImage} alt={product?.title || 'Produit'} className="w-full h-full object-cover" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-white text-sm line-clamp-1">{product?.title || 'Votre produit'}</p>
-                  <p className="text-xs text-white/60 mt-1">Quantité : {finalQty}</p>
-                </div>
-              </div>
-              <div className="space-y-2 text-sm text-white/80 border-t border-white/10 pt-4">
-                <div className="flex justify-between"><span>Sous-total</span><span className="font-semibold text-white">{total.toLocaleString('fr-FR')} {currency}</span></div>
-                <div className="flex justify-between"><span>Livraison</span><span className="font-bold text-green-400">Gratuite</span></div>
-              </div>
-              <div className="flex justify-between items-center mt-4 pt-4 border-t border-white/10">
-                <span className="font-black text-white text-base">Total payé</span>
-                <span className="font-black text-xl text-white">{total.toLocaleString('fr-FR')} {currency}</span>
-              </div>
-            </div>
-
-            {/* Contact / Info Boxes */}
-            <div className="flex-1 flex flex-col gap-3">
-              <div className="bg-gray-50 border border-gray-100 rounded-[16px] p-4 text-left flex gap-3 shadow-sm">
-                <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                </div>
-                <div>
-                  <h4 className="font-bold text-gray-900 text-sm">On vous appelle</h4>
-                  <p className="text-[11px] text-gray-500 mt-1 leading-tight">Notre équipe vous contactera sous peu pour confirmer les détails de la livraison au {phone}.</p>
-                </div>
-              </div>
-
-              {s.show_popup_whatsapp !== false && waLink && (
-                <div className="bg-green-50/50 border border-green-100 rounded-[16px] p-4 text-left flex flex-col gap-2 shadow-sm">
-                  <div className="flex gap-3">
-                    <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center flex-shrink-0">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-gray-900 text-sm">Besoin de nous joindre ?</h4>
-                      <p className="text-[11px] text-gray-500 mt-1 leading-tight">Contactez-nous directement sur WhatsApp pour toute question.</p>
-                    </div>
-                  </div>
-                  <a href={waLink} target="_blank" rel="noopener noreferrer"
-                     className="mt-1 w-full py-2.5 rounded-xl font-bold text-white text-[13px] shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2" 
-                     style={{ background: '#25D366' }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                      <path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/>
-                    </svg>
-                    Discuter sur WhatsApp
-                  </a>
-                </div>
-              )}
-            </div>
+          <div className="inline-flex items-center gap-1.5 bg-[#0066ff] text-white px-4 py-1.5 rounded-full text-[13px] font-bold mb-7 shadow-sm relative z-10 tracking-wide">
+            <ShieldCheck size={14} strokeWidth={2.5} /> N° Commande : #CMD-{randomId}
           </div>
 
-          {/* Animation Livreur & Badges */}
-          <div className="border-t border-gray-100 pt-6 mt-4 relative">
-            <div className="w-full h-[60px] relative overflow-hidden flex items-end justify-center mb-6">
-              <div className="absolute bottom-4 left-0 right-0 border-b-2 border-dashed border-gray-200" />
-              <div className="absolute left-[10%] w-3 h-3 bg-blue-500 rounded-full bottom-[13px] shadow-[0_0_10px_rgba(59,130,246,0.5)] z-10" />
-              <div className="absolute right-[10%] w-4 h-4 bg-gray-200 rounded-full bottom-[11px] flex items-center justify-center z-10">
-                <div className="w-2 h-2 bg-gray-400 rounded-full" />
+          <div className="flex flex-col gap-4 text-left relative z-10">
+            
+            {/* Récapitulatif Box */}
+            <div className="bg-white border border-[#e2e8f0] shadow-[0_4px_20px_rgba(0,0,0,0.03)] rounded-2xl overflow-hidden">
+              <div className="p-4 flex items-center gap-2 border-b border-gray-100/50">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                <h4 className="text-xs font-bold text-[#0b1f3f] uppercase tracking-wide">RÉCAPITULATIF DE VOTRE COMMANDE</h4>
               </div>
+              
+              <div className="p-4">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-16 h-16 rounded-xl overflow-hidden border border-gray-100 flex-shrink-0 bg-gray-50">
+                    <img src={productImage} alt={product?.title || 'Produit'} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-[#0b1f3f] text-[15px] leading-tight mb-1.5 line-clamp-2">{product?.title || 'Votre produit'}</p>
+                    <span className="inline-block bg-[#eff6ff] text-[#0066ff] px-2.5 py-0.5 rounded-md text-[11px] font-bold">
+                      Quantité : {finalQty}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-bold text-[#0066ff] text-base">{total.toLocaleString('fr-FR')} FCFA</span>
+                  </div>
+                </div>
+
+                <div className="border-t border-dashed border-gray-200 my-4"></div>
+
+                <div className="space-y-2.5 text-[13px] text-[#475569] font-medium">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg> Sous-total</div>
+                    <span>{total.toLocaleString('fr-FR')} FCFA</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2"><Truck size={16} strokeWidth={2.5} /> Livraison</div>
+                    <span className="font-bold text-[#16a34a]">Gratuite</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2"><Sparkles size={16} strokeWidth={2.5} /> Frais de service</div>
+                    <span>0 FCFA</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-[#eff6ff] px-4 py-3 border-t border-[#bfdbfe] flex justify-between items-center">
+                <span className="font-black text-[#0b1f3f] text-[15px]">Total payé</span>
+                <span className="font-black text-lg text-[#0066ff]">{total.toLocaleString('fr-FR')} FCFA</span>
+              </div>
+            </div>
+
+            {/* Traitement Box (Vert) */}
+            <div className="bg-[#f0fdf4] border border-[#bbf7d0] rounded-2xl p-4 flex items-center gap-3.5 relative overflow-hidden shadow-sm">
+              <div className="w-11 h-11 rounded-full bg-[#22c55e] text-white flex items-center justify-center flex-shrink-0 shadow-sm z-10">
+                <ShieldCheck size={22} strokeWidth={2.5} />
+              </div>
+              <div className="flex-1 z-10">
+                <h4 className="font-bold text-[#166534] text-[13px] mb-0.5 tracking-tight">Votre commande est en cours de traitement.</h4>
+                <p className="text-[11px] text-[#15803d]/90 leading-snug pr-12 font-medium">Vous recevrez un appel ou un message pour confirmer les détails de la livraison.</p>
+              </div>
+              {/* Illustration Livreur */}
               <img 
                 src="https://cdn-icons-png.flaticon.com/512/2830/2830305.png" 
                 alt="Livraison" 
-                className="h-12 absolute bottom-4 anim-delivery" 
-                style={{ filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.1))' }}
+                className="w-[70px] h-[70px] absolute -right-2 -bottom-2 opacity-95 object-contain"
+                style={{ filter: 'drop-shadow(-2px 4px 6px rgba(22,101,52,0.15))' }}
               />
             </div>
 
-            <div className="flex justify-center gap-6 @md:gap-10 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-              <div className="flex flex-col items-center gap-1.5">
-                <ShieldCheck size={18} className="text-blue-500" /> Paiement sécurisé
+            {/* WhatsApp Box (Bleu) */}
+            {waLink && (
+              <div className="bg-[#0066ff] rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden text-white shadow-[0_8px_20px_rgba(0,102,255,0.25)]">
+                <div className="flex-1 z-10">
+                  <h4 className="font-bold text-[15px] mb-1.5 tracking-tight">Une question ? Besoin d'aide ?</h4>
+                  <p className="text-[11px] text-white/90 mb-4 leading-snug pr-16 font-medium">Notre équipe est disponible sur WhatsApp pour vous accompagner.</p>
+                  <a href={waLink} target="_blank" rel="noopener noreferrer"
+                     className="inline-flex items-center gap-2 bg-white text-[#0b1f3f] px-4 py-2 rounded-full text-[13px] font-black shadow-md hover:scale-[1.02] active:scale-95 transition-all w-fit">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    Discuter sur WhatsApp <span className="text-gray-400 font-normal">›</span>
+                  </a>
+                </div>
+                {/* Illustration Téléphone */}
+                <div className="absolute -right-4 -bottom-6 w-36 h-36 opacity-100 z-0">
+                  <img src="https://cdn3d.iconscout.com/3d/free/thumb/free-whatsapp-9238385-7566213.png" alt="WhatsApp" className="w-full h-full object-contain drop-shadow-2xl" />
+                </div>
               </div>
-              <div className="flex flex-col items-center gap-1.5">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
-                Livraison rapide
-              </div>
-              <div className="flex flex-col items-center gap-1.5">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
-                Produits de qualité
-              </div>
+            )}
+          </div>
+
+          {/* Pied de page (Réassurance) */}
+          <div className="flex justify-center items-center gap-3 @md:gap-6 mt-7 pt-5 flex-wrap relative z-10">
+            <div className="flex flex-col items-center gap-1.5 text-center">
+              <div className="w-8 h-8 rounded-full border border-[#bfdbfe] flex items-center justify-center text-[#0066ff] bg-white shadow-sm"><ShieldCheck size={16} strokeWidth={2.5} /></div>
+              <span className="text-[10px] font-bold text-[#475569] leading-tight">Paiement<br/>sécurisé</span>
+            </div>
+            <div className="flex flex-col items-center gap-1.5 text-center">
+              <div className="w-8 h-8 rounded-full border border-[#bfdbfe] flex items-center justify-center text-[#0066ff] bg-white shadow-sm"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>
+              <span className="text-[10px] font-bold text-[#475569] leading-tight">Livraison<br/>rapide</span>
+            </div>
+            <div className="flex flex-col items-center gap-1.5 text-center">
+              <div className="w-8 h-8 rounded-full border border-[#bfdbfe] flex items-center justify-center text-[#0066ff] bg-white shadow-sm"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></div>
+              <span className="text-[10px] font-bold text-[#475569] leading-tight">Produits<br/>de qualité</span>
+            </div>
+            <div className="flex flex-col items-center gap-1.5 text-center">
+              <div className="w-8 h-8 rounded-full border border-[#bfdbfe] flex items-center justify-center text-[#0066ff] bg-white shadow-sm"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg></div>
+              <span className="text-[10px] font-bold text-[#475569] leading-tight">Support client<br/>réactif</span>
             </div>
           </div>
           
@@ -315,7 +350,7 @@ const btnAnimation: BtnAnimation = formSettings.btn_animation || 'pulse'
     )
   }
 
-return (
+  return (
     <div className="w-full px-4 py-8" id="order-form">
       <div
         className="max-w-md mx-auto overflow-hidden order-form-card"

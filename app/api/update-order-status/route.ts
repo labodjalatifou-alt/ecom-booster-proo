@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { sendPushNotification } from '@/lib/push-helper';
+import { dispatch } from '@/lib/notification-dispatcher';
 
 export async function POST(req: Request) {
   try {
-    const { orderId, status, userId, cashCollected, deliveryFee, deliveryFeeIncluded, note, livreurId } = await req.json();
+    const { orderId, status, userId, cashCollected, deliveryFee, deliveryFeeIncluded, note, livreurId, cancellationReason, rescheduledTo, rescheduledReason } = await req.json();
 
 
     if (!orderId || !status) {
@@ -25,10 +25,17 @@ export async function POST(req: Request) {
     const previousStatus = order.status;
     const currentCloserPaid = order.closer_paid || 0;
 
+    // Validation: Exiger livreurId si on passe à "Confirmé" (et que ça n'était pas déjà confirmé)
+    if (status === 'Confirmé' && !livreurId && !order.livreur_id) {
+       return NextResponse.json({ error: "Un livreur doit être assigné pour confirmer la commande." }, { status: 400 });
+    }
+
+    const now = new Date().toISOString();
+
     // 2. Construire les données de mise à jour
     const updateData: any = {
       status,
-      updated_at: new Date().toISOString(),
+      updated_at: now,
     };
 
     // Cash collecté (livreur)
@@ -36,11 +43,31 @@ export async function POST(req: Request) {
     if (deliveryFee !== undefined) updateData.cash_from_customer = parseInt(deliveryFee);
     if (deliveryFeeIncluded !== undefined) updateData.is_included_in_total = deliveryFeeIncluded;
     if (note !== undefined) updateData.note = note;
+    
+    // Annulation / Report
+    if (status === 'Annulé') {
+        updateData.cancelled_at = now;
+        if (cancellationReason) updateData.cancellation_reason = cancellationReason;
+    }
+    if (status === 'Programmé') {
+        if (rescheduledTo) updateData.rescheduled_to = rescheduledTo;
+        if (rescheduledReason) updateData.rescheduled_reason = rescheduledReason;
+    }
 
     // Assigner le closer ou livreur
     if (status === 'Confirmé' && userId) updateData.closer_id = userId;
-    if (status === 'Livré' && userId) updateData.livreur_id = userId;
-    if (livreurId !== undefined) updateData.livreur_id = livreurId;
+    if (status === 'Confirmé' || livreurId !== undefined) {
+      updateData.livreur_id = livreurId !== undefined ? livreurId : order.livreur_id;
+    }
+    
+    // Timestamps Lifecycle
+    if (status === 'Confirmé' && previousStatus !== 'Confirmé') {
+        updateData.confirmed_assigned_at = now;
+        updateData.assigned_at = now;
+    }
+    if (status === 'Livré') {
+        updateData.delivered_at = now;
+    }
 
 
     // 3. GAINS (Enregistrés directement dans la commande)
@@ -49,9 +76,14 @@ export async function POST(req: Request) {
     let closerCommissionDeliver = 500;
     let livreurCommissionDelivery = 1500;
 
+    let userRole = 'ADMIN';
+    let userName = 'User';
+
     if (userId) {
-      const { data: userProfile } = await supabase.from('User').select('role, commissionPerConfirm, commissionPerDeliver').eq('id', userId).single();
+      const { data: userProfile } = await supabase.from('User').select('name, role, commissionPerConfirm, commissionPerDeliver').eq('id', userId).single();
       if (userProfile) {
+        userRole = userProfile.role;
+        userName = userProfile.name || 'User';
         if (userProfile.role === 'CLOSER') {
           closerCommissionConfirm = userProfile.commissionPerConfirm || 500;
           closerCommissionDeliver = userProfile.commissionPerDeliver || 500;
@@ -71,56 +103,28 @@ export async function POST(req: Request) {
       }
     }
     
-    if (status === 'Confirmé') {
+    if (status === 'Confirmé' && previousStatus !== 'Confirmé') {
       updateData.closer_paid = closerCommissionConfirm;
 
       // Créditer le closer (background)
-      if (userId) {
+      if (userId && userRole === 'CLOSER') {
         supabase.rpc('increment_user_earnings', { target_user_id: userId, amount: closerCommissionConfirm }).then();
+      } else if (order.closer_id) {
+        supabase.rpc('increment_user_earnings', { target_user_id: order.closer_id, amount: closerCommissionConfirm }).then();
       }
 
-      // Notification
-      await supabase.from('notifications').insert({
-        type: 'ORDER_CONFIRMED',
-        title: 'Commande Confirmée',
-        message: `Commande #${String(orderId).slice(-6)} confirmée. +${closerCommissionConfirm} ${order.currency || ''} crédités.`,
-        target_role: 'ADMIN',
-        order_id: orderId,
-        store_id: order.store_id,
-      });
-
-    } else if (status === 'Livré') {
+    } else if (status === 'Livré' && previousStatus !== 'Livré') {
       updateData.closer_paid = currentCloserPaid + closerCommissionDeliver; // total closer pay
       updateData.livreur_paid = livreurCommissionDelivery;
-      updateData.delivered_at = new Date().toISOString();
 
       // Créditer le closer et le livreur (background)
       if (order.closer_id) {
         supabase.rpc('increment_user_earnings', { target_user_id: order.closer_id, amount: closerCommissionDeliver }).then();
       }
-      if (userId) {
-        supabase.rpc('increment_user_earnings', { target_user_id: userId, amount: livreurCommissionDelivery }).then();
+      const targetLivreurId = updateData.livreur_id || order.livreur_id;
+      if (targetLivreurId) {
+        supabase.rpc('increment_user_earnings', { target_user_id: targetLivreurId, amount: livreurCommissionDelivery }).then();
       }
-
-      // Notifications
-      await supabase.from('notifications').insert([
-        {
-          type: 'ORDER_DELIVERED',
-          title: 'Commande Livrée',
-          message: `Commande #${String(orderId).slice(-6)} livrée. Cash encaissé: ${cashCollected || order.price} ${order.currency || ''}`,
-          target_role: 'ADMIN',
-          order_id: orderId,
-          store_id: order.store_id,
-        },
-        {
-          type: 'MONEY_ADDED',
-          title: 'Encaissement',
-          message: `${cashCollected || order.price} ${order.currency || ''} encaissés sur commande #${String(orderId).slice(-6)}`,
-          target_role: 'ADMIN',
-          order_id: orderId,
-          store_id: order.store_id,
-        }
-      ]);
     }
 
     // 4. Appliquer la mise à jour
@@ -132,48 +136,87 @@ export async function POST(req: Request) {
       .single();
 
     if (updateError) throw updateError;
+    
+    let livreurName = '';
+    if (updatedOrder.livreur_id) {
+       const { data: liv } = await supabase.from('User').select('name').eq('id', updatedOrder.livreur_id).single();
+       if (liv) livreurName = liv.name;
+    }
 
-    // Déclencher les notifications push en arrière-plan
-    (async () => {
-      try {
-        // 1. Si la commande passe à 'Confirmé', on notifie le livreur assigné
-        if (status === 'Confirmé') {
-          const targetLivreurId = updatedOrder.livreur_id || order.livreur_id;
-          if (targetLivreurId) {
-            await sendPushNotification({
-              userId: targetLivreurId,
-              title: "Commande confirmée à livrer 📦",
-              body: `La commande de ${updatedOrder.customer || 'Client'} (${updatedOrder.city || ''}) est confirmée et prête pour la livraison.`,
-              url: "/interface-livreur"
-            });
-          }
+    // 5. Déclencher le dispatcher unifié
+    if (status === 'Confirmé' && previousStatus !== 'Confirmé') {
+        await dispatch({
+            type: 'confirmed',
+            orderId,
+            order: updatedOrder,
+            actorType: userRole.toLowerCase() as any,
+            actorId: userId,
+            channel: 'dashboard',
+            metadata: { closerName: userRole === 'CLOSER' ? userName : 'Admin', livreurName }
+        });
+        await dispatch({
+            type: 'assigned',
+            orderId,
+            order: updatedOrder,
+            actorType: userRole.toLowerCase() as any,
+            actorId: userId,
+            channel: 'dashboard',
+            metadata: { livreurName }
+        });
+    } else if (status === 'Livré' && previousStatus !== 'Livré') {
+        // Calculer durée
+        let duration = '';
+        if (updatedOrder.assigned_at) {
+          const diffMs = Date.now() - new Date(updatedOrder.assigned_at).getTime();
+          const hours = Math.floor(diffMs / 3600000);
+          const mins = Math.floor((diffMs % 3600000) / 60000);
+          duration = `${hours}h${String(mins).padStart(2, '0')}`;
         }
-
-        // 2. Si un livreur a été assigné ou modifié
-        const prevLivreurId = order.livreur_id;
-        const newLivreurId = updatedOrder.livreur_id;
-        if (newLivreurId && newLivreurId !== prevLivreurId) {
-          await sendPushNotification({
-            userId: newLivreurId,
-            title: "Nouvelle livraison assignée 🚚",
-            body: `La commande de ${updatedOrder.customer || 'Client'} (${updatedOrder.city || ''}) vous a été assignée.`,
-            url: "/interface-livreur"
-          });
-        }
-
-        // 3. Si la commande repasse à 'A Confirmer'
-        if (status === 'A Confirmer') {
-          await sendPushNotification({
-            role: 'CLOSER',
-            title: "Nouvelle commande en attente ☎️",
-            body: `Commande de ${updatedOrder.customer || 'Client'} (${updatedOrder.city || ''}) en attente de confirmation.`,
-            url: "/interface-closer"
-          });
-        }
-      } catch (err) {
-        console.error('Error triggering push notifications on status update:', err);
-      }
-    })();
+        await dispatch({
+            type: 'delivered',
+            orderId,
+            order: updatedOrder,
+            actorType: userRole.toLowerCase() as any,
+            actorId: userId,
+            channel: 'dashboard',
+            metadata: { 
+                closerName: 'Closer', // Could fetch actual closer name 
+                livreurName: userRole === 'LIVREUR' ? userName : livreurName,
+                deliveryDuration: duration
+            }
+        });
+    } else if (status === 'Annulé' && previousStatus !== 'Annulé') {
+        await dispatch({
+            type: 'cancelled',
+            orderId,
+            order: updatedOrder,
+            actorType: userRole.toLowerCase() as any,
+            actorId: userId,
+            channel: 'dashboard',
+            metadata: { reason: cancellationReason || note }
+        });
+    } else if (status === 'Programmé' && previousStatus !== 'Programmé') {
+        await dispatch({
+            type: 'rescheduled',
+            orderId,
+            order: updatedOrder,
+            actorType: userRole.toLowerCase() as any,
+            actorId: userId,
+            channel: 'dashboard',
+            metadata: { date: rescheduledTo || note }
+        });
+    } else if (updatedOrder.livreur_id && updatedOrder.livreur_id !== order.livreur_id) {
+         // Réassignation
+         await dispatch({
+            type: 'assigned',
+            orderId,
+            order: updatedOrder,
+            actorType: userRole.toLowerCase() as any,
+            actorId: userId,
+            channel: 'dashboard',
+            metadata: { livreurName }
+        });
+    }
 
     return NextResponse.json(updatedOrder);
 

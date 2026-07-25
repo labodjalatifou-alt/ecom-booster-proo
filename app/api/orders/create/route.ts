@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminSupabase } from '@/lib/supabase'
-import { sendPushNotification } from '@/lib/push-helper'
+import { dispatch } from '@/lib/notification-dispatcher'
 
 /**
  * API publique de création de commande (landing /s/[slug]).
@@ -36,22 +36,24 @@ export async function POST(request: Request) {
       note += ` | Variantes: ${variantSummary}`
     }
 
+    const orderData = {
+      customer: customerName,
+      phone,
+      city,
+      product: productName,
+      price: total,
+      currency,
+      store_id: storeId,
+      status: 'A Confirmer',
+      address: body.address || null,
+      country: body.country || null,
+      note,
+    }
+
     const { data: order, error } = await supabase
       .from('orders')
-      .insert({
-        customer: customerName,
-        phone,
-        city,
-        product: productName,
-        price: total,
-        currency,
-        store_id: storeId,
-        status: 'A Confirmer',
-        address: body.address || null,
-        country: body.country || null,
-        note,
-      })
-      .select('id')
+      .insert(orderData)
+      .select('*')
       .single()
 
     if (error) {
@@ -59,58 +61,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: `Impossible d'enregistrer la commande : ${error.message}` }, { status: 500 })
     }
 
-    const orderIdStr = order?.id ? String(order.id) : ''
-    const orderRef = orderIdStr ? orderIdStr.slice(-6) : '??????'
-    const msg = `${customerName} — ${product} (${total} ${currency}) · ${city}`
+    // 🚀 Dispatcher l'événement de création (gère Push, WhatsApp, Telegram, In-App, Audit)
+    await dispatch({
+      type: 'created',
+      orderId: order.id,
+      order: order,
+      channel: 'landing'
+    });
 
-    try {
-      const { error: notifError } = await supabase.from('notifications').insert([
-        {
-          type: 'ORDER_CREATED',
-          title: 'Nouvelle commande boutique',
-          message: msg,
-          target_role: 'ADMIN',
-          store_id: storeId,
-          order_id: orderIdStr || null,
-          read: false,
-        },
-        {
-          type: 'ORDER_CREATED',
-          title: 'Commande à confirmer ☎️',
-          message: `${customerName} (${city}) — ${product}`,
-          target_role: 'CLOSER',
-          store_id: storeId,
-          order_id: orderIdStr || null,
-          read: false,
-        },
-      ])
-      if (notifError) {
-        console.error('Erreur insertion notifications:', notifError)
-      }
-    } catch (notifErr) {
-      console.error('Erreur catch insertion notifications:', notifErr)
-    }
-
-    Promise.allSettled([
-      sendPushNotification({
-        role: 'CLOSER',
-        title: 'Nouvelle commande à confirmer ☎️',
-        body: `${customerName} (${city}) attend votre appel.`,
-        url: '/interface-closer',
-      }),
-      sendPushNotification({
-        role: 'ADMIN',
-        title: 'Nouvelle commande boutique 🛍️',
-        body: msg,
-        url: '/commandes',
-      }),
-    ]).then(results => {
-      results.forEach((r, i) => {
-        if (r.status === 'rejected') console.error(`Push notification ${i} failed:`, r.reason)
-      })
-    })
-
-    return NextResponse.json({ success: true, orderId: orderIdStr })
+    return NextResponse.json({ success: true, orderId: String(order.id) })
   } catch (err: any) {
     console.error('Erreur serveur commande:', err)
     return NextResponse.json({ error: `Erreur serveur lors de la commande : ${err.message}` }, { status: 500 })
