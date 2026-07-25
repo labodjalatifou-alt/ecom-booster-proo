@@ -139,11 +139,11 @@ SELECT
   u.id,
   u.name,
   COUNT(*) FILTER (WHERE o.status = 'Livré') AS deliveries,
-  COUNT(*) FILTER (WHERE o.status = 'Annulé' AND o.livreur_id = u.id) AS failures,
+  COUNT(*) FILTER (WHERE o.status = 'Annulé' AND o.livreur_id::text = u.id::text) AS failures,
   ROUND(AVG(EXTRACT(EPOCH FROM (o.delivered_at - o.assigned_at)) / 3600)::numeric, 1) AS avg_hours_to_deliver,
   ROUND(AVG(EXTRACT(EPOCH FROM (o.accepted_at - o.assigned_at)) / 60)::numeric, 0) AS avg_minutes_to_accept
 FROM "User" u
-LEFT JOIN orders o ON o.livreur_id = u.id
+LEFT JOIN orders o ON o.livreur_id::text = u.id::text
 WHERE u.role = 'LIVREUR'
 GROUP BY u.id, u.name;
 
