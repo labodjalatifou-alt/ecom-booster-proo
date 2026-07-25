@@ -119,38 +119,38 @@ export async function handleTelegramUpdate(update: TelegramUpdate): Promise<void
           await sendMessage(chatId, HELP_TEXT);
           break;
         case 'stats':
-          await handleStats(chatId, cleanArgs);
+          await handleStats(async (text, buttons) => { if (buttons) await sendMessageWithButtons(chatId, text, buttons); else await sendMessage(chatId, text); }, cleanArgs);
           break;
         case 'stock':
-          await handleStock(chatId, cleanArgs);
+          await handleStock(async (text, buttons) => { if (buttons) await sendMessageWithButtons(chatId, text, buttons); else await sendMessage(chatId, text); }, cleanArgs);
           break;
         case 'nonconfirmes':
         case 'nc':
-          await handleNonConfirmes(chatId);
+          await handleNonConfirmes(async (text, buttons) => { if (buttons) await sendMessageWithButtons(chatId, text, buttons); else await sendMessage(chatId, text); });
           break;
         case 'annules':
-          await handleAnnules(chatId, cleanArgs);
+          await handleAnnules(async (text, buttons) => { if (buttons) await sendMessageWithButtons(chatId, text, buttons); else await sendMessage(chatId, text); }, cleanArgs);
           break;
         case 'programmes':
         case 'prog':
-          await handleProgrammes(chatId);
+          await handleProgrammes(async (text, buttons) => { if (buttons) await sendMessageWithButtons(chatId, text, buttons); else await sendMessage(chatId, text); });
           break;
         case 'livreurs':
-          await handleLivreurs(chatId);
+          await handleLivreurs(async (text, buttons) => { if (buttons) await sendMessageWithButtons(chatId, text, buttons); else await sendMessage(chatId, text); });
           break;
         case 'sav':
-          await handleSav(chatId);
+          await handleSav(async (text, buttons) => { if (buttons) await sendMessageWithButtons(chatId, text, buttons); else await sendMessage(chatId, text); });
           break;
         case 'commande':
         case 'cmd':
-          await handleCommande(chatId, cleanArgs);
+          await handleCommande(async (text, buttons) => { if (buttons) await sendMessageWithButtons(chatId, text, buttons); else await sendMessage(chatId, text); }, cleanArgs);
           break;
         case 'relance':
-          await handleRelance(chatId, cleanArgs);
+          await handleRelance(async (text, buttons) => { if (buttons) await sendMessageWithButtons(chatId, text, buttons); else await sendMessage(chatId, text); }, cleanArgs);
           break;
         case 'approuver':
         case 'ok':
-          await handleApprouver(chatId, cleanArgs);
+          await handleApprouver(async (text, buttons) => { if (buttons) await sendMessageWithButtons(chatId, text, buttons); else await sendMessage(chatId, text); }, cleanArgs);
           break;
         default:
           await sendMessage(chatId, `❓ Commande \`/${command}\` non reconnue. Tapez /help.`);

@@ -10,7 +10,7 @@ const supabase = createAdminSupabase();
 
 // ---- /stats [Nj] — statistiques commandes ----
 
-export async function handleStats(chatId: number, args: string): Promise<void> {
+export async function handleStats(reply: (text: string, buttons?: any) => Promise<void>, args: string): Promise<void> {
   const daysMatch = args.match(/(\d+)/);
   const days = daysMatch ? parseInt(daysMatch[1]) : 7;
   const since = new Date();
@@ -22,7 +22,7 @@ export async function handleStats(chatId: number, args: string): Promise<void> {
     .gte('created_at', since.toISOString());
 
   if (error || !orders) {
-    await sendMessage(chatId, '❌ Erreur lors de la récupération des stats.');
+    await reply('❌ Erreur lors de la récupération des stats.');
     return;
   }
 
@@ -52,14 +52,14 @@ export async function handleStats(chatId: number, args: string): Promise<void> {
     `📈 Taux de livraison: *${total > 0 ? Math.round(((byStatus['Livré'] || 0) / total) * 100) : 0}%*`,
   ].join('\n');
 
-  await sendMessage(chatId, text);
+  await reply(text);
 }
 
 // ---- /stock [produit] — recherche stock ----
 
-export async function handleStock(chatId: number, args: string): Promise<void> {
+export async function handleStock(reply: (text: string, buttons?: any) => Promise<void>, args: string): Promise<void> {
   if (!args.trim()) {
-    await sendMessage(chatId, '⚠️ Usage: `/stock nom du produit`');
+    await reply('⚠️ Usage: `/stock nom du produit`');
     return;
   }
 
@@ -70,12 +70,12 @@ export async function handleStock(chatId: number, args: string): Promise<void> {
     .limit(10);
 
   if (error) {
-    await sendMessage(chatId, '❌ Erreur lors de la recherche de stock.');
+    await reply('❌ Erreur lors de la recherche de stock.');
     return;
   }
 
   if (!products || products.length === 0) {
-    await sendMessage(chatId, `🔍 Aucun produit trouvé pour "*${args.trim()}*".`);
+    await reply(`🔍 Aucun produit trouvé pour "*${args.trim()}*".`);
     return;
   }
 
@@ -83,12 +83,12 @@ export async function handleStock(chatId: number, args: string): Promise<void> {
     `📦 *${p.title}*\n  Stock: ${p.stock ?? '?'} | ${p.price} ${p.currency || 'FCFA'}`
   );
 
-  await sendMessage(chatId, `🏪 *Résultats pour "${args.trim()}"*\n\n${lines.join('\n\n')}`);
+  await reply(`🏪 *Résultats pour "${args.trim()}"*\n\n${lines.join('\n\n')}`);
 }
 
 // ---- /nonconfirmes — commandes en attente ----
 
-export async function handleNonConfirmes(chatId: number): Promise<void> {
+export async function handleNonConfirmes(reply: (text: string, buttons?: any) => Promise<void>): Promise<void> {
   const { data: orders, error } = await supabase
     .from('orders')
     .select('id, customer, phone, city, product, price, currency, created_at')
@@ -97,12 +97,12 @@ export async function handleNonConfirmes(chatId: number): Promise<void> {
     .limit(15);
 
   if (error || !orders) {
-    await sendMessage(chatId, '❌ Erreur lors de la récupération.');
+    await reply('❌ Erreur lors de la récupération.');
     return;
   }
 
   if (orders.length === 0) {
-    await sendMessage(chatId, '✅ Aucune commande en attente de confirmation.');
+    await reply('✅ Aucune commande en attente de confirmation.');
     return;
   }
 
@@ -112,12 +112,12 @@ export async function handleNonConfirmes(chatId: number): Promise<void> {
     return `#${ref} | ${o.customer} | ${o.city} | ${o.price} ${o.currency || ''} | ${age}`;
   });
 
-  await sendMessage(chatId, `⏳ *Commandes à confirmer (${orders.length})*\n\n${lines.join('\n')}`);
+  await reply(`⏳ *Commandes à confirmer (${orders.length})*\n\n${lines.join('\n')}`);
 }
 
 // ---- /annules — commandes annulées récentes ----
 
-export async function handleAnnules(chatId: number, args: string): Promise<void> {
+export async function handleAnnules(reply: (text: string, buttons?: any) => Promise<void>, args: string): Promise<void> {
   const daysMatch = args.match(/(\d+)/);
   const days = daysMatch ? parseInt(daysMatch[1]) : 7;
   const since = new Date();
@@ -132,12 +132,12 @@ export async function handleAnnules(chatId: number, args: string): Promise<void>
     .limit(20);
 
   if (error || !orders) {
-    await sendMessage(chatId, '❌ Erreur lors de la récupération.');
+    await reply('❌ Erreur lors de la récupération.');
     return;
   }
 
   if (orders.length === 0) {
-    await sendMessage(chatId, `✅ Aucune annulation les ${days} derniers jours.`);
+    await reply(`✅ Aucune annulation les ${days} derniers jours.`);
     return;
   }
 
@@ -147,12 +147,12 @@ export async function handleAnnules(chatId: number, args: string): Promise<void>
     return `#${ref} | ${o.customer} | ${o.phone} | ${reason}`;
   });
 
-  await sendMessage(chatId, `❌ *Annulations (${days}j) — ${orders.length}*\n\n${lines.join('\n')}`);
+  await reply(`❌ *Annulations (${days}j) — ${orders.length}*\n\n${lines.join('\n')}`);
 }
 
 // ---- /programmes — commandes programmées ----
 
-export async function handleProgrammes(chatId: number): Promise<void> {
+export async function handleProgrammes(reply: (text: string, buttons?: any) => Promise<void>): Promise<void> {
   const { data: orders, error } = await supabase
     .from('orders')
     .select('id, customer, phone, city, product, price, currency, programmed_date, note')
@@ -161,12 +161,12 @@ export async function handleProgrammes(chatId: number): Promise<void> {
     .limit(20);
 
   if (error || !orders) {
-    await sendMessage(chatId, '❌ Erreur lors de la récupération.');
+    await reply('❌ Erreur lors de la récupération.');
     return;
   }
 
   if (orders.length === 0) {
-    await sendMessage(chatId, '✅ Aucune commande programmée.');
+    await reply('✅ Aucune commande programmée.');
     return;
   }
 
@@ -178,12 +178,12 @@ export async function handleProgrammes(chatId: number): Promise<void> {
     return `#${ref} | ${o.customer} | 📞 ${o.phone} | 📅 ${date || '?'}`;
   });
 
-  await sendMessage(chatId, `📅 *Commandes programmées (${orders.length})*\n\n${lines.join('\n')}`);
+  await reply(`📅 *Commandes programmées (${orders.length})*\n\n${lines.join('\n')}`);
 }
 
 // ---- /livreurs — performance livreurs ----
 
-export async function handleLivreurs(chatId: number): Promise<void> {
+export async function handleLivreurs(reply: (text: string, buttons?: any) => Promise<void>): Promise<void> {
   const { data, error } = await supabase
     .from('livreur_performance')
     .select('*');
@@ -196,7 +196,7 @@ export async function handleLivreurs(chatId: number): Promise<void> {
       .eq('role', 'LIVREUR');
 
     if (!users || users.length === 0) {
-      await sendMessage(chatId, '🚚 Aucun livreur trouvé.');
+      await reply('🚚 Aucun livreur trouvé.');
       return;
     }
 
@@ -204,12 +204,12 @@ export async function handleLivreurs(chatId: number): Promise<void> {
       `${u.is_available !== false ? '🟢' : '🔴'} *${u.name}*`
     );
 
-    await sendMessage(chatId, `🚚 *Livreurs (${users.length})*\n\n${lines.join('\n')}`);
+    await reply(`🚚 *Livreurs (${users.length})*\n\n${lines.join('\n')}`);
     return;
   }
 
   if (!data || data.length === 0) {
-    await sendMessage(chatId, '🚚 Aucun livreur trouvé.');
+    await reply('🚚 Aucun livreur trouvé.');
     return;
   }
 
@@ -224,12 +224,12 @@ export async function handleLivreurs(chatId: number): Promise<void> {
     ].filter(Boolean).join('\n');
   });
 
-  await sendMessage(chatId, `🚚 *Performance livreurs*\n\n${lines.join('\n\n')}`);
+  await reply(`🚚 *Performance livreurs*\n\n${lines.join('\n\n')}`);
 }
 
 // ---- /sav — commandes livrées J+3 sans suivi ----
 
-export async function handleSav(chatId: number): Promise<void> {
+export async function handleSav(reply: (text: string, buttons?: any) => Promise<void>): Promise<void> {
   const threeDaysAgo = new Date();
   threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
   const fourDaysAgo = new Date();
@@ -244,12 +244,12 @@ export async function handleSav(chatId: number): Promise<void> {
     .limit(20);
 
   if (error || !orders) {
-    await sendMessage(chatId, '❌ Erreur lors de la récupération SAV.');
+    await reply('❌ Erreur lors de la récupération SAV.');
     return;
   }
 
   if (orders.length === 0) {
-    await sendMessage(chatId, '✅ Aucune commande SAV en attente (J+3).');
+    await reply('✅ Aucune commande SAV en attente (J+3).');
     return;
   }
 
@@ -265,7 +265,7 @@ export async function handleSav(chatId: number): Promise<void> {
   const newOrders = orders.filter(o => !existingOrderIds.has(o.id));
 
   if (newOrders.length === 0) {
-    await sendMessage(chatId, '✅ Toutes les relances J+3 sont déjà créées. Utilisez `/approuver` pour les envoyer.');
+    await reply('✅ Toutes les relances J+3 sont déjà créées. Utilisez `/approuver` pour les envoyer.');
     return;
   }
 
@@ -293,10 +293,10 @@ export async function handleSav(chatId: number): Promise<void> {
 
 // ---- /commande [id] — détail commande ----
 
-export async function handleCommande(chatId: number, args: string): Promise<void> {
+export async function handleCommande(reply: (text: string, buttons?: any) => Promise<void>, args: string): Promise<void> {
   const idStr = args.trim();
   if (!idStr) {
-    await sendMessage(chatId, '⚠️ Usage: `/commande 123456`');
+    await reply('⚠️ Usage: `/commande 123456`');
     return;
   }
 
@@ -313,7 +313,7 @@ export async function handleCommande(chatId: number, args: string): Promise<void
   const { data: orders, error } = await query.limit(1);
 
   if (error || !orders || orders.length === 0) {
-    await sendMessage(chatId, `❌ Commande "${idStr}" non trouvée.`);
+    await reply(`❌ Commande "${idStr}" non trouvée.`);
     return;
   }
 
@@ -353,15 +353,15 @@ export async function handleCommande(chatId: number, args: string): Promise<void
     eventLines.length > 0 ? `📜 *Historique:*\n${eventLines.join('\n')}` : '',
   ].filter(Boolean).join('\n');
 
-  await sendMessage(chatId, text);
+  await reply(text);
 }
 
 // ---- /relance [id] — créer une relance ----
 
-export async function handleRelance(chatId: number, args: string): Promise<void> {
+export async function handleRelance(reply: (text: string, buttons?: any) => Promise<void>, args: string): Promise<void> {
   const idStr = args.trim();
   if (!idStr) {
-    await sendMessage(chatId, '⚠️ Usage: `/relance 123456`');
+    await reply('⚠️ Usage: `/relance 123456`');
     return;
   }
 
@@ -374,7 +374,7 @@ export async function handleRelance(chatId: number, args: string): Promise<void>
 
   const { data: orders } = await query.limit(1);
   if (!orders || orders.length === 0) {
-    await sendMessage(chatId, `❌ Commande "${idStr}" non trouvée.`);
+    await reply(`❌ Commande "${idStr}" non trouvée.`);
     return;
   }
 
@@ -406,7 +406,7 @@ export async function handleRelance(chatId: number, args: string): Promise<void>
   }).select('id').single();
 
   if (error || !followup) {
-    await sendMessage(chatId, '❌ Erreur lors de la création de la relance.');
+    await reply('❌ Erreur lors de la création de la relance.');
     return;
   }
 
@@ -419,7 +419,7 @@ export async function handleRelance(chatId: number, args: string): Promise<void>
 
 // ---- /approuver [id] — approuver et envoyer une relance ----
 
-export async function handleApprouver(chatId: number, args: string): Promise<void> {
+export async function handleApprouver(reply: (text: string, buttons?: any) => Promise<void>, args: string): Promise<void> {
   if (!args.trim()) {
     // Lister les relances en attente
     const { data: pending } = await supabase
@@ -430,7 +430,7 @@ export async function handleApprouver(chatId: number, args: string): Promise<voi
       .limit(10);
 
     if (!pending || pending.length === 0) {
-      await sendMessage(chatId, '✅ Aucune relance en attente d\'approbation.');
+      await reply('✅ Aucune relance en attente d\'approbation.');
       return;
     }
 
@@ -457,7 +457,7 @@ export async function handleApprouver(chatId: number, args: string): Promise<voi
     .like('id', `%${fIdSuffix}`);
 
   if (!followups || followups.length === 0) {
-    await sendMessage(chatId, `❌ Relance "${fIdSuffix}" non trouvée ou déjà traitée.`);
+    await reply(`❌ Relance "${fIdSuffix}" non trouvée ou déjà traitée.`);
     return;
   }
 

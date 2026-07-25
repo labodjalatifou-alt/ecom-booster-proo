@@ -99,7 +99,7 @@ export async function processWhatsAppTextMessage(
     // Les commandes Telegram envoient via sendMessage, mais ici on veut WhatsApp
     // On les exécute normalement (elles envoient sur Telegram) mais on capture aussi pour WA
     try {
-      await originalHandler(whatsappChatId, match.args);
+      await originalHandler(async (text, buttons) => { responses.push(text); }, match.args);
     } catch {
       // Si échec (pas de chatId Telegram valide), c'est normal
     }
