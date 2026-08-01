@@ -47,6 +47,16 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+
+    // DEBUG: Log everything from Meta to Supabase
+    const supabase = createAdminSupabase();
+    await supabase.from('notifications').insert({
+      type: 'DEBUG_WA',
+      title: 'WA Webhook hit',
+      message: JSON.stringify(body).slice(0, 500),
+      target_role: 'ADMIN',
+    });
+
     const parsed = parseWebhook(body);
 
     if (!parsed) {
