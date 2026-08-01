@@ -17,6 +17,7 @@ import {
   handleRelance,
   handleApprouver,
 } from './commands';
+import { handleAIMessage } from './ai-handler';
 
 // ---- TYPES ----
 
@@ -100,22 +101,18 @@ export async function handleTelegramUpdate(update: TelegramUpdate): Promise<void
     // Parser la commande
     const match = text.match(/^\/(\w+)\s*(.*)?$/);
     if (!match) {
-      // Pas une commande → afficher un menu rapide
+      // Pas une commande slash → traitement IA
       if (text.toLowerCase() === 'help' || text === '?' || text.toLowerCase() === 'aide') {
         await sendMessage(chatId, HELP_TEXT);
       } else {
-        // Menu rapide avec les commandes les plus utiles
-        await sendMessage(chatId,
-          `👋 Bonjour ! Voici ce que je peux faire pour vous :\n\n` +
-          `📊 *Stats* — tapez \`/stats\`\n` +
-          `⏳ *Non confirmées* — tapez \`/nc\`\n` +
-          `📅 *Programmées* — tapez \`/programmes\`\n` +
-          `❌ *Annulées* — tapez \`/annules\`\n` +
-          `🚚 *Livreurs* — tapez \`/livreurs\`\n` +
-          `📋 *Détail commande* — tapez \`/commande 7435\`\n` +
-          `🔔 *SAV J+3* — tapez \`/sav\`\n\n` +
-          `❓ Liste complète : \`/help\``
-        );
+        // Envoyer indicateur de frappe puis répondre avec Claude
+        await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendChatAction`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: chatId, action: 'typing' }),
+        });
+        const aiResponse = await handleAIMessage(text);
+        await sendMessage(chatId, aiResponse);
       }
       return;
     }
