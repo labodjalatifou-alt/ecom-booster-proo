@@ -178,15 +178,7 @@ const btnAnimation: BtnAnimation = formSettings.btn_animation || 'pulse'
     shake: 'anim-shake', pulse: 'anim-pulse', bounce: 'anim-bounce', glow: 'anim-glow', none: '',
   }
 
-  useEffect(() => {
-    if (sent) {
-      // Jouer le son de notification
-      try {
-        const audio = new Audio('/sounds/shopify-notif.mp3')
-        audio.play().catch(e => console.log('Audio play prevented', e))
-      } catch (e) {}
-    }
-  }, [sent])
+  // Audio playback removed from client order confirmation
 
   if (sent) {
     const productImage = product?.image_url || product?.images?.[0] || 'https://placehold.co/100x100/e2e8f0/64748b?text=Produit'
