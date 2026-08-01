@@ -20,6 +20,7 @@ import { sendOrderAssignedLivreur } from '@/lib/whatsapp/templates';
 import { dispatch } from '@/lib/notification-dispatcher';
 import { processWhatsAppTextMessage } from '@/lib/bot/parser';
 import { detectEscalation } from '@/lib/bot/escalation';
+import { handleAIMessage } from '@/lib/telegram/ai-handler';
 
 export const dynamic = 'force-dynamic';
 
@@ -106,11 +107,9 @@ export async function POST(req: Request) {
           );
 
           if (!result.handled) {
-            // Pas une commande reconnue → aide
-            await sendTextMessage(
-              msg.from,
-              `👋 Commandes disponibles:\n\n• stats / stats 7j\n• stock [produit]\n• non confirmées\n• annulées\n• programmées\n• livreurs\n• sav\n• commande [id]\n• relance [id]\n• approuver`
-            );
+            // Pas une commande reconnue → envoyer à l'IA Claude
+            const aiResponse = await handleAIMessage(content.text);
+            await sendTextMessage(msg.from, aiResponse);
           }
         } else {
           // Client non reconnu → vérifier SAV
