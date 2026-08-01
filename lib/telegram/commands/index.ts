@@ -295,21 +295,21 @@ export async function handleSav(reply: (text: string, buttons?: any) => Promise<
 export async function handleCommande(reply: (text: string, buttons?: any) => Promise<void>, args: string): Promise<void> {
   const idStr = args.trim();
   if (!idStr) {
-    await reply('⚠️ Usage: `/commande 123456`');
+    await reply('⚠️ Usage: `/commande 7435` (utilisez l\'ID complet ou le suffixe de la commande)');
     return;
   }
 
-  // Recherche par ID complet ou par les 6 derniers chiffres
-  let query = supabase.from('orders').select('*, User:closer_id(name), Livreur:livreur_id(name)');
-
-  if (idStr.length <= 6) {
-    // Recherche par suffix
-    query = query.like('id', `%${idStr}`);
-  } else {
-    query = query.eq('id', parseInt(idStr));
+  const numId = parseInt(idStr);
+  if (isNaN(numId)) {
+    await reply('⚠️ L\'ID doit être un nombre. Exemple: `/commande 7435`');
+    return;
   }
 
-  const { data: orders, error } = await query.limit(1);
+  const { data: orders, error } = await supabase
+    .from('orders')
+    .select('*, User:closer_id(name), Livreur:livreur_id(name)')
+    .eq('id', numId)
+    .limit(1);
 
   if (error || !orders || orders.length === 0) {
     await reply(`❌ Commande "${idStr}" non trouvée.`);
@@ -360,18 +360,17 @@ export async function handleCommande(reply: (text: string, buttons?: any) => Pro
 export async function handleRelance(reply: (text: string, buttons?: any) => Promise<void>, args: string): Promise<void> {
   const idStr = args.trim();
   if (!idStr) {
-    await reply('⚠️ Usage: `/relance 123456`');
+    await reply('⚠️ Usage: `/relance 7435` (utilisez l\'ID complet de la commande)');
     return;
   }
 
-  let query = supabase.from('orders').select('*');
-  if (idStr.length <= 6) {
-    query = query.like('id', `%${idStr}`);
-  } else {
-    query = query.eq('id', parseInt(idStr));
+  const numId = parseInt(idStr);
+  if (isNaN(numId)) {
+    await reply('⚠️ L\'ID doit être un nombre. Exemple: `/relance 7435`');
+    return;
   }
 
-  const { data: orders } = await query.limit(1);
+  const { data: orders } = await supabase.from('orders').select('*').eq('id', numId).limit(1);
   if (!orders || orders.length === 0) {
     await reply(`❌ Commande "${idStr}" non trouvée.`);
     return;

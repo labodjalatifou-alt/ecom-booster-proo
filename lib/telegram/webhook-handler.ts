@@ -100,11 +100,22 @@ export async function handleTelegramUpdate(update: TelegramUpdate): Promise<void
     // Parser la commande
     const match = text.match(/^\/(\w+)\s*(.*)?$/);
     if (!match) {
-      // Pas une commande → aide
-      if (text.toLowerCase() === 'help' || text === '?') {
+      // Pas une commande → afficher un menu rapide
+      if (text.toLowerCase() === 'help' || text === '?' || text.toLowerCase() === 'aide') {
         await sendMessage(chatId, HELP_TEXT);
       } else {
-        await sendMessage(chatId, `❓ Commande non reconnue. Tapez /help pour la liste.`);
+        // Menu rapide avec les commandes les plus utiles
+        await sendMessage(chatId,
+          `👋 Bonjour ! Voici ce que je peux faire pour vous :\n\n` +
+          `📊 *Stats* — tapez \`/stats\`\n` +
+          `⏳ *Non confirmées* — tapez \`/nc\`\n` +
+          `📅 *Programmées* — tapez \`/programmes\`\n` +
+          `❌ *Annulées* — tapez \`/annules\`\n` +
+          `🚚 *Livreurs* — tapez \`/livreurs\`\n` +
+          `📋 *Détail commande* — tapez \`/commande 7435\`\n` +
+          `🔔 *SAV J+3* — tapez \`/sav\`\n\n` +
+          `❓ Liste complète : \`/help\``
+        );
       }
       return;
     }
