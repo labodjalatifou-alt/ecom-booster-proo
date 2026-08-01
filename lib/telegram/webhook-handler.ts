@@ -4,7 +4,7 @@
  */
 
 import { createAdminSupabase } from '@/lib/supabase';
-import { sendMessage } from './client';
+import { sendMessage, sendMessageWithButtons } from './client';
 import {
   handleStats,
   handleStock,

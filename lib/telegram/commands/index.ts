@@ -4,7 +4,7 @@
  */
 
 import { createAdminSupabase } from '@/lib/supabase';
-import { sendMessage, sendMessageWithButtons } from '../client';
+// Commands use the injected `reply` function, no direct client import needed
 
 const supabase = createAdminSupabase();
 
@@ -285,8 +285,7 @@ export async function handleSav(reply: (text: string, buttons?: any) => Promise<
     return `#${ref} | ${o.customer} | 📞 ${o.phone}`;
   });
 
-  await sendMessage(
-    chatId,
+  await reply(
     `🔔 *SAV J+3 — ${newOrders.length} relances créées*\n\n${lines.join('\n')}\n\n👉 Utilisez \`/approuver\` pour voir et envoyer.`
   );
 }
@@ -411,8 +410,7 @@ export async function handleRelance(reply: (text: string, buttons?: any) => Prom
   }
 
   const fId = followup.id.slice(-8);
-  await sendMessage(
-    chatId,
+  await reply(
     `📝 *Relance créée pour #${ref}*\n\n📱 ${o.phone}\n💬 Message proposé:\n\n_${suggestedMessage}_\n\n👉 \`/approuver ${fId}\` pour envoyer`
   );
 }
@@ -440,8 +438,7 @@ export async function handleApprouver(reply: (text: string, buttons?: any) => Pr
       return `\`${fId}\` | #${oRef} | ${p.customer_phone} | ${p.followup_type}`;
     });
 
-    await sendMessage(
-      chatId,
+    await reply(
       `📋 *Relances en attente (${pending.length})*\n\n${lines.join('\n')}\n\n👉 \`/approuver [id]\` pour envoyer`
     );
     return;
@@ -477,12 +474,11 @@ export async function handleApprouver(reply: (text: string, buttons?: any) => Pr
   // Marquer comme approuvé
   await supabase.from('pending_followups').update({
     status: 'approved',
-    approved_by: String(chatId),
+    approved_by: 'bot',
   }).eq('id', followup.id);
 
   const oRef = String(followup.order_id).slice(-6);
-  await sendMessage(
-    chatId,
+  await reply(
     `✅ Relance approuvée pour commande #${oRef}\n📱 ${followup.customer_phone}\n\n_Le message sera envoyé par le prochain cycle de la queue._`
   );
 }

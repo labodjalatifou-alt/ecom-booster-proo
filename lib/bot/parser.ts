@@ -22,7 +22,7 @@ import { detectEscalation } from './escalation';
 // ---- TYPES ----
 
 interface CommandMatch {
-  handler: (chatId: number, args: string) => Promise<void>;
+  handler: (reply: (text: string, buttons?: any) => Promise<void>, args: string) => Promise<void>;
   args: string;
 }
 
@@ -30,7 +30,7 @@ interface CommandMatch {
 
 const COMMANDS: Array<{
   pattern: RegExp;
-  handler: (chatId: number, args: string) => Promise<void>;
+  handler: (reply: (text: string, buttons?: any) => Promise<void>, args: string) => Promise<void>;
   argIndex?: number;
 }> = [
   { pattern: /^\/stats(?:\s+(.+))?$/i, handler: handleStats, argIndex: 1 },
@@ -100,8 +100,15 @@ export async function processWhatsAppTextMessage(
     // On les exécute normalement (elles envoient sur Telegram) mais on capture aussi pour WA
     try {
       await originalHandler(async (text, buttons) => { responses.push(text); }, match.args);
-    } catch {
-      // Si échec (pas de chatId Telegram valide), c'est normal
+    } catch (e) {
+      console.error(e);
+    }
+    
+    if (responses.length > 0) {
+      for (const res of responses) {
+        const cleanText = res.replace(/\*/g, '*').replace(/_/g, '_');
+        await sendTextMessage(fromPhone, cleanText);
+      }
     }
 
     return { handled: true };
